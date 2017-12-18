@@ -491,13 +491,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* htim_base)
 
 		HAL_NVIC_SetPriority(TIMx_IRQn, 2, 1);
 		HAL_NVIC_EnableIRQ(TIMx_IRQn);
-	}
-  if(htim_base->Instance==TIM7)
-  {
-    __TIM7_CLK_ENABLE();
-
-		HAL_NVIC_SetPriority(TIM7_IRQn, 2, 0);
-		HAL_NVIC_EnableIRQ(TIM7_IRQn);
+		
 	}
 }
 
@@ -563,14 +557,8 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     /**USART1 GPIO Configuration    
     PA9     ------> USART1_TX
     PA10     ------> USART1_RX 
-    PA11     ------> USART1_CTS
-    PA12     ------> USART1_RTS
     */
-#ifdef USARTx_CTS_PIN	
-    GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12;
-#else
     GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_10;
-#endif		
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FAST;//GPIO_SPEED_LOW;
@@ -580,7 +568,6 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 		HAL_NVIC_SetPriority(USART1_IRQn, 0, 1);
 		HAL_NVIC_EnableIRQ(USART1_IRQn);
   }
-#ifdef USART_IR_HUD	
   else if(huart->Instance==USART_IR_HUD) /* USART2 */
   {
     USART_IR_HUD_CLK_ENABLE();
@@ -609,7 +596,6 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 		HAL_NVIC_SetPriority(USART_IR_HUD_IRQn, 0, 1);
 		HAL_NVIC_EnableIRQ(USART_IR_HUD_IRQn);
   }
-#endif	
   else if(huart->Instance==USART3)
   {
   /* USER CODE BEGIN USART3_MspInit 0 */
@@ -645,18 +631,13 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 
   /* USER CODE END USART1_MspDeInit 0 */
     /* Peripheral clock disable */
-			HAL_NVIC_DisableIRQ(USART1_IRQn);
     __USART1_CLK_DISABLE();
   
     /**USART1 GPIO Configuration    
     PA9     ------> USART1_TX
     PA10     ------> USART1_RX 
     */
-#ifdef USARTx_CTS_PIN	
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12);
-#else
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_9|GPIO_PIN_10);
-#endif		
 
   /* USER CODE BEGIN USART1_MspDeInit 1 */
 
