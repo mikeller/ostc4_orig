@@ -41,7 +41,7 @@
 
 #include "stm32f4xx_hal.h"
 
-const SFirmwareData font_FirmwareData  SECTION_FIRMWARE_DATA =
+const SFirmwareData font_FirmwareData   __attribute__(( section(".upper_firmware_data") )) =
 {
     .versionFirst   = 0,
     .versionSecond  = 9,
