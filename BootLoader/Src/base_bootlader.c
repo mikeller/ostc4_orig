@@ -191,27 +191,36 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "stdio.h"
-#include <string.h> // for memcopy
+#include "base_bootloader.h"
 
+// From Bootloader/Inc:
+#include "tInfoBootloader.h"
+
+// ?
+#include "externLogbookFlash.h"
+#include "firmwareEraseProgram.h"
+#include "firmwareJumpToApplication.h"
+
+// From Common/Inc:
+#include "FirmwareData.h"
+
+// From Common/Drivers:
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_rcc.h"
 #include "stm32f4xx_hal_flash_ex.h"
 #include "stm32f4xx_hal_wwdg.h"
 
-#include "ostc.h"
-#include "base_bootloader.h"
+// From Discovery/Inc (shall be shared...)
+#include "data_exchange_main.h"
 #include "display.h"
 #include "gfx_engine.h"
-#include "externLogbookFlash.h"
+#include "ostc.h"
 #include "tComm.h"
 #include "tStructure.h"
-#include "tInfoBootloader.h"
 
-#include "firmwareEraseProgram.h"
-#include "firmwareJumpToApplication.h"
-
-#include "data_exchange_main.h"
+// From AC6 support:
+#include <stdio.h>
+#include <string.h> // for memcopy
 
 /** @addtogroup OSTC 4
   * @{
@@ -225,31 +234,31 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-	uint8_t returnFromCommCleanUpRequest = 0;
+uint8_t returnFromCommCleanUpRequest = 0;
 
-const SFirmwareData FirmwareData __attribute__((at(0x08000000 + 0x0000A000))) = {
-	.firmwareVersion16to32bit.ub.first 		= 1,
-	.firmwareVersion16to32bit.ub.second 	= 0,
-	.firmwareVersion16to32bit.ub.third 		= 1,
-	.firmwareVersion16to32bit.ub.betaFlag = 1,
+const SFirmwareData bootloader_FirmwareData __attribute__(( section(".bootloader_firmware_data") )) =
+{
+    .versionFirst   = 1,
+    .versionSecond  = 0,
+    .versionThird   = 1,
+    .versionBeta    = 1,
 
 	/* 4 bytes with trailing 0 */
 	.signature = "cw",
 	
-	.release_year = 16,
-	.release_month = 4,
-	.release_day = 8,
-	.release_sub = 0,
+	.release_year   = 16,
+	.release_month  = 4,
+	.release_day    = 8,
+	.release_sub    = 0,
 	
 	/* max 48 with trailing 0 */
-	//release_info ="12345678901234567890123456789012345678901"
 	.release_info ="tComm with all",
 	
 	/* for safety reasons and coming functions*/
-	.dummy[0] = 0,
-	.dummy[1] = 0,
-	.dummy[2] = 0xEE, /* the magic byte */
-	.dummy[3] = 0xFF
+	.magic[0] = FIRMWARE_MAGIC_FIRST,
+	.magic[1] = FIRMWARE_MAGIC_SECOND,
+	.magic[2] = FIRMWARE_MAGIC_FIRMWARE, /* the magic byte */
+	.magic[3] = FIRMWARE_MAGIC_END
 };
 
 
@@ -282,7 +291,7 @@ const SHardwareData HardwareData __attribute__((at(HARDWAREDATA_ADDRESS))) = {
 };
 
 
-RTC_HandleTypeDef		RtcHandle;
+RTC_HandleTypeDef	RtcHandle;
 TIM_HandleTypeDef   TimHandle; /* used in stm32f4xx_it.c too */
 TIM_HandleTypeDef   TimBacklightHandle; /* used in stm32f4xx_it.c too */
 

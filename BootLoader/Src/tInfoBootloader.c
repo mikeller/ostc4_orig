@@ -21,12 +21,15 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include <string.h>
-#include "base_bootloader.h"
-#include "ostc.h"
 #include "tInfoBootloader.h"
-#include "gfx_engine.h"
+
+#include "base_bootloader.h"
 #include "gfx_colors.h"
+#include "gfx_engine.h"
+#include "gfx_fonts.h"
+#include "ostc.h"
+
+#include <string.h>
 /* Exported variables --------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
