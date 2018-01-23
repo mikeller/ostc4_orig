@@ -1,24 +1,28 @@
-/**
-  ******************************************************************************
-  * @file    tInfoBootloader.c
-  * @author  heinrichs/weikamp, Christian Weikamp
-  * @version V0.0.1
-  * @date    08-May-2015
-  * @brief   Write something on the screen in between steps
-  *
-  @verbatim
-  ==============================================================================
-                        ##### How to use #####
-  ==============================================================================
-	* a little bit of text (DMA is not running for fast clean)
-	@endverbatim
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; COPYRIGHT(c) 2015 heinrichs weikamp</center></h2>
-  *
-  ******************************************************************************
-  */
+///////////////////////////////////////////////////////////////////////////////
+/// -*- coding: UTF-8 -*-
+///
+/// \file   BootLoader/Src/tInfoBootloader.c
+/// \brief  Write something on the screen in between steps
+/// \author heinrichs/weikamp, Christian Weikamp
+/// \date   08-May-2015
+///
+/// $Id$
+///////////////////////////////////////////////////////////////////////////////
+/// \par Copyright (c) 2014-2018 Heinrichs Weikamp gmbh
+///
+///     This program is free software: you can redistribute it and/or modify
+///     it under the terms of the GNU General Public License as published by
+///     the Free Software Foundation, either version 3 of the License, or
+///     (at your option) any later version.
+///
+///     This program is distributed in the hope that it will be useful,
+///     but WITHOUT ANY WARRANTY; without even the implied warranty of
+///     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+///     GNU General Public License for more details.
+///
+///     You should have received a copy of the GNU General Public License
+///     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//////////////////////////////////////////////////////////////////////////////
 
 /* Includes ------------------------------------------------------------------*/
 #include "tInfoBootloader.h"
@@ -37,7 +41,7 @@
 	GFX_DrawCfgScreen	tIBscreen;
 	GFX_DrawCfgWindow	tIBwindow;
 	uint8_t line = 1;
-	
+
 	char textButtonLeft[30] = { 0 };
 	char textButtonMid[31] = { 0 };
 	char textButtonRight[31] = { 0 };
@@ -63,7 +67,7 @@ void tInfoBootloader_init(void)
 	tIBwindow.WindowX1 = 779;
 	tIBwindow.WindowY0 = 0;
 	tIBwindow.WindowY1 = 799;
-	
+
 	line = 1;
 }
 
@@ -88,7 +92,7 @@ void tInfo_button_text(const char *text_left, const char *text_mid, const char *
 void tInfo_newpage(const char *text)
 {
 	uint32_t backup  = tIBscreen.FBStartAdress;
-	
+
 	tIBscreen.FBStartAdress = getFrame(18);
 	line = 1;
 	if(text)
@@ -101,10 +105,10 @@ void tInfo_newpage(const char *text)
 		write_content_simple(&tIBscreen, 0, 800, 480-24, &FontT24,textButtonMid,CLUT_ButtonSurfaceScreen);
 	if(*textButtonRight)
 		write_content_simple(&tIBscreen, 0, 800, 480-24, &FontT24,textButtonRight,CLUT_ButtonSurfaceScreen);
-	
+
 	GFX_SetFrameTop(tIBscreen.FBStartAdress);
 	GFX_change_LTDC();
-	
+
 	if(backup != 0)
 			releaseFrame(18,backup);
 }
@@ -120,7 +124,7 @@ void tInfo_write(const char *text)
 			GFX_write_string(&FontT48, &tIBwindow, text,line);
 		line++;
 
-	}	
+	}
 }
 
 /* Private functions ---------------------------------------------------------*/

@@ -1,46 +1,41 @@
-/**
-  ******************************************************************************
-  * @file    tInfoBootloader.h  - bootloader only -
-  * @author  heinrichs/weikamp, Christian Weikamp
-  * @version V0.0.1
-  * @date    08-Aug-2014
-  * @brief   Header file communication with PC
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; COPYRIGHT(c) 2014 heinrichs weikamp</center></h2>
-  *
-  ******************************************************************************
-  */ 
+///////////////////////////////////////////////////////////////////////////////
+/// -*- coding: UTF-8 -*-
+///
+/// \file   BootLoader/Inc/tInfoBootloader.h
+/// \brief  Header file communication with PC
+/// \author heinrichs/weikamp, Christian Weikamp
+/// \date   08-Aug-2014
+///
+/// $Id$
+///////////////////////////////////////////////////////////////////////////////
+/// \par Copyright (c) 2014-2018 Heinrichs Weikamp gmbh
+///
+///     This program is free software: you can redistribute it and/or modify
+///     it under the terms of the GNU General Public License as published by
+///     the Free Software Foundation, either version 3 of the License, or
+///     (at your option) any later version.
+///
+///     This program is distributed in the hope that it will be useful,
+///     but WITHOUT ANY WARRANTY; without even the implied warranty of
+///     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+///     GNU General Public License for more details.
+///
+///     You should have received a copy of the GNU General Public License
+///     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//////////////////////////////////////////////////////////////////////////////
 
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef TINFO_BOOTLOADER_H
 #define TINFO_BOOTLOADER_H
 
-#ifdef __cplusplus
- extern "C" {
-#endif
-
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
-/** @addtogroup Base
-  * @{
-  */
 
-/* Exported variables --------------------------------------------------------*/  
-
-
-/* Exported functions --------------------------------------------------------*/  
+/* Exported functions --------------------------------------------------------*/
 
 void tInfoBootloader_init(void);
 void tInfo_newpage(const char * text);
 void tInfo_write(const char * text);
 void tInfo_button_text(const char *text_left, const char *text_mid, const char *text_right);
 
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* TINFO_BOOTLOADER_H */
-
-/************************ (C) COPYRIGHT heinrichs weikamp *****END OF FILE****/
