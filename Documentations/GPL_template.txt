@@ -3,7 +3,7 @@
 ///
 /// \file   $file
 /// \brief  $brief
-/// \author $author
+/// \author Heinrichs Weikamp gmbh
 /// \date   $date
 ///
 /// \details

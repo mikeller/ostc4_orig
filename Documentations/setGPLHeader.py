@@ -23,7 +23,7 @@ def walk(OSTC4):
             if not os.path.exists(path):
                 continue
             print(path + ':')
-            for file in glob.iglob( os.path.join(path, '*.[chs]') ):
+            for file in sorted( glob.iglob( os.path.join(path, '*.[chs]') ) ):
                 try:
                     work(file)
                 except Exception as e:
@@ -44,7 +44,6 @@ def work(file):
     kw = {}
     kw['file']   = file.replace(OSTC4+'/', '')
     kw['brief']  = ''
-    kw['author'] = 'Heinrichs Weikamp'
     kw['date']   = '2018'
 
     # Try to gather info from existing header, if any:
@@ -55,7 +54,6 @@ def work(file):
             return
 
         get(line, 'brief', kw)
-        get(line, 'author', kw)
         get(line, 'date', kw)
 
     # Replace kw in header
