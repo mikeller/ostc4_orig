@@ -1,0 +1,1222 @@
+///////////////////////////////////////////////////////////////////////////////
+/// -*- coding: UTF-8 -*-
+///
+/// \file   Discovery/Src/show_logbook.c
+/// \brief  show_logbook_logbook_show_log_page1 /
+/// \author Heinrichs Weikamp gmbh
+/// \date   07-July-2014
+///
+/// \details
+///
+/// $Id$
+///////////////////////////////////////////////////////////////////////////////
+/// \par Copyright (c) 2014-2018 Heinrichs Weikamp gmbh
+///
+///     This program is free software: you can redistribute it and/or modify
+///     it under the terms of the GNU General Public License as published by
+///     the Free Software Foundation, either version 3 of the License, or
+///     (at your option) any later version.
+///
+///     This program is distributed in the hope that it will be useful,
+///     but WITHOUT ANY WARRANTY; without even the implied warranty of
+///     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+///     GNU General Public License for more details.
+///
+///     You should have received a copy of the GNU General Public License
+///     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//////////////////////////////////////////////////////////////////////////////
+
+#include "base.h"
+#include "logbook.h"
+#include "gfx_colors.h"
+#include "gfx_engine.h"
+#include "gfx_fonts.h"
+#include "show_logbook.h"
+#include "unit.h"
+
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h> // for abs()
+
+/* Private variables ---------------------------------------------------------*/
+
+GFX_DrawCfgScreen	tLOGscreen;
+GFX_DrawCfgScreen	tLOGbackground;
+
+
+void print_gas_name(char* output,uint8_t lengh,uint8_t oxygen,uint8_t helium);
+int16_t get_colour(int16_t color);
+
+/* Overview */
+void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards);
+/* Temperature */
+void show_logbook_logbook_show_log_page2(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards);
+/* Gas List */
+void show_logbook_logbook_show_log_page3(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards);
+/* ppO2 */
+void show_logbook_logbook_show_log_page4(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards);
+
+
+inline uint32_t MinU32LOG(uint32_t a, uint32_t b)
+{
+    return ((a<b)?a:b);
+}
+
+uint32_t MaxU32LOG(uint32_t a, uint32_t b)
+{
+    return((a>b)?a:b);
+}
+
+void write_label_(GFX_DrawCfgScreen *screenInput, SWindowGimpStyle win, const tFont *Font, uint8_t color, const char *text)
+{
+    GFX_DrawCfgWindow	hgfx;
+
+    if( win.right > 799)
+         win.right = 799;
+
+    if(win.top > 479)
+        win.top = 479;
+    hgfx.Image = screenInput;
+    hgfx.WindowNumberOfTextLines = 1;
+    hgfx.WindowLineSpacing = 0;
+    hgfx.WindowTab = 0;
+    hgfx.WindowX0 = win.left;
+    hgfx.WindowX1 = win.right;
+    hgfx.WindowY1 = 479 - win.top;
+    if(hgfx.WindowY1 < Font->height)
+        hgfx.WindowY0 = 0;
+    else
+        hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
+
+    GFX_write_label(Font, &hgfx, text, color);
+}
+
+
+/**
+  ******************************************************************************
+  * @brief   GFX write label. /  print coordinate system & depth graph
+  * @author  Peter Ryser
+  * @version V0.0.1
+  * @date    07-July-2014
+  ******************************************************************************
+    *
+  * @param  hgfx:
+  * @param  window: 			WindowGimpStyle
+  * @param  mode: 			different modes depending witch page uses the function
+  * @param  dataLength:
+  * @param  depthdata:
+  * @param  colordata: 			1
+  * @retval None
+  */
+void show_logbook_draw_depth_graph(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards, SWindowGimpStyle* window, short mode, uint16_t dataLength, uint16_t* depthdata, uint8_t * colordata, uint16_t * decostopdata)
+{
+    SLogbookHeader logbookHeader;
+    SWindowGimpStyle wintemp = *window;
+    SWindowGimpStyle winsmal;
+    logbook_getHeader(StepBackwards, &logbookHeader);
+    int divetime = logbookHeader.diveTimeMinutes;
+    int maxDepth =  logbookHeader.maxDepth/100;
+
+    int16_t saveBottom = wintemp.bottom;
+    int16_t saveTop = 0 - wintemp.top;
+
+    //*** Horisontal (depth) ***************************************************
+
+    //--- calc depth lines and labels --
+    int vscale = 0;
+    int vstep = 0;
+
+    vstep = maxDepth / 5;
+    vscale = vstep * 5;
+    if(vscale < maxDepth)
+    {
+        vstep += 1;
+        vscale += 5;
+    }
+/*
+    if(vscale <
+    for(int i=1; i <= 20; i++)
+    {
+        vscale = i * 25;
+        vstep = i * 5;
+        if( vscale > maxDepth)
+            break;
+    }
+*/
+    //--- print depth labels ---
+    winsmal.left = wintemp.left - 48;
+    winsmal.top	= wintemp.top  - 3;
+    winsmal.right = wintemp.left -1;
+    winsmal.bottom = winsmal.top + 16;
+
+    write_label_(hgfx, winsmal,&FontT24,CLUT_GasSensor1,"[m]");
+    winsmal.left = wintemp.left - 48;
+    char msg[3];
+    float deltaline = ((float)(wintemp.bottom - wintemp.top))/5;
+    for(int i = 1; i<=5; i++)
+    {
+
+        winsmal.top	= wintemp.top + deltaline * i - 14;
+        winsmal.bottom = winsmal.top + 16;
+        winsmal.right = wintemp.left - 2;
+        snprintf(msg,5,"%i",i * vstep);
+        write_label_(hgfx, winsmal,&FontT24,CLUT_GasSensor1,msg);
+    }
+
+    //vertical (Time) *******************************************************************
+    //--- calc time lines and labels --
+    int timestep = 0;
+    int lines = 0;
+    for(int i=1; i <= 60; i++)
+    {
+        timestep = i * 5;
+        lines = divetime/timestep;
+        if(lines < 7)
+        {
+            break;
+        }
+    }
+    //*** print coordinate system grit ***
+    int winwidth = wintemp.right - wintemp.left;
+    float vdeltaline = ((float)(winwidth * timestep))/divetime;
+    GFX_draw_Grid( &tLOGbackground,wintemp,  0, vdeltaline,  5,0,  CLUT_LogbookGrid);
+
+
+    //--- print time labels ---
+    winsmal.left = wintemp.left;
+    winsmal.top	=  wintemp.top - 40;
+    winsmal.right = winsmal.left + 60;
+    winsmal.bottom = winsmal.top + 16;
+
+
+    for(int i = 1; i<=lines; i++)
+    {
+        winsmal.left= wintemp.left + vdeltaline * i - 15;
+        winsmal.right = winsmal.left + 30;
+        snprintf(msg,5,"%3i",i * timestep);
+        write_label_(hgfx, winsmal,&FontT24,CLUT_GasSensor1,msg);
+    }
+    winsmal.left = wintemp.left;// - 9;
+    winsmal.top	=  wintemp.top - 40;
+    winsmal.right = winsmal.left + 60;
+    write_label_(hgfx, winsmal,&FontT24,CLUT_GasSensor1,"min");;
+
+    //--- print depth graph ---
+    //adapt window
+    int winhight = wintemp.bottom - wintemp.top;
+    int newhight = (winhight * maxDepth)/vscale;
+    wintemp.bottom = wintemp.top + newhight;
+    //wintemp.fontcolor = LOGBOOK_GRAPH_DEPTH;
+
+    int datamax = 0;
+    for(int i=0;i<dataLength;i++)
+    {
+        if(depthdata[i]>datamax)
+            datamax = depthdata[i];
+    }
+
+    if(decostopdata)
+    {
+        if(dataLength <= 1000)
+        {
+            uint8_t colortemp[1000];
+
+            for(int i = 0; i<dataLength; i++)
+            {
+                if(decostopdata[i] > depthdata[i])
+                {
+                    colortemp[i] = CLUT_WarningRed;
+                }
+                else
+                {
+                    colortemp[i] = CLUT_NiceGreen;
+                }
+            }
+            GFX_graph_print(hgfx,&wintemp,saveTop,1,0,datamax, decostopdata,dataLength, NULL, colortemp);
+        }
+        else
+            GFX_graph_print(hgfx,&wintemp,saveTop,1,0,datamax, decostopdata,dataLength, CLUT_NiceGreen, NULL);
+    }
+
+    switch(mode)
+    {
+    case 0:
+        GFX_graph_print(hgfx,&wintemp,0,1,0,datamax, depthdata,dataLength,CLUT_GasSensor1, NULL);
+        break;
+    case 1:
+        GFX_graph_print(hgfx,&wintemp,saveBottom,1,0,datamax, depthdata,dataLength,CLUT_GasSensor0,colordata);
+        break;
+    case 2:
+        if(*colordata)
+            GFX_graph_print(hgfx,&wintemp,0,1,0,datamax, depthdata,dataLength,CLUT_GasSensor0,colordata);
+        else
+            GFX_graph_print(hgfx,&wintemp,0,1,0,datamax, depthdata,dataLength,CLUT_GasSensor1, NULL);
+    }
+
+}
+
+
+
+/**
+  ******************************************************************************
+  * @brief  scaleAdapt
+  * @author  heinrichs weikamp gmbh
+  * @version V0.0.1
+  * @date    29-Nov-2016
+  ******************************************************************************
+    *
+  * @param  ...
+  * @retval *OutputStepOfScale, *OutputMaxValueOnScale, *OutputTop, *OutputBottom
+
+    * fit to multiples of 1ï¿½C (data format is 1/10ï¿½C)
+    */
+
+void scaleAdapt(	int InputTop, int InputBottom,
+                                    int16_t *OutputMinValue, int16_t *OutputMaxValue, int *OutputTop, int *OutputBottom,
+                                    uint16_t *OutputStepOfScale, int16_t *OutputMaxValueOnScale)
+{
+//	uint16_t oldScale;
+    uint16_t newScale;
+//	uint16_t diff_newScale;
+
+//	int16_t oldMaxOnScale;
+    int16_t newMaxOnScale;
+//	int16_t diff_newMaxOnScale;
+    _Bool negativeMaxValue = 0;
+
+//	float oldRange;
+    float newRange;
+
+    float	sizeOfScreen;
+//	float InputTopValue;
+//	float InputBottomValue;
+    float screenToRangeRatio;
+    float diffOutMaxToMaxOnScale;
+    float diffOutMinToMaxOnScale;
+    int positonOutputMaxValue;
+    int positonOutputMinValue;
+
+
+// scale
+//	oldScale = *OutputStepOfScale;
+    newScale = *OutputStepOfScale + 9;
+    newScale /= 10;
+    newScale *= 10;
+//	diff_newScale = newScale - *OutputStepOfScale;
+//	oldRange = 5 * oldScale;
+    newRange = 5 * newScale;
+    *OutputStepOfScale = newScale;
+
+    // MaxValueOnScale
+//	oldMaxOnScale = *OutputMaxValueOnScale;
+    if(OutputMaxValueOnScale < 0)
+    {
+        negativeMaxValue = 1;
+        newMaxOnScale = 0 - *OutputMaxValueOnScale;
+    }
+    else
+    {
+        negativeMaxValue = 0;
+        newMaxOnScale = *OutputMaxValueOnScale;
+    }
+    newMaxOnScale += 9;
+    newMaxOnScale /= 10;
+    newMaxOnScale *= 10;
+    if(negativeMaxValue)
+    {
+//		diff_newMaxOnScale = newMaxOnScale + *OutputMaxValueOnScale;
+        *OutputMaxValueOnScale = 0 - newMaxOnScale;
+    }
+    else
+    {
+//		diff_newMaxOnScale = newMaxOnScale - *OutputMaxValueOnScale;
+        *OutputMaxValueOnScale = newMaxOnScale;
+    }
+
+
+    // new coordinates
+    sizeOfScreen = 1 + InputBottom - InputTop;
+//	InputTopValue = *OutputMaxValueOnScale;
+//	InputBottomValue = InputTopValue + (6 * *OutputStepOfScale);
+
+    screenToRangeRatio = sizeOfScreen / newRange;
+    diffOutMaxToMaxOnScale = abs(*OutputMaxValueOnScale) - abs(*OutputMaxValue);
+//	diffOutMinToMax = abs(*OutputMinValue - *OutputMaxValue);
+    diffOutMinToMaxOnScale = abs(*OutputMaxValueOnScale - *OutputMinValue);
+
+    positonOutputMaxValue = (int)(diffOutMaxToMaxOnScale * screenToRangeRatio);
+    positonOutputMaxValue += *OutputTop;
+    positonOutputMinValue = (int)(diffOutMinToMaxOnScale * screenToRangeRatio);
+    positonOutputMinValue += *OutputTop;
+//	positonOutputMinValue = (int)(diffOutMinToMax * screenToRangeRatio);
+//	positonOutputMinValue += positonOutputMaxValue;
+    *OutputTop = positonOutputMaxValue;
+    *OutputBottom = positonOutputMinValue;
+}
+
+
+/**
+  ******************************************************************************
+  * @brief  scaleHelper
+  * @author  heinrichs weikamp gmbh
+  * @version V0.0.1
+  * @date    13-Oct-2016
+  ******************************************************************************
+    *
+  * @param  hgfx:
+  * @retval None
+
+    * pixel  50 oben
+    * pixel 439 unten
+    * pixel 390 gesamt hï¿½he
+
+    * for temperature, input is ï¿½C * 10
+    */
+
+void scaleHelper(	uint16_t InputDataLength, int16_t *InputDataArray, int InputTop, int InputBottom,
+                                    int16_t *OutputMinValue, int16_t *OutputMaxValue, int *OutputTop, int *OutputBottom,
+                                    uint16_t *OutputStepOfScale, int16_t *OutputMaxValueOnScale)
+{
+    int32_t 	datamin = INT16_MAX; // 32 bit for delta calculation ( delta is unsigned -> value can be 2x INT16_MAX)
+    int32_t 	datamax = INT16_MIN;
+    uint16_t	deltaMinMax = 1;
+//	uint16_t	deltaMinMaxUsed = 1;
+//	uint16_t 	digits = 1;
+//	uint16_t 	scaler = 1;
+    uint32_t	step = 1;
+    const int	sizeOfScreen = InputBottom - InputTop;
+    float pixel2range = 1.0;
+
+    // min, max, deltaMinMax, OutputMinValue, OutputMaxValue
+    for(uint16_t i = 0; i < InputDataLength; i++)
+    {
+        if(InputDataArray[i] > datamax)
+            datamax = InputDataArray[i];
+
+        if(InputDataArray[i] < datamin)
+            datamin = InputDataArray[i];
+    }
+
+    deltaMinMax = (uint16_t)(datamax - datamin);
+
+    *OutputMinValue = (int16_t)datamin;
+    *OutputMaxValue = (int16_t)datamax;
+
+    // step
+    step = deltaMinMax / 5;
+    while(deltaMinMax > (step * 5))
+    {
+        step += 1;
+    }
+    pixel2range = ((float)sizeOfScreen) / (step * 5);
+
+    *OutputStepOfScale = (uint16_t)step;
+    *OutputMaxValueOnScale = *OutputMaxValue;
+    *OutputTop = InputTop;
+    *OutputBottom = ((int)(pixel2range * deltaMinMax)) + *OutputTop;
+}
+
+/**
+  ******************************************************************************
+  * @brief  show_logbook_logbook_show_log_page1 /
+  * @author  Peter Ryser
+  * @version V0.0.1
+  * @date    07-July-2014
+  ******************************************************************************
+    *
+  * @param  hgfx:
+  * @retval None
+  */
+void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t StepBackwards)
+{
+    SWindowGimpStyle wintemp;
+    SWindowGimpStyle winsmal;
+    wintemp.left = 50;
+    wintemp.right = 799 - wintemp.left;
+    wintemp.top = 50;
+    wintemp.bottom = 479 - 40;
+
+    SLogbookHeader logbookHeader;
+    logbook_getHeader(StepBackwards ,&logbookHeader);
+
+    uint16_t depthdata[1000] = { 0 };
+    uint8_t  gasdata[1000] = { 0 };
+    int16_t tempdata[1000] = { 0 };
+
+    uint16_t dataLength = 0;
+    dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, tempdata, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+
+    //Print Date
+    uint8_t year = logbookHeader.dateYear;
+    uint8_t month = logbookHeader.dateMonth;
+    uint8_t day =  logbookHeader.dateDay;
+    char text[40];
+    snprintf(text, 20, "20%02i-%02i-%02i", year, month, day);
+    Gfx_write_label_var(hgfx, 30, 150,10, &FontT42,CLUT_GasSensor1,text);
+
+    // Print logbook number with offset
+    if(settingsGetPointer()->logbookOffset)
+    {
+        int32_t logNumber;
+        logNumber = settingsGetPointer()->logbookOffset - StepBackwards;
+        if(logNumber < 0)
+            logNumber = 0;
+        else
+        if(logNumber > 9999)
+            logNumber = 9999;
+
+        snprintf(text,20,"#%i",logNumber);
+        Gfx_write_label_var(hgfx, 300, 590,10, &FontT42,CLUT_GasSensor1,text);
+    }
+
+    //Print time
+    uint8_t hour = logbookHeader.timeHour;
+    uint8_t minute = logbookHeader.timeMinute;
+    snprintf(text,20,"%02i:%02i",hour,minute);
+    Gfx_write_label_var(hgfx, 600, 749,10, &FontT42,CLUT_GasSensor1,text);
+
+    //Print Dive Mode (OC/CCR/...)
+    switch(logbookHeader.diveMode)
+    {
+    case DIVEMODE_OC:
+            snprintf(text,20,"open circuit");
+            break;
+    case DIVEMODE_CCR:
+            snprintf(text,20,"closed circuit");
+            break;
+    case DIVEMODE_Gauge:
+            snprintf(text,20,"Gauge");
+            break;
+    case DIVEMODE_Apnea:
+            snprintf(text,20,"Apnea");
+            break;
+    }
+    Gfx_write_label_var(hgfx, 30, 250,60, &FontT42,CLUT_GasSensor4,text);
+
+    // Decomodel
+    if(logbookHeader.diveMode <= DIVEMODE_CCR)
+    {
+        switch(logbookHeader.decoModel)
+        {
+        case GF_MODE:
+                snprintf(text,20,"\002GF%u/%u",logbookHeader.gfLow_or_Vpm_conservatism,logbookHeader.gfHigh);
+                break;
+        case VPM_MODE:
+                snprintf(text,20,"\002VPM +%u",logbookHeader.gfLow_or_Vpm_conservatism);
+                break;
+        }
+        Gfx_write_label_var(hgfx, 600, 729,60, &FontT42,CLUT_GasSensor1,text);
+    }
+
+    //Write Dive Time
+    int minutes = logbookHeader.diveTimeMinutes;
+    int seconds = logbookHeader.diveTimeSeconds;
+    int hours = minutes/60;
+    minutes -= hours * 60;
+    snprintf(text,20,"%02i:%02i:%02i",hours,minutes,seconds);
+    Gfx_write_label_var(hgfx, 30, 250,360, &FontT42,CLUT_GasSensor1,text);
+    Gfx_write_label_var(hgfx, 200, 250,360, &FontT42,CLUT_GasSensor4,"s");
+
+    // Max Depth
+    int maxdepth =logbookHeader.maxDepth/100;
+    int maxdepth_dcm = logbookHeader.maxDepth/10 - maxdepth * 10;
+    int top = 150;
+    if(settingsGetPointer()->nonMetricalSystem)
+    {
+        float maxDepthFeet = 0;
+        maxDepthFeet = unit_depth_float(((float)logbookHeader.maxDepth)/100);
+        snprintf(text,20,"%.0f",maxDepthFeet);
+    }
+    else
+    {
+        snprintf(text,20,"%i.%i",maxdepth,maxdepth_dcm);
+    }
+    Gfx_write_label_var(hgfx, 30, 250,top, &FontT42,CLUT_GasSensor1,text);
+    winsmal.left = 30;
+    winsmal.top = top -3;
+    winsmal.bottom = winsmal.top + FontT42.height;
+    winsmal.right = winsmal.left + 50;
+    if(maxdepth < 10)
+    {
+        winsmal.left  = 137;
+    }
+    else if(maxdepth < 100)
+    {
+        winsmal.left  = 151;
+    }
+    else
+    {
+        winsmal.left  = 147;
+    }
+    write_label_(hgfx, winsmal,&FontT24,CLUT_GasSensor4,"max");
+    snprintf(text,3,"%c%c"
+        , unit_depth_char1()
+        , unit_depth_char2()
+    );
+    Gfx_write_label_var(hgfx, winsmal.left - 37, 250,top, &FontT42,CLUT_GasSensor4,text);
+
+    // Average Depth
+    int avrdepth =logbookHeader.averageDepth_mbar/100;
+    int avrdepth_dcm = logbookHeader.averageDepth_mbar/10 - avrdepth * 10;
+    top = 200;
+    if(settingsGetPointer()->nonMetricalSystem)
+    {
+        float avgDepthFeet = 0;
+        avgDepthFeet = unit_depth_float(((float)logbookHeader.averageDepth_mbar)/100);
+        snprintf(text,20,"%.0f",avgDepthFeet);
+    }
+    else
+    {
+        snprintf(text,20,"%i.%i",avrdepth,avrdepth_dcm);
+    }
+    Gfx_write_label_var(hgfx, 30, 250,top, &FontT42,CLUT_GasSensor1,text);
+    winsmal.left = 30;
+    winsmal.top = top -3;
+    winsmal.bottom = winsmal.top + FontT42.height;
+    winsmal.right = winsmal.left + 50;
+    if(avrdepth < 10)
+    {
+        winsmal.left  = 137                               ;
+    }
+    else if(avrdepth < 100)
+    {
+        winsmal.left  = 151;
+    }
+    else
+    {
+        winsmal.left  = 147;
+    }
+    write_label_(hgfx, winsmal,&FontT24,CLUT_GasSensor4,"avg");
+    snprintf(text,3,"%c%c"
+        , unit_depth_char1()
+        , unit_depth_char2()
+    );
+    Gfx_write_label_var(hgfx, winsmal.left - 37, 250,top, &FontT42,CLUT_GasSensor4,text);
+    // Temperature
+    top+= 50;
+    float temp_Temperature;
+    uint16_t start;
+    temp_Temperature = ((float)logbookHeader.minTemp)/10;
+    snprintf(text,20,"%.1f",unit_temperature_float(temp_Temperature));
+    Gfx_write_label_var(hgfx, 30, 250,top, &FontT42,CLUT_GasSensor1,text);
+
+    if(settingsGetPointer()->nonMetricalSystem)
+        start = 121;
+    else if((logbookHeader.minTemp >= 0) && (logbookHeader.minTemp < 10))
+        start = 100;
+    else if((logbookHeader.minTemp >= -10) && (logbookHeader.minTemp < 100))
+        start = 114;
+    else
+        start = 121;
+
+    text[0] = '\140';
+    if(settingsGetPointer()->nonMetricalSystem)
+        text[1] = 'F';
+    else
+        text[1] = 'C';
+    text[2] = 0;
+
+    Gfx_write_label_var(hgfx, start, 300,top, &FontT42,CLUT_GasSensor4,text);
+
+    // CNS
+    snprintf(text,20,"CNS: %i %%",logbookHeader.maxCNS);
+    Gfx_write_label_var(hgfx, 30, 250,750, &FontT42,CLUT_GasSensor1,text);
+
+// Surface Pressure
+//		snprintf(text,20,"\001%i\016\016 mbar",logbookHeader.surfacePressure_mbar);
+//		Gfx_write_label_var(hgfx,300,500,750, &FontT42,CLUT_GasSensor1,text);
+//		snprintf(text,40,"%i\016\016 mbar\017  (%i\016\016 m\017)",logbookHeader.surfacePressure_mbar, unit_SeaLevelRelation_integer(logbookHeader.surfacePressure_mbar));
+    snprintf(text,40,"%i\016\016 mbar\017",logbookHeader.surfacePressure_mbar);
+    Gfx_write_label_var(hgfx,320,600,750, &FontT42,CLUT_GasSensor1,text);
+
+
+    //--- print coordinate system & depth graph with gaschanges ---
+    wintemp.left 	= 330;
+    wintemp.top	=  160;
+    wintemp.bottom -= 40;
+    show_logbook_draw_depth_graph(hgfx, StepBackwards, &wintemp, 1, dataLength, depthdata, gasdata, NULL);
+}
+
+
+void show_logbook_logbook_show_log_page2(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards)
+{
+    //*** Page2: Depth and Temperature ****
+
+    SWindowGimpStyle wintemp;
+    SWindowGimpStyle winsmal;
+    wintemp.left = 50;
+    wintemp.right = 799 - wintemp.left;
+    wintemp.top = 50;
+    wintemp.bottom = 479 - 40;
+
+    SLogbookHeader logbookHeader;
+
+    logbook_getHeader(StepBackwards,&logbookHeader);
+    uint16_t dataLength = 0;
+    uint16_t depthdata[1000];
+    uint8_t  gasdata[1000];
+    int16_t  tempdata[1000];
+    uint16_t decoDepthdata[1000];
+    uint16_t *pDecoDepthData = 0;
+
+    dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, tempdata, NULL, NULL, NULL, NULL, NULL, NULL, NULL, decoDepthdata);
+
+        for(int i = 0; i<dataLength; i++)
+        {
+            if(decoDepthdata[i] >= 300)
+            {
+                pDecoDepthData = decoDepthdata;
+                break;
+            }
+        }
+    //--- print coordinate system & depth graph ---
+    show_logbook_draw_depth_graph(hgfx, StepBackwards, &wintemp, 0, dataLength, depthdata, gasdata, pDecoDepthData);
+
+    //*** Temperature *************************************************
+
+    //--- print temperature labels ---
+    // input maxtmpline, tmpstep, deltaline
+
+    winsmal.left = wintemp.right +6;
+    winsmal.top	= wintemp.top - 3;
+    winsmal.right =  wintemp.right + 30;
+    winsmal.bottom = winsmal.top + 16;
+
+    write_label_(hgfx, winsmal,&FontT24,CLUT_LogbookTemperature,"[C]");
+
+
+    int16_t minVal = 0;
+    int16_t maxVal = 0;
+    int newTop = 0;
+    int newBottom = 0;
+    uint16_t step = 0;
+    int16_t maxValTop = 0;
+
+    scaleHelper(dataLength, tempdata, wintemp.top, wintemp.bottom,
+                            &minVal, &maxVal, &newTop, &newBottom,
+                            &step, &maxValTop); // newTop is wintemp.top
+
+    scaleAdapt(	wintemp.top, wintemp.bottom,
+                            &minVal, &maxVal, &newTop, &newBottom,
+                            &step, &maxValTop);
+
+    // temperature in 1/10 ï¿½C
+    int deltaline = (1 + wintemp.bottom - wintemp.top)/5;
+    char msg[3];
+    int tmp = maxValTop;
+    for(int i = 1; i<=5; i++)
+    {
+        tmp -= 	step;
+        //if(tmp < 0)
+            //break;
+        winsmal.top	= wintemp.top + deltaline * i - 14;
+        winsmal.bottom = winsmal.top + 16;
+        if((tmp >= 0) && (tmp < 100))
+            snprintf(msg,2,"%1i",tmp);
+        else
+            snprintf(msg,3,"%2i",tmp);
+        write_label_(hgfx, winsmal,&FontT24,CLUT_LogbookTemperature,msg);
+    }
+
+
+    //--- print temperature graph ---
+    // input tempdata[i], maxtmpline, mintmpline, maxTmp, minTmp, deltaline, wintemp.top, dataLength, datamax,
+
+    //adapt window
+    wintemp.bottom = newBottom;
+    wintemp.top = newTop;
+    GFX_graph_print(hgfx,&wintemp,0,1,maxVal,minVal, (uint16_t *)tempdata,dataLength,CLUT_LogbookTemperature, NULL);
+}
+
+
+void show_logbook_logbook_show_log_page2_original(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards)
+{
+    //*** Page2: Depth and Temperature ****
+
+    SWindowGimpStyle wintemp;
+    SWindowGimpStyle winsmal;
+    wintemp.left = 50;
+    wintemp.right = 799 - wintemp.left;
+    wintemp.top = 50;
+    wintemp.bottom = 479 - 40;
+
+    SLogbookHeader logbookHeader;
+
+    logbook_getHeader(StepBackwards,&logbookHeader);
+    uint16_t dataLength = 0;
+    uint16_t depthdata[1000];
+    uint8_t  gasdata[1000];
+    int16_t  tempdata[1000];
+    uint16_t decoDepthdata[1000];
+    uint16_t *pDecoDepthData = 0;
+
+    dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, tempdata, NULL, NULL, NULL, NULL, NULL, NULL, NULL, decoDepthdata);
+
+/* test
+    for(int i = 0; i<dataLength/2; i++)
+        decoDepthdata[i] = 300;
+
+    for(int i = dataLength/2; i<dataLength; i++)
+        decoDepthdata[i] = 1200;
+*/
+    for(int i = 0; i<dataLength; i++)
+    {
+        if(decoDepthdata[i] >= 300)
+        {
+            pDecoDepthData = decoDepthdata;
+            break;
+        }
+    }
+    //--- print coordinate system & depth graph ---
+    show_logbook_draw_depth_graph(hgfx, StepBackwards, &wintemp, 0, dataLength, depthdata, gasdata, pDecoDepthData);
+
+    //*** Temperature *************************************************
+
+
+    int16_t datamax = -1000; // ï¿½C * 10
+    int16_t datamin = +1000;
+    for(int i = 0; i < dataLength;i++)
+    {
+        if(tempdata[i]>datamax)
+            datamax = tempdata[i];
+        if(tempdata[i]< datamin)
+            datamin = tempdata[i];
+    }
+    float maxTmp = ((float)datamax) /10.f;
+    float minTmp = ((float)datamin) /10.f;
+    int deltaTmp = maxTmp - minTmp;
+    int tmpstep = 2;
+
+    // 5 different scales: 1ï¿½C, 2ï¿½C, 4ï¿½C, 5ï¿½C, 10ï¿½C
+    // with 6 lines == 5 steps
+    if((deltaTmp) <=5)
+    {
+        tmpstep = 1;
+    }
+    else
+    if(deltaTmp <= (5*2))
+    {
+        tmpstep = 2;
+    }
+    else
+    if(deltaTmp <= (5 * 4))
+    {
+        tmpstep = 4;
+    }
+    else
+    if(deltaTmp <= (5 * 5))
+    {
+        tmpstep = 5;
+    }
+    else
+    {
+        tmpstep = 10;
+    }
+//	int steps = deltaTmp/tmpstep;
+
+
+//	int steps = deltaTmp/5;
+//	int tmpstep = 5;
+//	if(steps > 4)
+//		tmpstep = 10;
+
+    int maxtmpline = 0;
+    int mintmpline = 0;
+    if(minTmp < 0)
+    {
+        if(minTmp >= -5)
+        {
+            mintmpline = -5;
+
+        }
+        else if(minTmp >= -10)
+        {
+            mintmpline = -10;
+        }
+        else
+            mintmpline = -15;
+    }
+
+    if(maxTmp > 0)
+    {
+        while(maxtmpline < maxTmp)
+            maxtmpline += tmpstep;
+    }
+
+    if(tmpstep < 5)
+        maxtmpline = MaxU32LOG(maxtmpline, 10);
+    else if(tmpstep == 5)
+        maxtmpline = MaxU32LOG(maxtmpline, 25);
+    else
+        maxtmpline = 50;
+
+    maxtmpline += mintmpline;
+
+    //--- print temperature labels ---
+    // input maxtmpline, tmpstep, deltaline
+
+    winsmal.left = wintemp.right +6;
+    winsmal.top	= wintemp.top - 3;
+    winsmal.right =  wintemp.right + 30;
+    winsmal.bottom = winsmal.top + 16;
+
+    write_label_(hgfx, winsmal,&FontT24,CLUT_LogbookTemperature,"[C]");
+
+    int deltaline = (wintemp.bottom - wintemp.top)/5;
+    char msg[3];
+    int tmp = maxtmpline;
+    for(int i = 1; i<=5; i++)
+    {
+        tmp -= 	tmpstep;
+        //if(tmp < 0)
+            //break;
+        winsmal.top	= wintemp.top + deltaline * i - 14;
+        winsmal.bottom = winsmal.top + 16;
+        snprintf(msg,3,"%2i",tmp);
+        write_label_(hgfx, winsmal,&FontT24,CLUT_LogbookTemperature,msg);
+    }
+
+
+    //--- print temperature graph ---
+    // input tempdata[i], maxtmpline, mintmpline, maxTmp, minTmp, deltaline, wintemp.top, dataLength, datamax,
+
+    //adapt window
+    float ftmp =((maxtmpline - minTmp) * deltaline) /tmpstep +  wintemp.top;
+    wintemp.bottom = ftmp;
+    if((ftmp - (int)ftmp) >= 0.5f)
+        wintemp.bottom++;
+
+    ftmp = ((maxtmpline - maxTmp) * deltaline) /tmpstep + wintemp.top;
+    wintemp.top = ftmp;
+    if((ftmp - (int)ftmp) >= 0.5f)
+        wintemp.top++;
+
+    if(wintemp.top <= wintemp.bottom)
+    {
+        for(int i = 0; i < dataLength;i++)
+        {
+            tempdata[i] -= mintmpline;
+        }
+        datamax -= mintmpline;
+        // hw 160518
+        // es wird nur das Fenster (wintemp.top, wintemp.bottom) verwendet in dem Daten sind
+        // daher muss datamin angegeben werden
+        // der Gesamtbereich ist uninteressant
+        // Bsp Temperatur von 8ï¿½C bis 5ï¿½C
+        // Y-Achse ist 10ï¿½C (oben) bis 0ï¿½C (unten)
+        // aber wintemp.top ist 127
+        // und wintemp.bottom ist 243
+        GFX_graph_print(hgfx,&wintemp,0,1,datamax,datamin, (uint16_t *)tempdata,dataLength,CLUT_LogbookTemperature, NULL);
+    }
+}
+
+
+void build_logbook_test(uint8_t page, uint8_t StepBackwards)
+{
+    uint32_t lastScreen,lastBackground;
+
+    lastScreen = tLOGscreen.FBStartAdress;
+    lastBackground = tLOGbackground.FBStartAdress;
+
+    tLOGscreen.FBStartAdress = getFrame(16);
+    tLOGscreen.ImageHeight = 480;
+    tLOGscreen.ImageWidth = 800;
+    tLOGscreen.LayerIndex = 1;
+
+    tLOGbackground.FBStartAdress = getFrame(17);
+    tLOGbackground.ImageHeight = 480;
+    tLOGbackground.ImageWidth = 800;
+    tLOGbackground.LayerIndex = 0;
+    switch(page)
+    {
+    case 1:
+        show_logbook_logbook_show_log_page1(&tLOGscreen,StepBackwards);
+        break;
+    case 2:
+        show_logbook_logbook_show_log_page2(&tLOGscreen,StepBackwards);
+        break;
+    case 3:
+        show_logbook_logbook_show_log_page3(&tLOGscreen,StepBackwards);
+        break;
+    case 4:
+        show_logbook_logbook_show_log_page4(&tLOGscreen,StepBackwards);
+        break;
+    }
+
+    releaseFrame(16,lastScreen);
+    releaseFrame(17,lastBackground);
+}
+
+
+void show_logbook_test(_Bool firstPage, uint8_t StepBackwards)
+{
+    static uint8_t page = 1;
+    if(firstPage)
+    {
+            page = 1;
+    }
+    else
+    {
+            page++;
+            if(page > 4)
+                    page = 1;
+    }
+
+    build_logbook_test(page,StepBackwards);
+//	GFX_ResetLayer(TOP_LAYER);
+//	GFX_ResetLayer(BACKGRD_LAYER);
+
+    set_globalState(StILOGSHOW);
+    GFX_SetFramesTopBottom(tLOGscreen.FBStartAdress, tLOGbackground.FBStartAdress,480);
+}
+
+
+void show_logbook_exit(void)
+{
+    releaseFrame(16,tLOGscreen.FBStartAdress);
+    releaseFrame(17,tLOGbackground.FBStartAdress);
+}
+
+
+void show_logbook_logbook_show_log_page3(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards)
+{
+    SWindowGimpStyle wintemp;
+    SWindowGimpStyle winsmal;
+    wintemp.left = 50;
+    wintemp.right = 799 - wintemp.left;
+    wintemp.top = 50;
+    wintemp.bottom = 479 - 40;
+
+    SLogbookHeader logbookHeader;
+
+    logbook_getHeader(StepBackwards, &logbookHeader);
+    uint16_t dataLength = 0;
+    uint16_t depthdata[1000];
+    uint8_t  gasdata[1000];
+    dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+
+    //--- print coordinate system & depth graph with gaschanges ---
+    show_logbook_draw_depth_graph(hgfx, StepBackwards, &wintemp, 1, dataLength, depthdata, gasdata, NULL);
+
+    //--- print gas list ---
+    winsmal.left = wintemp.right - 190;
+    winsmal.right =  winsmal.left + 150;
+
+    char msg[15];
+    char gas_name[15];
+    int j = 0;
+    for(int i = 4;i >= 0;i--)
+    {
+        if(logbookHeader.gasordil[i].note.ub.active > 0)
+        {
+            j++;
+            winsmal.top	= wintemp.bottom - 5 - j * 26 ;
+            winsmal.bottom = winsmal.top + 21  ;
+            uint8_t color = get_colour(i);
+
+            print_gas_name(gas_name,15,logbookHeader.gasordil[i].oxygen_percentage,logbookHeader.gasordil[i].helium_percentage);
+            snprintf(msg,15,"G%i: %s",i + 1, gas_name);
+            //msg[10] = 0;
+            write_label_(hgfx, winsmal,&FontT24,color,msg);
+        }
+    }
+
+    //--- define buttons ---
+    /*if(*ghost_char_logfile_oxydata)
+        button_start_single_action(surf1_menu_logbook_current_page, surf1_menu_logbook_show_log_page4, surf1_menu_logbook_show_log_next);
+    else
+        button_start_single_action(surf1_menu_logbook_current_page, surf1_menu_logbook_show_log_page1, surf1_menu_logbook_show_log_next);
+        */
+}
+
+void show_logbook_logbook_show_log_page4(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards)
+{ SWindowGimpStyle wintemp;
+    SWindowGimpStyle winsmal;
+    wintemp.left = 50;
+    wintemp.right = 799 - wintemp.left;
+    wintemp.top = 50;
+    wintemp.bottom = 479 - 40;
+    uint8_t color = 0;
+    SLogbookHeader logbookHeader;
+
+    logbook_getHeader(StepBackwards, &logbookHeader);
+    uint16_t dataLength = 0;
+    uint16_t depthdata[1000];
+    uint8_t  gasdata[1000];
+    uint16_t ppO2data[1000];
+    uint16_t sensor2[1000];
+    uint16_t sensor3[1000];
+        uint16_t *setpoint = ppO2data;
+        uint16_t *sensor1 = ppO2data;
+
+
+        if(logbookHeader.diveMode != DIVEMODE_CCR)
+            dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, NULL, ppO2data, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        else
+        {
+            if(logbookHeader.CCRmode == CCRMODE_FixedSetpoint)
+                dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata, gasdata, NULL, NULL, setpoint, NULL, NULL, NULL, NULL, NULL, NULL);
+            else
+                dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata, gasdata, NULL, NULL, NULL, sensor1, sensor2, sensor3, NULL, NULL, NULL);
+        }
+
+
+    //--- print coordinate system & depth graph with bailout---
+    show_logbook_draw_depth_graph(hgfx, StepBackwards, &wintemp, 0, dataLength, depthdata, gasdata, NULL);
+
+
+
+    //*** Desciption at bottom of page ***************************
+    winsmal.top	= wintemp.bottom +2 ;
+    winsmal.bottom = winsmal.top + 16;
+
+
+    /*if(strcmp( (char*)ghost_char_logfile_text_oc_ccr,"ccr/bailout") == 0)
+    {
+        winsmal.left = wintemp.left + 2;
+        winsmal.right =  winsmal.left + 55;
+
+        oled_write(OVERLAY, &winsmal,"CCR -",false,true);
+
+        winsmal.left = winsmal.right;
+        winsmal.right =  winsmal.left + 90;
+        //winsmal.fontcolor = oled_get_colour(15);
+        oled_write(OVERLAY, &winsmal,"bailout",false,true);
+    }
+    else*/
+    {
+        winsmal.left = wintemp.left + 2;
+        winsmal.right =  winsmal.left + 55;
+         color = CLUT_GasSensor1;//LOGBOOK_GRAPH_DEPTH;
+
+        write_label_(hgfx, winsmal,&FontT24,color,"depth");
+
+    }
+    winsmal.left = 799 - 67;//wintemp.right -67;
+    winsmal.right = winsmal.left;// + 45;
+
+    color = CLUT_LogbookTemperature;//LOGBOOK_GRAPH_DEPTH;
+    if(logbookHeader.diveMode != DIVEMODE_CCR)
+        write_label_(hgfx, winsmal,&FontT24,color,"\002PP O2");
+    else
+    if(logbookHeader.CCRmode != CCRMODE_Sensors)
+        write_label_(hgfx, winsmal,&FontT24,color,"\002SETPOINT");
+    else
+        write_label_(hgfx, winsmal,&FontT24,color,"\002SENSORS");
+
+    //*** PP O2 ****************************************************
+    //calc lines and labels
+    int datamax = 0;
+    int datamin = 10000;
+    for(int i=1;i<dataLength;i++)
+    {
+        if(ppO2data[i]>datamax)
+            datamax = ppO2data[i];
+        if(ppO2data[i]<datamin)
+            datamin = ppO2data[i];
+    }
+    if((logbookHeader.diveMode == DIVEMODE_CCR) && (logbookHeader.CCRmode == CCRMODE_Sensors))
+    {
+        for(int i=1;i<dataLength;i++)
+        {
+            if(sensor2[i]>datamax)
+                datamax = sensor2[i];
+            if(sensor2[i]<datamin)
+                datamin = sensor2[i];
+            if(sensor3[i]>datamax)
+                datamax = sensor3[i];
+            if(sensor3[i]<datamin)
+                datamin = sensor3[i];
+        }
+    }
+    float maxoxy = ((float)datamax)/100;
+    float minoxy =  ((float)datamin)/100;
+    float oxystep = 0.5;
+    float maxoxyline = 2.5;
+
+    //--- print PP O2 labels ----
+    winsmal.left = wintemp.right + 2;
+    winsmal.top	= wintemp.top ;
+    winsmal.right =  wintemp.right + 30;
+    winsmal.bottom = winsmal.top + 16;
+    //winsmal.font = ft_tiny + ft_SLIM;
+    color = CLUT_LogbookTemperature;// = LOGBOOK_GRAPH_TEMP;
+
+    write_label_(hgfx, winsmal,&FontT24,color,"bar");
+
+    int deltaline = (wintemp.bottom - wintemp.top)/5;
+    char msg[4];
+    float oxy = maxoxyline;
+    for(int i = 1; i<=5; i++)
+    {
+        oxy -= 	oxystep;
+        if(oxy < 0)
+            break;
+        winsmal.top	= wintemp.top + deltaline * i - 8;
+        winsmal.bottom = winsmal.top + 16;
+        snprintf(msg,4,"%1.1f",oxy);
+        write_label_(hgfx, winsmal,&FontT24,color,msg);
+        //oled_write(OVERLAY, &winsmal,msg,false,true);
+    }
+
+    //--- print PP O2 graph ---
+    //Adapt window
+    float ftmp = ((maxoxyline - minoxy) * deltaline) /oxystep + wintemp.top;
+    wintemp.bottom = ftmp;
+    if((ftmp - (int)ftmp) >= 0.5f)
+        wintemp.bottom++;
+
+    ftmp = wintemp.top + ((maxoxyline - maxoxy) * deltaline) /oxystep;
+    wintemp.top = ftmp;
+    if((ftmp - (int)ftmp) >= 0.5f)
+        wintemp.top++;
+    wintemp.top = MaxU32LOG(wintemp.top ,0);
+    if(wintemp.top < wintemp.bottom)
+    {
+        if((logbookHeader.diveMode == DIVEMODE_CCR) && (logbookHeader.CCRmode == CCRMODE_Sensors))
+        {
+            GFX_graph_print(hgfx,&wintemp,0,1,datamax,datamin, ppO2data,dataLength,CLUT_LogbookTemperature, NULL);
+            GFX_graph_print(hgfx,&wintemp,0,1,datamax,datamin, sensor2,dataLength,CLUT_LogbookTemperature, NULL);
+            GFX_graph_print(hgfx,&wintemp,0,1,datamax,datamin, sensor3,dataLength,CLUT_LogbookTemperature, NULL);
+        }
+        else
+            GFX_graph_print(hgfx,&wintemp,0,1,datamax,datamin, ppO2data,dataLength,CLUT_LogbookTemperature, NULL);
+    }
+    else
+    {
+        point_t startPoint, stopPoint;
+        startPoint.x = wintemp.left;
+        stopPoint.x = wintemp.right;
+        stopPoint.y = startPoint.y = 479 - wintemp.top;
+        GFX_draw_colorline(hgfx, startPoint, stopPoint, CLUT_LogbookTemperature);
+    }
+
+    //--- define buttons ---
+    //button_start_single_action(surf1_menu_logbook_current_page, surf1_menu_logbook_show_log_page1, surf1_menu_logbook_show_log_next);
+}
+
+void print_gas_name(char* output,uint8_t length,uint8_t oxygen,uint8_t helium)
+{
+    if(helium == 0)
+    {
+        if(oxygen == 21)
+            snprintf(output, length, "Air");
+        else if(oxygen == 100)
+            snprintf(output, length, "Oxy");
+        else
+            snprintf(output, length, "NX%i",oxygen);
+    }
+    else
+        {
+                if((oxygen + helium) == 100)
+            snprintf(output, length, "HX%i",oxygen);
+                else
+                        snprintf(output, length, "TMX%i/%i", oxygen, helium);
+        }
+
+}
+
+int16_t get_colour(int16_t color)
+{
+     return CLUT_GasSensor1 + color;
+}
