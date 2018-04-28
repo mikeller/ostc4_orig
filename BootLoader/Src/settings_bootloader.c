@@ -3,7 +3,7 @@
 ///
 /// \file   BootLoader/Src/settings_bootloader.c
 /// \brief  mini version for firmwareDataGetPointer() etc.
-/// \author heinrichs/weikamp, Christian Weikamp
+/// \author heinrichs weikamp gmbh
 /// \date   21-March-2016
 ///
 /// $Id$

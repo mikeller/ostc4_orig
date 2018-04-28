@@ -1,4 +1,4 @@
-Common = ../ostc4-common
-Discovery = ../ostc4-discovery
-Small_CPU = ../ostc4-small
-wiki = ../ostc4/wiki
+Common = ostc4-common
+Discovery = ostc4-discovery
+Small_CPU = ostc4-small
+wiki = ostc4/wiki

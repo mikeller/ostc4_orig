@@ -57,7 +57,6 @@ void HAL_MspInit(void)
 
   /* System interrupt init*/
 	/** SysTick_IRQn interrupt configuration
-		* use 1  by Christian 
 		*/
   HAL_NVIC_SetPriority(SysTick_IRQn, 1, 0);
 
@@ -304,7 +303,6 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     hdma_spi1_tx.Init.Mode = DMA_NORMAL;
     hdma_spi1_tx.Init.Priority = DMA_PRIORITY_LOW;
     hdma_spi1_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-/* by christian */		
 hdma_spi1_tx.Init.MemBurst            = DMA_MBURST_INC4;
 hdma_spi1_tx.Init.PeriphBurst         = DMA_PBURST_INC4;
     HAL_DMA_Init(&hdma_spi1_tx);
@@ -321,7 +319,6 @@ hdma_spi1_tx.Init.PeriphBurst         = DMA_PBURST_INC4;
     hdma_spi1_rx.Init.Mode = DMA_NORMAL;
     hdma_spi1_rx.Init.Priority = DMA_PRIORITY_HIGH;
     hdma_spi1_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-/* by christian */	
 hdma_spi1_rx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
 
 hdma_spi1_rx.Init.MemBurst            = DMA_MBURST_INC4;
@@ -691,7 +688,6 @@ static void HAL_FMC_MspInit(void){
   }
   FMC_Initialized = 1;
   /* Peripheral clock enable */
-	/* by christian */
   __GPIOC_CLK_ENABLE();
   __GPIOD_CLK_ENABLE();
   __GPIOE_CLK_ENABLE();

@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * @file    stm32f4xx_hal_msp.c 
-  * @author  heinrichs/weikamp, Christian Weikamp
+  * @author  heinrichs weikamp gmbh
   * @date    05-Dec-2014
   * @version V0.0.1
   * @since   05-Dec-2014

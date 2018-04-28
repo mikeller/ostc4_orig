@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * @file    firmwareEraseProgram.c
-  * @author  heinrichs/weikamp, Christian Weikamp
+  * @author  heinrichs weikamp gmbh
   * @version V0.0.1
   * @date    05-May-2015
   * @version V0.0.1

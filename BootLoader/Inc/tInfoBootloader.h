@@ -3,7 +3,7 @@
 ///
 /// \file   BootLoader/Inc/tInfoBootloader.h
 /// \brief  Header file communication with PC
-/// \author heinrichs/weikamp, Christian Weikamp
+/// \author heinrichs weikamp gmbh
 /// \date   08-Aug-2014
 ///
 /// $Id$

@@ -2,7 +2,7 @@
   ******************************************************************************
 	* @copyright heinrichs weikamp
   * @file   		data_central_mini.c   - bootloader only -
-  * @author 		heinrichs/weikamp, Christian Weikamp
+  * @author 		heinrichs weikamp gmbh
   * @date   		10-November-2014
   * @version		V1.0.3
   * @since			10-Nov-2014
@@ -69,7 +69,7 @@ message. It should be doable in 4 + 9n instructions. In any case, two
 of the 13 or 9 instrucions are load byte.
    This is Figure 14-7 in the text. */
 
-/* http://www.hackersdelight.org/ i guess ;-)  *chsw */
+/* http://www.hackersdelight.org/ i guess ;-)  *hw */
 
 uint32_t crc32c_checksum(uint8_t* message, uint16_t length, uint8_t* message2, uint16_t length2) {
 	int i, j;

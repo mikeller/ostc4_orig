@@ -3,7 +3,7 @@
 ///
 /// \file   FontPack/./base_upperRegion.c
 /// \brief  The beginning of it all. main() is part of this.
-/// \author heinrichs/weikamp, Christian Weikamp
+/// \author heinrichs weikamp gmbh
 /// \date   31-August-2015
 ///
 /// $Id$

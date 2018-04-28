@@ -3,7 +3,7 @@
 ///
 /// \file   BootLoader/Src/base_bootlader.c
 /// \brief  he beginning of it all. main() is part of this.
-/// \author heinrichs/weikamp, Christian Weikamp
+/// \author heinrichs weikamp gmbh
 /// \date   26-February-2014
 ///
 /// $Id$
@@ -38,7 +38,7 @@
 							##### bootloader specific #####
 	==============================================================================
 
-	151130	chsw	sleep on button3
+	151130	hw	sleep on button3
 								(MX_tell_reset_logik_alles_ok() + DataEX_call() in endlos loop)
 
 	==============================================================================

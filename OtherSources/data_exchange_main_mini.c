@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * @file    data_exchange_main.c
-  * @author  heinrichs/weikamp, Christian Weikamp
+  * @author  heinrichs weikamp gmbh
   * @date    13-Oct-2014
   * @version V0.0.2
   * @since   27-May-2015

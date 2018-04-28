@@ -3,7 +3,7 @@
 ///
 /// \file   BootLoader/Src/tInfoBootloader.c
 /// \brief  Write something on the screen in between steps
-/// \author heinrichs/weikamp, Christian Weikamp
+/// \author heinrichs weikamp gmbh
 /// \date   08-May-2015
 ///
 /// $Id$
