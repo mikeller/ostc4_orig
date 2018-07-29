@@ -29,6 +29,8 @@ Click `Next`.
 2. Right on it, select `Properties`, `Resource` and set `Text file encoding` to **UTF-8**
 3. Right on it, select `Properties`, `Resource` then `Linked Resources` and click on `New...` to define a new variable **OSTC4** that points to your source folder **D:\Dev\OSTC4** (or whatever path you used on your system).    
 This should allow to change the project's origin with a single variable change.
+4. Right on it, select `Properties`, `Settings`, `Optimization` and set `Optimization Level` to **Optimize for size (-Os)**
+
 
 # Add Sources Folders #
 
@@ -74,6 +76,13 @@ Once done, If you go to the _C/C++ Projects explorer_, open your top-level proje
 
 1. Select your top-level project, right-click to edit `properties`. In `C/C++ Build` choose `Settings`, then `MCU G++ Linker` and `General`.
 And select _linker Script_: `OSTC4/Common/CPU1-F429.ld`
+
+
+## Prepare generation of bin file
+1. Select your top-level project, right-click to edit `properties`. In `C/C++ Build` choose `Settings`, then tab `Build Steps` and `Post build step command`.
+2. Add option -R .upper* to the command to removed the upper memory section, which is provided by the font library => 
+`arm-none-eabi-objcopy -R .upper* -O binary "${BuildArtifactFileBaseName}.elf" "${BuildArtifactFileBaseName}.bin"; arm-none-eabi-size "${BuildArtifactFileName}"`
+
 
 ## Build ELF firmware ##
 
