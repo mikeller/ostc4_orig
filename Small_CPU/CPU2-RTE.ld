@@ -70,39 +70,40 @@ MEMORY
 
 SECTIONS
 {
+  .isr_vector 0x08000000 :
+  {
+  . = ALIGN(4);
+    KEEP( *(.isr_vector) ) 
+    KEEP(*(.init))
+    KEEP(*(.fini))
+  } >ROM
+  
 	/* Place FirmwareData at absolute address */
 	.firmware_data 0x08005000:
 	{
-		cpu2_FirmwareData = 0x08005000;
+		cpu2_FirmwareData = 0; 
+		KEEP( *(.firmware_data) )
 	} > ROM
 
-	.text ORIGIN(ROM) :
-	{
-		KEEP(*(.isr_vector))
+	.text 0x08005100 :
+	{	
+		. = ALIGN(4);
+		*(.text)           /* .text sections (code) */
 		*(.text*)
-
-		KEEP(*(.init))
-		KEEP(*(.fini))
-
-		/* .ctors */
-		*crtbegin.o(.ctors)
-		*crtbegin?.o(.ctors)
-		*(EXCLUDE_FILE(*crtend?.o *crtend.o) .ctors)
-		*(SORT(.ctors.*))
-		*(.ctors)
-
-		/* .dtors */
- 		*crtbegin.o(.dtors)
- 		*crtbegin?.o(.dtors)
- 		*(EXCLUDE_FILE(*crtend?.o *crtend.o) .dtors)
- 		*(SORT(.dtors.*))
- 		*(.dtors)
-
-		*(.rodata*)
-
-		KEEP(*(.eh_frame*))
+		*(.eh_frame*)
+        . = ALIGN(4); 
+  
 	} > ROM
 
+/********************** Constant data into ROM memory *********************/
+  .rodata :
+  {
+    . = ALIGN(4);
+    *(.rodata)         /* .rodata sections (constants, strings, etc.) */
+    *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
+    . = ALIGN(4);
+  } >ROM
+  
 	.ARM.extab :
 	{
 		*(.ARM.extab* .gnu.linkonce.armextab.*)
@@ -115,50 +116,62 @@ SECTIONS
 	} > ROM
 	__exidx_end = .;
 
-	__etext = .;
+  .preinit_array     :
+  {
+    . = ALIGN(4);
+    PROVIDE_HIDDEN( __preinit_array_start = . );
+    KEEP( *(.preinit_array*) )
+    PROVIDE_HIDDEN( __preinit_array_end = . );
+    . = ALIGN(4);
+  } >ROM
+  
+  .init_array :
+  {
+    . = ALIGN(4);
+    PROVIDE_HIDDEN( __init_array_start = . );
+    KEEP( *(SORT(.init_array.*)) )
+    KEEP( *(.init_array*) )
+    PROVIDE_HIDDEN( __init_array_end = . );
+    . = ALIGN(4);
+  } >ROM
+  
+  .fini_array :
+  {
+    . = ALIGN(4);
+    PROVIDE_HIDDEN( __fini_array_start = . );
+    KEEP( *(SORT(.fini_array.*)) )
+    KEEP( *(.fini_array*) )
+    PROVIDE_HIDDEN( __fini_array_end = . );
+    . = ALIGN(4);
+    
+    __etext = .;        /* define a global symbols at end of code */
+  } >ROM
 
-	.data : AT (__etext)
+ /* Used by the startup to initialize data */
+ 	_sidata = LOADADDR(.data);
+
+	.data : 
 	{
+		. = ALIGN(4);
 		__data_start__ = .;
-		*(vtable)
+		_sdata = .;        /* create a global symbol at data start */
+    	*(.data)           /* .data sections */
 		*(.data*)
-
-		. = ALIGN(4);
-		/* preinit data */
-		PROVIDE_HIDDEN (__preinit_array_start = .);
-		KEEP(*(.preinit_array))
-		PROVIDE_HIDDEN (__preinit_array_end = .);
-
-		. = ALIGN(4);
-		/* init data */
-		PROVIDE_HIDDEN (__init_array_start = .);
-		KEEP(*(SORT(.init_array.*)))
-		KEEP(*(.init_array))
-		PROVIDE_HIDDEN (__init_array_end = .);
-
-
-		. = ALIGN(4);
-		/* finit data */
-		PROVIDE_HIDDEN (__fini_array_start = .);
-		KEEP(*(SORT(.fini_array.*)))
-		KEEP(*(.fini_array))
-		PROVIDE_HIDDEN (__fini_array_end = .);
-
+		*(vtable)
 		. = ALIGN(4);
 		/* All data end */
 		__data_end__ = .;
+	} >RAM AT>ROM
 
-	} > RAM
-
-	.bss (NOLOAD):
+	.bss :
 	{
 		__bss_start__ = .;
 		*(.bss*)
 		*(COMMON)
 		__bss_end__ = .;
-	} > RAM
+	} >RAM
 	
-	.heap (NOLOAD):
+	.heap :
 	{
 		__end__ = .;
 		end = __end__;
@@ -169,7 +182,7 @@ SECTIONS
 	/* .stack_dummy section doesn't contains any symbols. It is only
 	 * used for linker to calculate size of stack sections, and assign
 	 * values to stack symbols later */
-	.stack_dummy (NOLOAD):
+	.stack_dummy :
 	{
 		*(.stack)
 	} > RAM
