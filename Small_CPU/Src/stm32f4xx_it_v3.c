@@ -82,6 +82,7 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* Go to infinite loop when Hard Fault exception occurs */
+  HAL_NVIC_SystemReset(); /* TODO Exception occures during startup and no iwdg is active ==> Call reset till iwdg is added */
   while (1)
   {
   }
