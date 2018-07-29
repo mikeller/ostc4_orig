@@ -48,24 +48,26 @@ SEARCH_DIR(.)
 /***************************** Memory Definition ****************************/
 MEMORY
 {
-    ROM  (rx) : ORIGIN = 0x08000000, LENGTH = 0x100000 /* 1024K */
+	ROM_BOOT  (rx) : ORIGIN = 0x08000000, LENGTH = 0x00040000 /* 256K */
+    ROM_MAIN  (rx) : ORIGIN = 0x08040000, LENGTH = 0x00090000 /* 576K */
     UPPER(rx) : ORIGIN = 0x08100000, LENGTH = 0x100000 /* 1024K */
     RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 192K
   CCRAM (rwx) : ORIGIN = 0x10000000, LENGTH = 64K
 }
 
+/* Linker file shall be shared between Bootloader, Font and Firmware projects. Not used memory areas to be cut during bin generation */
+
 /* Make sure ROM and UPPER are contiguous, and map 2MB */
-ASSERT( ORIGIN(UPPER) - ORIGIN(ROM) == LENGTH(ROM), "ROM lower and upper region shall be continuous" )
-ASSERT( LENGTH(ROM) + LENGTH(UPPER) == 2048K, "ROM lower + upper regions = 2MB" )
+/* TODO: At the moment the size of the defined memory will be directly reflected into the file size of resultion bin => Keep small until not used memory may be excluded from build */
+/*ASSERT( ORIGIN(UPPER) - ORIGIN(ROM) == LENGTH(ROM), "ROM lower and upper region shall be continuous" )
+/*ASSERT( LENGTH(ROM) + LENGTH(UPPER) == 2048K, "ROM lower + upper regions = 2MB" ) */
 
 /* Highest address of the user mode stack */
-_estack = ORIGIN(RAM) + LENGTH(RAM);
+/*_estack = ORIGIN(RAM) + LENGTH(RAM);*/
 
-/* Used by the startup to initialize data */
-_sidata = LOADADDR(.data);
 
 _Min_Heap_Size  = 0;      	/* no required heap  (malloc'ed space) */
-_Min_Stack_Size = 0x8000; 	/* required 32K of stack */
+_Min_Stack_Size = 0x08000; 	/* required 32K of stack */
 
 /* Linker script to place sections and symbol values. Should be used together
  * with other linker script that defines memory regions FLASH and RAM.
@@ -96,13 +98,20 @@ _Min_Stack_Size = 0x8000; 	/* required 32K of stack */
 SECTIONS
 {
   /******************* NVIC reset and interupt vectors **********************/
-  .isr_vector 0x08000000 :
+  .isr_vector 0x08040000 :
   {
+  . = ALIGN(4);
     KEEP( *(.isr_vector) ) 
+    KEEP(*(.init))
   } >ROM
 
-  /************* The program code and other data into ROM memory ************/
-  .text :
+
+ /*	PROVIDE( firmware_FirmwareData = . );*/
+ .firmware_FirmwareData 0x08050000 : {
+ 	KEEP( *(.firmware_firmware_data) )
+  } >ROM
+  
+  .text 0x08054000 :
   {
     . = ALIGN(4);
     *(.text)           /* .text sections (code) */
@@ -114,8 +123,32 @@ SECTIONS
     . = ALIGN(4);
     _etext = .;        /* define a global symbols at end of code */
   } >ROM
+ 
 
-  .preinit_array     :
+  /********************** Constant data into ROM memory *********************/
+  .rodata :
+  {
+    . = ALIGN(4);
+    *(.rodata)         /* .rodata sections (constants, strings, etc.) */
+    *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
+    . = ALIGN(4);
+  } >ROM
+
+  .ARM.extab   : { 
+  	. = ALIGN(4);
+  	*(.ARM.extab* .gnu.linkonce.armextab.*)
+  	. = ALIGN(4);
+  } >ROM
+  
+  .ARM : {
+    . = ALIGN(4);
+    __exidx_start = .;
+    *(.ARM.exidx*)
+    __exidx_end = .;
+    . = ALIGN(4);
+  } >ROM
+  
+   .preinit_array     :
   {
     . = ALIGN(4);
     PROVIDE_HIDDEN( __preinit_array_start = . );
@@ -143,29 +176,11 @@ SECTIONS
     PROVIDE_HIDDEN( __fini_array_end = . );
     . = ALIGN(4);
   } >ROM
-
-  /********************** Constant data into ROM memory *********************/
-  .rodata :
-  {
-    . = ALIGN(4);
-    *(.rodata)         /* .rodata sections (constants, strings, etc.) */
-    *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
-    . = ALIGN(4);
-  } >ROM
-
-  .ARM.extab   : { 
-  	. = ALIGN(4);
-  	*(.ARM.extab* .gnu.linkonce.armextab.*)
-  	. = ALIGN(4);
-  } >ROM
   
-  .ARM : {
-    . = ALIGN(4);
-    __exidx_start = .;
-    *(.ARM.exidx*)
-    __exidx_end = .;
-    . = ALIGN(4);
-  } >ROM
+    /************* The program code and other data into ROM memory ************/
+
+
+  
   
   /************* Data and Structures at absolute address in ROM *************/
  
@@ -175,29 +190,298 @@ SECTIONS
  	KEEP( *(.bootloader_firmware_data) )
  } > ROM
  	
-  /* FIMXE: original address was 0x08050000. But we have a collision */
- .firmware_FirmwareData 0x08060000 : {
- 	PROVIDE( firmware_FirmwareData = . );
- 	KEEP( *(.firmware_firmware_data) )
-  } >ROM
 
   .font_firmware_data 0x08132000 : {
   	PROVIDE( font_FirmwareData = . );
   	KEEP( *(.font_firmware_data) )
   } >UPPER
+
+/* TODO: the linker does not seem to work as the one of used for initial bootloader ==> Reconstruct layout to keep it compatible with the first version */
+/* TODO: cleanup during next iteration */
   
   /* Put fonts and images in UPPER region */  
-  .upper_fonts 	: {
+  .upper_fonts 	0x08132040  : {
   	__upper_font_data = .;
-  	KEEP( *(.upper_fonts) )
+  	 . = 0x13E; 
+  	 *(.upper_fonts.image_data_FontT144_0x0030)
+  	 . = 0x02515; 
+  	 *(.upper_fonts.image_data_FontT144_0x0031)
+  	 . = 0x03469; 
+  	 *(.upper_fonts.image_data_FontT144_0x0032)
+  	 . = 0x4FDC; 
+  	 *(.upper_fonts.image_data_FontT144_0x0033)
+  	 . = 0x6862; 
+  	 *(.upper_fonts.image_data_FontT144_0x0034)
+  	 . = 0x86C2; 
+  	 *(.upper_fonts.image_data_FontT144_0x0035)
+  	 . = 0x9FB3; 
+  	 *(.upper_fonts.image_data_FontT144_0x0036)
+  	 . = 0xBB26; 
+  	 *(.upper_fonts.image_data_FontT144_0x0037)
+  	 . = 0xD845; 
+  	 *(.upper_fonts.image_data_FontT144_0x0038)
+  	 . = 0xF34D;
+  	 *(.upper_fonts.image_data_FontT144_0x0039)
+  	 . = 0x10EC0;
+  	 *(.upper_fonts.image_data_FontT24_0x0020)
+  	 *(.upper_fonts.image_data_FontT24_0x0021)
+  	 *(.upper_fonts.image_data_FontT24_0x0022)
+  	 *(.upper_fonts.image_data_FontT24_0x0023)
+  	 *(.upper_fonts.image_data_FontT24_0x0024)
+  	 *(.upper_fonts.image_data_FontT24_0x0025)
+  	 *(.upper_fonts.image_data_FontT24_0x0026)
+  	 *(.upper_fonts.image_data_FontT24_0x0027)
+  	 *(.upper_fonts.image_data_FontT24_0x0028)
+  	 *(.upper_fonts.image_data_FontT24_0x0029)
+  	 *(.upper_fonts.image_data_FontT24_0x002a)
+  	 *(.upper_fonts.image_data_FontT24_0x003f)
+  	 *(.upper_fonts.image_data_FontT24_0x002c)
+  	 *(.upper_fonts.image_data_FontT24_0x002d)
+  	 *(.upper_fonts.image_data_FontT24_0x002e)
+  	 *(.upper_fonts.image_data_FontT24_0x002f)
+     *(.upper_fonts.image_data_FontT24_0x0030)
+  	 *(.upper_fonts.image_data_FontT24_0x0031)
+  	 *(.upper_fonts.image_data_FontT24_0x0032)
+  	 *(.upper_fonts.image_data_FontT24_0x0033)
+  	 *(.upper_fonts.image_data_FontT24_0x0034)
+  	 *(.upper_fonts.image_data_FontT24_0x0035)
+  	 *(.upper_fonts.image_data_FontT24_0x0036)
+  	 *(.upper_fonts.image_data_FontT24_0x0037)
+  	 *(.upper_fonts.image_data_FontT24_0x0038)
+  	 *(.upper_fonts.image_data_FontT24_0x0039)
+  	 *(.upper_fonts.image_data_FontT24_0x003a)
+  	 *(.upper_fonts.image_data_FontT24_0x003b)
+  	 *(.upper_fonts.image_data_FontT24_0x003c)
+  	 *(.upper_fonts.image_data_FontT24_0x003d)
+  	 *(.upper_fonts.image_data_FontT24_0x003e)
+  	 . = . + 0x8c;
+     *(.upper_fonts.image_data_FontT24_0x0040)
+  	 *(.upper_fonts.image_data_FontT24_0x0041)
+  	 *(.upper_fonts.image_data_FontT24_0x0042)
+  	 *(.upper_fonts.image_data_FontT24_0x0043)
+  	 *(.upper_fonts.image_data_FontT24_0x0044)
+  	 *(.upper_fonts.image_data_FontT24_0x0045)
+  	 *(.upper_fonts.image_data_FontT24_0x0046)
+  	 *(.upper_fonts.image_data_FontT24_0x0047)
+  	 *(.upper_fonts.image_data_FontT24_0x0048)
+  	 *(.upper_fonts.image_data_FontT24_0x0049)
+  	 *(.upper_fonts.image_data_FontT24_0x004a)
+  	 *(.upper_fonts.image_data_FontT24_0x004b)
+  	 *(.upper_fonts.image_data_FontT24_0x004c)
+  	 *(.upper_fonts.image_data_FontT24_0x004d)
+  	 *(.upper_fonts.image_data_FontT24_0x004e)  	
+  	 *(.upper_fonts.image_data_FontT24_0x004f)   
+     *(.upper_fonts.image_data_FontT24_0x0050)
+  	 *(.upper_fonts.image_data_FontT24_0x0051)
+  	 *(.upper_fonts.image_data_FontT24_0x0052)
+  	 *(.upper_fonts.image_data_FontT24_0x0053)
+  	 *(.upper_fonts.image_data_FontT24_0x0054)
+  	 *(.upper_fonts.image_data_FontT24_0x0055)
+  	 *(.upper_fonts.image_data_FontT24_0x0056)
+  	 *(.upper_fonts.image_data_FontT24_0x0057)
+  	 *(.upper_fonts.image_data_FontT24_0x0058)
+  	 *(.upper_fonts.image_data_FontT24_0x0059)
+  	 *(.upper_fonts.image_data_FontT24_0x005a)
+  	 *(.upper_fonts.image_data_FontT24_0x005b)
+  	 *(.upper_fonts.image_data_FontT24_0x005c)
+  	 *(.upper_fonts.image_data_FontT24_0x005d)
+  	 *(.upper_fonts.image_data_FontT24_0x005e)  	
+  	 *(.upper_fonts.image_data_FontT24_0x005f)    
+  	 *(.upper_fonts.image_data_FontT24_0x0060)
+  	 *(.upper_fonts.image_data_FontT24_0x0061)
+  	 *(.upper_fonts.image_data_FontT24_0x0062)
+  	 *(.upper_fonts.image_data_FontT24_0x0063)
+  	 . = . + 0x1c;
+  	 *(.upper_fonts.image_data_FontT24_0x0064)
+  	 *(.upper_fonts.image_data_FontT24_0x0065)
+  	 *(.upper_fonts.image_data_FontT24_0x0066)
+  	 *(.upper_fonts.image_data_FontT24_0x0067)
+  	 *(.upper_fonts.image_data_FontT24_0x0068)
+  	 *(.upper_fonts.image_data_FontT24_0x0069)
+  	 *(.upper_fonts.image_data_FontT24_0x006a)
+  	 *(.upper_fonts.image_data_FontT24_0x006b)
+  	 *(.upper_fonts.image_data_FontT24_0x006c)
+  	 *(.upper_fonts.image_data_FontT24_0x006d)
+  	 *(.upper_fonts.image_data_FontT24_0x006e)  	
+  	 *(.upper_fonts.image_data_FontT24_0x006f)  	 
+  	 *(.upper_fonts.image_data_FontT24_0x0070)
+  	 *(.upper_fonts.image_data_FontT24_0x0071)
+  	 *(.upper_fonts.image_data_FontT24_0x0072)
+  	 *(.upper_fonts.image_data_FontT24_0x0073)
+  	 *(.upper_fonts.image_data_FontT24_0x0074)
+  	 *(.upper_fonts.image_data_FontT24_0x0075)
+  	 *(.upper_fonts.image_data_FontT24_0x0076)
+  	 *(.upper_fonts.image_data_FontT24_0x0077)
+  	 *(.upper_fonts.image_data_FontT24_0x0078)
+  	 *(.upper_fonts.image_data_FontT24_0x0079)
+  	 *(.upper_fonts.image_data_FontT24_0x007a)
+  	 *(.upper_fonts.image_data_FontT24_0x007b)
+  	 *(.upper_fonts.image_data_FontT24_0x007c)
+  	 . = . + 0x1c;
+  	 *(.upper_fonts.image_data_FontT24_0x007d)
+  	 *(.upper_fonts.image_data_FontT24_0x007e)  	
+  	 *(.upper_fonts.image_data_FontT24_0x00a1)
+  	 *(.upper_fonts.image_data_FontT24_0x00bf)    
+  	 *(.upper_fonts.image_data_FontT24_0x00c1)
+  	 *(.upper_fonts.image_data_FontT24_0x00c4)  
+  	 *(.upper_fonts.image_data_FontT24_0x00c6) 
+  	 *(.upper_fonts.image_data_FontT24_0x00c7)
+  	 *(.upper_fonts.image_data_FontT24_0x00c9)
+  	 *(.upper_fonts.image_data_FontT24_0x00cd)
+  	 *(.upper_fonts.image_data_FontT24_0x00d1)
+  	 *(.upper_fonts.image_data_FontT24_0x00d3)
+  	 *(.upper_fonts.image_data_FontT24_0x00d6)
+  	 *(.upper_fonts.image_data_FontT24_0x00da)
+  	 *(.upper_fonts.image_data_FontT24_0x00dc)
+  	 *(.upper_fonts.image_data_FontT24_0x00df) 
+  	 *(.upper_fonts.image_data_FontT24_0x00e0)
+  	 *(.upper_fonts.image_data_FontT24_0x00e1)
+  	 *(.upper_fonts.image_data_FontT24_0x00e2)
+  	 *(.upper_fonts.image_data_FontT24_0x00e4)
+  	 *(.upper_fonts.image_data_FontT24_0x00e6)
+  	 *(.upper_fonts.image_data_FontT24_0x00e7)
+  	 *(.upper_fonts.image_data_FontT24_0x00e8)
+  	 *(.upper_fonts.image_data_FontT24_0x00e9)         
+  	 *(.upper_fonts.image_data_FontT24_0x00ec)
+  	 *(.upper_fonts.image_data_FontT24_0x00ed)
+  	 *(.upper_fonts.image_data_FontT24_0x00f0)
+  	 *(.upper_fonts.image_data_FontT24_0x00f1)
+  	 *(.upper_fonts.image_data_FontT24_0x00f2)
+  	 *(.upper_fonts.image_data_FontT24_0x00f3)
+  	 *(.upper_fonts.image_data_FontT24_0x00f6)
+  	 *(.upper_fonts.image_data_FontT24_0x00f9)
+  	 *(.upper_fonts.image_data_FontT24_0x00fa)
+  	 *(.upper_fonts.image_data_FontT24_0x00fc)         
+  	 *(.upper_fonts.image_data_FontT24_0x00ff)
+  	 *(.upper_fonts.image_data_FontT24_0x0152)
+  	 *(.upper_fonts.image_data_FontT24_0x0153)
+  	 *(.upper_fonts.image_data_FontT24_0x0178)
+  	 *(.upper_fonts.image_data_FontT24_0x002b)
+  	 . =  . + 0x1d642;
+  	  *(.upper_images.image_data_ostc_fuer_Tauchcomputer_240px)
+	 *(.upper_fonts.image_data_FontT84_0x002e)
+	  . =  . + 0x9f;
+	 *(.upper_fonts.image_data_FontT84_0x0030)
+	  . =  . + 0x0d;
+	 *(.upper_fonts.image_data_FontT84_0x0031)
+	  . =  . + 0xaa;
+	 *(.upper_fonts.image_data_FontT84_0x0032)
+	  . =  . + 0x7b;
+	 *(.upper_fonts.image_data_FontT84_0x0033)
+	  . =  . + 0x38;
+	 *(.upper_fonts.image_data_FontT84_0x0034)
+	  . =  . + 0x7f;
+	 *(.upper_fonts.image_data_FontT84_0x0035)
+	  . =  . + 0x77;
+	 *(.upper_fonts.image_data_FontT84_0x0036)
+	  . =  . + 0x7b;
+	 *(.upper_fonts.image_data_FontT84_0x0037)
+	 . =  . + 0x0d;
+	 *(.upper_fonts.image_data_FontT84_0x0038)
+	 . =  . + 0x2b;
+	 *(.upper_fonts.image_data_FontT84_0x0039)
+	 . =  . + 0xe8;
+  	 *(.upper_fonts.image_data_FontT54_0x0022)
+  	 *(.upper_fonts.image_data_FontT54_0x0025)
+  	 . =  . + 0x112;
+  	 *(.upper_fonts.image_data_FontT54_0x0027)
+  	 . =  . + 0xd8;
+  	 *(.upper_fonts.image_data_FontT54_0x002a)
+  	 . =  . + 0x133;
+     *(.upper_fonts.image_data_FontT54_0x002d)
+  	 . =  . + 0x1d7;
+  	 *(.upper_fonts.image_data_FontT54_0x002e)
+  	 . =  . + 0x17b;
+  	 *(.upper_fonts.image_data_FontT54_0x002f)
+  	 . =  . + 0x02;
+  	 *(.upper_fonts.image_data_FontT54_0x0030)
+  	 . =  . + 0x0ba;
+  	 *(.upper_fonts.image_data_FontT54_0x0031)
+  	 . =  . + 0x27d;
+  	 *(.upper_fonts.image_data_FontT54_0x0032)
+  	 . =  . + 0xe3;
+  	 *(.upper_fonts.image_data_FontT54_0x0033)
+  	 . =  . + 0x35;
+  	 *(.upper_fonts.image_data_FontT54_0x0034)
+  	 . =  . + 0x68;
+  	 *(.upper_fonts.image_data_FontT54_0x0035)
+  	 . =  . + 0x35;
+  	 *(.upper_fonts.image_data_FontT54_0x0036)
+  	 . =  . + 0xba;
+  	 *(.upper_fonts.image_data_FontT54_0x0037)
+  	 . =  . + 0x191;
+  	 *(.upper_fonts.image_data_FontT54_0x0038)
+  	 . =  . + 0xe3;
+  	 *(.upper_fonts.image_data_FontT54_0x0039)
+  	 . =  . + 0xe3;
+  	 *(.upper_fonts.image_data_FontT54_0x003a)
+  	 . =  . + 0x7b;
+  	 *(.upper_fonts.image_data_FontT54_0x0043)
+  	 . =  . + 0x3b;
+  	 *(.upper_fonts.image_data_FontT54_0x006c)
+  	 . =  . + 0x2d;
+  	 *(.upper_fonts.image_data_FontT54_0x006d)
+  	 . =  . + 0x94;
+  	 *(.upper_fonts.image_data_FontT54_0x00ba)
+  	 . =  . + 0x0a;
+  	 
+  	 *(.upper_fonts.image_data_FontT105_0x002*)
+  	 *(.upper_fonts.image_data_FontT105_0x003*)
+  	 *(.upper_fonts.image_data_FontT105_0x0043)
+  	 . =  . + 0x17c8;
+  	 *(.upper_fonts.image_data_FontT105_0x007c)
+  	 *(.upper_fonts.image_data_FontT105_0x00ba)
+  	 *(.upper_fonts.image_data_FontT105_54_0x006d)
+  	 
+	 *(.upper_fonts.image_data_FontT54_0x0068)
+	 . =  . + 0x1195;
+	 
+	 *(.upper_fonts.image_data_FontT42_0x00b0)
+	 *(.upper_fonts.image_data_FontT42_0x0020)
+	  . =  . + 0x23;
+	 *(.upper_fonts.image_data_FontT42_0x002*)
+	 *(.upper_fonts.image_data_FontT42_0x003*)
+	 *(.upper_fonts.image_data_FontT42_0x004*)
+	 *(.upper_fonts.image_data_FontT42_0x005*)
+	 . =  . + 0x420;
+	 *(.upper_fonts.image_data_FontT42_0x006*)
+	 *(.upper_fonts.image_data_FontT42_0x0070)
+	 *(.upper_fonts.image_data_FontT42_0x0071)
+	 *(.upper_fonts.image_data_FontT42_0x0072)
+	 *(.upper_fonts.image_data_FontT42_0x0073)
+	 *(.upper_fonts.image_data_FontT42_0x0074)
+	 *(.upper_fonts.image_data_FontT42_0x0075)
+	 *(.upper_fonts.image_data_FontT42_0x0076)
+	 *(.upper_fonts.image_data_FontT42_0x0077)
+	 *(.upper_fonts.image_data_FontT42_0x0078)
+	 *(.upper_fonts.image_data_FontT42_0x0079)
+	 . =  . + 0x12c0;
+  	 *(.upper_fonts.image_data_FontT42_*)
+  	 *(.upper_fonts.image_data_T54addon_0x002b_PLUS*)
+  	 *(.upper_fonts.image_data_T54addon_0x0040_AT*)
+  	 *(.upper_fonts.image_data_FontT48_*)
+  	 *(.upper_fonts.image_data_FontT48addon*)
+  	 *(.upper_fonts.image_data_FontT24plus_0x00fb*)
+  	 *(.upper_fonts.image_data_awe48_*)
+  	 
+	 /**(.upper_fonts*)*/ 
   	__upper_font_data_end = .;
   } >UPPER
 
-  .upper_font_directory 0x081E0000 : { /* Last 128 KBytes of UPPER ROM */
+  /* Put fonts and images in UPPER region */  
+ /*
+  .upper_images : {
+  	__upper_image_data = .;
+  	KEEP( *(.upper_images) )
+  	__upper_image_data_end = .;
+  } >ROM UPPER */
+ 
+ 
+  .upper_font_directory /*0x081E0000*/ : { /* Last 128 KBytes of UPPER ROM */
   
     /* Define Known Address for Each Font */
   	__font_directory = .;
-	PROVIDE( Awe48    = __font_directory + 0 * 0xc );  
+/*	PROVIDE( Awe48    = __font_directory + 0 * 0xc );  
 	PROVIDE( FontT24  = __font_directory + 1 * 0xc );
 	PROVIDE( FontT42  = __font_directory + 2 * 0xc );
 	PROVIDE( FontT48  = __font_directory + 3 * 0xc );
@@ -205,27 +489,34 @@ SECTIONS
 	PROVIDE( FontT84  = __font_directory + 5 * 0xc );
 	PROVIDE( FontT105 = __font_directory + 6 * 0xc );
 	PROVIDE( FontT144 = __font_directory + 7 * 0xc );
-	PROVIDE( Batt24   = __font_directory + 8 * 0xc );
+	PROVIDE( Batt24   = __font_directory + 8 * 0xc ); */
 	__font_directory_end = __font_directory + 9 * 0xc;
 
-	KEEP( *(.upper_font_directory) )
+	*(.upper_font_directory)
+	__font_directory_end = .;
   	LONG( -1 );	/* Magic End Marker */
 	
     /* and for Each Image */
-	__image_directory = .;
-	PROVIDE( ImgHWcolor = __image_directory + 0 * 8 );
-	PROVIDE( ImgOSTC    = __image_directory + 1 * 8 );
-	__image_directory_end = __image_directory + 2 * 8;
+/*	__image_directory = .; */
+/*	PROVIDE( ImgHWcolor = __image_directory + 0 * 8 );
+	PROVIDE( ImgOSTC    = __image_directory + 1 * 8 ); */
+/*	__image_directory_end = __image_directory + 2 * 8; */
+
+/*	KEEP( *(.upper_image_directory) ) */
 
 	/* FIXME: shall KEEP images here */
   	LONG( -1 );	/* Magic End Marker */
 	
     /* and for CLUT */
-	PROVIDE( indexHWcolor = . );
+/*	PROVIDE( indexHWcolor = . ); */
 	. += 0x400;
   	LONG( -1 );	/* Magic End Marker */
-  } >UPPER  
+  } >ROM /*UPPER*/  
   
+  
+  /* Used by the startup to initialize data */
+_sidata = LOADADDR(.data);
+
   /************ Initialized Data Sections into RAM & ROM Memory **************/
   .data : 
   {
@@ -240,6 +531,8 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >RAM AT>ROM
   
+ 
+
   /*************** Uninitialized Data Section into RAM Memory ****************/
   .bss :
   {
@@ -257,7 +550,7 @@ SECTIONS
     __bss_end__ = _ebss;
   } >RAM
 
-  /********************** User_heap_stack section ****************************/
+ /********************** User_heap_stack section ****************************/
   /* just to check that there is enough RAM left */
   ._user_heap_stack :
   {
@@ -267,6 +560,7 @@ SECTIONS
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
+    _estack = .;
   } >RAM
 
   /* Remove information from the compiler libraries */
