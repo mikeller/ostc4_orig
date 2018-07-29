@@ -22,6 +22,8 @@
 # 	define INCLUDE_FONTS_BINARY
 #endif
 
+#define INCLUDE_FONTS_BINARY 1
+
 #ifdef INCLUDE_FONTS_BINARY
 
 /* Fonts fixed in upper region */
