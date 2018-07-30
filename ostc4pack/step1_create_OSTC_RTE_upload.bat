@@ -1,0 +1,2 @@
+OSTC4pack_V4.exe 0 OSTC4_RTE.bin
+PAUSE
