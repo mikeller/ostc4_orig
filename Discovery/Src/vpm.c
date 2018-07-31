@@ -2059,7 +2059,7 @@ void decompression_stop(float *deco_stop_depth,
 //	float weighted_allowable_gradient;
     float initial_helium_pressure[16];
  /* by hw */
-    float initial_CNS;
+    float initial_CNS = gCNS_VPM;
 
     //static float time_counter;
     short i;

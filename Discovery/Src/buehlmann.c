@@ -1,5 +1,5 @@
-/*	getrennte Gase für die verschiedenen Modi
-		um Gaswechsel Einträge zu vereinfachen
+/*	getrennte Gase fï¿½r die verschiedenen Modi
+		um Gaswechsel Eintrï¿½ge zu vereinfachen
 		das heisst:
 		oc == bailout in cc mode
 */
@@ -545,7 +545,7 @@ float next_stop_depth_input_is_actual_stop_id(int actual_id)
 int ascend_with_all_gaschanges(float pressure_decrease)
 {
 	float pressureTop, pressureTop_tmp, pressureBottom, pressureChange, ascendrate_in_seconds_for_one_bar, pressure_difference;
-	int time_for_ascend;
+	int time_for_ascend = 0;
 	int seconds;
 	int i;
 

@@ -421,7 +421,9 @@ _Bool skipCCRpage(uint8_t page)
 
 void findValidPosition(uint8_t *pageOuput, uint8_t *lineOutput)
 {
-    uint8_t page, line, first;
+    uint8_t page = 0;
+    uint8_t line = 0;
+    uint8_t first = 0;
 
     *pageOuput = 0;
     *lineOutput = 0;
@@ -606,7 +608,7 @@ void tM_build_pages(void)
 
 void tM_refresh_live_content(void)
 {
-    uint8_t page;
+    uint8_t page = 0;
     char text[MAX_PAGE_TEXTSIZE];
     char subtext[MAX_PAGE_TEXTSIZE];
     uint16_t tabPosition;

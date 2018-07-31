@@ -67,6 +67,9 @@ uint32_t tMDeco_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext)
         case DIVEMODE_Apnea:
             divemode = TXT_Apnoe;
             break;
+        default :
+        	divemode = TXT_OpenCircuit;
+        	break;
         }
         textPointer += snprintf(&text[textPointer], 60,\
             "%c"

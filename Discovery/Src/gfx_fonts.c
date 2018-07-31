@@ -22,7 +22,9 @@
 # 	define INCLUDE_FONTS_BINARY
 #endif
 
+#ifndef INCLUDE_FONTS_BINARY
 #define INCLUDE_FONTS_BINARY 1
+#endif
 
 #ifdef INCLUDE_FONTS_BINARY
 

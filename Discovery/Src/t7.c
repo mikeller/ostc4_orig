@@ -1417,7 +1417,7 @@ void t7_refresh_customview(void)
     char text[256];
     uint16_t textpointer = 0;
     int16_t start;
-    uint8_t lineCountCustomtext;
+    uint8_t lineCountCustomtext = 0;
     int16_t shiftWindowY0;
     RTC_DateTypeDef Sdate;
     RTC_TimeTypeDef Stime;

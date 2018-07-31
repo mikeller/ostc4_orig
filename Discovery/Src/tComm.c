@@ -1351,7 +1351,7 @@ uint8_t receive_update_data_flex(uint8_t* pBuffer1, uint8_t* pBuffer2, uint8_t R
     uint8_t serialBuffer[10];
     uint32_t length1, length2, lengthCompare, offsetCompare, ByteCompareStatus;
     uint32_t lengthTotal, offsetTotal, pruefsumme, pruefsummeCalc;
-    uint32_t checksum, checksumCalc;
+    uint32_t checksum, checksumCalc = 0;
     uint8_t id;
     const uint8_t id_Region1_firmware = 0xFF;
     const uint8_t id_RTE = 0xFE;

@@ -679,7 +679,10 @@ void simulation_gas_consumption(uint16_t *outputConsumptionList, uint16_t depth_
 
     SDiveState * pDiveState = &stateSim;
 
-    uint8_t depthDecoNext, depthLast, depthSecond, depthInc;
+    uint8_t depthDecoNext = 0;
+    uint8_t depthLast = 0;
+    uint8_t depthSecond = 0;
+	uint8_t depthInc = 0;
 
     for(int i = 1; i < 6; i++)
         outputConsumptionTempFloat[i] = 0;

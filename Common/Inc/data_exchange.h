@@ -140,7 +140,7 @@ typedef struct
 		// wireless data
 		SDataWireless wireless_data[4];
 		// PIC data
-		uint8_t button_setting[3];
+		uint8_t button_setting[4]; /* see dependency to SLiveData->buttonPICdata */
 		uint8_t SPARE1;
 		//debug
 		uint32_t pressure_uTick;

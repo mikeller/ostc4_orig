@@ -724,8 +724,8 @@ float *ending_radius)
 void vpm_init(SVpm* pVpm, short conservatism, short repetitive_dive, long seconds_since_last_dive)
 {
 
-	float critical_radius_n2_microns,
-		critical_radius_he_microns;
+	float critical_radius_n2_microns = 0.82;		 /* be conservative in case of an unexpected parameter value */
+	float critical_radius_he_microns = 0.72;
 	float initial_critical_radius_n2[16];
 	float initial_critical_radius_he[16];
 	int i = 0;
@@ -755,6 +755,10 @@ void vpm_init(SVpm* pVpm, short conservatism, short repetitive_dive, long second
 			critical_radius_he_microns=0.65;
 			break;
 		case 5:
+			critical_radius_n2_microns=0.82;
+			critical_radius_he_microns=0.72;
+			break;
+		default:
 			critical_radius_n2_microns=0.82;
 			critical_radius_he_microns=0.72;
 			break;

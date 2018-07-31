@@ -738,7 +738,7 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 
 	
 	// wireless - �ltere daten aufr�umen
-	for(int i=0;i<=(2*NUM_GASES+1);i++)
+	for(int i=0;i<(2*NUM_GASES+1);i++)
 	{
 		if(pStateReal->lifeData.bottle_bar[i])
 		{
@@ -815,7 +815,9 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 	
 	/*	uint8_t IAmStolenPleaseKillMe;
 	 */
-	if(settingsGetPointer()->IAmStolenPleaseKillMe > 3)
+	pSettings = settingsGetPointer();
+
+	if(pSettings->IAmStolenPleaseKillMe > 3)
 	{
 		pSettings->salinity = 0;
 		dataIn.data[dataIn.boolPressureData].surface_mbar = 999;
@@ -823,7 +825,7 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		dataIn.mode = MODE_DIVE;
 	}
 
-	pSettings = settingsGetPointer();
+
 	ambient = dataIn.data[dataIn.boolPressureData].pressure_mbar / 1000.0f;
 	surface = dataIn.data[dataIn.boolPressureData].surface_mbar / 1000.0f;
 
