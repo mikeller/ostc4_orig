@@ -30,6 +30,9 @@
  *      Linker script for running in internal FLASH on the STM32F401RE
  *----------------------------------------------------------------------------*/
 
+/* Entry Point */
+ENTRY(Reset_Handler)
+
 OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
 SEARCH_DIR(.)
