@@ -85,7 +85,7 @@ uint8_t extCPU2bootloader_start(uint8_t *version, uint16_t *chipID)
 }
 
 
-uint8_t extCPU2bootloader_internal(uint8_t* buffer, uint16_t length, char* display_text)
+uint8_t extCPU2bootloader_internal(uint8_t* buffer, uint32_t length, char* display_text)
 {
   uint8_t version = 0;
   uint16_t chipID = 0;
@@ -96,7 +96,7 @@ uint8_t extCPU2bootloader_internal(uint8_t* buffer, uint16_t length, char* displ
 	  return 0;
 	HAL_Delay(100);
 	uint16_t i=0;
-	uint16_t lengthsave = length;
+	uint32_t lengthsave = length;
 	uint8_t percent = 0;
   
 	while(length)
@@ -123,7 +123,7 @@ uint8_t extCPU2bootloader_internal(uint8_t* buffer, uint16_t length, char* displ
 }
 
 
-uint8_t extCPU2bootloader(uint8_t* buffer, uint16_t length, char* display_text)
+uint8_t extCPU2bootloader(uint8_t* buffer, uint32_t length, char* display_text)
 {
 	uint8_t result = 0;
 

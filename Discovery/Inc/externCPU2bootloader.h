@@ -36,6 +36,6 @@
 
 uint8_t extCPU2bootloader_start(uint8_t *version, uint16_t *chipID);
 void extCPU2bootloader_continue(void);
-uint8_t extCPU2bootloader( uint8_t* buffer, uint16_t length, char* display_text);
+uint8_t extCPU2bootloader( uint8_t* buffer, uint32_t length, char* display_text);
 
 #endif /* EXTERN_CPU2_BOOTLOADER_H */
