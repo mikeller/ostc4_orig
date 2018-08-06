@@ -274,8 +274,8 @@ uint8_t OnAction_Date(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber,
         if((blockNumber == 1) && (digitContentNew > '0' + 12))
             digitContentNew = '1';
         // year range 2017-2018
-        if((blockNumber == 2) && (digitContentNew > '0' + 18))
-            digitContentNew = '0' + 17;
+        if((blockNumber == 2) && (digitContentNew > '0' + 22))
+            digitContentNew = '0' + 18;
         return digitContentNew;
     }
     if(action == ACTION_BUTTON_BACK)
@@ -497,7 +497,7 @@ void openEdit_Language(void)
     else
         active = 0;
     write_field_on_off(StMSYS2_French,			 30, 800, ME_Y_LINE3,  &FontT48, text, active);
-/*
+
 
     pSettings->selected_language = LANGUAGE_Italian;
     if(	actualLanguage == pSettings->selected_language)
@@ -506,6 +506,7 @@ void openEdit_Language(void)
         active = 0;
     write_field_on_off(StMSYS2_Italian,			 30, 800, ME_Y_LINE4,  &FontT48, text, active);
 
+/*
     pSettings->selected_language = LANGUAGE_Espanol;
     if(	actualLanguage == pSettings->selected_language)
         active = 1;
@@ -520,7 +521,7 @@ void openEdit_Language(void)
     setEvent(StMSYS2_English, (uint32_t)OnAction_English);
     setEvent(StMSYS2_German, 	(uint32_t)OnAction_German);
     setEvent(StMSYS2_French,	(uint32_t)OnAction_French);
-    //setEvent(StMSYS2_Italian,	(uint32_t)OnAction_Italian);
+    setEvent(StMSYS2_Italian,	(uint32_t)OnAction_Italian);
     //setEvent(StMSYS2_Espanol,	(uint32_t)OnAction_Espanol);
 }
 

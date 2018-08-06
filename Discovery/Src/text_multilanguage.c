@@ -54,7 +54,7 @@ static uint8_t text_ES_LanguageName[] = "Castellano";
 static uint8_t text_EN_Depth[] = "Depth";
 static uint8_t text_DE_Depth[] = "Tiefe";
 static uint8_t text_FR_Depth[] = "Profondeur";
-static uint8_t text_IT_Depth[] = "Profondità";
+static uint8_t text_IT_Depth[] = "Profondita";
 static uint8_t text_ES_Depth[] = "";
 
 // dive mode
@@ -68,14 +68,14 @@ static uint8_t text_ES_Divetime[] = "";
 static uint8_t text_EN_MaxDepth[] = "Max Depth";
 static uint8_t text_DE_MaxDepth[] = "Max Tiefe";
 static uint8_t text_FR_MaxDepth[] = "Prof. max";    // Profondeur
-static uint8_t text_IT_MaxDepth[] = "Profondità Max";
+static uint8_t text_IT_MaxDepth[] = "Profondita Max";
 static uint8_t text_ES_MaxDepth[] = "";
 
 // dive mode
 static uint8_t text_EN_AvgDepth[] = "Avg Depth";
 static uint8_t text_DE_AvgDepth[] = "(/) Tiefe";
 static uint8_t text_FR_AvgDepth[] = "Prof. Moy";
-static uint8_t text_IT_AvgDepth[] = "Profondità media";
+static uint8_t text_IT_AvgDepth[] = "Profonditamedia";
 static uint8_t text_ES_AvgDepth[] = "";
 
 // dive mode
@@ -194,7 +194,7 @@ static uint8_t text_ES_o2Sensors[] = "";
 static uint8_t text_EN_Brightness[] = "Brightness";
 static uint8_t text_DE_Brightness[] = "Display Helligkeit";
 static uint8_t text_FR_Brightness[] = "LuminositÃ©";
-static uint8_t text_IT_Brightness[] = "Luminosità";
+static uint8_t text_IT_Brightness[] = "Luminosite";
 static uint8_t text_ES_Brightness[] = "";
 
 // Menu SYS1
@@ -208,7 +208,7 @@ static uint8_t text_ES_Cave[] = "";
 static uint8_t text_EN_Eco[] = "Eco";
 static uint8_t text_DE_Eco[] = "Eco-Sparmodus";
 static uint8_t text_FR_Eco[] = "Mode Ã©co";
-static uint8_t text_IT_Eco[] = "Modalità ECO";
+static uint8_t text_IT_Eco[] = "ModalitaECO";
 static uint8_t text_ES_Eco[] = "";
 
 // Menu SYS1
@@ -415,7 +415,7 @@ static uint8_t text_ES_Minimum[] = "";
 static uint8_t text_EN_Salinity[] = "Salinity";
 static uint8_t text_DE_Salinity[] = "Salzgehalt";
 static uint8_t text_FR_Salinity[] = "SalinitÃ©";
-static uint8_t text_IT_Salinity[] = "Salinità";
+static uint8_t text_IT_Salinity[] = "Salinitï¿½";
 static uint8_t text_ES_Salinity[] = "";
 
 // Menu DECO1
@@ -550,14 +550,14 @@ static uint8_t text_ES_CornerStandard[] = "";
 static uint8_t text_EN_SetToMOD[] = "Set Change Depth To MOD";
 static uint8_t text_DE_SetToMOD[] = "Setze Wechseltiefe auf MOD";
 static uint8_t text_FR_SetToMOD[] = "RÃ©gler prof. chgmt. Ã  PMU";
-static uint8_t text_IT_SetToMOD[] = "Cambia profondità";
+static uint8_t text_IT_SetToMOD[] = "Cambia profondita";
 static uint8_t text_ES_SetToMOD[] = "";
 
 // Menu SYS2 sub
 static uint8_t text_EN_Units[] = "Units";
 static uint8_t text_DE_Units[] = "Einheit";
 static uint8_t text_FR_Units[] = "UnitÃ©s";
-static uint8_t text_IT_Units[] = "Unità";
+static uint8_t text_IT_Units[] = "Unitï¿½";
 static uint8_t text_ES_Units[] = "";
 
 // Menu SYS2 sub
@@ -754,7 +754,7 @@ static uint8_t text_ES_SimDiveTime[] = "";
 static uint8_t text_EN_SimMaxDepth[] = "Max. Depth";
 static uint8_t text_DE_SimMaxDepth[] = "Max. Tiefe";
 static uint8_t text_FR_SimMaxDepth[] = "Prof. max";
-static uint8_t text_IT_SimMaxDepth[] = "Profondità Max.";
+static uint8_t text_IT_SimMaxDepth[] = "Profonditï¿½ Max.";
 static uint8_t text_ES_SimMaxDepth[] = "";
 
 // Menu SIM sub
@@ -831,7 +831,7 @@ static uint8_t text_ES_Decolist[] = "";
 static uint8_t text_EN_ButtonSensitivity[] = "Button sensitivity";
 static uint8_t text_DE_ButtonSensitivity[] = "Taster Ansprechen";
 static uint8_t text_FR_ButtonSensitivity[] = "Bouton sensibilitÃ©";
-static uint8_t text_IT_ButtonSensitivity[] = "Sensibilità Pulsante";
+static uint8_t text_IT_ButtonSensitivity[] = "Sensibilitï¿½ Pulsante";
 static uint8_t text_ES_ButtonSensitivity[] = "";
 
 //
@@ -1166,31 +1166,31 @@ static uint8_t text_ES_Sunday[] = "";
 static uint8_t text_EN_Monday[] = "Monday";
 static uint8_t text_DE_Monday[] = "Montag";
 static uint8_t text_FR_Monday[] = "Lundi";
-static uint8_t text_IT_Monday[] = "Lunedì";
+static uint8_t text_IT_Monday[] = "Lunedi";
 static uint8_t text_ES_Monday[] = "";
 
 static uint8_t text_EN_Tuesday[] = "Tuesday";
 static uint8_t text_DE_Tuesday[] = "Dienstag";
 static uint8_t text_FR_Tuesday[] = "Mardi";
-static uint8_t text_IT_Tuesday[] = "Martedì";
+static uint8_t text_IT_Tuesday[] = "Martedi";
 static uint8_t text_ES_Tuesday[] = "";
 
 static uint8_t text_EN_Wednesday[] = "Wednesday";
 static uint8_t text_DE_Wednesday[] = "Mittwoch";
 static uint8_t text_FR_Wednesday[] = "Mercredi";
-static uint8_t text_IT_Wednesday[] = "Mercoledì";
+static uint8_t text_IT_Wednesday[] = "Mercoledi";
 static uint8_t text_ES_Wednesday[] = "";
 
 static uint8_t text_EN_Thursday[] = "Thursday";
 static uint8_t text_DE_Thursday[] = "Donnerstag";
 static uint8_t text_FR_Thursday[] = "Jeudi";
-static uint8_t text_IT_Thursday[] = "Giovedì";
+static uint8_t text_IT_Thursday[] = "Giovedi";
 static uint8_t text_ES_Thursday[] = "";
 
 static uint8_t text_EN_Friday[] = "Friday";
 static uint8_t text_DE_Friday[] = "Freitag";
 static uint8_t text_FR_Friday[] = "Vendredi";
-static uint8_t text_IT_Friday[] = "Venerdì";
+static uint8_t text_IT_Friday[] = "Venerdi";
 static uint8_t text_ES_Friday[] = "";
 
 static uint8_t text_EN_Saturday[] = "Saturday";
@@ -1217,7 +1217,7 @@ static uint8_t text_ES_ScooterTemperature[] = "";
 static uint8_t text_EN_ScooterSpeed[] = "Speed";
 static uint8_t text_DE_ScooterSpeed[] = "Geschwindigkeit";
 static uint8_t text_FR_ScooterSpeed[] = "Vitesse";
-static uint8_t text_IT_ScooterSpeed[] = "Velocità";
+static uint8_t text_IT_ScooterSpeed[] = "Velocita";
 static uint8_t text_ES_ScooterSpeed[] = "";
 
 // Menu SYS1 (Bonex Computer)

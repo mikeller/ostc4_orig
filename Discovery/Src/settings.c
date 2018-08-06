@@ -55,15 +55,15 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
 {
     .versionFirst   = 1,
     .versionSecond 	= 3,
-    .versionThird   = 3,
-    .versionBeta    = 1,
+    .versionThird   = 5,
+    .versionBeta    = 0,
 
     /* 4 bytes with trailing 0 */
-    .signature = "cw",
+    .signature = "mh",
 
-    .release_year = 17,
-    .release_month = 7,
-    .release_day = 4,
+    .release_year = 18,
+    .release_month = 8,
+    .release_day = 6,
     .release_sub = 0,
 
     /* max 48 with trailing 0 */
@@ -350,11 +350,6 @@ void set_new_settings_missing_in_ext_flash(void)
     const SSettings* pStandard = settingsGetPointerStandard();
 
     pSettings->scooterControl = 0;
-
-    if((pSettings->serialHigh == 0) && (pSettings->serialLow == 25))
-    {
-        memcpy(pSettings->customtext, " Salomï¿½\n\r" " Wiedmer\n\r", 60);
-    }
 
     switch(pSettings->header)
     {
