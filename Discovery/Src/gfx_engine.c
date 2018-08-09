@@ -2257,6 +2257,7 @@ static uint32_t GFX_write_substring(GFX_CfgWriteString* cfg, GFX_DrawCfgWindow* 
 	uint8_t i, j;
 	uint32_t found;
 	uint32_t pText;
+	uint16_t decodeUTF8;
 	uint8_t gfx_selected_language;
 #ifndef BOOTLOADER_STANDALONE
 	SSettings *pSettings;
@@ -2265,8 +2266,10 @@ static uint32_t GFX_write_substring(GFX_CfgWriteString* cfg, GFX_DrawCfgWindow* 
 	if(gfx_selected_language >= LANGUAGE_END)
 #endif		
 		gfx_selected_language = 0;
+
+
 // -----------------------------
-	if(textId != (uint8_t)TXT_2BYTE) 
+ 	if(textId != (uint8_t)TXT_2BYTE)
 	{
 		found = 0;
 		j = 0;
@@ -2281,6 +2284,7 @@ static uint32_t GFX_write_substring(GFX_CfgWriteString* cfg, GFX_DrawCfgWindow* 
 		}
 		if(!found)
 			return cfg->Xdelta;
+
 // -----------------------------
 		pText = (uint32_t)text_array[j].text[gfx_selected_language];
 		if(!pText)
@@ -2326,6 +2330,17 @@ static uint32_t GFX_write_substring(GFX_CfgWriteString* cfg, GFX_DrawCfgWindow* 
 		else
 		if(*(char*)pText == ' ')
 			cfg->Xdelta += ((tFont *)cfg->actualFont)->spacesize;
+		else
+		if((*(char*)pText) & 0x80) /* Identify a UNICODE character other than standard ASCII using the highest bit */
+		{
+			decodeUTF8 = ((*(char*)pText) & 0x1F) << 6; /* use 5bits of first byte for upper part of unicode */
+			pText++;
+			decodeUTF8 |= (*(char*)pText) & 0x3F; /* add lower 6bits as second part of the unicode */
+			if (decodeUTF8 <= 0xff) /* The following function has a uint8 input parameter ==> no UNICODEs > 0xff supported */
+			{
+				cfg->Xdelta = GFX_write_char(hgfx, cfg, (uint8_t)decodeUTF8, (tFont *)cfg->actualFont);
+			}
+		}
 		else
 			cfg->Xdelta = GFX_write_char(hgfx, cfg, *(uint8_t *)pText, (tFont *)cfg->actualFont);
 
@@ -3130,6 +3145,7 @@ uint32_t GFX_write__Modify_Xdelta__Centered(GFX_CfgWriteString* cfg, GFX_DrawCfg
 	uint32_t i, j;
 	uint8_t gfx_selected_language;
 	uint32_t pText;
+	uint16_t decodeUTF8;
 
 #ifndef BOOTLOADER_STANDALONE
 	SSettings *pSettings;
@@ -3147,9 +3163,20 @@ uint32_t GFX_write__Modify_Xdelta__Centered(GFX_CfgWriteString* cfg, GFX_DrawCfg
 	j = 0;
 	while (*(char*)pText != 0)// und fehlend: Abfrage window / image size
 	{
+		if((*(char*)pText) & 0x80) /* Identify a UNICODE character other than standard ASCII using the highest bit */
+		{
+			decodeUTF8 = ((*(char*)pText) & 0x1F) << 6; /* use 5bits of first byte for upper part of unicode */
+			pText++;
+			decodeUTF8 |= (*(char*)pText) & 0x3F; /* add lower 6bits as second part of the unicode */
+		}
+		else
+		{
+			decodeUTF8 = *(char*)pText; /* place ASCII char */
+		}
+
 		for(i=0;i<((tFont *)cfg->font)->length;i++)
 		{
-			if(((tFont *)cfg->font)->chars[i].code == *(char*)pText)
+			if(((tFont *)cfg->font)->chars[i].code == decodeUTF8)
 			{
 				Xsum += ((tFont *)cfg->font)->chars[i].image->width;
 				break;
@@ -3190,6 +3217,7 @@ uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GFX_DrawC
 	uint8_t gfx_selected_language;
 	uint32_t pText;
 	uint8_t setToTinyFont = 0;
+	uint16_t decodeUTF8;
 
 #ifndef BOOTLOADER_STANDALONE
 	SSettings *pSettings;
@@ -3236,9 +3264,19 @@ uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GFX_DrawC
 		}
 		else
 		{
+			if((*(char*)pText) & 0x80) /* Identify a UNICODE character other than standard ASCII using the highest bit */
+			{
+				decodeUTF8 = ((*(char*)pText) & 0x1F) << 6; /* use 5bits of first byte for upper part of unicode */
+				pText++;
+				decodeUTF8 |= (*(char*)pText) & 0x3F; /* add lower 6bits as second part of the unicode */
+			}
+			else
+			{
+				decodeUTF8 = *(char*)pText;
+			}
 			for(i=0;i<font->length;i++)
 			{
-				if(font->chars[i].code == *(char*)pText)
+				if(font->chars[i].code == decodeUTF8)
 				{
 					Xsum += font->chars[i].image->width;
 					break;
