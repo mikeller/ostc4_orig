@@ -256,134 +256,134 @@ void decom_tissues_exposure2(int period_in_seconds, SGas* pActualGas,  float amb
 
 	int period_in_seconds_left;
 
-	if(period_in_seconds <= 0)
-		return;
-
+	if(period_in_seconds > 0)
+	{
 
 		decom_get_inert_gases(ambiant_pressure_bar, pActualGas, &percent_N2, &percent_He);
 
 		partial_pressure_N2 =  (ambiant_pressure_bar - WATER_VAPOUR_PRESSURE) * percent_N2;
 		partial_pressure_He = (ambiant_pressure_bar - WATER_VAPOUR_PRESSURE) * percent_He;
-	period_in_seconds_left = period_in_seconds;
+		period_in_seconds_left = period_in_seconds;
 
-	while(period_in_seconds_left)
-	{
-		if(period_in_seconds_left >= 3600)
-			period_in_seconds = 3600;
-		else
-		if(period_in_seconds_left >= 800)
-			period_in_seconds = 800;
-		else
-		if(period_in_seconds_left >= 300)
-			period_in_seconds = 300;
-		else
-		if(period_in_seconds_left >= 100)
-			period_in_seconds = 100;
-		else
-		if(period_in_seconds_left >= 60)
-			period_in_seconds = 60;
-		else
-		if(period_in_seconds_left == 36)
-			period_in_seconds = 18;
-		else
-		if(period_in_seconds_left >= 20)
-			period_in_seconds = 20;
-		else
-		if(period_in_seconds_left >= 18)
-			period_in_seconds = 18;
-		else
-		if(period_in_seconds_left >= 10)
-			period_in_seconds = 10;
-		else
-		if(period_in_seconds_left >= 8)
-			period_in_seconds = 8;
-		else
-		if(period_in_seconds_left >= 3)
-			period_in_seconds = 3;
-		else
-			period_in_seconds = 1;
-
-		period_in_seconds_left -= period_in_seconds;
-
-		switch (period_in_seconds)
+		while(period_in_seconds_left)
 		{
-			case 1:
-			for (ci=0;ci<16;ci++)
+			if(period_in_seconds_left >= 3600)
+				period_in_seconds = 3600;
+			else
+			if(period_in_seconds_left >= 800)
+				period_in_seconds = 800;
+			else
+			if(period_in_seconds_left >= 300)
+				period_in_seconds = 300;
+			else
+			if(period_in_seconds_left >= 100)
+				period_in_seconds = 100;
+			else
+			if(period_in_seconds_left >= 60)
+				period_in_seconds = 60;
+			else
+			if(period_in_seconds_left == 36)
+				period_in_seconds = 18;
+			else
+			if(period_in_seconds_left >= 20)
+				period_in_seconds = 20;
+			else
+			if(period_in_seconds_left >= 18)
+				period_in_seconds = 18;
+			else
+			if(period_in_seconds_left >= 10)
+				period_in_seconds = 10;
+			else
+			if(period_in_seconds_left >= 8)
+				period_in_seconds = 8;
+			else
+			if(period_in_seconds_left >= 3)
+				period_in_seconds = 3;
+			else
+				period_in_seconds = 1;
+
+			period_in_seconds_left -= period_in_seconds;
+
+			switch (period_in_seconds)
 			{
-				tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_one_second[ci];
-				tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_one_second[ci];
+				case 1:
+				for (ci=0;ci<16;ci++)
+				{
+					tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_one_second[ci];
+					tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_one_second[ci];
+				}
+				break;
+				case 3:
+				for (ci=0;ci<16;ci++)
+				{
+					tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_003_second[ci];
+					tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_003_second[ci];
+				}
+				break;
+				case 8:
+				for (ci=0;ci<16;ci++)
+				{
+					tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_008_second[ci];
+					tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_008_second[ci];
+				}
+				break;
+				case 10:
+				for (ci=0;ci<16;ci++)
+				{
+					tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_10_seconds[ci];
+					tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_10_seconds[ci];
+				}
+				break;
+				case 18:
+				for (ci=0;ci<16;ci++)
+				{
+					tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_18_seconds[ci];
+					tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_18_seconds[ci];
+				}
+				break;
+				case 20:
+				for (ci=0;ci<16;ci++)
+				{
+					tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_20_seconds[ci];
+					tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_20_seconds[ci];
+				}
+				break;
+				case 60:
+				for (ci=0;ci<16;ci++)
+				{
+					tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_one_minute[ci];
+					tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_one_minute[ci];
+				}
+				break;
+				case 100:
+				for (ci=0;ci<16;ci++)
+				{
+					tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_100_second[ci];
+					tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_100_second[ci];
+				}
+				break;
+				case 300:
+				for (ci=0;ci<16;ci++)
+				{
+					tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_five_minutes[ci];
+					tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_five_minutes[ci];
+				}
+				break;
+				case 800:
+				for (ci=0;ci<16;ci++)
+				{
+					tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_800_second[ci];
+					tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_800_second[ci];
+				}
+				break;
+				case 3600:
+				for (ci=0;ci<16;ci++)
+				{
+					tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_one_hour[ci];
+					tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_one_hour[ci];
+				}
+				break;
 			}
-			break;
-			case 3:
-			for (ci=0;ci<16;ci++)
-			{
-				tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_003_second[ci];
-				tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_003_second[ci];
-			}
-			break;
-			case 8:
-			for (ci=0;ci<16;ci++)
-			{
-				tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_008_second[ci];
-				tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_008_second[ci];
-			}
-			break;
-			case 10:
-			for (ci=0;ci<16;ci++)
-			{
-				tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_10_seconds[ci];
-				tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_10_seconds[ci];
-			}
-			break;
-			case 18:
-			for (ci=0;ci<16;ci++)
-			{
-				tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_18_seconds[ci];
-				tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_18_seconds[ci];
-			}
-			break;
-			case 20:
-			for (ci=0;ci<16;ci++)
-			{
-				tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_20_seconds[ci];
-				tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_20_seconds[ci];
-			}
-			break;
-			case 60:
-			for (ci=0;ci<16;ci++)
-			{
-				tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_one_minute[ci];
-				tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_one_minute[ci];
-			}
-			break;
-			case 100:
-			for (ci=0;ci<16;ci++)
-			{
-				tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_100_second[ci];
-				tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_100_second[ci];
-			}
-			break;
-			case 300:
-			for (ci=0;ci<16;ci++)
-			{
-				tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_five_minutes[ci];
-				tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_five_minutes[ci];
-			}
-			break;
-			case 800:
-			for (ci=0;ci<16;ci++)
-			{
-				tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_800_second[ci];
-				tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_800_second[ci];
-			}
-			break;
-			case 3600:
-			for (ci=0;ci<16;ci++)
-			{
-				tissue_N2_selected_stage[ci] += (partial_pressure_N2 - tissue_N2_selected_stage[ci]) * float_buehlmann_N2_factor_expositon_one_hour[ci];
-				tissue_He_selected_stage[ci] += (partial_pressure_He - tissue_He_selected_stage[ci]) * float_buehlmann_He_factor_expositon_one_hour[ci];
-			}
-			break;
 		}
 	}
 }

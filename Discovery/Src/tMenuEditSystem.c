@@ -1157,7 +1157,7 @@ void refresh_InformationPage(void)
         text_content[1] = TXT2BYTE_ChargeCycles;
         text_content[2] = 0;
         write_label_var(  20, 800, ME_Y_LINE1, &FontT42, text_content);
-        snprintf(text_content,80,"%i (%i)",stateDeviceGetPointer()->batteryChargeCycles.value_int32,stateDeviceGetPointer()->batteryChargeCompleteCycles.value_int32);
+        snprintf(text_content,80,"%ld (%ld)",stateDeviceGetPointer()->batteryChargeCycles.value_int32,stateDeviceGetPointer()->batteryChargeCompleteCycles.value_int32);
         write_label_var(  20, 800, ME_Y_LINE2, &FontT42, text_content);
 
         translateDate(stateDeviceGetPointer()->batteryChargeCycles.date_rtc_dr, &Sdate);
@@ -1190,7 +1190,7 @@ void refresh_InformationPage(void)
         text_content[2] = 0;
         write_label_var(  20, 800, ME_Y_LINE1, &FontT42, text_content);
 
-        snprintf(text_content,80,"%i (%i)",stateDeviceGetPointer()->diveCycles.value_int32,(stateDeviceGetPointer()->depthMaximum.value_int32 - 1000) / 100);
+        snprintf(text_content,80,"%ld (%ld)",stateDeviceGetPointer()->diveCycles.value_int32,(stateDeviceGetPointer()->depthMaximum.value_int32 - 1000) / 100);
         write_label_var(  20, 800, ME_Y_LINE2, &FontT42, text_content);
 
         translateDate(stateDeviceGetPointer()->diveCycles.date_rtc_dr, &Sdate);
@@ -1203,7 +1203,7 @@ void refresh_InformationPage(void)
         text_content[2] = 0;
         write_label_var(  20, 800, ME_Y_LINE4, &FontT42, text_content);
 
-        snprintf(text_content,80,"%i",(stateDeviceGetPointer()->hoursOfOperation.value_int32)/3600);
+        snprintf(text_content,80,"%ld",(stateDeviceGetPointer()->hoursOfOperation.value_int32)/3600);
         write_label_var(  20, 800, ME_Y_LINE5, &FontT42, text_content);
 
         text_button[0] = TXT_2BYTE;
