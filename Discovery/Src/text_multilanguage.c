@@ -41,14 +41,14 @@ static uint8_t text_EN_Language[] = "Language";
 static uint8_t text_DE_Language[] = "Sprache";
 static uint8_t text_FR_Language[] = "Langue";
 static uint8_t text_IT_Language[] = "Lingua";
-static uint8_t text_ES_Language[] = "Idioma";
+static uint8_t text_ES_Language[] = "";
 
 // Menu
 static uint8_t text_EN_LanguageName[] = "English";
 static uint8_t text_DE_LanguageName[] = "Deutsch";
 static uint8_t text_FR_LanguageName[] = "Français";
 static uint8_t text_IT_LanguageName[] = "Italiano";
-static uint8_t text_ES_LanguageName[] = "Castellano";
+static uint8_t text_ES_LanguageName[] = "";
 
 // dive mode
 static uint8_t text_EN_Depth[] = "Depth";
@@ -94,21 +94,21 @@ static uint8_t text_ES_Nullzeit[] = "";
 
 // dive mode
 static uint8_t text_EN_ppO2[] = "ppO2";
-static uint8_t text_DE_ppO2[] = "";
+static uint8_t text_DE_ppO2[] = "ppO2";
 static uint8_t text_FR_ppO2[] = "ppO2";
 static uint8_t text_IT_ppO2[] = "ppO2";
 static uint8_t text_ES_ppO2[] = "";
 
 // dive mode
 static uint8_t text_EN_TTS[] = "TTS";
-static uint8_t text_DE_TTS[] = "";
+static uint8_t text_DE_TTS[] = "TTS";
 static uint8_t text_FR_TTS[] = "DTR";
 static uint8_t text_IT_TTS[] = "TTS";
 static uint8_t text_ES_TTS[] = "";
 
 // dive mode
 static uint8_t text_EN_CNSshort[] = "CNS";
-static uint8_t text_DE_CNSshort[] = "";
+static uint8_t text_DE_CNSshort[] = "ZNS";
 static uint8_t text_FR_CNSshort[] = "SNC";
 static uint8_t text_IT_CNSshort[] = "CNS";
 static uint8_t text_ES_CNSshort[] = "";
@@ -122,7 +122,7 @@ static uint8_t text_ES_Temperature[] = "";
 
 // dive mode
 static uint8_t text_EN_FutureTTS[] = "FutureTTS";
-static uint8_t text_DE_FutureTTS[] = "";
+static uint8_t text_DE_FutureTTS[] = "FutureTTS";
 static uint8_t text_FR_FutureTTS[] = "FutureDTR";
 static uint8_t text_IT_FutureTTS[] = "TTS Futuro";
 static uint8_t text_ES_FutureTTS[] = "";
@@ -143,21 +143,21 @@ static uint8_t text_ES_Seconds[] = "";
 
 // Menu OC sub and Menu CC sub
 static uint8_t text_EN_Gas[] = "Gas";
-static uint8_t text_DE_Gas[] = "";
+static uint8_t text_DE_Gas[] = "Gas";
 static uint8_t text_FR_Gas[] = "Gaz";
 static uint8_t text_IT_Gas[] = "Gas";
 static uint8_t text_ES_Gas[] = "";
 
 // dive mode
 static uint8_t text_EN_Ceiling[] = "Ceiling";
-static uint8_t text_DE_Ceiling[] = "";
+static uint8_t text_DE_Ceiling[] = "Ceiling";
 static uint8_t text_FR_Ceiling[] = "Plafond";
 static uint8_t text_IT_Ceiling[] = "Ceiling";
 static uint8_t text_ES_Ceiling[] = "";
 
 // dive mode
 static uint8_t text_EN_ActualGradient[] = "Relative GF";
-static uint8_t text_DE_ActualGradient[] = "";
+static uint8_t text_DE_ActualGradient[] = "Relativ GF";
 static uint8_t text_FR_ActualGradient[] = "GF relatif";
 static uint8_t text_IT_ActualGradient[] = "GF relativo";
 static uint8_t text_ES_ActualGradient[] = "";
@@ -234,21 +234,21 @@ static uint8_t text_ES_Ultrabright[] = "";
 
 // Menu OC (Header)
 static uint8_t text_EN_OC_Gas_Edit[] = "Open Circuit";
-static uint8_t text_DE_OC_Gas_Edit[] = "";
+static uint8_t text_DE_OC_Gas_Edit[] = "Open Circuit";
 static uint8_t text_FR_OC_Gas_Edit[] = "Circuit ouvert";
 static uint8_t text_IT_OC_Gas_Edit[] = "Circuito aperto";
 static uint8_t text_ES_OC_Gas_Edit[] = "";
 
 // Menu CC (Header)
 static uint8_t text_EN_Diluent_Gas_Edit[] = "Diluent";
-static uint8_t text_DE_Diluent_Gas_Edit[] = "";
+static uint8_t text_DE_Diluent_Gas_Edit[] = "Diluent";
 static uint8_t text_FR_Diluent_Gas_Edit[] = "Diluant";
 static uint8_t text_IT_Diluent_Gas_Edit[] = "Diluente";
 static uint8_t text_ES_Diluent_Gas_Edit[] = "";
 
 // Menu Gas
 static uint8_t text_EN_Mix[] = "Mix";
-static uint8_t text_DE_Mix[] = "";
+static uint8_t text_DE_Mix[] = "Mix";
 static uint8_t text_FR_Mix[] = "Gaz";  // Or Mélange
 static uint8_t text_IT_Mix[] = "Gas MIX";
 static uint8_t text_ES_Mix[] = "";
@@ -277,7 +277,7 @@ static uint8_t text_ES_Deco[] = "";
 // Menu Gas
 static uint8_t text_EN_Travel[] = "Travel";
 static uint8_t text_DE_Travel[] = "Reise";
-static uint8_t text_FR_Travel[] = ""; // We always use english here I think...
+static uint8_t text_FR_Travel[] = "Travel";
 static uint8_t text_IT_Travel[] = "Viaggio";
 static uint8_t text_ES_Travel[] = "";
 
@@ -291,14 +291,14 @@ static uint8_t text_ES_Inactive[] = "";
 // Menu Gas
 static uint8_t text_EN_ChangeDepth[] = "ChangeDepth";
 static uint8_t text_DE_ChangeDepth[] = "Wechseltiefe";
-static uint8_t text_FR_ChangeDepth[] = "Prof.Changmt"; // "Profondeur de changement";  // Prof.Changmt
+static uint8_t text_FR_ChangeDepth[] = "Prof.Changmt";
 static uint8_t text_IT_ChangeDepth[] = "Cambio Prof.";
 static uint8_t text_ES_ChangeDepth[] = "";
 
 // Menu Gas
 static uint8_t text_EN_Type[] = "Type";
 static uint8_t text_DE_Type[] = "Typ";
-static uint8_t text_FR_Type[] = "";
+static uint8_t text_FR_Type[] = "Type";
 static uint8_t text_IT_Type[] = "Tipo";
 static uint8_t text_ES_Type[] = "";
 
@@ -311,15 +311,15 @@ static uint8_t text_ES_Setpoint_Edit[] = "";
 
 // Menu SYS1 (O2 Sensors)
 static uint8_t text_EN_Fallback[] = "Fallback";
-static uint8_t text_DE_Fallback[] = "";
-static uint8_t text_FR_Fallback[] = "Fallback";      // Or "Repli"
+static uint8_t text_DE_Fallback[] = "Fallback";
+static uint8_t text_FR_Fallback[] = "Fallback";
 static uint8_t text_IT_Fallback[] = "Fallback";
 static uint8_t text_ES_Fallback[] = "";
 
 // Menu DECO2
 static uint8_t text_EN_Algorithm[] = "Algorithm";
 static uint8_t text_DE_Algorithm[] = "Rechenmodell";
-static uint8_t text_FR_Algorithm[] = ""; // Algorithm
+static uint8_t text_FR_Algorithm[] = "Algorithm";
 static uint8_t text_IT_Algorithm[] = "Algoritmo";
 static uint8_t text_ES_Algorithm[] = "";
 
@@ -339,7 +339,7 @@ static uint8_t text_ES_CCRmode[] = "";
 
 // Menu DECO1 (CCR mode only)
 static uint8_t text_EN_Sensor[] = "Sensor";
-static uint8_t text_DE_Sensor[] = "";
+static uint8_t text_DE_Sensor[] = "Sensor";
 static uint8_t text_FR_Sensor[] = "Cellule";
 static uint8_t text_IT_Sensor[] = "Sensore";
 static uint8_t text_ES_Sensor[] = "";
@@ -367,28 +367,28 @@ static uint8_t text_ES_LastDecostop[] = "";
 
 // Menu DECO2 and Dive Menu
 static uint8_t text_EN_ZHL16GF[] = "ZH-L16+GF";
-static uint8_t text_DE_ZHL16GF[] = "";
-static uint8_t text_FR_ZHL16GF[] = "";
-static uint8_t text_IT_ZHL16GF[] = "";
+static uint8_t text_DE_ZHL16GF[] = "ZH-L16+GF";
+static uint8_t text_FR_ZHL16GF[] = "ZH-L16+GF";
+static uint8_t text_IT_ZHL16GF[] = "ZH-L16+GF";
 static uint8_t text_ES_ZHL16GF[] = "";
 
 // Menu DECO2 and Dive Menu
 static uint8_t text_EN_aGF[] = "aGF";
-static uint8_t text_DE_aGF[] = "";
-static uint8_t text_FR_aGF[] = "";
+static uint8_t text_DE_aGF[] = "aGF";
+static uint8_t text_FR_aGF[] = "aGF";
 static uint8_t text_IT_aGF[] = "aGF";
 static uint8_t text_ES_aGF[] = "";
 
 // Menu DECO2 and Dive Menu
 static uint8_t text_EN_VPM[] = "VPM";
-static uint8_t text_DE_VPM[] = "";
-static uint8_t text_FR_VPM[] = "";
-static uint8_t text_IT_VPM[] = "";
+static uint8_t text_DE_VPM[] = "VPM";
+static uint8_t text_FR_VPM[] = "VPM";
+static uint8_t text_IT_VPM[] = "VPM";
 static uint8_t text_ES_VPM[] = "";
 
 // Dive Menu
 static uint8_t text_EN_LowHigh[] = "low         high";
-static uint8_t text_DE_LowHigh[] = "";
+static uint8_t text_DE_LowHigh[] = "low         high";
 static uint8_t text_FR_LowHigh[] = "Bas         Haut";
 static uint8_t text_IT_LowHigh[] = "Basso       Alto";
 static uint8_t text_ES_LowHigh[] = "";
@@ -401,14 +401,14 @@ static uint8_t text_IT_ppO2Name[] = "Pressione parziale Ossigeno";
 static uint8_t text_ES_ppO2Name[] = "";
 
 static uint8_t text_EN_Maximum[] = "Maximum";
-static uint8_t text_DE_Maximum[] = "";
-static uint8_t text_FR_Maximum[] = "";
+static uint8_t text_DE_Maximum[] = "Maximum";
+static uint8_t text_FR_Maximum[] = "Maximum";
 static uint8_t text_IT_Maximum[] = "Massimo";
 static uint8_t text_ES_Maximum[] = "";
 
 static uint8_t text_EN_Minimum[] = "Minimum";
-static uint8_t text_DE_Minimum[] = "";
-static uint8_t text_FR_Minimum[] = "";
+static uint8_t text_DE_Minimum[] = "Minimum";
+static uint8_t text_FR_Minimum[] = "Minimum";
 static uint8_t text_IT_Minimum[] = "Minimo";
 static uint8_t text_ES_Minimum[] = "";
 
@@ -447,13 +447,13 @@ static uint8_t text_ES_Time[] = "";
 
 static uint8_t text_EN_Date[] = "Date";
 static uint8_t text_DE_Date[] = "Datum";
-static uint8_t text_FR_Date[] = ""; // Date
+static uint8_t text_FR_Date[] = "Date";
 static uint8_t text_IT_Date[] = "Data";
 static uint8_t text_ES_Date[] = "";
 
 static uint8_t text_EN_Format[] = "Format";
 static uint8_t text_DE_Format[] = "Format";
-static uint8_t text_FR_Format[] = ""; // Format
+static uint8_t text_FR_Format[] = "Format";
 static uint8_t text_IT_Format[] = "Formato";
 static uint8_t text_ES_Format[] = "";
 
@@ -466,7 +466,7 @@ static uint8_t text_ES_DateTime[] = "";
 
 static uint8_t text_EN_DayMonthYear[] = "Date";
 static uint8_t text_DE_DayMonthYear[] = "Datum";
-static uint8_t text_FR_DayMonthYear[] = ""; // Date
+static uint8_t text_FR_DayMonthYear[] = "Date";
 static uint8_t text_IT_DayMonthYear[] = "Data";
 static uint8_t text_ES_DayMonthYear[] = "";
 
@@ -492,14 +492,14 @@ static uint8_t text_ES_LogbookEmpty[] = "";
 
 // Menu SIM
 static uint8_t text_EN_Start_Calculation[] = "Start Calculation";
-static uint8_t text_DE_Start_Calculation[] = "";
+static uint8_t text_DE_Start_Calculation[] = "Berechnung starten";
 static uint8_t text_FR_Start_Calculation[] = "Calculer";
 static uint8_t text_IT_Start_Calculation[] = "Calcola";
 static uint8_t text_ES_Start_Calculation[] = "";
 
 // Menu SYS2
 static uint8_t text_EN_Design[] = "Layout";
-static uint8_t text_DE_Design[] = "";
+static uint8_t text_DE_Design[] = "Design";
 static uint8_t text_FR_Design[] = "Affichage";
 static uint8_t text_IT_Design[] = "Layout";
 static uint8_t text_ES_Design[] = "";
@@ -562,7 +562,7 @@ static uint8_t text_ES_Units[] = "";
 
 // Menu SYS2 sub
 static uint8_t text_EN_Design_t7_feet[] = "Feet/Fahrenheit";
-static uint8_t text_DE_Design_t7_feet[] = "";
+static uint8_t text_DE_Design_t7_feet[] = "Fuß/Fahrenheit";
 static uint8_t text_FR_Design_t7_feet[] = "Pied/Fahrenheit";
 static uint8_t text_IT_Design_t7_feet[] = "Piedi/Fahrenheit";
 static uint8_t text_ES_Design_t7_feet[] = "";
@@ -583,7 +583,7 @@ static uint8_t text_ES_Information[] = "";
 
 // Menu SYS2
 static uint8_t text_EN_ResetMenu[] = "Reset Menu";
-static uint8_t text_DE_ResetMenu[] = "Reset Menü";
+static uint8_t text_DE_ResetMenu[] = "Reset Menü ";
 static uint8_t text_FR_ResetMenu[] = "Menu RaZ"; // RàZ
 static uint8_t text_IT_ResetMenu[] = "Reset";
 static uint8_t text_ES_ResetMenu[] = "";
@@ -592,20 +592,20 @@ static uint8_t text_ES_ResetMenu[] = "";
 static uint8_t text_EN_LogbookOffset[] = "Logbook offset";
 static uint8_t text_DE_LogbookOffset[] = "Logbuch-Versatz";
 static uint8_t text_FR_LogbookOffset[] = "Num. 1er plongée";
-static uint8_t text_IT_LogbookOffset[] = "Loogbook offset";
+static uint8_t text_IT_LogbookOffset[] = "Logbook offset";
 static uint8_t text_ES_LogbookOffset[] = "";
 
 
 // Menu SYS2 sub
 static uint8_t text_EN_Maintenance[] = "Maintenance";
-static uint8_t text_DE_Maintenance[] = "";
-static uint8_t text_FR_Maintenance[] = "";
+static uint8_t text_DE_Maintenance[] = "Wartung";
+static uint8_t text_FR_Maintenance[] = "Maintenance";
 static uint8_t text_IT_Maintenance[] = "Manutenzione";
 static uint8_t text_ES_Maintenance[] = "";
 
 // Menu SYS2 sub
 static uint8_t text_EN_SetBatteryCharge[] = "Restore Battery Charge";
-static uint8_t text_DE_SetBatteryCharge[] = "";
+static uint8_t text_DE_SetBatteryCharge[] = "Batterie zurücksetzen";
 static uint8_t text_FR_SetBatteryCharge[] = "";
 static uint8_t text_IT_SetBatteryCharge[] = "Ricaricare batteria";
 static uint8_t text_ES_SetBatteryCharge[] = "";
@@ -984,7 +984,7 @@ static uint8_t text_ES_ButtonView[] = "";
 // Button label (tiny line)
 static uint8_t text_EN_ButtonMenu[] = "Menu";
 static uint8_t text_DE_ButtonMenu[] = "Menü";
-static uint8_t text_FR_ButtonMenu[] = "";// Menu
+static uint8_t text_FR_ButtonMenu[] = "Menu";
 static uint8_t text_IT_ButtonMenu[] = "Menu";
 static uint8_t text_ES_ButtonMenu[] = "";
 
@@ -1010,18 +1010,18 @@ static uint8_t text_IT_ButtonNext[] = "Prossimo";
 static uint8_t text_ES_ButtonNext[] = "";
 
 // Button label (tiny line)
-static uint8_t text_EN_ButtonMinus[] = "\375";
-static uint8_t text_DE_ButtonMinus[] = "";
-static uint8_t text_FR_ButtonMinus[] = "";
-static uint8_t text_IT_ButtonMinus[] = "";
-static uint8_t text_ES_ButtonMinus[] = "";
+static uint8_t text_EN_ButtonMinus[] = "-";
+static uint8_t text_DE_ButtonMinus[] = "-";
+static uint8_t text_FR_ButtonMinus[] = "-";
+static uint8_t text_IT_ButtonMinus[] = "-";
+static uint8_t text_ES_ButtonMinus[] = "-";
 
 // Button label (tiny line)
-static uint8_t text_EN_ButtonPlus[] = "\373";
-static uint8_t text_DE_ButtonPlus[] = "";
-static uint8_t text_FR_ButtonPlus[] = "";
-static uint8_t text_IT_ButtonPlus[] = "";
-static uint8_t text_ES_ButtonPlus[] = "";
+static uint8_t text_EN_ButtonPlus[] = "+";
+static uint8_t text_DE_ButtonPlus[] = "+";
+static uint8_t text_FR_ButtonPlus[] = "+";
+static uint8_t text_IT_ButtonPlus[] = "+";
+static uint8_t text_ES_ButtonPlus[] = "+";
 
 // Dive menu
 static uint8_t text_EN_SimFollowDecoStops[] = "Ascent follows decostops";
