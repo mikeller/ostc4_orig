@@ -583,7 +583,7 @@ static uint8_t text_ES_Information[] = "";
 
 // Menu SYS2
 static uint8_t text_EN_ResetMenu[] = "Reset Menu";
-static uint8_t text_DE_ResetMenu[] = "Reset Menü ";
+static uint8_t text_DE_ResetMenu[] = "Reset Menu";
 static uint8_t text_FR_ResetMenu[] = "Menu RaZ"; // RàZ
 static uint8_t text_IT_ResetMenu[] = "Reset";
 static uint8_t text_ES_ResetMenu[] = "";
