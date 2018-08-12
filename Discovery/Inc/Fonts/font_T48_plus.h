@@ -4233,4 +4233,4 @@ static const tChar FontT48_array[] __attribute__(( section(".lower_fonts.FontT48
 
 };
 
-const tFont FontT48 UPPER_FONT_DIRECTORY = { 95+8, FontT48_array, 14, 25, 56 };
+const tFont FontT48 UPPER_FONT_DIRECTORY = { 95+9, FontT48_array, 14, 25, 56 };
