@@ -73,7 +73,6 @@ uint8_t SPI3_ButtonAdjust(uint8_t *arrayInput, uint8_t *arrayOutput)
 	HAL_StatusTypeDef status;
 	uint8_t answer[10];
 	uint8_t rework[10];
-	uint8_t wait = 0;
 
 	rework[0] = 0xFF;
 	for(int i = 0; i < 3; i++)
@@ -109,14 +108,11 @@ uint8_t SPI3_ButtonAdjust(uint8_t *arrayInput, uint8_t *arrayOutput)
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,GPIO_PIN_SET);
 	for(int i=0;i<7;i++)
 	{
-		for(int iiii = 0; iiii < 400; iiii++)
-			wait++;
+		HAL_Delay(10);
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,GPIO_PIN_RESET);
-		for(int iiii = 0; iiii < 400; iiii++)
-			wait++;
+		HAL_Delay(10);
 		status += HAL_SPI_TransmitReceive(&hspi3, &rework[i], &answer[i], 1,20);
-		for(int iiii = 0; iiii < 400; iiii++)
-			wait++;
+		HAL_Delay(10);
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,GPIO_PIN_SET);
 	}
 	
