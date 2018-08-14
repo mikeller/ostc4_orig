@@ -1138,9 +1138,8 @@ void refresh_InformationPage(void)
         date[year] = Sdate.Year;
         snprintf(text_content,40,"Firmware release date:  %02d.%02d.%02d",date[0],date[1],date[2]);
         write_label_var(  20, 800, ME_Y_LINE3, &FontT42, text_content);
-        //write_label_var(  20, 800, ME_Y_LINE3, &FontT42, "Available now: Boot 2016. Get Yours!");
         write_label_var(  20, 800, ME_Y_LINE4, &FontT42, "for more information");
-        write_label_var(  20, 800, ME_Y_LINE5, &FontT42, "info@heinrihweikamp.com");
+        write_label_var(  20, 800, ME_Y_LINE5, &FontT42, "info@heinrichsweikamp.com");
 
         text_button[0] = TXT_2BYTE;
         text_button[1] = TXT2BYTE_ButtonNext;
