@@ -55,7 +55,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
 {
     .versionFirst   = 1,
     .versionSecond 	= 3,
-    .versionThird   = 6,
+    .versionThird   = 5,
     .versionBeta    = 0,
 
     /* 4 bytes with trailing 0 */
@@ -63,12 +63,12 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
 
     .release_year = 18,
     .release_month = 8,
-    .release_day = 6,
+    .release_day = 15,
     .release_sub = 0,
 
     /* max 48 with trailing 0 */
     //release_info ="12345678901234567890123456789012345678901"
-    .release_info  ="going on",
+    .release_info  ="gcc_1st",
 
     /* for safety reasons and coming functions */
     .magic[0] = FIRMWARE_MAGIC_FIRST,

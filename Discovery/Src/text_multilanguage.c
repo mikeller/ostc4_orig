@@ -54,7 +54,7 @@ static uint8_t text_ES_LanguageName[] = "";
 static uint8_t text_EN_Depth[] = "Depth";
 static uint8_t text_DE_Depth[] = "Tiefe";
 static uint8_t text_FR_Depth[] = "Profondeur";
-static uint8_t text_IT_Depth[] = "Profondità";
+static uint8_t text_IT_Depth[] = "Profondita";
 static uint8_t text_ES_Depth[] = "";
 
 // dive mode
@@ -415,7 +415,7 @@ static uint8_t text_ES_Minimum[] = "";
 static uint8_t text_EN_Salinity[] = "Salinity";
 static uint8_t text_DE_Salinity[] = "Salzgehalt";
 static uint8_t text_FR_Salinity[] = "Salinité";
-static uint8_t text_IT_Salinity[] = "Salinità";
+static uint8_t text_IT_Salinity[] = "Salinita";
 static uint8_t text_ES_Salinity[] = "";
 
 // Menu DECO1
@@ -549,15 +549,15 @@ static uint8_t text_ES_CornerStandard[] = "";
 // Menu GAS sub
 static uint8_t text_EN_SetToMOD[] = "Set change depth to MOD";
 static uint8_t text_DE_SetToMOD[] = "Setze Wechseltiefe auf MOD";
-static uint8_t text_FR_SetToMOD[] = "Régler prof. chgmt. à PMU";
-static uint8_t text_IT_SetToMOD[] = "Cambia profondità MOD";
+static uint8_t text_FR_SetToMOD[] = "Régler prof. chgmt. a PMU";
+static uint8_t text_IT_SetToMOD[] = "Cambia profondita MOD";
 static uint8_t text_ES_SetToMOD[] = "";
 
 // Menu SYS2 sub
 static uint8_t text_EN_Units[] = "Units";
 static uint8_t text_DE_Units[] = "Einheit";
 static uint8_t text_FR_Units[] = "Unités";
-static uint8_t text_IT_Units[] = "Unità";
+static uint8_t text_IT_Units[] = "Unita";
 static uint8_t text_ES_Units[] = "";
 
 // Menu SYS2 sub
@@ -584,7 +584,7 @@ static uint8_t text_ES_Information[] = "";
 // Menu SYS2
 static uint8_t text_EN_ResetMenu[] = "Reset menu";
 static uint8_t text_DE_ResetMenu[] = "Reset-Menü";
-static uint8_t text_FR_ResetMenu[] = "Menu RaZ"; // RàZ
+static uint8_t text_FR_ResetMenu[] = "Menu RaZ"; // RaZ
 static uint8_t text_IT_ResetMenu[] = "Reset";
 static uint8_t text_ES_ResetMenu[] = "";
 
@@ -676,14 +676,14 @@ static uint8_t text_ES_StartBootloader[] = "";
 // Menu SYS2 sub
 static uint8_t text_EN_ResetLogbook[] = "Reset logbook";
 static uint8_t text_DE_ResetLogbook[] = "Logbuch zurücksetzen";
-static uint8_t text_FR_ResetLogbook[] = "RaZ carnet"; // RàZ
+static uint8_t text_FR_ResetLogbook[] = "RaZ carnet"; // RaZ
 static uint8_t text_IT_ResetLogbook[] = "Ripristina logbook";
 static uint8_t text_ES_ResetLogbook[] = "";
 
 // Surface warning
 static uint8_t text_EN_PleaseUpdate[] = "Please update";
 static uint8_t text_DE_PleaseUpdate[] = "Bitte updaten:";
-static uint8_t text_FR_PleaseUpdate[] = "Mettre à jours svp.";
+static uint8_t text_FR_PleaseUpdate[] = "Mettre a jours svp.";
 static uint8_t text_IT_PleaseUpdate[] = "Aggiornamento";
 static uint8_t text_ES_PleaseUpdate[] = "";
 
@@ -704,7 +704,7 @@ static uint8_t text_ES_Fonts[] = "";
 // Dive Menu
 static uint8_t text_EN_ResetStopwatch[] = "Reset stopwatch";
 static uint8_t text_DE_ResetStopwatch[] = "Stoppuhr zurückstellen";
-static uint8_t text_FR_ResetStopwatch[] = "RaZ chrono"; // RàZ
+static uint8_t text_FR_ResetStopwatch[] = "RaZ chrono"; // RaZ
 static uint8_t text_IT_ResetStopwatch[] = "Riavvia cronometro";
 static uint8_t text_ES_ResetStopwatch[] = "";
 
@@ -774,7 +774,7 @@ static uint8_t text_ES_SimSummary[] = "";
 // Menu SIM sub
 static uint8_t text_EN_SimDecTo[] = "Dec to";
 static uint8_t text_DE_SimDecTo[] = "Abst.";
-static uint8_t text_FR_SimDecTo[] = "Desc à";
+static uint8_t text_FR_SimDecTo[] = "Desc a";
 static uint8_t text_IT_SimDecTo[] = "";
 static uint8_t text_ES_SimDecTo[] = "";
 
@@ -788,7 +788,7 @@ static uint8_t text_ES_SimLevel[] = "";
 // Menu SIM sub
 static uint8_t text_EN_SimAscTo[] = "Asc to";
 static uint8_t text_DE_SimAscTo[] = "Aufst.";
-static uint8_t text_FR_SimAscTo[] = "Rem. à";
+static uint8_t text_FR_SimAscTo[] = "Rem. a";
 static uint8_t text_IT_SimAscTo[] = "";
 static uint8_t text_ES_SimAscTo[] = "";
 
@@ -1391,7 +1391,7 @@ static uint8_t text_ES_ExtraNone[] = "";
 // Menu SYS2 Reset RTE and Firmware Update During Bluetooth Connection
 static uint8_t text_EN_DecoDataLost[] = "Decompression data will be lost";
 static uint8_t text_DE_DecoDataLost[] = "Dekompressionsdaten verloren!";
-static uint8_t text_FR_DecoDataLost[] = "RaZ de la décompression"; // RàZ
+static uint8_t text_FR_DecoDataLost[] = "RaZ de la décompression"; // RaZ
 static uint8_t text_IT_DecoDataLost[] = "";
 static uint8_t text_ES_DecoDataLost[] = "";
 
