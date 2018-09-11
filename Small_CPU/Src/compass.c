@@ -275,13 +275,13 @@ void compass_init(uint8_t fast, uint8_t gain)
 		I2C_Master_Receive(  DEVICE_COMPASS_303D, &data, 1);
 		if(data == WHOIAM_VALUE)
 			hardwareCompass = LSM303D;
-//		else
-//			hardwareCompass = HMC5883L;
+		else
+			hardwareCompass = HMC5883L;
 	}
 
 	
-// könnte Probleme mit altem Chip machen
-// beim 303D führt dieser Code dazu, dass WHOIAM_VALUE nicht geschickt wird!!!
+// kï¿½nnte Probleme mit altem Chip machen
+// beim 303D fï¿½hrt dieser Code dazu, dass WHOIAM_VALUE nicht geschickt wird!!!
 	
 #ifdef MODE_LSM303DLHC
 	HAL_StatusTypeDef resultOfOperation = HAL_TIMEOUT;
@@ -306,7 +306,7 @@ void compass_init(uint8_t fast, uint8_t gain)
 	}
 
 #endif
-/*	
+
 	if(hardwareCompass == 0)
 	{
 		uint8_t data = WHO_AM_I;
@@ -317,7 +317,7 @@ void compass_init(uint8_t fast, uint8_t gain)
 		else
 			hardwareCompass = HMC5883L;
 	}
-*/
+
 // was in else before !	
 	if(hardwareCompass == 0)
 		hardwareCompass = HMC5883L;	
@@ -376,7 +376,7 @@ int compass_calib(void)
 {
 	if(hardwareCompass == LSM303DLHC)
 	{
-		return compass_calib_common(); // 170821 zur Zeit kein lowpass filtering gefunden, nur high pass auf dem Register ohne Erklärung
+		return compass_calib_common(); // 170821 zur Zeit kein lowpass filtering gefunden, nur high pass auf dem Register ohne Erklï¿½rung
 	}
 	else
 	if(hardwareCompass == LSM303D)
@@ -1148,7 +1148,7 @@ void compass_init_LSM303DLHC(uint8_t fast, uint8_t gain)
 {
 // acceleration
 	// todo : BDU an (wie 303D) und high res, beides in REG4
-		//LSM303D_write_checked_reg(DLHC_CTRL_REG2_A,0x00); // 0x00 default, hier könnte filter sein 0x8?80, cutoff freq. not beschrieben
+		//LSM303D_write_checked_reg(DLHC_CTRL_REG2_A,0x00); // 0x00 default, hier kï¿½nnte filter sein 0x8?80, cutoff freq. not beschrieben
 	
 	if(fast == 0)
 	{
@@ -1185,13 +1185,13 @@ void compass_init_LSM303DLHC(uint8_t fast, uint8_t gain)
 	
 //		LSM303D_write_checked_reg(,);
 //		LSM303D_write_checked_reg(DLHC_CTRL_REG1_A, 0x27); // 0x27 = acc. normal mode with ODR 50Hz - passt nicht mit datenblatt!!
-//		LSM303D_write_checked_reg(DLHC_CTRL_REG4_A, 0x40); // 0x40 = full scale range ±2 gauss in continuous data update mode and change the little-endian to a big-endian structure.
+//		LSM303D_write_checked_reg(DLHC_CTRL_REG4_A, 0x40); // 0x40 = full scale range ï¿½2 gauss in continuous data update mode and change the little-endian to a big-endian structure.
 
 	if(fast == 0)
 	{
 		LSM303DLHC_accelerator_write_req(DLHC_CTRL_REG1_A, 0x27); // 0x27 = acc. normal mode, all axes, with ODR 10HZ laut LSM303DLHC, page 25/42
 		//
-		//LSM303D_write_checked_reg(DLHC_CTRL_REG2_A,0x00); // 0x00 default, hier könnte filter sein 0x8?80, cutoff freq. not beschrieben
+		//LSM303D_write_checked_reg(DLHC_CTRL_REG2_A,0x00); // 0x00 default, hier kï¿½nnte filter sein 0x8?80, cutoff freq. not beschrieben
 		//LSM303D_write_checked_reg(DLHC_CTRL_REG3_A,0x00); // 0x00 default
 		//
 		LSM303DLHC_accelerator_write_req(DLHC_CTRL_REG4_A, 0x00); // 0x00 = ich glaube little-endian ist gut
@@ -1206,7 +1206,7 @@ void compass_init_LSM303DLHC(uint8_t fast, uint8_t gain)
 	{
 		LSM303DLHC_accelerator_write_req(DLHC_CTRL_REG1_A, 0x57); // 0x57 = acc. normal mode, all axes, with ODR 100HZ, LSM303DLHC, page 25/42
 		//
-		//LSM303D_write_checked_reg(DLHC_CTRL_REG2_A,0x00); // 0x00 default, hier könnte filter sein 0x8?80, cutoff freq. not beschrieben
+		//LSM303D_write_checked_reg(DLHC_CTRL_REG2_A,0x00); // 0x00 default, hier kï¿½nnte filter sein 0x8?80, cutoff freq. not beschrieben
 		//LSM303D_write_checked_reg(DLHC_CTRL_REG3_A,0x00); // 0x00 default
 		//
 		LSM303DLHC_accelerator_write_req(DLHC_CTRL_REG4_A, 0x00); // 0x00 = ich glaube little-endian ist gut
@@ -1318,7 +1318,7 @@ void acceleration_read_LSM303DLHC(void)
 
 	rotate_accel_3f(&xraw_f, &yraw_f, &zraw_f); 
 	
-	// mh für 303D
+	// mh fï¿½r 303D
 	accel_report_x = xraw_f;
 	accel_report_y = yraw_f;
 	accel_report_z = zraw_f;
