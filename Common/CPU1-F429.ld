@@ -50,7 +50,7 @@ MEMORY
 {
 	ROM_BOOT  (rx) : ORIGIN = 0x08000000, LENGTH = 0x00040000 /* 256K */
     ROM_MAIN  (rx) : ORIGIN = 0x08040000, LENGTH = 0x00090000 /* 576K */
-    UPPER(rx) : ORIGIN = 0x08100000, LENGTH = 0x100000 /* 1024K */
+    UPPER(rx) : ORIGIN = 0x08132000, LENGTH = 0xAE270 /* 713K */
     RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 192K
   CCRAM (rwx) : ORIGIN = 0x10000000, LENGTH = 64K
 }
@@ -110,6 +110,11 @@ SECTIONS
  .firmware_FirmwareData 0x08050000 : {
  	KEEP( *(.firmware_firmware_data) )
   } >ROM
+  
+  .font_firmware_data 0x08132000 : {
+  	KEEP( *(.font_firmware_data) ) 
+  	  
+  } >UPPER
   
   .text 0x08054000 :
   {
@@ -191,10 +196,54 @@ SECTIONS
  } > ROM
  	
 
-  .font_firmware_data 0x08132000 : {
-  	PROVIDE( font_FirmwareData = . );
-  	KEEP( *(.font_firmware_data) )
-  } >UPPER
+   .upper_font_dir 0x081DEF00 : { /* Flash Sector 23 is protected (bootloader font + image) => use end of sector 22 */
+  
+    /* Define Known Address for Each Font */
+  	__font_directory = .;
+	
+	
+	*(.upper_font_directory.Awe48)
+	*(.upper_font_directory.FontT24)
+	*(.upper_font_directory.FontT42)
+	*(.upper_font_directory.FontT48)
+	*(.upper_font_directory.FontT54)
+	*(.upper_font_directory.FontT84)
+	*(.upper_font_directory.FontT105)
+	*(.upper_font_directory.FontT144)
+	*(.upper_font_directory.Batt24*)
+
+	__font_directory_end = .;
+  	LONG( -1 );	/* Magic End Marker */
+	
+    /* and for Each Image */
+/*	__image_directory = .; */
+/*	PROVIDE( ImgHWcolor = __image_directory + 0 * 8 );
+	PROVIDE( ImgOSTC    = __image_directory + 1 * 8 ); */
+/*	__image_directory_end = __image_directory + 2 * 8; */
+
+/*	KEEP( *(.upper_image_directory) ) */
+
+	/* FIXME: shall KEEP images here */
+  	LONG( -1 );	/* Magic End Marker */
+	
+    /* and for CLUT */
+/*	PROVIDE( indexHWcolor = . ); */
+	. += 0x100; 
+  	LONG( -1 );	/* Magic End Marker */
+  } >UPPER  
+
+  
+
+
+  /* Put fonts and images in UPPER region */  
+ /*
+  .upper_images : {
+  	__upper_image_data = .;
+  	KEEP( *(.newupper_images) )
+  	__upper_image_data_end = .;
+  } > UPPER
+  */
+  
 
 /* TODO: the linker does not seem to work as the one of used for initial bootloader ==> Reconstruct layout to keep it compatible with the first version */
 /* TODO: cleanup during next iteration */
@@ -459,59 +508,23 @@ SECTIONS
   	 *(.upper_fonts.image_data_FontT42_*)
   	 *(.upper_fonts.image_data_T54addon_0x002b_PLUS*)
   	 *(.upper_fonts.image_data_T54addon_0x0040_AT*)
-  	 *(.upper_fonts.image_data_FontT48_*)
   	 *(.upper_fonts.image_data_FontT48addon*)
   	 *(.upper_fonts.image_data_FontT24plus_0x00fb*)
+  	 *(.upper_fonts.image_data_FontT24plus_0x00fd*)
+  	 *(.upper_fonts.image_data_FontT48_*) 	 
   	 *(.upper_fonts.image_data_awe48_*)
+  
+/* moving of fonts from lower to upper */  	 
   	 
-	 /**(.upper_fonts*)*/ 
+	 *(.upper_fonts*) 
+	 
   	__upper_font_data_end = .;
   } >UPPER
 
-  /* Put fonts and images in UPPER region */  
- /*
-  .upper_images : {
-  	__upper_image_data = .;
-  	KEEP( *(.upper_images) )
-  	__upper_image_data_end = .;
-  } >ROM UPPER */
  
- 
-  .upper_font_directory /*0x081E0000*/ : { /* Last 128 KBytes of UPPER ROM */
-  
-    /* Define Known Address for Each Font */
-  	__font_directory = .;
-/*	PROVIDE( Awe48    = __font_directory + 0 * 0xc );  
-	PROVIDE( FontT24  = __font_directory + 1 * 0xc );
-	PROVIDE( FontT42  = __font_directory + 2 * 0xc );
-	PROVIDE( FontT48  = __font_directory + 3 * 0xc );
-	PROVIDE( FontT54  = __font_directory + 4 * 0xc );
-	PROVIDE( FontT84  = __font_directory + 5 * 0xc );
-	PROVIDE( FontT105 = __font_directory + 6 * 0xc );
-	PROVIDE( FontT144 = __font_directory + 7 * 0xc );
-	PROVIDE( Batt24   = __font_directory + 8 * 0xc ); */
-	__font_directory_end = __font_directory + 9 * 0xc;
 
-	*(.upper_font_directory)
-	__font_directory_end = .;
-  	LONG( -1 );	/* Magic End Marker */
-	
-    /* and for Each Image */
-/*	__image_directory = .; */
-/*	PROVIDE( ImgHWcolor = __image_directory + 0 * 8 );
-	PROVIDE( ImgOSTC    = __image_directory + 1 * 8 ); */
-/*	__image_directory_end = __image_directory + 2 * 8; */
+  	
 
-/*	KEEP( *(.upper_image_directory) ) */
-
-	/* FIXME: shall KEEP images here */
-  	LONG( -1 );	/* Magic End Marker */
-	
-    /* and for CLUT */
-/*	PROVIDE( indexHWcolor = . ); */
-	. += 0x400;
-  	LONG( -1 );	/* Magic End Marker */
-  } >ROM /*UPPER*/  
   
   
   /* Used by the startup to initialize data */
