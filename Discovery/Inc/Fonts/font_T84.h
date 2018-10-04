@@ -522,20 +522,20 @@ static const uint8_t image_data_FontT84_0x0039[2752 - (6 * 63)] __attribute__(( 
     0x01,//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static const tImage FontT84_0x002e __attribute__(( section(".lower_fonts.FontT84_0x002e") )) = { image_data_FontT84_0x002e, 30, 64};
-static const tImage FontT84_0x0030 __attribute__(( section(".lower_fonts.FontT84_0x0030") )) = { image_data_FontT84_0x0030, 43, 64};
-static const tImage FontT84_0x0031 __attribute__(( section(".lower_fonts.FontT84_0x0031") )) = { image_data_FontT84_0x0031, 43, 64};
-static const tImage FontT84_0x0032 __attribute__(( section(".lower_fonts.FontT84_0x0032") )) = { image_data_FontT84_0x0032, 43, 64};
-static const tImage FontT84_0x0033 __attribute__(( section(".lower_fonts.FontT84_0x0033") )) = { image_data_FontT84_0x0033, 43, 64};
-static const tImage FontT84_0x0034 __attribute__(( section(".lower_fonts.FontT84_0x0034") )) = { image_data_FontT84_0x0034, 43, 64};
-static const tImage FontT84_0x0035 __attribute__(( section(".lower_fonts.FontT84_0x0035") )) = { image_data_FontT84_0x0035, 43, 64};
-static const tImage FontT84_0x0036 __attribute__(( section(".lower_fonts.FontT84_0x0036") )) = { image_data_FontT84_0x0036, 43, 64};
-static const tImage FontT84_0x0037 __attribute__(( section(".lower_fonts.FontT84_0x0037") )) = { image_data_FontT84_0x0037, 43, 64};
-static const tImage FontT84_0x0038 __attribute__(( section(".lower_fonts.FontT84_0x0038") )) = { image_data_FontT84_0x0038, 43, 64};
-static const tImage FontT84_0x0039 __attribute__(( section(".lower_fonts.FontT84_0x0039") )) = { image_data_FontT84_0x0039, 43, 64};
+static const tImage FontT84_0x002e __attribute__(( section(".upper_fonts.FontT84_0x002e") )) = { image_data_FontT84_0x002e, 30, 64};
+static const tImage FontT84_0x0030 __attribute__(( section(".upper_fonts.FontT84_0x0030") )) = { image_data_FontT84_0x0030, 43, 64};
+static const tImage FontT84_0x0031 __attribute__(( section(".upper_fonts.FontT84_0x0031") )) = { image_data_FontT84_0x0031, 43, 64};
+static const tImage FontT84_0x0032 __attribute__(( section(".upper_fonts.FontT84_0x0032") )) = { image_data_FontT84_0x0032, 43, 64};
+static const tImage FontT84_0x0033 __attribute__(( section(".upper_fonts.FontT84_0x0033") )) = { image_data_FontT84_0x0033, 43, 64};
+static const tImage FontT84_0x0034 __attribute__(( section(".upper_fonts.FontT84_0x0034") )) = { image_data_FontT84_0x0034, 43, 64};
+static const tImage FontT84_0x0035 __attribute__(( section(".upper_fonts.FontT84_0x0035") )) = { image_data_FontT84_0x0035, 43, 64};
+static const tImage FontT84_0x0036 __attribute__(( section(".upper_fonts.FontT84_0x0036") )) = { image_data_FontT84_0x0036, 43, 64};
+static const tImage FontT84_0x0037 __attribute__(( section(".upper_fonts.FontT84_0x0037") )) = { image_data_FontT84_0x0037, 43, 64};
+static const tImage FontT84_0x0038 __attribute__(( section(".upper_fonts.FontT84_0x0038") )) = { image_data_FontT84_0x0038, 43, 64};
+static const tImage FontT84_0x0039 __attribute__(( section(".upper_fonts.FontT84_0x0039") )) = { image_data_FontT84_0x0039, 43, 64};
 
 
-static const tChar FontT84_array[] __attribute__(( section(".lower_fonts.FontT84_array") )) = {
+static const tChar FontT84_array[] __attribute__(( section(".upper_fonts.FontT84_array") )) = {
 
   // character: '.'
   {0x002e, &FontT84_0x002e},
@@ -572,4 +572,4 @@ static const tChar FontT84_array[] __attribute__(( section(".lower_fonts.FontT84
 
 };
 
-const tFont FontT84 UPPER_FONT_DIRECTORY = { 11, FontT84_array,0, 43, 64 };
+const tFont FontT84 __attribute__ (( used, section(".upper_font_directory.FontT84") )) = { 11, FontT84_array,0, 43, 64 };

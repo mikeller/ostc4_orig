@@ -71,7 +71,7 @@ extern const uint32_t indexHWcolor[indexHWcolorSIZE];
 // Macro to store in UPPER rom font sections
 /* TODO: Looking at older map files the directories should be placed within the firmware memory */
 /*       As well as the image data => to be confirmed */ 
-#define UPPER_FONT_DIRECTORY __attribute__ (( used, section(".lower_font_directory") ))
+#define UPPER_FONT_DIRECTORY __attribute__ (( used, section(".upper_font_directory") ))
 
 #define UPPER_IMAGE_DIRECTORY __attribute__(( section(".lower_image_directory") ))
 #define UPPER_IMAGES          __attribute__(( section(".lower_images") ))

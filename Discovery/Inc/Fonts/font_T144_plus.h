@@ -798,18 +798,18 @@ static const uint8_t image_data_FontT144_0x0039[7776 - (8 * 107)] __attribute__(
     0x01,//0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static const tImage FontT144_0x0030 __attribute__(( section(".lower_fonts.FontT144_0x0030") )) = {   image_data_FontT144_0x0030, 72, 108};
-static const tImage FontT144_0x0031 __attribute__(( section(".lower_fonts.FontT144_0x0031") )) = {   image_data_FontT144_0x0031, 72, 108};
-static const tImage FontT144_0x0032 __attribute__(( section(".lower_fonts.FontT144_0x0032") )) = {   image_data_FontT144_0x0032, 72, 108};
-static const tImage FontT144_0x0033 __attribute__(( section(".lower_fonts.FontT144_0x0033") )) = {   image_data_FontT144_0x0033, 72, 108};
-static const tImage FontT144_0x0034 __attribute__(( section(".lower_fonts.FontT144_0x0034") )) = {   image_data_FontT144_0x0034, 72, 108};
-static const tImage FontT144_0x0035 __attribute__(( section(".lower_fonts.FontT144_0x0035") )) = {   image_data_FontT144_0x0035, 72, 108};
-static const tImage FontT144_0x0036 __attribute__(( section(".lower_fonts.FontT144_0x0036") )) = {   image_data_FontT144_0x0036, 72, 108};
-static const tImage FontT144_0x0037 __attribute__(( section(".lower_fonts.FontT144_0x0037") )) = {   image_data_FontT144_0x0037, 72, 108};
-static const tImage FontT144_0x0038 __attribute__(( section(".lower_fonts.FontT144_0x0038") )) = {   image_data_FontT144_0x0038, 72, 108};
-static const tImage FontT144_0x0039 __attribute__(( section(".lower_fonts.FontT144_0x0039") )) = {   image_data_FontT144_0x0039, 72, 108};
+static const tImage FontT144_0x0030 __attribute__(( section(".upper_fonts.FontT144_0x0030") )) = {   image_data_FontT144_0x0030, 72, 108};
+static const tImage FontT144_0x0031 __attribute__(( section(".upper_fonts.FontT144_0x0031") )) = {   image_data_FontT144_0x0031, 72, 108};
+static const tImage FontT144_0x0032 __attribute__(( section(".upper_fonts.FontT144_0x0032") )) = {   image_data_FontT144_0x0032, 72, 108};
+static const tImage FontT144_0x0033 __attribute__(( section(".upper_fonts.FontT144_0x0033") )) = {   image_data_FontT144_0x0033, 72, 108};
+static const tImage FontT144_0x0034 __attribute__(( section(".upper_fonts.FontT144_0x0034") )) = {   image_data_FontT144_0x0034, 72, 108};
+static const tImage FontT144_0x0035 __attribute__(( section(".upper_fonts.FontT144_0x0035") )) = {   image_data_FontT144_0x0035, 72, 108};
+static const tImage FontT144_0x0036 __attribute__(( section(".upper_fonts.FontT144_0x0036") )) = {   image_data_FontT144_0x0036, 72, 108};
+static const tImage FontT144_0x0037 __attribute__(( section(".upper_fonts.FontT144_0x0037") )) = {   image_data_FontT144_0x0037, 72, 108};
+static const tImage FontT144_0x0038 __attribute__(( section(".upper_fonts.FontT144_0x0038") )) = {   image_data_FontT144_0x0038, 72, 108};
+static const tImage FontT144_0x0039 __attribute__(( section(".upper_fonts.FontT144_0x0039") )) = {   image_data_FontT144_0x0039, 72, 108};
 
-static const tChar FontT144_array[] __attribute__(( section(".lower_fonts.FontT144_array") )) = {
+static const tChar FontT144_array[] __attribute__(( section(".upper_fonts.FontT144_array") )) = {
 
   // character: '0'
   {0x0030, &FontT144_0x0030},
@@ -843,4 +843,4 @@ static const tChar FontT144_array[] __attribute__(( section(".lower_fonts.FontT1
 
 };
 
-const tFont FontT144 UPPER_FONT_DIRECTORY = { 10, FontT144_array, 0, 72, 108 };
+const tFont FontT144 __attribute__ (( used, section(".upper_font_directory.FontT144") )) = { 10, FontT144_array, 0, 72, 108 };

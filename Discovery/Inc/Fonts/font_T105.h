@@ -1389,37 +1389,37 @@ static const uint8_t image_data_FontT54_0x0068[1176] __attribute__(( section(".u
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static const tImage FontT105_0x0022 __attribute__(( section(".lower_fonts.FontT105_0x0022") )) = { image_data_FontT105_0x0022, 31, 80};
-static const tImage FontT105_0x0025 __attribute__(( section(".lower_fonts.FontT105_0x0025") )) = { image_data_FontT105_0x0025, 60, 80};
-static const tImage FontT105_0x0027 __attribute__(( section(".lower_fonts.FontT105_0x0027") )) = { image_data_FontT105_0x0027, 14, 80};
-static const tImage FontT105_0x002a __attribute__(( section(".lower_fonts.FontT105_0x002a") )) = { image_data_FontT105_0x002a, 36, 80};
-static const tImage FontT105_0x002d __attribute__(( section(".lower_fonts.FontT105_0x002d") )) = { image_data_FontT105_0x002d, 36, 80};
-static const tImage FontT105_0x002e __attribute__(( section(".lower_fonts.FontT105_0x002e") )) = { image_data_FontT105_0x002e, 36, 80};
-static const tImage FontT105_0x002f __attribute__(( section(".lower_fonts.FontT105_0x002f") )) = { image_data_FontT105_0x002f, 52, 80};
-static const tImage FontT105_0x0030 __attribute__(( section(".lower_fonts.FontT105_0x0030") )) = { image_data_FontT105_0x0030, 52, 80};
-static const tImage FontT105_0x0031 __attribute__(( section(".lower_fonts.FontT105_0x0031") )) = { image_data_FontT105_0x0031, 52, 80};
-static const tImage FontT105_0x0032 __attribute__(( section(".lower_fonts.FontT105_0x0032") )) = { image_data_FontT105_0x0032, 52, 80};
-static const tImage FontT105_0x0033 __attribute__(( section(".lower_fonts.FontT105_0x0033") )) = { image_data_FontT105_0x0033, 52, 80};
-static const tImage FontT105_0x0034 __attribute__(( section(".lower_fonts.FontT105_0x0034") )) = { image_data_FontT105_0x0034, 52, 80};
-static const tImage FontT105_0x0035 __attribute__(( section(".lower_fonts.FontT105_0x0035") )) = { image_data_FontT105_0x0035, 52, 80};
-static const tImage FontT105_0x0036 __attribute__(( section(".lower_fonts.FontT105_0x0036") )) = { image_data_FontT105_0x0036, 52, 80};
-static const tImage FontT105_0x0037 __attribute__(( section(".lower_fonts.FontT105_0x0037") )) = { image_data_FontT105_0x0037, 52, 80};
-static const tImage FontT105_0x0038 __attribute__(( section(".lower_fonts.FontT105_0x0038") )) = { image_data_FontT105_0x0038, 52, 80};
-static const tImage FontT105_0x0039 __attribute__(( section(".lower_fonts.FontT105_0x0039") )) = { image_data_FontT105_0x0039, 52, 80};
-static const tImage FontT105_0x003a __attribute__(( section(".lower_fonts.FontT105_0x003a") )) = { image_data_FontT105_0x003a, 36, 80};
-static const tImage FontT105_0x003c __attribute__(( section(".lower_fonts.FontT105_0x003c") )) = { image_data_FontT105_0x003c, 52, 80};
-static const tImage FontT105_0x003e __attribute__(( section(".lower_fonts.FontT105_0x003e") )) = { image_data_FontT105_0x003e, 52, 80};
-static const tImage FontT105_0x0043 __attribute__(( section(".lower_fonts.FontT105_0x0043") )) = { image_data_FontT105_0x0043, 60, 80};
-static const tImage FontT105_0x0046 __attribute__(( section(".lower_fonts.FontT105_0x0046") )) = { image_data_FontT105_0x0046, 46, 80};
-/*static const tImage FontT105_0x006d __attribute__(( section(".lower_fonts.FontT105_0x006d") )) = { image_data_FontT105_0x006d, 84, 80};*/
-static const tImage FontT105_0x007c __attribute__(( section(".lower_fonts.FontT105_0x007c") )) = { image_data_FontT105_0x007c, 52, 80};
-static const tImage FontT105_0x00ba __attribute__(( section(".lower_fonts.FontT105_0x00ba") )) = { image_data_FontT105_0x00ba, 36, 80};
-static const tImage FontT105_54_0x006d __attribute__(( section(".lower_fonts.FontT105_54_0x006d") )) = { image_data_FontT105_54_0x006d, 45, 42};
-static const tImage FontT105_54_0x0068 __attribute__(( section(".lower_fonts.FontT105_54_0x0068") )) = { image_data_FontT54_0x0068, 28, 42};
+static const tImage FontT105_0x0022 __attribute__(( section(".upper_fonts.FontT105_0x0022") )) = { image_data_FontT105_0x0022, 31, 80};
+static const tImage FontT105_0x0025 __attribute__(( section(".upper_fonts.FontT105_0x0025") )) = { image_data_FontT105_0x0025, 60, 80};
+static const tImage FontT105_0x0027 __attribute__(( section(".upper_fonts.FontT105_0x0027") )) = { image_data_FontT105_0x0027, 14, 80};
+static const tImage FontT105_0x002a __attribute__(( section(".upper_fonts.FontT105_0x002a") )) = { image_data_FontT105_0x002a, 36, 80};
+static const tImage FontT105_0x002d __attribute__(( section(".upper_fonts.FontT105_0x002d") )) = { image_data_FontT105_0x002d, 36, 80};
+static const tImage FontT105_0x002e __attribute__(( section(".upper_fonts.FontT105_0x002e") )) = { image_data_FontT105_0x002e, 36, 80};
+static const tImage FontT105_0x002f __attribute__(( section(".upper_fonts.FontT105_0x002f") )) = { image_data_FontT105_0x002f, 52, 80};
+static const tImage FontT105_0x0030 __attribute__(( section(".upper_fonts.FontT105_0x0030") )) = { image_data_FontT105_0x0030, 52, 80};
+static const tImage FontT105_0x0031 __attribute__(( section(".upper_fonts.FontT105_0x0031") )) = { image_data_FontT105_0x0031, 52, 80};
+static const tImage FontT105_0x0032 __attribute__(( section(".upper_fonts.FontT105_0x0032") )) = { image_data_FontT105_0x0032, 52, 80};
+static const tImage FontT105_0x0033 __attribute__(( section(".upper_fonts.FontT105_0x0033") )) = { image_data_FontT105_0x0033, 52, 80};
+static const tImage FontT105_0x0034 __attribute__(( section(".upper_fonts.FontT105_0x0034") )) = { image_data_FontT105_0x0034, 52, 80};
+static const tImage FontT105_0x0035 __attribute__(( section(".upper_fonts.FontT105_0x0035") )) = { image_data_FontT105_0x0035, 52, 80};
+static const tImage FontT105_0x0036 __attribute__(( section(".upper_fonts.FontT105_0x0036") )) = { image_data_FontT105_0x0036, 52, 80};
+static const tImage FontT105_0x0037 __attribute__(( section(".upper_fonts.FontT105_0x0037") )) = { image_data_FontT105_0x0037, 52, 80};
+static const tImage FontT105_0x0038 __attribute__(( section(".upper_fonts.FontT105_0x0038") )) = { image_data_FontT105_0x0038, 52, 80};
+static const tImage FontT105_0x0039 __attribute__(( section(".upper_fonts.FontT105_0x0039") )) = { image_data_FontT105_0x0039, 52, 80};
+static const tImage FontT105_0x003a __attribute__(( section(".upper_fonts.FontT105_0x003a") )) = { image_data_FontT105_0x003a, 36, 80};
+static const tImage FontT105_0x003c __attribute__(( section(".upper_fonts.FontT105_0x003c") )) = { image_data_FontT105_0x003c, 52, 80};
+static const tImage FontT105_0x003e __attribute__(( section(".upper_fonts.FontT105_0x003e") )) = { image_data_FontT105_0x003e, 52, 80};
+static const tImage FontT105_0x0043 __attribute__(( section(".upper_fonts.FontT105_0x0043") )) = { image_data_FontT105_0x0043, 60, 80};
+static const tImage FontT105_0x0046 __attribute__(( section(".upper_fonts.FontT105_0x0046") )) = { image_data_FontT105_0x0046, 46, 80};
+/*static const tImage FontT105_0x006d __attribute__(( section(".upper_fonts.FontT105_0x006d") )) = { image_data_FontT105_0x006d, 84, 80};*/
+static const tImage FontT105_0x007c __attribute__(( section(".upper_fonts.FontT105_0x007c") )) = { image_data_FontT105_0x007c, 52, 80};
+static const tImage FontT105_0x00ba __attribute__(( section(".upper_fonts.FontT105_0x00ba") )) = { image_data_FontT105_0x00ba, 36, 80};
+static const tImage FontT105_54_0x006d __attribute__(( section(".upper_fonts.FontT105_54_0x006d") )) = { image_data_FontT105_54_0x006d, 45, 42};
+static const tImage FontT105_54_0x0068 __attribute__(( section(".upper_fonts.FontT105_54_0x0068") )) = { image_data_FontT54_0x0068, 28, 42};
 
 /* 0x0818e29d könnte es weitergehen */
 
-static const tChar FontT105_array[] __attribute__(( section(".lower_fonts.FontT105_array") )) = {
+static const tChar FontT105_array[] __attribute__(( section(".upper_fonts.FontT105_array") )) = {
 
   // character: '"'
   {0x0022, &FontT105_0x0022},
@@ -1500,4 +1500,4 @@ static const tChar FontT105_array[] __attribute__(( section(".lower_fonts.FontT1
   {0x0060, &FontT105_0x00ba}
 };
 
-const tFont FontT105 UPPER_FONT_DIRECTORY = { 25, FontT105_array, 15, 52, 80};
+const tFont FontT105 __attribute__ (( used, section(".upper_font_directory.FontT105") )) = { 25, FontT105_array, 15, 52, 80};
