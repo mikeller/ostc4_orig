@@ -69,7 +69,7 @@ HAL_StatusTypeDef MX_I2C1_Init(void)
 {
 	I2cHandle.Instance             = I2Cx;
   I2cHandle.Init.AddressingMode  = I2C_ADDRESSINGMODE_7BIT;
-  I2cHandle.Init.ClockSpeed      = 100000;//400000;
+  I2cHandle.Init.ClockSpeed      = 400000;//400000;
   I2cHandle.Init.DualAddressMode = I2C_DUALADDRESS_DISABLED;
   I2cHandle.Init.DutyCycle       = I2C_DUTYCYCLE_16_9;
   I2cHandle.Init.GeneralCallMode = I2C_GENERALCALL_DISABLED;
@@ -79,6 +79,8 @@ HAL_StatusTypeDef MX_I2C1_Init(void)
 	global.dataSendToSlaveStopEval = 1;
 
 	global.I2C_SystemStatus = HAL_I2C_Init(&I2cHandle);
+	HAL_I2CEx_AnalogFilter_Config(&I2cHandle, I2C_ANALOGFILTER_ENABLED);
+
 
 	global.dataSendToSlaveStopEval = 0;
 	if(global.dataSendToSlavePending)

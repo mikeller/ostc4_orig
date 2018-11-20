@@ -406,7 +406,8 @@ uint16_t schedule_update_timer_helper(int8_t thisSeconds)
   */
 void schedule_check_resync(void)
 {
-	if((global.check_sync_not_running >= 10) || (global.dataSendToSlaveIsNotValidCount >= 2))
+	//TODO: (kittz) test for stability
+	if((global.check_sync_not_running >= 10))
 	{
 		global.dataSendToSlaveIsNotValidCount = 0;
 		global.check_sync_not_running = 0;
