@@ -327,6 +327,7 @@ uint8_t DataEX_call(void)
 //HAL_GPIO_WritePin(OSCILLOSCOPE2_GPIO_PORT,OSCILLOSCOPE2_PIN,GPIO_PIN_RESET); /* only for testing with Oscilloscope */
 
 	SPI_DMA_answer = HAL_SPI_TransmitReceive_DMA(&cpu2DmaSpi, (uint8_t *)&dataOut, (uint8_t *)&dataIn, EXCHANGE_BUFFERSIZE+1);
+	HAL_Delay(3);
 	if(SPI_DMA_answer != HAL_OK)
     DataEX_Error_Handler(SPI_DMA_answer);
 //HAL_Delay(3);
@@ -334,6 +335,31 @@ uint8_t DataEX_call(void)
 
 	return 1;
 }
+
+
+uint32_t SPI_CALLBACKS;
+uint32_t get_num_SPI_CALLBACKS(void){
+	return SPI_CALLBACKS;
+}
+
+SDataExchangeSlaveToMaster* get_dataInPointer(void){
+	return &dataIn;
+}
+
+
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+
+
+	if(hspi == &cpu2DmaSpi)
+	{
+		SPI_CALLBACKS+=1;
+	}
+}
+
+
+
+
 
 void DateEx_copy_to_dataOut(void)
 {

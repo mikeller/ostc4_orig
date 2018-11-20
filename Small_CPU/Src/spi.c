@@ -82,7 +82,7 @@ uint8_t SPI3_ButtonAdjust(uint8_t *arrayInput, uint8_t *arrayOutput)
 			arrayInput[i] = 0xFE;
 		if(arrayInput[i] >= 15)
 		{
-			// copy - auslöse-schwelle
+			// copy - auslï¿½se-schwelle
 			rework[i+1] = arrayInput[i];
 			// wieder-scharf-schalte-schwelle
 			rework[i+3+1] = arrayInput[i] - 10;
@@ -90,14 +90,14 @@ uint8_t SPI3_ButtonAdjust(uint8_t *arrayInput, uint8_t *arrayOutput)
 		else
 		if(arrayInput[i] >= 10)
 		{
-			// copy - auslöse-schwelle
+			// copy - auslï¿½se-schwelle
 			rework[i+1] = arrayInput[i];
 			// wieder-scharf-schalte-schwelle
 			rework[i+3+1] = arrayInput[i] - 5;
 		}
 		else
 		{
-			// copy - auslöse-schwelle
+			// copy - auslï¿½se-schwelle
 			rework[i+1] = 7;
 			// wieder-scharf-schalte-schwelle
 			rework[i+3+1] = 6;
@@ -339,6 +339,10 @@ void SPI_Start_single_TxRx_with_Master(void)
 
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
+	/* restart SPI */
+if(hspi == &hspi1)
+	{
+
 	global.check_sync_not_running = 0;
 	/* stop data exchange? */
 	if(global.mode == MODE_SHUTDOWN)
@@ -353,41 +357,24 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 	/* data consistent? */
 	if(SPI_check_header_and_footer_ok())
 	{
-		GPIO_new_DEBUG_HIGH();
+//		GPIO_new_DEBUG_HIGH(); //For debug.
 		global.dataSendToSlaveIsValid = 1;
 		global.dataSendToSlaveIsNotValidCount = 0;
 	}
 	else
 	{
-		GPIO_new_DEBUG_LOW();
+//		GPIO_new_DEBUG_LOW(); //For debug.
 		global.dataSendToSlaveIsValid = 0;
 		global.dataSendToSlaveIsNotValidCount++;
 	}
 	global.dataSendToMaster.power_on_reset = 0;
 	global.deviceDataSendToMaster.power_on_reset = 0;
-	/* no i2c or other time critical threads? */
-	if(global.dataSendToSlaveIsValid)
-	{
-		if(!global.dataSendToSlaveStopEval)
+	if(!global.dataSendToSlaveStopEval)
 		{
-			scheduleSpecial_Evaluate_DataSendToSlave();
+		scheduleSpecial_Evaluate_DataSendToSlave();
 		}
-		else
-		{
-			global.dataSendToSlavePending = 1;
-		}
-	}
-	else
-	{
-		global.dataSendToSlavePending = 0;
-	}
-	
-	/* restart SPI */
-	if(hspi == &hspi1)
-	{
-		if(global.dataSendToSlaveIsValid)
-			SPI_Start_single_TxRx_with_Master();
-	}
+	SPI_Start_single_TxRx_with_Master();
+  }
 }
 
 
@@ -415,9 +402,10 @@ static uint8_t SPI_check_header_and_footer_ok(void)
 
 static void SPI_Error_Handler(void)
 {
-  while(1)
-  {
-  }
+	//The device is locks. Hard to recover.
+//  while(1)
+//  {
+//  }
 }
 
 /**
