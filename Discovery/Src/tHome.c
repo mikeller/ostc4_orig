@@ -455,11 +455,8 @@ uint8_t tHome_show_lost_connection_count(GFX_DrawCfgScreen *ScreenToWriteOn)
     snprintf(text,10,"\002%X%X%X%X",dataIn->footer.checkCode[0],dataIn->footer.checkCode[1],dataIn->footer.checkCode[2],dataIn->footer.checkCode[3]);
     Gfx_write_label_var(ScreenToWriteOn,  600,800, 60,&FontT24,CLUT_ButtonSymbols,text);
 
-    snprintf(text,10,"---");
-       Gfx_write_label_var(ScreenToWriteOn,  600,800, 90,&FontT24,CLUT_ButtonSymbols,text);
-
-       snprintf(text,10,"cpt:\002%i",get_num_SPI_CALLBACKS());
-          Gfx_write_label_var(ScreenToWriteOn,  600,800, 120,&FontT24,CLUT_ButtonSymbols,text);
+    snprintf(text,10,"cpt:\002%i",get_num_SPI_CALLBACKS());
+    Gfx_write_label_var(ScreenToWriteOn,  600,800, 90,&FontT24,CLUT_ButtonSymbols,text);
 
 //    snprintf(text,10,"i2c:\002%i",get_DataEX_Error_place());
 //    Gfx_write_label_var(ScreenToWriteOn,  600,800, 90,&FontT24,CLUT_ButtonSymbols,text);

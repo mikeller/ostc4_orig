@@ -369,9 +369,10 @@ if(hspi == &hspi1)
 	}
 	global.dataSendToMaster.power_on_reset = 0;
 	global.deviceDataSendToMaster.power_on_reset = 0;
-	if(!global.dataSendToSlaveStopEval)
+	if(global.dataUpdateIsNeeded)
 		{
 		scheduleSpecial_Evaluate_DataSendToSlave();
+		global.dataUpdateIsNeeded=0;
 		}
 	SPI_Start_single_TxRx_with_Master();
   }
