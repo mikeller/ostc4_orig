@@ -297,12 +297,10 @@ void scheduleSpecial_Evaluate_DataSendToSlave(void)
 	copyBatteryData();
 	copyDeviceData();
 	copyVpmCrushingData();
-	scheduleUpdateDeviceData();
-
-
-
 
 	deviceDataFlashValid = 1;
+	scheduleUpdateDeviceData();
+
 }
 
 
