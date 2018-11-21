@@ -182,8 +182,44 @@ void initGlobals(void)
 void scheduleSpecial_Evaluate_DataSendToSlave(void)
 {
 
+	/* for device data updates */
+		deviceDataFlashValid = 0;
+		memcpy(&DeviceDataFlash, &global.dataSendToSlave.data.DeviceData, sizeof(SDevice));
 
-	global.dataSendToSlavePending = 0;
+		//TODO: (kittz) split by current mode.
+
+		// new hw 170523
+		if(global.I2C_SystemStatus != HAL_OK)
+		{
+		 MX_I2C1_TestAndClear();
+		 MX_I2C1_Init();
+		 if(!is_init_pressure_done())
+		 {
+			 init_pressure();
+		 }
+		}
+
+		pressure_update();
+		copyPressureData();
+		compass_read();
+		acceleration_read();
+		compass_calc();
+		battery_gas_gauge_get_data();
+		copyCompassData();
+
+		copyCnsAndOtuData();
+		copyTimeData();
+		copyBatteryData();
+		copyDeviceData();
+		copyVpmCrushingData();
+
+		deviceDataFlashValid = 1;
+		scheduleUpdateDeviceData();
+
+
+
+
+//	global.dataSendToSlavePending = 0;
 //	if(!global.dataSendToSlaveIsValid)		return; //TODO: WHAT THE FUCK?????!!!!!
 	
 	global.dataSendToMaster.confirmRequest.uw = 0;
@@ -267,39 +303,6 @@ void scheduleSpecial_Evaluate_DataSendToSlave(void)
 	/* for simulation / testing */
 	global.ceiling_from_main_CPU_mbar	= global.dataSendToSlave.data.ambient_pressure_mbar_ceiling;
 	
-	/* for device data updates */
-	deviceDataFlashValid = 0;
-	memcpy(&DeviceDataFlash, &global.dataSendToSlave.data.DeviceData, sizeof(SDevice));
-
-	//TODO: (kittz) split by current mode.
-
-	// new hw 170523
-	if(global.I2C_SystemStatus != HAL_OK)
-	{
-	 MX_I2C1_TestAndClear();
-	 MX_I2C1_Init();
-	 if(!is_init_pressure_done())
-	 {
-		 init_pressure();
-	 }
-	}
-
-	pressure_update();
-	copyPressureData();
-	compass_read();
-	acceleration_read();
-	compass_calc();
-	battery_gas_gauge_get_data();
-	copyCompassData();
-
-	copyCnsAndOtuData();
-	copyTimeData();
-	copyBatteryData();
-	copyDeviceData();
-	copyVpmCrushingData();
-
-	deviceDataFlashValid = 1;
-	scheduleUpdateDeviceData();
 
 }
 
@@ -1183,27 +1186,27 @@ void scheduleUpdateDeviceData(void)
 	if(temperature_centigrad_int32 < global.deviceData.temperatureMinimum.value_int32)
 	{
 		global.deviceData.temperatureMinimum.value_int32 = temperature_centigrad_int32;
-		//WTF?		scheduleSetDate(&global.deviceData.temperatureMinimum);
+		/*Last_change_time?*/		scheduleSetDate(&global.deviceData.temperatureMinimum);
 	}
 
 	if(temperature_centigrad_int32 > global.deviceData.temperatureMaximum.value_int32)
 	{
 		global.deviceData.temperatureMaximum.value_int32 = temperature_centigrad_int32;
-		//WTF?		scheduleSetDate(&global.deviceData.temperatureMaximum);
+		/*Last_change_time?*/		scheduleSetDate(&global.deviceData.temperatureMaximum);
 	}
 
 	pressure_mbar_int32 = (int32_t)get_pressure_mbar();
 	if(pressure_mbar_int32 > global.deviceData.depthMaximum.value_int32)
 	{
 		global.deviceData.depthMaximum.value_int32 = pressure_mbar_int32;
-		//WTF?		scheduleSetDate(&global.deviceData.depthMaximum);
+		/*Last_change_time?*/		scheduleSetDate(&global.deviceData.depthMaximum);
 	}
 	
 	voltage_mvolt_int32 = (int32_t)(get_voltage() * 1000);
 	if(voltage_mvolt_int32 < global.deviceData.voltageMinimum.value_int32)
 	{
 		global.deviceData.voltageMinimum.value_int32 = voltage_mvolt_int32;
-		//WTF?		scheduleSetDate(&global.deviceData.voltageMinimum);
+		/*Last_change_time?*/		scheduleSetDate(&global.deviceData.voltageMinimum);
 	}
 
 	/* third step, counter */
@@ -1230,14 +1233,14 @@ void scheduleUpdateDeviceData(void)
 void scheduleUpdateDeviceDataChargerFull(void)
 {
 	global.deviceData.batteryChargeCompleteCycles.value_int32++;
-//WTF?		scheduleSetDate(&global.deviceData.batteryChargeCompleteCycles);
+	/*Last_change_time?*/		scheduleSetDate(&global.deviceData.batteryChargeCompleteCycles);
 }
 
 
 void scheduleUpdateDeviceDataChargerCharging(void)
 {
 	global.deviceData.batteryChargeCycles.value_int32++;
-//WTF?		scheduleSetDate(&global.deviceData.batteryChargeCycles);
+	/*Last_change_time?*/		scheduleSetDate(&global.deviceData.batteryChargeCycles);
 }
 
 

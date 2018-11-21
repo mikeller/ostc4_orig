@@ -306,8 +306,8 @@ uint8_t DataEX_call(void)
 	uint8_t SPI_DMA_answer = 0;
 	
 	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_SET);
-	delayMicros(10);
-
+	delayMicros(50); //~exchange time(+20% reserve)
+	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
 	/* one cycle with NotChipSelect true to clear slave spi buffer */
 
 	if(data_old__lost_connection_to_slave_counter_temp >= 3)
@@ -315,10 +315,10 @@ uint8_t DataEX_call(void)
 		data_old__lost_connection_to_slave_counter_temp = 0;
 		data_old__lost_connection_to_slave_counter_retry++;
 	}
-	else
-	{
-		HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
-	}
+//	else
+//	{
+//		HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
+//	}
 
 	DataEx_call_helper_requests();
 
@@ -327,7 +327,7 @@ uint8_t DataEX_call(void)
 //HAL_GPIO_WritePin(OSCILLOSCOPE2_GPIO_PORT,OSCILLOSCOPE2_PIN,GPIO_PIN_RESET); /* only for testing with Oscilloscope */
 
 	SPI_DMA_answer = HAL_SPI_TransmitReceive_DMA(&cpu2DmaSpi, (uint8_t *)&dataOut, (uint8_t *)&dataIn, EXCHANGE_BUFFERSIZE+1);
-	HAL_Delay(3);
+//	HAL_Delay(3);
 	if(SPI_DMA_answer != HAL_OK)
     DataEX_Error_Handler(SPI_DMA_answer);
 //HAL_Delay(3);

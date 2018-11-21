@@ -55,7 +55,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
 {
     .versionFirst   = 1,
     .versionSecond 	= 4,
-    .versionThird   = 3,
+    .versionThird   = 5,
     .versionBeta    = 0,
 
     /* 4 bytes with trailing 0 */
