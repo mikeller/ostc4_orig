@@ -272,11 +272,35 @@ void scheduleSpecial_Evaluate_DataSendToSlave(void)
 	memcpy(&DeviceDataFlash, &global.dataSendToSlave.data.DeviceData, sizeof(SDevice));
 
 	//TODO: (kittz) split by current mode.
+
+	// new hw 170523
+	if(global.I2C_SystemStatus != HAL_OK)
+	{
+	 MX_I2C1_TestAndClear();
+	 MX_I2C1_Init();
+	 if(!is_init_pressure_done())
+	 {
+		 init_pressure();
+	 }
+	}
+
+	pressure_update();
+	copyPressureData();
+	compass_read();
+	acceleration_read();
+	compass_calc();
+	battery_gas_gauge_get_data();
+	copyCompassData();
+
 	copyCnsAndOtuData();
 	copyTimeData();
 	copyBatteryData();
 	copyDeviceData();
 	copyVpmCrushingData();
+	scheduleUpdateDeviceData();
+
+
+
 
 	deviceDataFlashValid = 1;
 }
@@ -486,8 +510,8 @@ void scheduleDiveMode(void)
 		if(ticksdiff >= counterPressure100msec * 100 + 20)
 		{
 				global.check_sync_not_running++;
-				pressure_update();
-				scheduleUpdateDeviceData();
+//				pressure_update();
+//				scheduleUpdateDeviceData();
 				if(global.demo_mode)
 				{
 					turbo_seconds = demo_modify_temperature_and_pressure(global.lifeData.dive_time_seconds, counterPressure100msec, global.ceiling_from_main_CPU_mbar);
@@ -518,16 +542,16 @@ void scheduleDiveMode(void)
 //					if(global.demo_mode)
 //						global.lifeData.ascent_rate_meter_per_min /= 4;
 				}
-				copyPressureData();
+//				copyPressureData();
 				counterPressure100msec++;
 		}
 			//evaluate compass data at 50 ms, 150 ms, 250 ms,....
 		if(ticksdiff >= counterCompass100msec * 100 + 50)
 		{
-			compass_read();
-			acceleration_read();
-			compass_calc();
-			copyCompassData();
+//			compass_read();
+//			acceleration_read();
+//			compass_calc();
+//			copyCompassData();
 			counterCompass100msec++;
 		}
 		
@@ -555,7 +579,7 @@ void scheduleDiveMode(void)
 				global.lifeData.ppO2 = decom_calc_ppO2(global.lifeData.pressure_ambient_bar, &global.lifeData.actualGas);
 				decom_oxygen_calculate_cns(&global.lifeData.cns,global.lifeData.ppO2);
 				decom_oxygen_calculate_otu(&global.lifeData.otu,global.lifeData.ppO2);
-				battery_gas_gauge_get_data();
+//				battery_gas_gauge_get_data();
 
 
 				/** counter_exit allows safe exit via button for testing
@@ -632,16 +656,16 @@ void scheduleDiveMode(void)
 //			copyCnsAndOtuData();
 //			copyBatteryData();
 
-			// new hw 170523
-			if(global.I2C_SystemStatus != HAL_OK)
-			{
-				MX_I2C1_TestAndClear();
-				MX_I2C1_Init();
-				if(!is_init_pressure_done())
-				{
-					init_pressure();
-				}
-			}
+//			// new hw 170523
+//			if(global.I2C_SystemStatus != HAL_OK)
+//			{
+//				MX_I2C1_TestAndClear();
+//				MX_I2C1_Init();
+//				if(!is_init_pressure_done())
+//				{
+//					init_pressure();
+//				}
+//			}
 			
 			counterCompass100msec = 0;
 			counterPressure100msec = 0;
@@ -696,10 +720,10 @@ void scheduleTestMode(void)
 		{
 				global.check_sync_not_running++;
 
-pressure_update();
-scheduleUpdateDeviceData();
+//pressure_update();
+//scheduleUpdateDeviceData();
 global.lifeData.ascent_rate_meter_per_min = 0;
-copyPressureData();
+//copyPressureData();
 
 				if(temperature_carousel > 20.0f)
 				{
@@ -778,10 +802,10 @@ void scheduleSurfaceMode(void)
 		if(ticksdiff >= counterPressure100msec * 100 + 20)
 		{
 				global.check_sync_not_running++;
-				pressure_update();
-				scheduleUpdateDeviceData();
+//				pressure_update();
+//				scheduleUpdateDeviceData();
 				global.lifeData.ascent_rate_meter_per_min = 0;
-				copyPressureData();
+//				copyPressureData();
 				counterPressure100msec++;
 				
 				if(scheduleCheck_pressure_reached_dive_mode_level())
@@ -792,10 +816,10 @@ void scheduleSurfaceMode(void)
 
 		if(ticksdiff >= counterCompass100msec * 100 + 50)
 		{
-			compass_read();
-			acceleration_read();
-			compass_calc();
-			copyCompassData();
+//			compass_read();
+//			acceleration_read();
+//			compass_calc();
+//			copyCompassData();
 			counterCompass100msec++;
 		}
 
@@ -848,23 +872,23 @@ void scheduleSurfaceMode(void)
 			decom_oxygen_calculate_cns_degrade(&global.lifeData.cns, global.seconds_since_last_dive);
 			global.lifeData.desaturation_time_minutes = decom_calc_desaturation_time(global.lifeData.tissue_nitrogen_bar,global.lifeData.tissue_helium_bar,global.lifeData.pressure_surface_bar);
 			battery_charger_get_status_and_contral_battery_gas_gauge(0);
-			battery_gas_gauge_get_data();
+//			battery_gas_gauge_get_data();
 			
 //			copyCnsAndOtuData();
 //			copyTimeData();
 //			copyBatteryData();
 //			copyDeviceData();
 
-			// new hw 170523
-			if(global.I2C_SystemStatus != HAL_OK)
-			{
-				MX_I2C1_TestAndClear();
-				MX_I2C1_Init();
-				if(!is_init_pressure_done())
-				{
-					init_pressure();
-				}
-			}
+//			// new hw 170523
+//			if(global.I2C_SystemStatus != HAL_OK)
+//			{
+//				MX_I2C1_TestAndClear();
+//				MX_I2C1_Init();
+//				if(!is_init_pressure_done())
+//				{
+//					init_pressure();
+//				}
+//			}
 			
 			counterCompass100msec = 0;
 			counterPressure100msec = 0;

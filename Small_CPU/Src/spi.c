@@ -140,7 +140,7 @@ void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity 				= SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase 					= SPI_PHASE_1EDGE;
   hspi1.Init.NSS 								= SPI_NSS_HARD_INPUT;//SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler	= SPI_BAUDRATEPRESCALER_128;
+  hspi1.Init.BaudRatePrescaler	= SPI_BAUDRATEPRESCALER_64;
   hspi1.Init.FirstBit 					= SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode 						= SPI_TIMODE_DISABLED;
   hspi1.Init.CRCCalculation 		= SPI_CRCCALCULATION_DISABLED;//_DISABLED; _ENABLED;
@@ -188,7 +188,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
 		hdma_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
 		hdma_tx.Init.MemDataAlignment    = DMA_MDATAALIGN_BYTE;
 		hdma_tx.Init.Mode                = DMA_NORMAL;
-		hdma_tx.Init.Priority            = DMA_PRIORITY_LOW;
+		hdma_tx.Init.Priority            = DMA_PRIORITY_VERY_HIGH;
 		hdma_tx.Init.FIFOMode            = DMA_FIFOMODE_DISABLE;         
 		hdma_tx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
 		hdma_tx.Init.MemBurst            = DMA_MBURST_INC4;
@@ -369,11 +369,11 @@ if(hspi == &hspi1)
 	}
 	global.dataSendToMaster.power_on_reset = 0;
 	global.deviceDataSendToMaster.power_on_reset = 0;
-	if(global.dataUpdateIsNeeded)
-		{
-		scheduleSpecial_Evaluate_DataSendToSlave();
-		global.dataUpdateIsNeeded=0;
-		}
+//	if(global.dataUpdateIsNeeded)
+//		{
+	scheduleSpecial_Evaluate_DataSendToSlave();
+//		global.dataUpdateIsNeeded=0;
+//		}
 	SPI_Start_single_TxRx_with_Master();
   }
 }
