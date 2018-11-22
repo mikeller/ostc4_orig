@@ -53,7 +53,7 @@ typedef struct
 	_Bool demo_mode;
 	uint8_t dataSendToSlaveIsValid;
 	uint8_t dataSendToSlavePending;
-	uint8_t dataUpdateIsNeeded;
+	uint8_t dataSendToSlaveStopEval;
 	uint32_t sync_error_count;
 	uint32_t check_sync_not_running;
 	uint8_t ButtonResponsiveness[4];

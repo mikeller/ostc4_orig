@@ -306,7 +306,7 @@ uint8_t DataEX_call(void)
 	uint8_t SPI_DMA_answer = 0;
 	
 	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_SET);
-	delayMicros(50); //~exchange time(+20% reserve)
+	delayMicros(10); //~exchange time(+20% reserve)
 	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
 	/* one cycle with NotChipSelect true to clear slave spi buffer */
 

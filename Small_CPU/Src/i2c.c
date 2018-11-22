@@ -76,16 +76,17 @@ HAL_StatusTypeDef MX_I2C1_Init(void)
   I2cHandle.Init.NoStretchMode   = I2C_NOSTRETCH_DISABLED;
   I2cHandle.Init.OwnAddress1     = 0x01;
   
+	global.dataSendToSlaveStopEval = 1;
 
 	global.I2C_SystemStatus = HAL_I2C_Init(&I2cHandle);
 	HAL_I2CEx_AnalogFilter_Config(&I2cHandle, I2C_ANALOGFILTER_ENABLED);
 
 
-//	if(global.dataSendToSlavePending)
-//	{
-//		scheduleSpecial_Evaluate_DataSendToSlave();
-//	}
-	global.dataUpdateIsNeeded = 1;
+	global.dataSendToSlaveStopEval = 0;
+	if(global.dataSendToSlavePending)
+	{
+		scheduleSpecial_Evaluate_DataSendToSlave();
+	}
 	return (HAL_StatusTypeDef)global.I2C_SystemStatus;
 }
 
@@ -109,19 +110,18 @@ HAL_StatusTypeDef I2C_Master_TransmitNoStop(  uint16_t DevAddress, uint8_t *pDat
 	if(global.I2C_SystemStatus != HAL_OK)
 		return (HAL_StatusTypeDef)global.I2C_SystemStatus;
 	
+	global.dataSendToSlaveStopEval = 1;
 	
-
   global.I2C_SystemStatus = HAL_I2C_Master_Transmit(&I2cHandle, DevAddress,  pData, Size, 100 /*FIXME , 0*/);
 	if(global.I2C_SystemStatus != HAL_OK)
 	{
 		I2C_Error_count();
 	}
-
-//	if(global.dataSendToSlavePending)
-//	{
-//		scheduleSpecial_Evaluate_DataSendToSlave();
-//	}
-	global.dataUpdateIsNeeded = 1;
+	global.dataSendToSlaveStopEval = 0;
+	if(global.dataSendToSlavePending)
+	{
+		scheduleSpecial_Evaluate_DataSendToSlave();
+	}
 	return (HAL_StatusTypeDef)global.I2C_SystemStatus;
 }
 
@@ -132,7 +132,7 @@ HAL_StatusTypeDef I2C_Master_Transmit(  uint16_t DevAddress, uint8_t *pData, uin
 		return (HAL_StatusTypeDef)(global.I2C_SystemStatus & 0x03);
 
 	
-
+	global.dataSendToSlaveStopEval = 1;
 
 	global.I2C_SystemStatus = HAL_I2C_Master_Transmit(&I2cHandle, DevAddress,  pData, Size, 100 /*FIXME , 1*/);
 	if(global.I2C_SystemStatus != HAL_OK)
@@ -140,12 +140,12 @@ HAL_StatusTypeDef I2C_Master_Transmit(  uint16_t DevAddress, uint8_t *pData, uin
 		I2C_Error_count();
 	}
 
-//	if(global.dataSendToSlavePending)
-//	{
-//		scheduleSpecial_Evaluate_DataSendToSlave();
-//	}
-//
-	global.dataUpdateIsNeeded = 1;
+	global.dataSendToSlaveStopEval = 0;
+	if(global.dataSendToSlavePending)
+	{
+		scheduleSpecial_Evaluate_DataSendToSlave();
+	}
+	
 	return (HAL_StatusTypeDef)global.I2C_SystemStatus;
 }
 
@@ -157,6 +157,7 @@ HAL_StatusTypeDef I2C_Master_Receive(  uint16_t DevAddress, uint8_t *pData, uint
 
 	uint8_t localHALstatusReturn = 0xFF;
 
+	global.dataSendToSlaveStopEval = 1;
 
   localHALstatusReturn = HAL_I2C_Master_Receive(&I2cHandle, DevAddress,  pData, Size, 100);
 	if(localHALstatusReturn != HAL_OK)
@@ -164,11 +165,11 @@ HAL_StatusTypeDef I2C_Master_Receive(  uint16_t DevAddress, uint8_t *pData, uint
 		I2C_Error_count();
 	}
 
-	global.dataUpdateIsNeeded = 1;
-//	if(global.dataSendToSlavePending)
-//	{
-//		scheduleSpecial_Evaluate_DataSendToSlave();
-//	}
+	global.dataSendToSlaveStopEval = 0;
+	if(global.dataSendToSlavePending)
+	{
+		scheduleSpecial_Evaluate_DataSendToSlave();
+	}
 	return (HAL_StatusTypeDef)localHALstatusReturn;
 }
 

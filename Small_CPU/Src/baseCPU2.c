@@ -387,7 +387,7 @@ int main(void)
             MX_DMA_Init();
             MX_SPI1_Init();
             MX_EXTI_wireless_Init();
-//            SPI_Start_single_TxRx_with_Master();
+            SPI_Start_single_TxRx_with_Master();
             EXTI_Test_Button_Init();
 
             /*
@@ -414,7 +414,7 @@ int main(void)
             MX_DMA_Init();
             MX_SPI1_Init();
 //				MX_EXTI_wireless_Init();
-//            SPI_Start_single_TxRx_with_Master();
+            SPI_Start_single_TxRx_with_Master();
 //				EXTI_Test_Button_Init();
 
             scheduleTestMode();
@@ -496,7 +496,7 @@ int main(void)
             MX_DMA_Init();
             MX_SPI1_Init();
             MX_EXTI_wireless_Init();
-//            SPI_Start_single_TxRx_with_Master();
+            SPI_Start_single_TxRx_with_Master();
 
             // EXTILine0_Button_DeInit(); not now, later after testing
             break;
