@@ -378,48 +378,10 @@ int main(void) {
 			break;
 
 		case MODE_CALIB:
-//            scheduleCompassCalibrationMode();
+            scheduleCompassCalibrationMode();
 			break;
 
 		case MODE_SURFACE:
-
-
-//			uint32_t tickstart = 0;
-//			uint32_t ticksdiff = 0;
-//			uint32_t lasttick = 0;
-//			tickstart = HAL_GetTick();
-//			uint8_t counterPressure100msec = 0;
-//			uint8_t counterCompass100msec = 0;
-//			uint8_t counterAmbientLight100msec = 0;
-//			uint16_t counterWireless1msec = 0;
-//			uint16_t counter1ms=0;
-//			while (global.mode == MODE_SURFACE) {
-//
-//				lasttick = HAL_GetTick();
-//				ticksdiff = time_elapsed_ms(tickstart, lasttick);
-//
-//				if (ticksdiff >= counter1ms) {
-//
-//					global.lifeData.ascent_rate_meter_per_min = 0;
-//					counter1ms++;
-//					if(counter1ms>1000){
-//						counter1ms=0;
-//						global.check_sync_not_running++;
-//
-//					}
-//
-//				}
-//
-//			}
-
-//        	if(global.check_sync_not_running>10){
-//        		SPI_Start_single_TxRx_with_Master();
-//        	}
-//        	schedule_check_resync();
-//        	pressure_update();
-//        	compass_read();
-//        	acceleration_read();
-//        	compass_calc();
 			scheduleSurfaceMode();
 			break;
 
@@ -427,39 +389,39 @@ int main(void) {
 			break;
 
 		case MODE_DIVE:
-//            backup.no_fly_time_minutes = global.no_fly_time_minutes;
-//            backup.seconds_since_last_dive = global.seconds_since_last_dive;
-//
-//            vpm_init( &global.vpm, global.conservatism, global.repetitive_dive,
-//                      global.seconds_since_last_dive );
-//            global.no_fly_time_minutes = 0;
-//            global.lifeData.dive_time_seconds = 0;
-//            global.lifeData.dive_time_seconds_without_surface_time = 0;
-//            scheduleDiveMode();
-//            // done now in scheduler prior to change mode: global.seconds_since_last_dive = 1;
-//
-//            if( global.lifeData.dive_time_seconds > 60 )
-//            {
-//                //No Fly time 60% of desaturationtime after dive
-//                global.no_fly_time_minutes = decom_calc_desaturation_time(
-//                    global.lifeData.tissue_nitrogen_bar,
-//                    global.lifeData.tissue_helium_bar,
-//                    global.lifeData.pressure_surface_bar ) * 60 / 100;
-//                if( global.no_fly_time_minutes < (24 * 60) )
-//                    global.no_fly_time_minutes = 24 * 60;
-//            }
-//            else
-//            {
-//                global.no_fly_time_minutes = backup.no_fly_time_minutes;
-//                global.seconds_since_last_dive = backup.seconds_since_last_dive;
-//            }
-//
-//            global.lifeData.dive_time_seconds = 0;
-//            global.lifeData.dive_time_seconds_without_surface_time = 0;
-//            global.lifeData.counterSecondsShallowDepth = 0;
-//
-//            backup.no_fly_time_minutes = 0;
-//            backup.seconds_since_last_dive = 0;
+            backup.no_fly_time_minutes = global.no_fly_time_minutes;
+            backup.seconds_since_last_dive = global.seconds_since_last_dive;
+
+            vpm_init( &global.vpm, global.conservatism, global.repetitive_dive,
+                      global.seconds_since_last_dive );
+            global.no_fly_time_minutes = 0;
+            global.lifeData.dive_time_seconds = 0;
+            global.lifeData.dive_time_seconds_without_surface_time = 0;
+            scheduleDiveMode();
+            // done now in scheduler prior to change mode: global.seconds_since_last_dive = 1;
+
+            if( global.lifeData.dive_time_seconds > 60 )
+            {
+                //No Fly time 60% of desaturationtime after dive
+                global.no_fly_time_minutes = decom_calc_desaturation_time(
+                    global.lifeData.tissue_nitrogen_bar,
+                    global.lifeData.tissue_helium_bar,
+                    global.lifeData.pressure_surface_bar ) * 60 / 100;
+                if( global.no_fly_time_minutes < (24 * 60) )
+                    global.no_fly_time_minutes = 24 * 60;
+            }
+            else
+            {
+                global.no_fly_time_minutes = backup.no_fly_time_minutes;
+                global.seconds_since_last_dive = backup.seconds_since_last_dive;
+            }
+
+            global.lifeData.dive_time_seconds = 0;
+            global.lifeData.dive_time_seconds_without_surface_time = 0;
+            global.lifeData.counterSecondsShallowDepth = 0;
+
+            backup.no_fly_time_minutes = 0;
+            backup.seconds_since_last_dive = 0;
 			break;
 
 		case MODE_SHUTDOWN:

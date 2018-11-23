@@ -181,7 +181,7 @@ void initGlobals(void)
 
 void scheduleSpecial_Evaluate_DataSendToSlave(void)
 {
-	schedule_check_resync();
+
 	global.dataSendToSlavePending = 0;
 	if(!global.dataSendToSlaveIsValid) return;
 	
@@ -284,22 +284,22 @@ void scheduleSpecial_Evaluate_DataSendToSlave(void)
 
 
 //	pressure_update();
-
+//
 //	compass_read();
 //	acceleration_read();
 //	compass_calc();
-
-
-//	copyPressureData();
-//	battery_gas_gauge_get_data();
-//	if(global.mode==MODE_CALIB)copyCompassData();
-//	copyCnsAndOtuData();
-//	copyTimeData();
-//	copyBatteryData();
-//	copyDeviceData();
-//	copyVpmCrushingData();
-//	deviceDataFlashValid = 1;
-//	scheduleUpdateDeviceData();
+//
+//
+	copyPressureData();
+	battery_gas_gauge_get_data();
+	if(global.mode==MODE_CALIB)copyCompassData();
+	copyCnsAndOtuData();
+	copyTimeData();
+	copyBatteryData();
+	copyDeviceData();
+	copyVpmCrushingData();
+//
+	scheduleUpdateDeviceData();
 
 
 }
