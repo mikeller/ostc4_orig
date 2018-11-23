@@ -520,6 +520,7 @@ int main(void)
 //  ===============================================================================
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+	DataEX_call();
 #ifdef DEMOMODE
     if(htim->Instance==TIM7)
     {
@@ -556,7 +557,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     case BaseInfo:
         updateSetpointStateUsed();
         DateEx_copy_to_dataOut();
-        DataEX_call();
+//        DataEX_call();
         DataEX_copy_to_LifeData(&modeChange);
 //foto session :-)  stateRealGetPointerWrite()->lifeData.battery_charge = 99;
 //foto session :-)  stateSimGetPointerWrite()->lifeData.battery_charge = 99;
@@ -576,7 +577,7 @@ base_tempLightLevel =			TIM_BACKLIGHT_adjust();
         break;
     case BaseStop:
         DateEx_copy_to_dataOut();
-        DataEX_call();
+//        DataEX_call();
         DataEX_control_connection_while_asking_for_sleep();
         break;
     default:
@@ -584,7 +585,7 @@ base_tempLightLevel =			TIM_BACKLIGHT_adjust();
         if(get_globalState() == StUART_RTECONNECT)
         {
             DateEx_copy_to_dataOut();
-            DataEX_call();
+//            DataEX_call();
             DataEX_copy_to_LifeData(0);
         }
         break;

@@ -153,51 +153,38 @@
 #include "stm32f4xx_hal.h"
 #include <stdio.h>
 
-uint8_t hasExternalClock(void)
-{
-    if( (TM_OTP_Read( 0, 0 ) > 0) && (TM_OTP_Read( 0, 0 ) < 0xFF) )
-        return 1;
-    else
-        return 0;
+uint8_t hasExternalClock(void) {
+	if ((TM_OTP_Read(0, 0) > 0) && (TM_OTP_Read(0, 0) < 0xFF))
+		return 1;
+	else
+		return 0;
 }
 
 // SHALL LOAD AT 0x08000000 + 0x00005000 = 0x08005000.
 // See CPU2-RTE.ld
 const SFirmwareData cpu2_FirmwareData __attribute__(( section(".firmware_data") ))
-    =
-    {
-      .versionFirst = 1,
-      .versionSecond = 5,
-      .versionThird = 2,
-      .versionBeta = 0,
+= { .versionFirst = 1, .versionSecond = 5, .versionThird = 2, .versionBeta = 0,
 
-      /* 4 bytes with trailing 0 */
-      .signature = "mh",
+/* 4 bytes with trailing 0 */
+.signature = "mh",
 
-      .release_year = 18,
-      .release_month = 7,
-      .release_day = 29,
-      .release_sub = 0,
+.release_year = 18, .release_month = 7, .release_day = 29, .release_sub = 0,
 
-      /* max 48 with trailing 0 */
-      //release_info ="12345678901234567890123456789012345678901"
-      .release_info = "compass stuff",
+		/* max 48 with trailing 0 */
+		//release_info ="12345678901234567890123456789012345678901"
+		.release_info = "compass stuff",
 
-      /* for safety reasons and coming functions */
-      .magic[0] = FIRMWARE_MAGIC_FIRST,
-      .magic[1] = FIRMWARE_MAGIC_SECOND,
-      .magic[2] = FIRMWARE_MAGIC_CPU2_RTE, /* the magic byte for RTE */
-      .magic[3] = FIRMWARE_MAGIC_END
-    };
+		/* for safety reasons and coming functions */
+		.magic[0] = FIRMWARE_MAGIC_FIRST, .magic[1] = FIRMWARE_MAGIC_SECOND,
+		.magic[2] = FIRMWARE_MAGIC_CPU2_RTE, /* the magic byte for RTE */
+		.magic[3] = FIRMWARE_MAGIC_END };
 
-uint8_t firmwareVersionHigh(void)
-{
-    return cpu2_FirmwareData.versionFirst;
+uint8_t firmwareVersionHigh(void) {
+	return cpu2_FirmwareData.versionFirst;
 }
 
-uint8_t firmwareVersionLow(void)
-{
-    return cpu2_FirmwareData.versionSecond;
+uint8_t firmwareVersionLow(void) {
+	return cpu2_FirmwareData.versionSecond;
 }
 
 /** @addtogroup OSTC4
@@ -273,10 +260,9 @@ void GPIO_new_DEBUG_HIGH(void);
 
 #define REGULAR_RUN
 
-int __io_putchar(int ch)
-{
-    ITM_SendChar( ch );
-    return ch;
+int __io_putchar(int ch) {
+	ITM_SendChar(ch);
+	return ch;
 }
 
 /* Private functions ---------------------------------------------------------*/
@@ -287,269 +273,280 @@ int __io_putchar(int ch)
  * @retval None
  */
 
-int main(void)
-{
-    HAL_Init();
-    SystemClock_Config();
+int main(void) {
+	HAL_Init();
+	SystemClock_Config();
 
-    HAL_SYSTICK_Config( HAL_RCC_GetHCLKFreq() / 1000 );
-    HAL_SYSTICK_CLKSourceConfig( SYSTICK_CLKSOURCE_HCLK );
-    HAL_NVIC_SetPriority( SysTick_IRQn, 0, 0 );
+	HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq() / 1000);
+	HAL_SYSTICK_CLKSourceConfig( SYSTICK_CLKSOURCE_HCLK);
+	HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 
-    MX_RTC_init();
-    GPIO_LED_Init();
-    GPIO_new_DEBUG_Init(); // added 170322 hw
-    initGlobals();
+	MX_RTC_init();
+	GPIO_LED_Init();
+	GPIO_new_DEBUG_Init(); // added 170322 hw
+	initGlobals();
 
-    printf("CPU2-RTE running...\n");
+	printf("CPU2-RTE running...\n");
 
-    MX_I2C1_Init();
-    if( global.I2C_SystemStatus != HAL_OK )
-    {
-        if( MX_I2C1_TestAndClear() == GPIO_PIN_RESET )
-        {
-            MX_I2C1_TestAndClear(); // do it a second time
-        }
-        MX_I2C1_Init();
-    }
+	MX_I2C1_Init();
+	if (global.I2C_SystemStatus != HAL_OK) {
+		if (MX_I2C1_TestAndClear() == GPIO_PIN_RESET) {
+			MX_I2C1_TestAndClear(); // do it a second time
+		}
+		MX_I2C1_Init();
+	}
 
-    //dangerous:	TM_OTP_Write(0,0, 0x01);
+	//dangerous:	TM_OTP_Write(0,0, 0x01);
 #ifdef REGULAR_RUN
-    global.sensorError[SENSOR_PRESSURE_ID] = init_pressure();
-    global.I2C_SystemStatus = global.sensorError[SENSOR_PRESSURE_ID];
-    if( global.I2C_SystemStatus != HAL_OK )
-    {
-        if( MX_I2C1_TestAndClear() == GPIO_PIN_RESET )
-        {
-            MX_I2C1_TestAndClear(); // do it a second time
-        }
-        MX_I2C1_Init();
-        global.sensorError[SENSOR_PRESSURE_ID] = init_pressure();
-        global.I2C_SystemStatus = global.sensorError[SENSOR_PRESSURE_ID];
-    }
+	global.sensorError[SENSOR_PRESSURE_ID] = init_pressure();
+	global.I2C_SystemStatus = global.sensorError[SENSOR_PRESSURE_ID];
+	if (global.I2C_SystemStatus != HAL_OK) {
+		if (MX_I2C1_TestAndClear() == GPIO_PIN_RESET) {
+			MX_I2C1_TestAndClear(); // do it a second time
+		}
+		MX_I2C1_Init();
+		global.sensorError[SENSOR_PRESSURE_ID] = init_pressure();
+		global.I2C_SystemStatus = global.sensorError[SENSOR_PRESSURE_ID];
+	}
 
-    global.dataSendToMaster.sensorErrors =
-        global.sensorError[SENSOR_PRESSURE_ID];
-    init_surface_ring();
-    init_battery_gas_gauge();
-    HAL_Delay( 10 );
-    battery_gas_gauge_get_data();
+	global.dataSendToMaster.sensorErrors =
+			global.sensorError[SENSOR_PRESSURE_ID];
+	init_surface_ring();
+	init_battery_gas_gauge();
+	HAL_Delay(10);
+	battery_gas_gauge_get_data();
 //	battery_gas_gauge_set(0);
 
-    global.lifeData.battery_voltage = get_voltage();
-    global.lifeData.battery_charge = get_charge();
-    copyBatteryData();
+	global.lifeData.battery_voltage = get_voltage();
+	global.lifeData.battery_charge = get_charge();
+	copyBatteryData();
 
-    MX_SPI3_Init();
-    if( !scheduleSetButtonResponsiveness() )
-    {
-        HAL_Delay( 1 );
-        scheduleSetButtonResponsiveness(); // init
-        HAL_Delay( 1 );
-        if( !scheduleSetButtonResponsiveness() ) // send again, if problem it's not my problem here.
-        {
-            HAL_Delay( 1 );
-            scheduleSetButtonResponsiveness(); // init
-            HAL_Delay( 1 );
-        }
-    }
+	MX_SPI3_Init();
+	if (!scheduleSetButtonResponsiveness()) {
+		HAL_Delay(1);
+		scheduleSetButtonResponsiveness(); // init
+		HAL_Delay(1);
+		if (!scheduleSetButtonResponsiveness()) // send again, if problem it's not my problem here.
+		{
+			HAL_Delay(1);
+			scheduleSetButtonResponsiveness(); // init
+			HAL_Delay(1);
+		}
+	}
 
-    ADCx_Init();
-    GPIO_Power_MainCPU_Init();
-    global.mode = MODE_POWERUP;
+	ADCx_Init();
+	GPIO_Power_MainCPU_Init();
+	global.mode = MODE_POWERUP;
 #else
-    init_pressure();
-    init_surface_ring();
+	init_pressure();
+	init_surface_ring();
 
-    ADCx_Init();
-    GPIO_Power_MainCPU_Init();
-    global.mode = MODE_TEST;
+	ADCx_Init();
+	GPIO_Power_MainCPU_Init();
+	global.mode = MODE_TEST;
 #endif
-    while( 1 )
-    {
-        printf("Global mode = %d\n", global.mode);
+	while (1) {
+		printf("Global mode = %d\n", global.mode);
 
-        switch( global.mode )
-        {
-        case MODE_POWERUP:
-        case MODE_BOOT:
-            //				ReInit_battery_charger_status_pins();
-            compass_init( 0, 7 );
-            accelerator_init();
-            wireless_init();
-            if( global.mode == MODE_BOOT )
-            {
-                GPIO_Power_MainCPU_OFF();
-                HAL_Delay( 100 ); // for GPIO_Power_MainCPU_ON();
-                GPIO_Power_MainCPU_ON();
-            }
-            SPI_synchronize_with_Master();
-            MX_DMA_Init();
-            MX_SPI1_Init();
-            MX_EXTI_wireless_Init();
-            SPI_Start_single_TxRx_with_Master();
-            EXTI_Test_Button_Init();
+		switch (global.mode) {
+		case MODE_POWERUP:
+		case MODE_BOOT:
+			//				ReInit_battery_charger_status_pins();
+			compass_init(0, 7);
+			accelerator_init();
+			wireless_init();
+			if (global.mode == MODE_BOOT) {
+				GPIO_Power_MainCPU_OFF();
+				HAL_Delay(100); // for GPIO_Power_MainCPU_ON();
+				GPIO_Power_MainCPU_ON();
+			}
+			SPI_synchronize_with_Master();
+			MX_DMA_Init();
+			MX_SPI1_Init();
+			MX_EXTI_wireless_Init();
+			SPI_Start_single_TxRx_with_Master();
+			EXTI_Test_Button_Init();
 
-            /*
-             uint8_t dataWireless[64];
-             while(1)
-             {
-             wireless_evaluate_and_debug(dataWireless,64);
-             }
-             */
-            global.mode = MODE_SURFACE;
-            break;
+			/*
+			 uint8_t dataWireless[64];
+			 while(1)
+			 {
+			 wireless_evaluate_and_debug(dataWireless,64);
+			 }
+			 */
+			global.mode = MODE_SURFACE;
+			break;
 
-        case MODE_CALIB:
-            scheduleCompassCalibrationMode();
-            break;
+		case MODE_CALIB:
+//            scheduleCompassCalibrationMode();
+			break;
 
-        case MODE_SURFACE:
-            scheduleSurfaceMode();
-            break;
+		case MODE_SURFACE:
 
-        case MODE_TEST:
-            GPIO_Power_MainCPU_ON();
-            SPI_synchronize_with_Master();
-            MX_DMA_Init();
-            MX_SPI1_Init();
-//				MX_EXTI_wireless_Init();
-            SPI_Start_single_TxRx_with_Master();
-//				EXTI_Test_Button_Init();
 
-            scheduleTestMode();
-            break;
+//			uint32_t tickstart = 0;
+//			uint32_t ticksdiff = 0;
+//			uint32_t lasttick = 0;
+//			tickstart = HAL_GetTick();
+//			uint8_t counterPressure100msec = 0;
+//			uint8_t counterCompass100msec = 0;
+//			uint8_t counterAmbientLight100msec = 0;
+//			uint16_t counterWireless1msec = 0;
+//			uint16_t counter1ms=0;
+//			while (global.mode == MODE_SURFACE) {
+//
+//				lasttick = HAL_GetTick();
+//				ticksdiff = time_elapsed_ms(tickstart, lasttick);
+//
+//				if (ticksdiff >= counter1ms) {
+//
+//					global.lifeData.ascent_rate_meter_per_min = 0;
+//					counter1ms++;
+//					if(counter1ms>1000){
+//						counter1ms=0;
+//						global.check_sync_not_running++;
+//
+//					}
+//
+//				}
+//
+//			}
 
-        case MODE_DIVE:
-            backup.no_fly_time_minutes = global.no_fly_time_minutes;
-            backup.seconds_since_last_dive = global.seconds_since_last_dive;
+//        	if(global.check_sync_not_running>10){
+//        		SPI_Start_single_TxRx_with_Master();
+//        	}
+//        	schedule_check_resync();
+//        	pressure_update();
+//        	compass_read();
+//        	acceleration_read();
+//        	compass_calc();
+			scheduleSurfaceMode();
+			break;
 
-            vpm_init( &global.vpm, global.conservatism, global.repetitive_dive,
-                      global.seconds_since_last_dive );
-            global.no_fly_time_minutes = 0;
-            global.lifeData.dive_time_seconds = 0;
-            global.lifeData.dive_time_seconds_without_surface_time = 0;
-            scheduleDiveMode();
-            // done now in scheduler prior to change mode: global.seconds_since_last_dive = 1;
+		case MODE_TEST:
+			break;
 
-            if( global.lifeData.dive_time_seconds > 60 )
-            {
-                //No Fly time 60% of desaturationtime after dive
-                global.no_fly_time_minutes = decom_calc_desaturation_time(
-                    global.lifeData.tissue_nitrogen_bar,
-                    global.lifeData.tissue_helium_bar,
-                    global.lifeData.pressure_surface_bar ) * 60 / 100;
-                if( global.no_fly_time_minutes < (24 * 60) )
-                    global.no_fly_time_minutes = 24 * 60;
-            }
-            else
-            {
-                global.no_fly_time_minutes = backup.no_fly_time_minutes;
-                global.seconds_since_last_dive = backup.seconds_since_last_dive;
-            }
+		case MODE_DIVE:
+//            backup.no_fly_time_minutes = global.no_fly_time_minutes;
+//            backup.seconds_since_last_dive = global.seconds_since_last_dive;
+//
+//            vpm_init( &global.vpm, global.conservatism, global.repetitive_dive,
+//                      global.seconds_since_last_dive );
+//            global.no_fly_time_minutes = 0;
+//            global.lifeData.dive_time_seconds = 0;
+//            global.lifeData.dive_time_seconds_without_surface_time = 0;
+//            scheduleDiveMode();
+//            // done now in scheduler prior to change mode: global.seconds_since_last_dive = 1;
+//
+//            if( global.lifeData.dive_time_seconds > 60 )
+//            {
+//                //No Fly time 60% of desaturationtime after dive
+//                global.no_fly_time_minutes = decom_calc_desaturation_time(
+//                    global.lifeData.tissue_nitrogen_bar,
+//                    global.lifeData.tissue_helium_bar,
+//                    global.lifeData.pressure_surface_bar ) * 60 / 100;
+//                if( global.no_fly_time_minutes < (24 * 60) )
+//                    global.no_fly_time_minutes = 24 * 60;
+//            }
+//            else
+//            {
+//                global.no_fly_time_minutes = backup.no_fly_time_minutes;
+//                global.seconds_since_last_dive = backup.seconds_since_last_dive;
+//            }
+//
+//            global.lifeData.dive_time_seconds = 0;
+//            global.lifeData.dive_time_seconds_without_surface_time = 0;
+//            global.lifeData.counterSecondsShallowDepth = 0;
+//
+//            backup.no_fly_time_minutes = 0;
+//            backup.seconds_since_last_dive = 0;
+			break;
 
-            global.lifeData.dive_time_seconds = 0;
-            global.lifeData.dive_time_seconds_without_surface_time = 0;
-            global.lifeData.counterSecondsShallowDepth = 0;
+		case MODE_SHUTDOWN:
+			HAL_Delay(200);
+			global.mode = MODE_SLEEP;
+			MX_SPI3_Init();
+			break;
 
-            backup.no_fly_time_minutes = 0;
-            backup.seconds_since_last_dive = 0;
-            break;
+		case MODE_SLEEP:
+			/*
+			 sleep_prepare();
+			 scheduleSleepMode_test();
+			 */
+			/*
+			 GPIO_Power_MainCPU_OFF();
+			 EXTI_Test_Button_DeInit();
+			 EXTI_Wakeup_Button_Init();
+			 NOT_USED_AT_THE_MOMENT_scheduleSleepMode();
+			 */
+			EXTI_Test_Button_DeInit();
+			MX_EXTI_wireless_DeInit();
+			if (hasExternalClock())
+				SystemClock_Config_HSI();
+			sleep_prepare();
 
-        case MODE_SHUTDOWN:
-            HAL_Delay( 200 );
-            global.mode = MODE_SLEEP;
-            MX_SPI3_Init();
-            break;
+			GPIO_LED_Init();
 
-        case MODE_SLEEP:
-            /*
-             sleep_prepare();
-             scheduleSleepMode_test();
-             */
-            /*
-             GPIO_Power_MainCPU_OFF();
-             EXTI_Test_Button_DeInit();
-             EXTI_Wakeup_Button_Init();
-             NOT_USED_AT_THE_MOMENT_scheduleSleepMode();
-             */
-            EXTI_Test_Button_DeInit();
-            MX_EXTI_wireless_DeInit();
-            if( hasExternalClock() )
-                SystemClock_Config_HSI();
-            sleep_prepare();
+			scheduleSleepMode();
+			if (hasExternalClock())
+				SystemClock_Config_HSE();
+			GPIO_LED_Init();
+			EXTI_Wakeup_Button_DeInit();
+			ADCx_Init();
+			GPIO_Power_MainCPU_Init();
+			GPIO_Power_MainCPU_ON();
+			compass_init(0, 7);
+			accelerator_init();
+			wireless_init();
+			SPI_synchronize_with_Master();
+			MX_DMA_Init();
+			MX_SPI1_Init();
+			MX_EXTI_wireless_Init();
+			SPI_Start_single_TxRx_with_Master();
 
-            GPIO_LED_Init();
-
-            scheduleSleepMode();
-            if( hasExternalClock() )
-                SystemClock_Config_HSE();
-            GPIO_LED_Init();
-            EXTI_Wakeup_Button_DeInit();
-            ADCx_Init();
-            GPIO_Power_MainCPU_Init();
-            GPIO_Power_MainCPU_ON();
-            compass_init( 0, 7 );
-            accelerator_init();
-            wireless_init();
-            SPI_synchronize_with_Master();
-            MX_DMA_Init();
-            MX_SPI1_Init();
-            MX_EXTI_wireless_Init();
-            SPI_Start_single_TxRx_with_Master();
-
-            // EXTILine0_Button_DeInit(); not now, later after testing
-            break;
-        }
-    }
+			// EXTILine0_Button_DeInit(); not now, later after testing
+			break;
+		}
+	}
 }
 
 /** @brief Button feedback - EXTI line detection callbacks
  * @param GPIO_Pin: Specifies the pins connected EXTI line
  * @retval None
  */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
-    if( GPIO_Pin == WIRELSS_RISING_GPIO_PIN )
-    {
-        wireless_trigger_RisingEdgeSilence();
-    }
+	if (GPIO_Pin == WIRELSS_RISING_GPIO_PIN) {
+		wireless_trigger_RisingEdgeSilence();
+	}
 
-    else
+	else
 
-    if( GPIO_Pin == WIRELSS_FALLING_GPIO_PIN )
-    {
-        wireless_trigger_FallingEdgeSignalHigh();
-    }
+	if (GPIO_Pin == WIRELSS_FALLING_GPIO_PIN) {
+		wireless_trigger_FallingEdgeSignalHigh();
+	}
 
-    else
+	else
 
-    if( GPIO_Pin == BUTTON_OSTC_GPIO_PIN )
-    {
-        if( global.mode == MODE_SLEEP )
-        {
-            global.mode = MODE_BOOT;
-        }
-    }
+	if (GPIO_Pin == BUTTON_OSTC_GPIO_PIN) {
+		if (global.mode == MODE_SLEEP) {
+			global.mode = MODE_BOOT;
+		}
+	}
 
-    else
+	else
 
-    if( GPIO_Pin == BUTTON_TEST_GPIO_PIN )
-    {
-        if( !global.demo_mode && (global.mode == MODE_SURFACE) )
-        {
-            global.demo_mode = 1;
-            global.mode = MODE_DIVE;
-        }
-        else if( global.demo_mode && (global.mode == MODE_DIVE)
-            && (global.lifeData.dive_time_seconds > 10) )
-        {
-            global.demo_mode = 0;
-            global.dataSendToMaster.mode = MODE_ENDDIVE;
-            global.deviceDataSendToMaster.mode = MODE_ENDDIVE;
-        }
-    }
+	if (GPIO_Pin == BUTTON_TEST_GPIO_PIN) {
+		if (!global.demo_mode && (global.mode == MODE_SURFACE)) {
+			global.demo_mode = 1;
+			global.mode = MODE_DIVE;
+		} else if (global.demo_mode && (global.mode == MODE_DIVE)
+				&& (global.lifeData.dive_time_seconds > 10)) {
+			global.demo_mode = 0;
+			global.dataSendToMaster.mode = MODE_ENDDIVE;
+			global.deviceDataSendToMaster.mode = MODE_ENDDIVE;
+		}
+	}
 }
 
 /**
@@ -573,47 +570,44 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
  * @retval None
  */
 
-void SystemClock_Config(void)
-{
-    if( hasExternalClock() )
-        SystemClock_Config_HSE();
-    else
-        SystemClock_Config_HSI();
+void SystemClock_Config(void) {
+	if (hasExternalClock())
+		SystemClock_Config_HSE();
+	else
+		SystemClock_Config_HSI();
 }
 
-void SYSCLKConfig_STOP(void)
-{
-    SYSCLKConfig_STOP_HSI();
+void SYSCLKConfig_STOP(void) {
+	SYSCLKConfig_STOP_HSI();
 }
 
-void SystemClock_Config_HSE(void)
-{
-    RCC_OscInitTypeDef RCC_OscInitStruct;
-    RCC_ClkInitTypeDef RCC_ClkInitStruct;
+void SystemClock_Config_HSE(void) {
+	RCC_OscInitTypeDef RCC_OscInitStruct;
+	RCC_ClkInitTypeDef RCC_ClkInitStruct;
 //  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
 
-    __PWR_CLK_ENABLE(); // is identical to __HAL_RCC_PWR_CLK_ENABLE();
+	__PWR_CLK_ENABLE(); // is identical to __HAL_RCC_PWR_CLK_ENABLE();
 
-    __HAL_PWR_VOLTAGESCALING_CONFIG( PWR_REGULATOR_VOLTAGE_SCALE2 );
+	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
 
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE; //|RCC_OSCILLATORTYPE_LSE;
-    RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-    //RCC_OscInitStruct.LSEState = RCC_LSE_ON;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLM = 8;
-    RCC_OscInitStruct.PLL.PLLN = 320;
-    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
-    RCC_OscInitStruct.PLL.PLLQ = 4;
-    HAL_RCC_OscConfig( &RCC_OscInitStruct );
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE; //|RCC_OSCILLATORTYPE_LSE;
+	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+	//RCC_OscInitStruct.LSEState = RCC_LSE_ON;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+	RCC_OscInitStruct.PLL.PLLM = 8;
+	RCC_OscInitStruct.PLL.PLLN = 320;
+	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+	RCC_OscInitStruct.PLL.PLLQ = 4;
+	HAL_RCC_OscConfig(&RCC_OscInitStruct);
 
-    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
-        | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
-    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-    HAL_RCC_ClockConfig( &RCC_ClkInitStruct, FLASH_LATENCY_2 );
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
+			| RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+	HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2);
 
 //  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_RTC;
 //  PeriphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
@@ -623,44 +617,43 @@ void SystemClock_Config_HSE(void)
 
 //  HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
-    /* SysTick_IRQn interrupt configuration */
+	/* SysTick_IRQn interrupt configuration */
 //  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
-void SystemClock_Config_HSI(void)
-{
-    RCC_ClkInitTypeDef RCC_ClkInitStruct;
-    RCC_OscInitTypeDef RCC_OscInitStruct;
+void SystemClock_Config_HSI(void) {
+	RCC_ClkInitTypeDef RCC_ClkInitStruct;
+	RCC_OscInitTypeDef RCC_OscInitStruct;
 
-    /* Enable Power Control clock */
-    __HAL_RCC_PWR_CLK_ENABLE();
+	/* Enable Power Control clock */
+	__HAL_RCC_PWR_CLK_ENABLE();
 
-    /* The voltage scaling allows optimizing the power consumption when the device is
-     clocked below the maximum system frequency, to update the voltage scaling value 
-     regarding system frequency refer to product datasheet.  */
-    __HAL_PWR_VOLTAGESCALING_CONFIG( PWR_REGULATOR_VOLTAGE_SCALE2 );
+	/* The voltage scaling allows optimizing the power consumption when the device is
+	 clocked below the maximum system frequency, to update the voltage scaling value
+	 regarding system frequency refer to product datasheet.  */
+	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
 
-    /* Enable HSI Oscillator and activate PLL with HSI as source */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-    RCC_OscInitStruct.HSICalibrationValue = 0x10;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-    RCC_OscInitStruct.PLL.PLLM = 16;
-    RCC_OscInitStruct.PLL.PLLN = 320;
-    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
-    RCC_OscInitStruct.PLL.PLLQ = 4;
-    HAL_RCC_OscConfig( &RCC_OscInitStruct );
+	/* Enable HSI Oscillator and activate PLL with HSI as source */
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+	RCC_OscInitStruct.HSICalibrationValue = 0x10;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+	RCC_OscInitStruct.PLL.PLLM = 16;
+	RCC_OscInitStruct.PLL.PLLN = 320;
+	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+	RCC_OscInitStruct.PLL.PLLQ = 4;
+	HAL_RCC_OscConfig(&RCC_OscInitStruct);
 
-    /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
-     clocks dividers */
-    RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK
-        | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
-    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-    HAL_RCC_ClockConfig( &RCC_ClkInitStruct, FLASH_LATENCY_2 );
+	/* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
+	 clocks dividers */
+	RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK
+			| RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+	HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2);
 }
 /*	
  RCC_OscInitTypeDef RCC_OscInitStruct;
@@ -707,55 +700,53 @@ void SystemClock_Config_HSI(void)
  * @param  None
  * @retval None
  */
-void SYSCLKConfig_STOP_HSE(void)
-{
-    RCC_ClkInitTypeDef RCC_ClkInitStruct;
-    RCC_OscInitTypeDef RCC_OscInitStruct;
-    uint32_t pFLatency = 0;
+void SYSCLKConfig_STOP_HSE(void) {
+	RCC_ClkInitTypeDef RCC_ClkInitStruct;
+	RCC_OscInitTypeDef RCC_OscInitStruct;
+	uint32_t pFLatency = 0;
 
-    /* Get the Oscillators configuration according to the internal RCC registers */
-    HAL_RCC_GetOscConfig( &RCC_OscInitStruct );
+	/* Get the Oscillators configuration according to the internal RCC registers */
+	HAL_RCC_GetOscConfig(&RCC_OscInitStruct);
 
-    /* After wake-up from STOP reconfigure the system clock: Enable HSI and PLL */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-    RCC_OscInitStruct.HSIState = RCC_HSE_ON;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    HAL_RCC_OscConfig( &RCC_OscInitStruct );
+	/* After wake-up from STOP reconfigure the system clock: Enable HSI and PLL */
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+	RCC_OscInitStruct.HSIState = RCC_HSE_ON;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+	HAL_RCC_OscConfig(&RCC_OscInitStruct);
 
-    /* Get the Clocks configuration according to the internal RCC registers */
-    HAL_RCC_GetClockConfig( &RCC_ClkInitStruct, &pFLatency );
+	/* Get the Clocks configuration according to the internal RCC registers */
+	HAL_RCC_GetClockConfig(&RCC_ClkInitStruct, &pFLatency);
 
-    /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
-     clocks dividers */
-    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_SYSCLK;
-    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-    HAL_RCC_ClockConfig( &RCC_ClkInitStruct, pFLatency );
+	/* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
+	 clocks dividers */
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_SYSCLK;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+	HAL_RCC_ClockConfig(&RCC_ClkInitStruct, pFLatency);
 }
 
-void SYSCLKConfig_STOP_HSI(void)
-{
-    RCC_ClkInitTypeDef RCC_ClkInitStruct;
-    RCC_OscInitTypeDef RCC_OscInitStruct;
-    uint32_t pFLatency = 0;
+void SYSCLKConfig_STOP_HSI(void) {
+	RCC_ClkInitTypeDef RCC_ClkInitStruct;
+	RCC_OscInitTypeDef RCC_OscInitStruct;
+	uint32_t pFLatency = 0;
 
-    /* Get the Oscillators configuration according to the internal RCC registers */
-    HAL_RCC_GetOscConfig( &RCC_OscInitStruct );
+	/* Get the Oscillators configuration according to the internal RCC registers */
+	HAL_RCC_GetOscConfig(&RCC_OscInitStruct);
 
-    /* After wake-up from STOP reconfigure the system clock: Enable HSI and PLL */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.HSICalibrationValue = 0x10;
-    HAL_RCC_OscConfig( &RCC_OscInitStruct );
+	/* After wake-up from STOP reconfigure the system clock: Enable HSI and PLL */
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+	RCC_OscInitStruct.HSICalibrationValue = 0x10;
+	HAL_RCC_OscConfig(&RCC_OscInitStruct);
 
-    /* Get the Clocks configuration according to the internal RCC registers */
-    HAL_RCC_GetClockConfig( &RCC_ClkInitStruct, &pFLatency );
+	/* Get the Clocks configuration according to the internal RCC registers */
+	HAL_RCC_GetClockConfig(&RCC_ClkInitStruct, &pFLatency);
 
-    /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
-     clocks dividers */
-    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_SYSCLK;
-    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-    HAL_RCC_ClockConfig( &RCC_ClkInitStruct, pFLatency );
+	/* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
+	 clocks dividers */
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_SYSCLK;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+	HAL_RCC_ClockConfig(&RCC_ClkInitStruct, pFLatency);
 }
 
 /**
@@ -763,9 +754,8 @@ void SYSCLKConfig_STOP_HSI(void)
  * @param None
  * @retval None
  */
-void HAL_SYSTICK_Callback(void)
-{
-    HAL_IncTick();
+void HAL_SYSTICK_Callback(void) {
+	HAL_IncTick();
 }
 
 /**
@@ -796,66 +786,59 @@ void HAL_SYSTICK_Callback(void)
  }
  */
 
-static void GPIO_LED_Init(void)
-{
-    GPIO_InitTypeDef GPIO_InitStructure;
+static void GPIO_LED_Init(void) {
+	GPIO_InitTypeDef GPIO_InitStructure;
 
-    __GPIOC_CLK_ENABLE();
-    GPIO_InitStructure.Pin = GPIO_PIN_3;
-    GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStructure.Pull = GPIO_PULLUP;
-    GPIO_InitStructure.Speed = GPIO_SPEED_FAST;
-    HAL_GPIO_Init( GPIOC, &GPIO_InitStructure );
+	__GPIOC_CLK_ENABLE();
+	GPIO_InitStructure.Pin = GPIO_PIN_3;
+	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStructure.Pull = GPIO_PULLUP;
+	GPIO_InitStructure.Speed = GPIO_SPEED_FAST;
+	HAL_GPIO_Init( GPIOC, &GPIO_InitStructure);
 }
 
-void GPIO_new_DEBUG_Init(void)
-{
+void GPIO_new_DEBUG_Init(void) {
 #ifdef DEBUG_PIN_ACTIVE
-    GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitTypeDef GPIO_InitStructure;
 
-    __GPIOC_CLK_ENABLE();
-    GPIO_InitStructure.Pin = GPIO_PIN_3;
-    GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStructure.Pull = GPIO_PULLUP;
-    GPIO_InitStructure.Speed = GPIO_SPEED_FAST;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+	__GPIOC_CLK_ENABLE();
+	GPIO_InitStructure.Pin = GPIO_PIN_3;
+	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStructure.Pull = GPIO_PULLUP;
+	GPIO_InitStructure.Speed = GPIO_SPEED_FAST;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 #endif
 }
 
-void GPIO_new_DEBUG_LOW(void)
-{
+void GPIO_new_DEBUG_LOW(void) {
 #ifdef DEBUG_PIN_ACTIVE
-    HAL_GPIO_WritePin(GPIOC,GPIO_PIN_3,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOC,GPIO_PIN_3,GPIO_PIN_RESET);
 #endif
 }
 
-void GPIO_new_DEBUG_HIGH(void)
-{
+void GPIO_new_DEBUG_HIGH(void) {
 #ifdef DEBUG_PIN_ACTIVE
-    HAL_GPIO_WritePin(GPIOC,GPIO_PIN_3,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOC,GPIO_PIN_3,GPIO_PIN_SET);
 #endif
 }
 
-static void GPIO_Power_MainCPU_Init(void)
-{
-    GPIO_InitTypeDef GPIO_InitStructure;
-    __GPIOC_CLK_ENABLE();
-    GPIO_InitStructure.Pin = GPIO_PIN_0;
-    GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStructure.Pull = GPIO_PULLUP;
-    GPIO_InitStructure.Speed = GPIO_SPEED_LOW;
-    HAL_GPIO_Init( GPIOC, &GPIO_InitStructure );
-    HAL_GPIO_WritePin( GPIOC, GPIO_PIN_0, GPIO_PIN_RESET );
+static void GPIO_Power_MainCPU_Init(void) {
+	GPIO_InitTypeDef GPIO_InitStructure;
+	__GPIOC_CLK_ENABLE();
+	GPIO_InitStructure.Pin = GPIO_PIN_0;
+	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStructure.Pull = GPIO_PULLUP;
+	GPIO_InitStructure.Speed = GPIO_SPEED_LOW;
+	HAL_GPIO_Init( GPIOC, &GPIO_InitStructure);
+	HAL_GPIO_WritePin( GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
 }
 
-static void GPIO_Power_MainCPU_ON(void)
-{
-    HAL_GPIO_WritePin( GPIOC, GPIO_PIN_0, GPIO_PIN_RESET );
+static void GPIO_Power_MainCPU_ON(void) {
+	HAL_GPIO_WritePin( GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
 }
 
-static void GPIO_Power_MainCPU_OFF(void)
-{
-    HAL_GPIO_WritePin( GPIOC, GPIO_PIN_0, GPIO_PIN_SET );
+static void GPIO_Power_MainCPU_OFF(void) {
+	HAL_GPIO_WritePin( GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
 }
 
 /**
@@ -864,111 +847,105 @@ static void GPIO_Power_MainCPU_OFF(void)
  * @retval None
  */
 
-static void EXTI_Wakeup_Button_Init(void)
-{
-    GPIO_InitTypeDef GPIO_InitStructure;
+static void EXTI_Wakeup_Button_Init(void) {
+	GPIO_InitTypeDef GPIO_InitStructure;
 
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    BUTTON_OSTC_HAL_RCC_GPIO_CLK_ENABLE();
-    GPIO_InitStructure.Pin = BUTTON_OSTC_GPIO_PIN;
-    GPIO_InitStructure.Mode = GPIO_MODE_IT_FALLING;
-    GPIO_InitStructure.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init( BUTTON_OSTC_GPIO_PORT, &GPIO_InitStructure );
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	BUTTON_OSTC_HAL_RCC_GPIO_CLK_ENABLE();
+	GPIO_InitStructure.Pin = BUTTON_OSTC_GPIO_PIN;
+	GPIO_InitStructure.Mode = GPIO_MODE_IT_FALLING;
+	GPIO_InitStructure.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init( BUTTON_OSTC_GPIO_PORT, &GPIO_InitStructure);
 
-    HAL_NVIC_SetPriority( BUTTON_OSTC_IRQn, 0x0F, 0 );
-    HAL_NVIC_EnableIRQ( BUTTON_OSTC_IRQn );
+	HAL_NVIC_SetPriority( BUTTON_OSTC_IRQn, 0x0F, 0);
+	HAL_NVIC_EnableIRQ( BUTTON_OSTC_IRQn);
 }
 
-static void EXTI_Wakeup_Button_DeInit(void)
-{
-    GPIO_InitTypeDef GPIO_InitStructure;
+static void EXTI_Wakeup_Button_DeInit(void) {
+	GPIO_InitTypeDef GPIO_InitStructure;
 
-    GPIO_InitStructure.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStructure.Speed = GPIO_SPEED_LOW;
-    GPIO_InitStructure.Pull = GPIO_NOPULL;
+	GPIO_InitStructure.Mode = GPIO_MODE_ANALOG;
+	GPIO_InitStructure.Speed = GPIO_SPEED_LOW;
+	GPIO_InitStructure.Pull = GPIO_NOPULL;
 
-    GPIO_InitStructure.Pin = BUTTON_OSTC_GPIO_PIN;
-    HAL_GPIO_Init( BUTTON_OSTC_GPIO_PORT, &GPIO_InitStructure );
-    HAL_NVIC_DisableIRQ( BUTTON_OSTC_IRQn );
+	GPIO_InitStructure.Pin = BUTTON_OSTC_GPIO_PIN;
+	HAL_GPIO_Init( BUTTON_OSTC_GPIO_PORT, &GPIO_InitStructure);
+	HAL_NVIC_DisableIRQ( BUTTON_OSTC_IRQn);
 }
 
-static void EXTI_Test_Button_Init(void)
-{
-    GPIO_InitTypeDef GPIO_InitStructure;
+static void EXTI_Test_Button_Init(void) {
+	GPIO_InitTypeDef GPIO_InitStructure;
 
-    BUTTON_TEST_GPIO_CLK_ENABLE();
-    GPIO_InitStructure.Pin = BUTTON_TEST_GPIO_PIN;
-    GPIO_InitStructure.Mode = GPIO_MODE_IT_FALLING;
-    GPIO_InitStructure.Pull = GPIO_PULLUP;
-    HAL_GPIO_Init( BUTTON_TEST_GPIO_PORT, &GPIO_InitStructure );
-    HAL_NVIC_SetPriority( BUTTON_TEST_IRQn, 0x0F, 0 );
-    HAL_NVIC_EnableIRQ( BUTTON_TEST_IRQn );
+	BUTTON_TEST_GPIO_CLK_ENABLE();
+	GPIO_InitStructure.Pin = BUTTON_TEST_GPIO_PIN;
+	GPIO_InitStructure.Mode = GPIO_MODE_IT_FALLING;
+	GPIO_InitStructure.Pull = GPIO_PULLUP;
+	HAL_GPIO_Init( BUTTON_TEST_GPIO_PORT, &GPIO_InitStructure);
+	HAL_NVIC_SetPriority( BUTTON_TEST_IRQn, 0x0F, 0);
+	HAL_NVIC_EnableIRQ( BUTTON_TEST_IRQn);
 }
 
-static void EXTI_Test_Button_DeInit(void)
-{
-    GPIO_InitTypeDef GPIO_InitStructure;
+static void EXTI_Test_Button_DeInit(void) {
+	GPIO_InitTypeDef GPIO_InitStructure;
 
-    GPIO_InitStructure.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStructure.Speed = GPIO_SPEED_LOW;
-    GPIO_InitStructure.Pull = GPIO_NOPULL;
+	GPIO_InitStructure.Mode = GPIO_MODE_ANALOG;
+	GPIO_InitStructure.Speed = GPIO_SPEED_LOW;
+	GPIO_InitStructure.Pull = GPIO_NOPULL;
 
-    GPIO_InitStructure.Pin = BUTTON_TEST_GPIO_PIN;
-    HAL_GPIO_Init( BUTTON_TEST_GPIO_PORT, &GPIO_InitStructure );
-    HAL_NVIC_DisableIRQ( BUTTON_TEST_IRQn );
+	GPIO_InitStructure.Pin = BUTTON_TEST_GPIO_PIN;
+	HAL_GPIO_Init( BUTTON_TEST_GPIO_PORT, &GPIO_InitStructure);
+	HAL_NVIC_DisableIRQ( BUTTON_TEST_IRQn);
 }
 
-static void MX_EXTI_wireless_Init(void)
-{
-    GPIO_InitTypeDef GPIO_InitStructure;
+static void MX_EXTI_wireless_Init(void) {
+	GPIO_InitTypeDef GPIO_InitStructure;
 
-    WIRELSS_POWER_HAL_RCC_GPIO_CLK_ENABLE();
-    GPIO_InitStructure.Pin = WIRELSS_POWER_GPIO_PIN;
-    GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStructure.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init( WIRELSS_POWER_GPIO_PORT, &GPIO_InitStructure );
-    HAL_GPIO_WritePin( WIRELSS_POWER_GPIO_PORT, WIRELSS_POWER_GPIO_PIN,
-                       GPIO_PIN_SET );
+	WIRELSS_POWER_HAL_RCC_GPIO_CLK_ENABLE();
+	GPIO_InitStructure.Pin = WIRELSS_POWER_GPIO_PIN;
+	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStructure.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init( WIRELSS_POWER_GPIO_PORT, &GPIO_InitStructure);
+	HAL_GPIO_WritePin( WIRELSS_POWER_GPIO_PORT, WIRELSS_POWER_GPIO_PIN,
+			GPIO_PIN_SET);
 
-    WIRELSS_RISING_HAL_RCC_GPIO_CLK_ENABLE();
-    GPIO_InitStructure.Pin = WIRELSS_RISING_GPIO_PIN;
-    GPIO_InitStructure.Mode = GPIO_MODE_IT_RISING;
-    GPIO_InitStructure.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init( WIRELSS_RISING_GPIO_PORT, &GPIO_InitStructure );
+	WIRELSS_RISING_HAL_RCC_GPIO_CLK_ENABLE();
+	GPIO_InitStructure.Pin = WIRELSS_RISING_GPIO_PIN;
+	GPIO_InitStructure.Mode = GPIO_MODE_IT_RISING;
+	GPIO_InitStructure.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init( WIRELSS_RISING_GPIO_PORT, &GPIO_InitStructure);
 
-    HAL_NVIC_SetPriority( WIRELSS_RISING_IRQn, 0x02, 0 );
-    HAL_NVIC_EnableIRQ( WIRELSS_RISING_IRQn );
+	HAL_NVIC_SetPriority( WIRELSS_RISING_IRQn, 0x02, 0);
+	HAL_NVIC_EnableIRQ( WIRELSS_RISING_IRQn);
 
-    WIRELSS_FALLING_HAL_RCC_GPIO_CLK_ENABLE();
-    GPIO_InitStructure.Pin = WIRELSS_FALLING_GPIO_PIN;
-    GPIO_InitStructure.Mode = GPIO_MODE_IT_FALLING;
-    GPIO_InitStructure.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init( WIRELSS_FALLING_GPIO_PORT, &GPIO_InitStructure );
+	WIRELSS_FALLING_HAL_RCC_GPIO_CLK_ENABLE();
+	GPIO_InitStructure.Pin = WIRELSS_FALLING_GPIO_PIN;
+	GPIO_InitStructure.Mode = GPIO_MODE_IT_FALLING;
+	GPIO_InitStructure.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init( WIRELSS_FALLING_GPIO_PORT, &GPIO_InitStructure);
 
-    HAL_NVIC_SetPriority( WIRELSS_FALLING_IRQn, 0x02, 0 );
-    HAL_NVIC_EnableIRQ( WIRELSS_FALLING_IRQn );
+	HAL_NVIC_SetPriority( WIRELSS_FALLING_IRQn, 0x02, 0);
+	HAL_NVIC_EnableIRQ( WIRELSS_FALLING_IRQn);
 
 }
 
-static void MX_EXTI_wireless_DeInit(void)
-{
-    GPIO_InitTypeDef GPIO_InitStructure;
+static void MX_EXTI_wireless_DeInit(void) {
+	GPIO_InitTypeDef GPIO_InitStructure;
 
-    GPIO_InitStructure.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStructure.Speed = GPIO_SPEED_LOW;
-    GPIO_InitStructure.Pull = GPIO_NOPULL;
+	GPIO_InitStructure.Mode = GPIO_MODE_ANALOG;
+	GPIO_InitStructure.Speed = GPIO_SPEED_LOW;
+	GPIO_InitStructure.Pull = GPIO_NOPULL;
 
-    GPIO_InitStructure.Pin = WIRELSS_RISING_GPIO_PIN;
-    HAL_GPIO_Init( WIRELSS_RISING_GPIO_PORT, &GPIO_InitStructure );
+	GPIO_InitStructure.Pin = WIRELSS_RISING_GPIO_PIN;
+	HAL_GPIO_Init( WIRELSS_RISING_GPIO_PORT, &GPIO_InitStructure);
 
-    GPIO_InitStructure.Pin = WIRELSS_FALLING_GPIO_PIN;
-    HAL_GPIO_Init( WIRELSS_FALLING_GPIO_PORT, &GPIO_InitStructure );
+	GPIO_InitStructure.Pin = WIRELSS_FALLING_GPIO_PIN;
+	HAL_GPIO_Init( WIRELSS_FALLING_GPIO_PORT, &GPIO_InitStructure);
 
-    GPIO_InitStructure.Pin = WIRELSS_POWER_GPIO_PIN;
-    HAL_GPIO_Init( WIRELSS_POWER_GPIO_PORT, &GPIO_InitStructure );
+	GPIO_InitStructure.Pin = WIRELSS_POWER_GPIO_PIN;
+	HAL_GPIO_Init( WIRELSS_POWER_GPIO_PORT, &GPIO_InitStructure);
 
-    HAL_NVIC_DisableIRQ( WIRELSS_RISING_IRQn );
-    HAL_NVIC_DisableIRQ( WIRELSS_FALLING_IRQn );
+	HAL_NVIC_DisableIRQ( WIRELSS_RISING_IRQn);
+	HAL_NVIC_DisableIRQ( WIRELSS_FALLING_IRQn);
 }
 
 /* NUCLEO C 13
@@ -995,77 +972,75 @@ static void MX_EXTI_wireless_DeInit(void)
  }
  */
 
-void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *I2cHandle)
-{
+void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *I2cHandle) {
 
 }
 
-void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *I2cHandle)
-{
+void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *I2cHandle) {
 
 }
 
-void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *I2cHandle)
-{
+void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *I2cHandle) {
 
 }
 
-void sleep_prepare(void)
-{
-    EXTI_Wakeup_Button_Init();
-    /*
-     GPIO_InitStruct.Pull = GPIO_PULLUP;
-     GPIO_InitStruct.Pin =  GPIO_PIN_0;
-     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-     */
-    compass_sleep();
-    HAL_Delay( 100 );
-    accelerator_sleep();
-    HAL_Delay( 100 );
+void sleep_prepare(void) {
+	EXTI_Wakeup_Button_Init();
+	/*
+	 GPIO_InitStruct.Pull = GPIO_PULLUP;
+	 GPIO_InitStruct.Pin =  GPIO_PIN_0;
+	 HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	 */
+	compass_sleep();
+	HAL_Delay(100);
+	accelerator_sleep();
+	HAL_Delay(100);
 
-    I2C_DeInit();
-    MX_SPI_DeInit();
-    MX_SPI3_DeInit();
-    ADCx_DeInit();
+	I2C_DeInit();
+	MX_SPI_DeInit();
+	MX_SPI3_DeInit();
+	ADCx_DeInit();
 
-    GPIO_InitTypeDef GPIO_InitStruct;
+	GPIO_InitTypeDef GPIO_InitStruct;
 
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    __HAL_RCC_GPIOH_CLK_ENABLE();
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+	__HAL_RCC_GPIOH_CLK_ENABLE();
 
-    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Pin = GPIO_PIN_All;
-    HAL_GPIO_Init( GPIOH, &GPIO_InitStruct );
+	GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+	GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Pin = GPIO_PIN_All;
+	HAL_GPIO_Init( GPIOH, &GPIO_InitStruct);
 #ifdef DEBUGMODE
-    GPIO_InitStruct.Pin = GPIO_PIN_All ^ ( GPIO_PIN_3 | GPIO_PIN_8 | GPIO_PIN_9); /* debug */
+	GPIO_InitStruct.Pin = GPIO_PIN_All ^ ( GPIO_PIN_3 | GPIO_PIN_8 | GPIO_PIN_9); /* debug */
 #endif
-    HAL_GPIO_Init( GPIOB, &GPIO_InitStruct );
+	HAL_GPIO_Init( GPIOB, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_All
-        ^ ( GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_14 | GPIO_PIN_15); /* power off & charger in & charge out & OSC32*/
-    HAL_GPIO_Init( GPIOC, &GPIO_InitStruct );
+	GPIO_InitStruct.Pin =
+			GPIO_PIN_All
+					^ ( GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_14
+							| GPIO_PIN_15); /* power off & charger in & charge out & OSC32*/
+	HAL_GPIO_Init( GPIOC, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_All ^ ( GPIO_PIN_0);
+	GPIO_InitStruct.Pin = GPIO_PIN_All ^ ( GPIO_PIN_0);
 #ifdef DEBUGMODE
-    GPIO_InitStruct.Pin = GPIO_PIN_All ^ ( GPIO_PIN_0 | GPIO_PIN_13 | GPIO_PIN_14); /* wake up button & debug */
+	GPIO_InitStruct.Pin = GPIO_PIN_All ^ ( GPIO_PIN_0 | GPIO_PIN_13 | GPIO_PIN_14); /* wake up button & debug */
 #endif
-    HAL_GPIO_Init( GPIOA, &GPIO_InitStruct );
+	HAL_GPIO_Init( GPIOA, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_All;
-    HAL_GPIO_Init( GPIOH, &GPIO_InitStruct );
+	GPIO_InitStruct.Pin = GPIO_PIN_All;
+	HAL_GPIO_Init( GPIOH, &GPIO_InitStruct);
 
-    GPIO_Power_MainCPU_OFF();
+	GPIO_Power_MainCPU_OFF();
 
 #ifndef DEBUGMODE
-    __HAL_RCC_GPIOB_CLK_DISABLE();
+	__HAL_RCC_GPIOB_CLK_DISABLE();
 #endif
-    __HAL_RCC_GPIOH_CLK_DISABLE();
+	__HAL_RCC_GPIOH_CLK_DISABLE();
 
-    HAL_Delay( 1000 );
+	HAL_Delay(1000);
 }
 
 /*
@@ -1123,13 +1098,13 @@ void sleep_prepare(void)
  */
 void assert_failed(uint8_t* file, uint32_t line)
 {
-    /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+	/* User can add his own implementation to report the file name and line number,
+	 ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
 
-    /* Infinite loop */
-    while (1)
-    {
-    }
+	/* Infinite loop */
+	while (1)
+	{
+	}
 }
 #endif
 
