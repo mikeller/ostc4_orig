@@ -55,8 +55,8 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
 {
     .versionFirst   = 1,
     .versionSecond 	= 4,
-    .versionThird   = 5,
-    .versionBeta    = 1,
+    .versionThird   = 3,
+    .versionBeta    = 2,
 
     /* 4 bytes with trailing 0 */
     .signature = "mh",
@@ -1059,9 +1059,9 @@ uint8_t check_and_correct_settings(void)
     // flex values 0, 1, 2
     for(int i=0; i<3;i++)
     {
-        if(Settings.ButtonResponsiveness[i] < 60) // 70-10
+        if(Settings.ButtonResponsiveness[i] < 40) // 50-10  //Fix for broken buttons. :)
         {
-            Settings.ButtonResponsiveness[i] = 70;
+            Settings.ButtonResponsiveness[i] = 40;
             corrections++;
         }
         else
@@ -2660,9 +2660,9 @@ void settingsHelperButtonSens_keepPercentageValues(uint32_t inputValueRaw, uint8
             inputValueRaw = 110;
     }
     else
-    if(inputValueRaw < 70)
+    if(inputValueRaw < 50)
     {
-            inputValueRaw = 70;
+            inputValueRaw = 50;
     }
 
     // the unbalanced value
