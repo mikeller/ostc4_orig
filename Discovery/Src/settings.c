@@ -55,7 +55,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
 {
     .versionFirst   = 1,
     .versionSecond 	= 4,
-    .versionThird   = 6,
+    .versionThird   = 7,
     .versionBeta    = 2,
 
     /* 4 bytes with trailing 0 */
@@ -1045,29 +1045,29 @@ uint8_t check_and_correct_settings(void)
 /*	uint8_t ButtonResponsiveness[4];
  */
     // Base value, index 3
-    if(Settings.ButtonResponsiveness[3] < 70)
+    if(Settings.ButtonResponsiveness[3] < MIN_BUTTONRESPONSIVENESS_GUI)
     {
-        Settings.ButtonResponsiveness[3] = 70;
+        Settings.ButtonResponsiveness[3] = MIN_BUTTONRESPONSIVENESS_GUI;
         corrections++;
     }
     else
-    if(Settings.ButtonResponsiveness[3] > 110)
+    if(Settings.ButtonResponsiveness[3] > MIN_BUTTONRESPONSIVENESS_GUI)
     {
-        Settings.ButtonResponsiveness[3] = 130;
+        Settings.ButtonResponsiveness[3] = MIN_BUTTONRESPONSIVENESS;
         corrections++;
     }
     // flex values 0, 1, 2
     for(int i=0; i<3;i++)
     {
-        if(Settings.ButtonResponsiveness[i] < 40) // 50-10  //Fix for broken buttons. :)
+        if(Settings.ButtonResponsiveness[i] < MIN_BUTTONRESPONSIVENESS) // 50-10  //Fix for broken buttons. :)
         {
-            Settings.ButtonResponsiveness[i] = 40;
+            Settings.ButtonResponsiveness[i] = MIN_BUTTONRESPONSIVENESS;
             corrections++;
         }
         else
-        if(Settings.ButtonResponsiveness[i] > 130) // 110+20
+        if(Settings.ButtonResponsiveness[i] > MAX_BUTTONRESPONSIVENESS) // 110+20
         {
-            Settings.ButtonResponsiveness[i] = 130;
+            Settings.ButtonResponsiveness[i] = MAX_BUTTONRESPONSIVENESS;
             corrections++;
         }
     }
