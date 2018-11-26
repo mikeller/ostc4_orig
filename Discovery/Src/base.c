@@ -25,176 +25,176 @@
 //////////////////////////////////////////////////////////////////////////////
 
 /**
-@verbatim
-==============================================================================
-                        ##### Firmware Info #####
-==============================================================================
-[..] In settings.c including text and magic stuff
-==============================================================================
-                        ##### IRQs #####
-==============================================================================
-[..] The IRQs are very important and most functions should only run there.
+ @verbatim
+ ==============================================================================
+ ##### Firmware Info #####
+ ==============================================================================
+ [..] In settings.c including text and magic stuff
+ ==============================================================================
+ ##### IRQs #####
+ ==============================================================================
+ [..] The IRQs are very important and most functions should only run there.
 
-            PreemptPriority are as follows
-            (#) 2 (low)		sprintf _only_ here. Don't use in maintask or anywhere else.
-                                        Called by Buttons und Timer3
-                                        Timer3 is 1/10 second
-            (#) 1 (mid)		anything that should work while in IRQ2 like HalDelay(), VSYNC
-                                        and DMA2D Transfer Complete for housekeepingFrame();
-            (#)	0 (high)	_very very short_ interrupts like The HAL hardware part for
-                                        spi, uart, i2c.
+ PreemptPriority are as follows
+ (#) 2 (low)		sprintf _only_ here. Don't use in maintask or anywhere else.
+ Called by Buttons und Timer3
+ Timer3 is 1/10 second
+ (#) 1 (mid)		anything that should work while in IRQ2 like HalDelay(), VSYNC
+ and DMA2D Transfer Complete for housekeepingFrame();
+ (#)	0 (high)	_very very short_ interrupts like The HAL hardware part for
+ spi, uart, i2c.
 
-            SubPriority within 	PreemptPriority give the order to execute.
-            Introduced 30.Oct.14 as it used by several HAL examples.
-            Three levelAmbients are available (2 low,1 mid,0 high)
+ SubPriority within 	PreemptPriority give the order to execute.
+ Introduced 30.Oct.14 as it used by several HAL examples.
+ Three levelAmbients are available (2 low,1 mid,0 high)
 
-            The STM32F4 has 4bits for IRQ levelAmbients, divided 2/2 in this code
-            with the NVIC_PRIORITYGROUP_2 setting.
+ The STM32F4 has 4bits for IRQ levelAmbients, divided 2/2 in this code
+ with the NVIC_PRIORITYGROUP_2 setting.
 
-==============================================================================
-                        ##### MainTask #####
-==============================================================================
-[..] For everthing slow without importance to be 'in time'.
-         Like VPM and Buehlmann.
-         No sprintf and probably no GFX_SetFramesTopBottom() stuff neither.
-         If sprintf is called while sprintf is executed it blows up everything.
+ ==============================================================================
+ ##### MainTask #####
+ ==============================================================================
+ [..] For everthing slow without importance to be 'in time'.
+ Like VPM and Buehlmann.
+ No sprintf and probably no GFX_SetFramesTopBottom() stuff neither.
+ If sprintf is called while sprintf is executed it blows up everything.
 
-==============================================================================
-                        ##### Frames / the external SDRAM #####
-==============================================================================
-[..] The SDRAM is handled by getFrame() and releaseFrame().
-         Each frame with 800*480*2 Bytes.
-         Be carefull to release every frame
-         otherwise there will be a memory leakage over time.
-         housekeepingFrame() in the MainTask takes care of cleaning the frames.
-         All frames are filled with 0x00. This will be transparent with color of
-         CLUT_Font020 (is CLUT 0) if the alpha is set for a 16bit pair.
-         housekeepingFrame() delays the cleaning of frames still used as screen
-         buffer to prevent flickering.
+ ==============================================================================
+ ##### Frames / the external SDRAM #####
+ ==============================================================================
+ [..] The SDRAM is handled by getFrame() and releaseFrame().
+ Each frame with 800*480*2 Bytes.
+ Be carefull to release every frame
+ otherwise there will be a memory leakage over time.
+ housekeepingFrame() in the MainTask takes care of cleaning the frames.
+ All frames are filled with 0x00. This will be transparent with color of
+ CLUT_Font020 (is CLUT 0) if the alpha is set for a 16bit pair.
+ housekeepingFrame() delays the cleaning of frames still used as screen
+ buffer to prevent flickering.
 
-[..] use global variable frameCounter[] in gfxengine.c to control memory
-         all but the last three are identical to caller_id
-         for example 0x05 are the menu frames
-         the last but one is a sum for higher numbers (shouldn't be any)
-         the last but one are those in status RELEASED
-         the last are those CLEAR (as of 151202 down to 4 in logbook mode)
+ [..] use global variable frameCounter[] in gfxengine.c to control memory
+ all but the last three are identical to caller_id
+ for example 0x05 are the menu frames
+ the last but one is a sum for higher numbers (shouldn't be any)
+ the last but one are those in status RELEASED
+ the last are those CLEAR (as of 151202 down to 4 in logbook mode)
 
-[..] 4 pages are used for two double memories for screenshots (since Nov. 15)
+ [..] 4 pages are used for two double memories for screenshots (since Nov. 15)
 
-==============================================================================
-                        ##### Display #####
-==============================================================================
-[..] There is a Top layer, Bottom layer and background color.
-         All are perfectly alpha-blended by hardware.
+ ==============================================================================
+ ##### Display #####
+ ==============================================================================
+ [..] There is a Top layer, Bottom layer and background color.
+ All are perfectly alpha-blended by hardware.
 
-            (#) top layer			has 800x480 option function calls only
-                                                as it is not used for cursors here
-            (#)	bottom layer	has free size and start option to be used
-                                                for cursors (or sprites in the future ;-)
-            (#) background		only black in the moment.
-                                                ToDo: Could be anything else for warnings etc.
-                                                if needed
+ (#) top layer			has 800x480 option function calls only
+ as it is not used for cursors here
+ (#)	bottom layer	has free size and start option to be used
+ for cursors (or sprites in the future ;-)
+ (#) background		only black in the moment.
+ ToDo: Could be anything else for warnings etc.
+ if needed
 
-[..] Frame updates, switching and cursors is done with
+ [..] Frame updates, switching and cursors is done with
 
-            (#) GFX_SetFramesTopBottom() and the subset
-                    GFX_SetFrameTop() + GFX_SetFrameBottom()
-                    Those do not change anything on the display but give commands to..
-            (#) GFX_change_LTDC()	The only place that changes the pointer.
-                                                        This prevents erratic behaviour if several changes
-                                                        are made within one refresh rate of the screen.
-                                                        Is called in IRQ by PD4 and HAL_GPIO_EXTI_IRQHandler
-                                                        from VSYNC signal.
+ (#) GFX_SetFramesTopBottom() and the subset
+ GFX_SetFrameTop() + GFX_SetFrameBottom()
+ Those do not change anything on the display but give commands to..
+ (#) GFX_change_LTDC()	The only place that changes the pointer.
+ This prevents erratic behaviour if several changes
+ are made within one refresh rate of the screen.
+ Is called in IRQ by PD4 and HAL_GPIO_EXTI_IRQHandler
+ from VSYNC signal.
 
-[..] Content
+ [..] Content
 
-            (#) Colors	by LookupTable only. This could be modified by
-                                    system settings in the future. (gfx_color.h/.c)
+ (#) Colors	by LookupTable only. This could be modified by
+ system settings in the future. (gfx_color.h/.c)
 
-            (#) Text		by text_multilinguage.h/.c with one char
-                                    necessary only starting from '\x80'
-                                    with automatic language switch by
-                                    selected_language in SSettings
-                                    see openEdit_Language() in tMenuEditSystem.c
-                                    Therefore there are differnent functions
-                                    for example:
-                                    write_label_fix() for single char multilanguage
-                                    write_label_var() for strings that could include
-                                    multilanguage as well
-                                    see GFX_write_string() to get an overview of the controls
-                                    as well as the command list in gfx_engine.h
-                                    There is no clear before writing, text overlay is always on.
-                                    Many options to have LargeFont.SmallFont for numbers etc.
+ (#) Text		by text_multilinguage.h/.c with one char
+ necessary only starting from '\x80'
+ with automatic language switch by
+ selected_language in SSettings
+ see openEdit_Language() in tMenuEditSystem.c
+ Therefore there are differnent functions
+ for example:
+ write_label_fix() for single char multilanguage
+ write_label_var() for strings that could include
+ multilanguage as well
+ see GFX_write_string() to get an overview of the controls
+ as well as the command list in gfx_engine.h
+ There is no clear before writing, text overlay is always on.
+ Many options to have LargeFont.SmallFont for numbers etc.
 
-==============================================================================
-                        ##### Update, DualBoot and build-in FLASH memory usage #####
-==============================================================================
-[..] Boot0 pin, Boot1/PB2 pin and BFB2 software bit control the behaviour.
-            PB2 should be tied to GND.
-            Boot0 == VDD -> bootloader on start, otherwise boot from Bank1 or Bank2
-            depending on BFB2.
-            Bank2 contains the Fonts and should contain a proper test code in future
-            Bank1 is the main code (Bank1 is 1 MB too, usage as of Oct. 14 is 200 KB)
-[..] Bootloader should be either UART or USB (on FS pins _only_)
-            USB HS to FS like on the Eval board does not work.
-[..] Bootloader for the smaller CPU2 is implemented via the SPI used for DMA copy.
+ ==============================================================================
+ ##### Update, DualBoot and build-in FLASH memory usage #####
+ ==============================================================================
+ [..] Boot0 pin, Boot1/PB2 pin and BFB2 software bit control the behaviour.
+ PB2 should be tied to GND.
+ Boot0 == VDD -> bootloader on start, otherwise boot from Bank1 or Bank2
+ depending on BFB2.
+ Bank2 contains the Fonts and should contain a proper test code in future
+ Bank1 is the main code (Bank1 is 1 MB too, usage as of Oct. 14 is 200 KB)
+ [..] Bootloader should be either UART or USB (on FS pins _only_)
+ USB HS to FS like on the Eval board does not work.
+ [..] Bootloader for the smaller CPU2 is implemented via the SPI used for DMA copy.
 
-==============================================================================
-                        ##### Connection to CPU2 (STM32F411 as of Oct.14 #####
-==============================================================================
-[..] Connected via SPI and DMA for every purpose.
-            two entire arrays are transfered for data security reasons
-            with respect to master (STM32F429) might interrupt internal
-            data copy in CPU2 (like hi byte, low byte, etc.).
-[..] The entire life data is calculated in CPU2. Like tissues, CNS,...
-            Therefore the main unit is _not_ necessarily a Real Time system.
-            Simulation on the main unit can be executed without disrupting life data.
-[..] SPI is triggered and timed by calling DataEX_call() in data_exchange_main.c
-            DataEX_copy_to_LifeData() does the transfer from buffer to variables used.
+ ==============================================================================
+ ##### Connection to CPU2 (STM32F411 as of Oct.14 #####
+ ==============================================================================
+ [..] Connected via SPI and DMA for every purpose.
+ two entire arrays are transfered for data security reasons
+ with respect to master (STM32F429) might interrupt internal
+ data copy in CPU2 (like hi byte, low byte, etc.).
+ [..] The entire life data is calculated in CPU2. Like tissues, CNS,...
+ Therefore the main unit is _not_ necessarily a Real Time system.
+ Simulation on the main unit can be executed without disrupting life data.
+ [..] SPI is triggered and timed by calling DataEX_call() in data_exchange_main.c
+ DataEX_copy_to_LifeData() does the transfer from buffer to variables used.
 
-==============================================================================
-                        ##### Menu, MenuEdit, Info #####
-==============================================================================
-[..] tMenu.c, tMenuEdit.c and tInfo.c is the system used.
-            logbook is part of Info not Menu.
-            The Info Menu is accessed by button 'Back'
-            The regular Menu is accessed by button 'Enter'
-[..] Menu content is kept in frame memory for fast access.
-            There is no need to build pages if the 'Enter' button is pressed.
-            This is in contrast to MenuEdit pages.
-[..] Button control for new pages (and pages in general) have to implemented
-            in tMenu.c, tMenuEdit.c or tInfo.c
+ ==============================================================================
+ ##### Menu, MenuEdit, Info #####
+ ==============================================================================
+ [..] tMenu.c, tMenuEdit.c and tInfo.c is the system used.
+ logbook is part of Info not Menu.
+ The Info Menu is accessed by button 'Back'
+ The regular Menu is accessed by button 'Enter'
+ [..] Menu content is kept in frame memory for fast access.
+ There is no need to build pages if the 'Enter' button is pressed.
+ This is in contrast to MenuEdit pages.
+ [..] Button control for new pages (and pages in general) have to implemented
+ in tMenu.c, tMenuEdit.c or tInfo.c
 
-[..] ToDo (Oct. 14) Timeout for menus via Timer3 / IRQ 2
+ [..] ToDo (Oct. 14) Timeout for menus via Timer3 / IRQ 2
 
-==============================================================================
-                        ##### settings #####
-==============================================================================
-[..] files: settings.c, settings.h
-            1. adjust struct SSettings in settings.h
-            2. adjust const SSettings SettingsStandard in settings.c
-            3. adjust set_new_settings_missing_in_ext_flash()
-            4. adjust check_and_correct_settings()  IMPORTANT as it changes values!
+ ==============================================================================
+ ##### settings #####
+ ==============================================================================
+ [..] files: settings.c, settings.h
+ 1. adjust struct SSettings in settings.h
+ 2. adjust const SSettings SettingsStandard in settings.c
+ 3. adjust set_new_settings_missing_in_ext_flash()
+ 4. adjust check_and_correct_settings()  IMPORTANT as it changes values!
 
-==============================================================================
-                        ##### specials #####
-==============================================================================
-[..] There was code for vector graphics from great demos
-            (peridiummmm and jupiter) that can be fitted again
+ ==============================================================================
+ ##### specials #####
+ ==============================================================================
+ [..] There was code for vector graphics from great demos
+ (peridiummmm and jupiter) that can be fitted again
 
-==============================================================================
-                        ##### ppO2 sensors #####
-==============================================================================
-[..] in tCCR.c is function get_ppO2SensorWeightedResult_cbar();
+ ==============================================================================
+ ##### ppO2 sensors #####
+ ==============================================================================
+ [..] in tCCR.c is function get_ppO2SensorWeightedResult_cbar();
 
  @endverbatim
-******************************************************************************
-* @attention
-*
-* <h2><center>&copy; COPYRIGHT(c) 2014 heinrichs weikamp</center></h2>
-*
-******************************************************************************
-*/
+ ******************************************************************************
+ * @attention
+ *
+ * <h2><center>&copy; COPYRIGHT(c) 2014 heinrichs weikamp</center></h2>
+ *
+ ******************************************************************************
+ */
 
 /* Includes ------------------------------------------------------------------*/
 #include "stdio.h"
@@ -242,14 +242,13 @@ static void TIM_DEMO_init(void);
 //#include <stdlib.h> // for malloc and free
 
 /** @addtogroup OSTC 4
-    * @{
-    */
+ * @{
+ */
 
 /* Private typedef -----------------------------------------------------------*/
 
 //#define NO_TIMEOUT
 //#define	QUICK_SLEEP
-
 /* Private define ------------------------------------------------------------*/
 //#define BUFFER_SIZE         ((uint32_t)0x00177000)
 //#define WRITE_READ_ADDR     ((uint32_t)0x0000)
@@ -258,16 +257,16 @@ static void TIM_DEMO_init(void);
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 
-RTC_HandleTypeDef		RtcHandle; /* used to change time and date, no RTC is running on this MCU */
-TIM_HandleTypeDef   TimHandle; /* used in stm32f4xx_it.c too */
-TIM_HandleTypeDef   TimBacklightHandle; /* used in stm32f4xx_it.c too */
-TIM_HandleTypeDef   TimDemoHandle; /* used in stm32f4xx_it.c too */
+RTC_HandleTypeDef RtcHandle; /* used to change time and date, no RTC is running on this MCU */
+TIM_HandleTypeDef TimHandle; /* used in stm32f4xx_it.c too */
+TIM_HandleTypeDef TimBacklightHandle; /* used in stm32f4xx_it.c too */
+TIM_HandleTypeDef TimDemoHandle; /* used in stm32f4xx_it.c too */
 
 /*
-uint32_t time_before;
-uint32_t time_between;
-uint32_t time_after;
-*/
+ uint32_t time_before;
+ uint32_t time_between;
+ uint32_t time_after;
+ */
 
 /* SDRAM handler declaration */
 SDRAM_HandleTypeDef hsdram;
@@ -277,24 +276,24 @@ FMC_SDRAM_CommandTypeDef command;
 /* This was used for Dual Boot */
 //FLASH_OBProgramInitTypeDef    OBInit;
 //FLASH_AdvOBProgramInitTypeDef AdvOBInit;
-
 /* Private variables with external access ------------------------------------*/
 
 uint32_t globalStateID = 0;
 uint8_t globalModeID = SURFMODE;
 uint32_t time_without_button_pressed_deciseconds = 0; /**< langbeschreibung (eigenes Feld) warum diese variable verwendet wird um den sleepmode zu aktivieren */
-uint8_t bootToBootloader = 0;	///< set  in tComm.c to install firmware updates, calls resetToFirmwareUpdate()
+uint8_t bootToBootloader = 0;///< set  in tComm.c to install firmware updates, calls resetToFirmwareUpdate()
 //uint8_t dataEx_VPM_call = 0;
 uint8_t returnFromCommCleanUpRequest = 0; ///< use this to exit bluetooth mode and call tComm_exit()
 uint32_t base_tempLightLevel = 0;
-uint8_t	updateButtonsToDefault = 0;
-uint8_t	wasFirmwareUpdateCheckBattery = 0;
+uint8_t updateButtonsToDefault = 0;
+uint8_t wasFirmwareUpdateCheckBattery = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 
 static void SystemClock_Config(void);
 static void Error_Handler(void);
-static void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram, FMC_SDRAM_CommandTypeDef *Command);
+static void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram,
+		FMC_SDRAM_CommandTypeDef *Command);
 static void SDRAM_Config(void);
 static void EXTILine_Buttons_Config(void);
 static void TIM_init(void);
@@ -306,25 +305,25 @@ static void resetToFirmwareUpdate(void);
 
 /* ITM Trace-------- ---------------------------------------------------------*/
 /*
-#define ITM_Port8(n)    (*((volatile unsigned char *)(0xE0000000+4*n)))
-#define ITM_Port16(n)   (*((volatile unsigned short*)(0xE0000000+4*n)))
-#define ITM_Port32(n)   (*((volatile unsigned long *)(0xE0000000+4*n)))
+ #define ITM_Port8(n)    (*((volatile unsigned char *)(0xE0000000+4*n)))
+ #define ITM_Port16(n)   (*((volatile unsigned short*)(0xE0000000+4*n)))
+ #define ITM_Port32(n)   (*((volatile unsigned long *)(0xE0000000+4*n)))
 
-#define DEMCR           (*((volatile unsigned long *)(0xE000EDFC)))
-#define TRCENA          0x01000000
+ #define DEMCR           (*((volatile unsigned long *)(0xE000EDFC)))
+ #define TRCENA          0x01000000
 
-struct __FILE { int handle; };
-FILE __stdout;
-FILE __stdin;
+ struct __FILE { int handle; };
+ FILE __stdout;
+ FILE __stdin;
 
-int fputc(int ch, FILE *f) {
-    if (DEMCR & TRCENA) {
-        while (ITM_Port32(0) == 0);
-        ITM_Port8(0) = ch;
-    }
-    return(ch);
-}
-*/
+ int fputc(int ch, FILE *f) {
+ if (DEMCR & TRCENA) {
+ while (ITM_Port32(0) == 0);
+ ITM_Port8(0) = ch;
+ }
+ return(ch);
+ }
+ */
 
 //  ===============================================================================
 //	main
@@ -332,175 +331,172 @@ int fputc(int ch, FILE *f) {
 ///					for bluetooth and deco calculations
 ///
 //  ===============================================================================
-int main(void)
-{
-    uint32_t pLayerInvisible;
-    uint16_t totalDiveCounterFound;
+int main(void) {
+	uint32_t pLayerInvisible;
+	uint16_t totalDiveCounterFound;
 
-    set_globalState( StBoot0 );
+	set_globalState( StBoot0);
 
-    HAL_Init();
-    HAL_NVIC_SetPriorityGrouping( NVIC_PRIORITYGROUP_2 );
+	HAL_Init();
+	HAL_NVIC_SetPriorityGrouping( NVIC_PRIORITYGROUP_2);
 
-    SystemClock_Config();
+	SystemClock_Config();
 
-    MX_GPIO_Init();
-    //  MX_SmallCPU_NO_Reset_Helper();	 //161116 hw
-    MX_SPI_Init();
-    MX_UART_Init();
-    SDRAM_Config();
-    HAL_Delay( 100 );
-    GFX_init( &pLayerInvisible );
+	MX_GPIO_Init();
+	//  MX_SmallCPU_NO_Reset_Helper();	 //161116 hw
+	MX_SPI_Init();
+	MX_UART_Init();
+	SDRAM_Config();
+	HAL_Delay(100);
+	GFX_init(&pLayerInvisible);
 
-    TIM_init();
-    TIM_BACKLIGHT_init();
+	TIM_init();
+	TIM_BACKLIGHT_init();
 
-    /*
-        GFX_helper_font_memory_list(&FontT24);
-        GFX_helper_font_memory_list(&FontT42);
-        GFX_helper_font_memory_list(&FontT48);
-        GFX_helper_font_memory_list(&FontT54);
-        GFX_helper_font_memory_list(&FontT84);
-        GFX_helper_font_memory_list(&FontT105);
-        GFX_helper_font_memory_list(&FontT144);
-    */
+	/*
+	 GFX_helper_font_memory_list(&FontT24);
+	 GFX_helper_font_memory_list(&FontT42);
+	 GFX_helper_font_memory_list(&FontT48);
+	 GFX_helper_font_memory_list(&FontT54);
+	 GFX_helper_font_memory_list(&FontT84);
+	 GFX_helper_font_memory_list(&FontT105);
+	 GFX_helper_font_memory_list(&FontT144);
+	 */
 
-    stateRealGetPointerWrite()->lastKnownBatteryPercentage = 0; // damit das nicht in settings kopiert wird.
-    set_settings_to_Standard();
-    mod_settings_for_first_start_with_empty_ext_flash();
-    ext_flash_read_settings();
-    if( newFirmwareVersionCheckViaSettings() ) // test for old firmware version in loaded settings
-    {
-        wasFirmwareUpdateCheckBattery = 1;
-        set_settings_button_to_standard_with_individual_buttonBalance(); // will adapt individual values
-    }
-    //settingsGetPointer()->bluetoothActive = 0; 	/* MX_Bluetooth_PowerOff();  unnecessary as part of MX_GPIO_Init() */
-    //settingsGetPointer()->compassBearing = 0;
-    set_new_settings_missing_in_ext_flash(); // inlcudes update of firmware version  161121
+	stateRealGetPointerWrite()->lastKnownBatteryPercentage = 0; // damit das nicht in settings kopiert wird.
+	set_settings_to_Standard();
+	mod_settings_for_first_start_with_empty_ext_flash();
+	ext_flash_read_settings();
+	if (newFirmwareVersionCheckViaSettings()) // test for old firmware version in loaded settings
+	{
+		wasFirmwareUpdateCheckBattery = 1;
+		set_settings_button_to_standard_with_individual_buttonBalance(); // will adapt individual values
+	}
+	//settingsGetPointer()->bluetoothActive = 0; 	/* MX_Bluetooth_PowerOff();  unnecessary as part of MX_GPIO_Init() */
+	//settingsGetPointer()->compassBearing = 0;
+	set_new_settings_missing_in_ext_flash(); // inlcudes update of firmware version  161121
 
-    // new 170508: bluetooth on at start
-    settingsGetPointer()->bluetoothActive = 1;
-    MX_Bluetooth_PowerOn();
+	// new 170508: bluetooth on at start
+	settingsGetPointer()->bluetoothActive = 1;
+	MX_Bluetooth_PowerOn();
 
-    // Haase Geburtstag:
-    //  settingsGetPointer()->serialHigh = (3012 / 256);
-    //  settingsGetPointer()->serialLow  = (3012 & 0xFF);
+	// Haase Geburtstag:
+	//  settingsGetPointer()->serialHigh = (3012 / 256);
+	//  settingsGetPointer()->serialLow  = (3012 & 0xFF);
 
-    //  settingsGetPointer()->showDebugInfo = 1;
+	//  settingsGetPointer()->showDebugInfo = 1;
 
-    /*
-    if(settingsGetPointer()->scooterControl)
-    {
-         settingsGetPointer()->bluetoothActive = 1;
-         MX_Bluetooth_PowerOn();
-         if(settingsGetPointer()->scooterDeviceAddress[0] != 0)
-            bC_setConnectRequest();
-    }
-    */
-    /*
-    if( (hardwareDataGetPointer()->primarySerial == 20+18)
-     || (hardwareDataGetPointer()->primarySerial == 20+25)
-     || (hardwareDataGetPointer()->primarySerial == 20+27))
-    {
-        MX_Bluetooth_PowerOn();
-        tComm_Set_Bluetooth_Name(1);
-    }
-    */
-    errorsInSettings = check_and_correct_settings();
-    createDiveSettings();
+	/*
+	 if(settingsGetPointer()->scooterControl)
+	 {
+	 settingsGetPointer()->bluetoothActive = 1;
+	 MX_Bluetooth_PowerOn();
+	 if(settingsGetPointer()->scooterDeviceAddress[0] != 0)
+	 bC_setConnectRequest();
+	 }
+	 */
+	/*
+	 if( (hardwareDataGetPointer()->primarySerial == 20+18)
+	 || (hardwareDataGetPointer()->primarySerial == 20+25)
+	 || (hardwareDataGetPointer()->primarySerial == 20+27))
+	 {
+	 MX_Bluetooth_PowerOn();
+	 tComm_Set_Bluetooth_Name(1);
+	 }
+	 */
+	errorsInSettings = check_and_correct_settings();
+	createDiveSettings();
 
 #ifdef QUICK_SLEEP
-    settingsGetPointer()->timeoutSurfacemode = 20;
+	settingsGetPointer()->timeoutSurfacemode = 20;
 #else
-    settingsGetPointer()->timeoutSurfacemode = 120;
+	settingsGetPointer()->timeoutSurfacemode = 120;
 #endif
 
 #ifdef DEMOMODE
-    demoConfigureSettings();
-    TIM_DEMO_init();
+	demoConfigureSettings();
+	TIM_DEMO_init();
 #endif
 
 // -----------------------------
 
-    display_power_on__1_of_2__pre_RGB();
-    GFX_LTDC_Init();
-    GFX_LTDC_LayerDefaultInit( TOP_LAYER, pLayerInvisible );
-    GFX_LTDC_LayerDefaultInit( BACKGRD_LAYER, pLayerInvisible );
-    GFX_SetFramesTopBottom( pLayerInvisible, pLayerInvisible, 480 );
-    HAL_Delay( 20 );
-    display_power_on__2_of_2__post_RGB();
-    GFX_use_colorscheme( settingsGetPointer()->tX_colorscheme );
+	display_power_on__1_of_2__pre_RGB();
+	GFX_LTDC_Init();
+	GFX_LTDC_LayerDefaultInit( TOP_LAYER, pLayerInvisible);
+	GFX_LTDC_LayerDefaultInit( BACKGRD_LAYER, pLayerInvisible);
+	GFX_SetFramesTopBottom(pLayerInvisible, pLayerInvisible, 480);
+	HAL_Delay(20);
+	display_power_on__2_of_2__post_RGB();
+	GFX_use_colorscheme(settingsGetPointer()->tX_colorscheme);
 
 // -----------------------------
-    tHome_init();
-    tI_init();
-    tM_init();
-    tMenuEdit_init();
-    tInfoLog_init();
-    tComm_init();
-    DataEX_init();
-    setButtonResponsiveness( settingsGetPointer()->ButtonResponsiveness );
-    set_globalState_tHome();
+	tHome_init();
+	tI_init();
+	tM_init();
+	tMenuEdit_init();
+	tInfoLog_init();
+	tComm_init();
+	DataEX_init();
+	setButtonResponsiveness(settingsGetPointer()->ButtonResponsiveness);
+	set_globalState_tHome();
 
-    GFX_start_VSYNC_IRQ();
-    tCCR_init();
+	GFX_start_VSYNC_IRQ();
+	tCCR_init();
 
-    GFX_logoAutoOff();
-    EXTILine_Buttons_Config();
+	GFX_logoAutoOff();
+	EXTILine_Buttons_Config();
 
-    ext_flash_repair_dive_log();
-    //ext_flash_repair_SPECIAL_dive_numbers_starting_count_with(1);
+	ext_flash_repair_dive_log();
+	//ext_flash_repair_SPECIAL_dive_numbers_starting_count_with(1);
 
-    totalDiveCounterFound = logbook_lastDive_diveNumber();
-    if( settingsGetPointer()->totalDiveCounter < totalDiveCounterFound )
-            settingsGetPointer()->totalDiveCounter = totalDiveCounterFound;
+	totalDiveCounterFound = logbook_lastDive_diveNumber();
+	if (settingsGetPointer()->totalDiveCounter < totalDiveCounterFound)
+		settingsGetPointer()->totalDiveCounter = totalDiveCounterFound;
 
-    if( settingsGetPointer()->debugModeOnStart )
-    {
-        settingsGetPointer()->debugModeOnStart = 0;
-        ext_flash_write_settings();
-        setDebugMode();
-        openInfo( StIDEBUG );
-    }
+	if (settingsGetPointer()->debugModeOnStart) {
+		settingsGetPointer()->debugModeOnStart = 0;
+		ext_flash_write_settings();
+		setDebugMode();
+		openInfo( StIDEBUG);
+	}
 
-    /* @brief main LOOP
-     *
-     * this is executed while no IRQ interrupts it
-     * - deco calculation
-     * - bluetooth
-     * and resetToFirmwareUpdate()
-     * because tComm_control() does not exit before disconnection
-     */
-    while( 1 )
-    {
-        if( bootToBootloader )
-            resetToFirmwareUpdate();
+	/* @brief main LOOP
+	 *
+	 * this is executed while no IRQ interrupts it
+	 * - deco calculation
+	 * - bluetooth
+	 * and resetToFirmwareUpdate()
+	 * because tComm_control() does not exit before disconnection
+	 */
+	while (1) {
+		if (bootToBootloader)
+			resetToFirmwareUpdate();
 
-        // this will allways reset after RTE reset -> no good!
+		// this will allways reset after RTE reset -> no good!
 //		if(DataEX_was_power_on()) // new to allow for update after RTE update
 //			resetToFirmwareUpdate();
 
-        tCCR_control();
-        if( tComm_control() )// will stop while loop if tComm Mode started until exit from UART
-        {
-            createDiveSettings();
-            updateMenu();
-            ext_flash_write_settings();
-        }
-        deco_loop();
-        /*
-        bonexControl();
-        if(bC_getStatus() == BC_DISCONNECTED)
-        {
-            if(tComm_control())			// will stop while loop if tComm Mode started until exit from UART
-            {
-                createDiveSettings();
-                updateMenu();
-                ext_flash_write_settings();
-            }
-        }
-        */
-    }
+		tCCR_control();
+		if (tComm_control()) // will stop while loop if tComm Mode started until exit from UART
+		{
+			createDiveSettings();
+			updateMenu();
+			ext_flash_write_settings();
+		}
+		deco_loop();
+		/*
+		 bonexControl();
+		 if(bC_getStatus() == BC_DISCONNECTED)
+		 {
+		 if(tComm_control())			// will stop while loop if tComm Mode started until exit from UART
+		 {
+		 createDiveSettings();
+		 updateMenu();
+		 ext_flash_write_settings();
+		 }
+		 }
+		 */
+	}
 }
 
 //  ===============================================================================
@@ -518,248 +514,245 @@ int main(void)
 /// to be called
 ///
 //  ===============================================================================
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 //	DataEX_call();
 #ifdef DEMOMODE
-    if(htim->Instance==TIM7)
-    {
-        HAL_GPIO_EXTI_Callback(demoGetCommand());
-        return;
-    }
+	if(htim->Instance==TIM7)
+	{
+		HAL_GPIO_EXTI_Callback(demoGetCommand());
+		return;
+	}
 #endif
-    static uint8_t last_base;
+	static uint8_t last_base;
 
-    SStateList status;
-    uint32_t timeout_in_seconds;
-    uint32_t timeout_limit_Surface_in_seconds;
+	SStateList status;
+	uint32_t timeout_in_seconds;
+	uint32_t timeout_limit_Surface_in_seconds;
 
-    _Bool InDiveMode = 0;
-    _Bool modeChange = 0; // to exit from menu and logbook
+	_Bool InDiveMode = 0;
+	_Bool modeChange = 0; // to exit from menu and logbook
 
-    if(stateUsed->mode == MODE_DIVE)
-        InDiveMode = 1;
-    else
-        InDiveMode = 0;
+	if (stateUsed->mode == MODE_DIVE)
+		InDiveMode = 1;
+	else
+		InDiveMode = 0;
 
-    if(returnFromCommCleanUpRequest)
-    {
-        tComm_exit();
-        returnFromCommCleanUpRequest = 0;
-    }
+	if (returnFromCommCleanUpRequest) {
+		tComm_exit();
+		returnFromCommCleanUpRequest = 0;
+	}
 
-    get_globalStateList(&status);
+	get_globalStateList(&status);
 
-    switch(status.base)
-    {
-    case BaseHome:
-    case BaseMenu:
-    case BaseInfo:
-        updateSetpointStateUsed();
-        DateEx_copy_to_dataOut();
-        DataEX_call();
-        DataEX_copy_to_LifeData(&modeChange);
+	switch (status.base) {
+	case BaseHome:
+	case BaseMenu:
+	case BaseInfo:
+		updateSetpointStateUsed();
+		DateEx_copy_to_dataOut();
+		DataEX_call();
+		DataEX_copy_to_LifeData(&modeChange);
 //foto session :-)  stateRealGetPointerWrite()->lifeData.battery_charge = 99;
 //foto session :-)  stateSimGetPointerWrite()->lifeData.battery_charge = 99;
-        DataEX_copy_to_deco();
-        if(stateUsed == stateSimGetPointer())
-            simulation_UpdateLifeData(1);
-        check_warning();
-        if(stateUsed == stateRealGetPointer())
-            logbook_InitAndWrite();
-        updateMiniLiveLogbook(1);
-        timer_UpdateSecond(1);
-base_tempLightLevel =			TIM_BACKLIGHT_adjust();
-        tCCR_tick();
-        tHome_tick();
-        if(status.base == BaseHome)
-            tMenuEdit_writeSettingsToFlash(); // takes 900 ms!!
-        break;
-    case BaseStop:
-        DateEx_copy_to_dataOut();
-        DataEX_call();
-        DataEX_control_connection_while_asking_for_sleep();
-        break;
-    default:
-    case BaseComm:
-        if(get_globalState() == StUART_RTECONNECT)
-        {
-            DateEx_copy_to_dataOut();
-            DataEX_call();
-            DataEX_copy_to_LifeData(0);
-        }
-        break;
-    }
+		DataEX_copy_to_deco();
+		if (stateUsed == stateSimGetPointer())
+			simulation_UpdateLifeData(1);
+		check_warning();
+		if (stateUsed == stateRealGetPointer())
+			logbook_InitAndWrite();
+		updateMiniLiveLogbook(1);
+		timer_UpdateSecond(1);
+		base_tempLightLevel = TIM_BACKLIGHT_adjust();
+		tCCR_tick();
+		tHome_tick();
+		if (status.base == BaseHome)
+			tMenuEdit_writeSettingsToFlash(); // takes 900 ms!!
+		break;
+	case BaseStop:
+		DateEx_copy_to_dataOut();
+		DataEX_call();
+		DataEX_control_connection_while_asking_for_sleep();
+		break;
+	default:
+	case BaseComm:
+		if (get_globalState() == StUART_RTECONNECT) {
+			DateEx_copy_to_dataOut();
+			DataEX_call();
+			DataEX_copy_to_LifeData(0);
+		}
+		break;
+	}
 
-    /* timeout control */
-    if(modeChange) ///< from RTE, set in data_exchange_main.c
-        time_without_button_pressed_deciseconds = (settingsGetPointer()->timeoutSurfacemode / 4) * 3;
-    if(status.base != last_base)
-        time_without_button_pressed_deciseconds = 0;
-    last_base = status.base;
-    timeout_in_seconds = time_without_button_pressed_deciseconds / 10;
-    time_without_button_pressed_deciseconds += 1;
-    if(modeChange || (timeout_in_seconds != time_without_button_pressed_deciseconds / 10))
-    {
+	/* timeout control */
+	if (modeChange) ///< from RTE, set in data_exchange_main.c
+		time_without_button_pressed_deciseconds =
+				(settingsGetPointer()->timeoutSurfacemode / 4) * 3;
+	if (status.base != last_base)
+		time_without_button_pressed_deciseconds = 0;
+	last_base = status.base;
+	timeout_in_seconds = time_without_button_pressed_deciseconds / 10;
+	time_without_button_pressed_deciseconds += 1;
+	if (modeChange
+			|| (timeout_in_seconds
+					!= time_without_button_pressed_deciseconds / 10)) {
 #ifdef NO_TIMEOUT
-        timeout_in_seconds = 0;
+		timeout_in_seconds = 0;
 #else
-        timeout_in_seconds += 1;
+		timeout_in_seconds += 1;
 #endif
 
-        if(InDiveMode)
-        {
-            switch(status.base)
-            {
-            case BaseHome:
-                if((status.line != 0) && (timeout_in_seconds  >= settingsGetPointer()->timeoutEnterButtonSelectDive))
-                {
-                    set_globalState(StD);
-                    timeout_in_seconds = 0;
-                }
-            break;
+		if (InDiveMode) {
+			switch (status.base) {
+			case BaseHome:
+				if ((status.line != 0)
+						&& (timeout_in_seconds
+								>= settingsGetPointer()->timeoutEnterButtonSelectDive)) {
+					set_globalState(StD);
+					timeout_in_seconds = 0;
+				}
+				break;
 
-            case BaseMenu:
-                if((status.line == 0) && ((timeout_in_seconds  >= settingsGetPointer()->timeoutMenuDive) || modeChange))
-                {
-                    exitMenu();
-                    timeout_in_seconds = 0;
-                }
-                if((status.line != 0) && ((timeout_in_seconds  >= settingsGetPointer()->timeoutMenuEdit) || modeChange))
-                {
-                    exitMenuEdit_to_Home();
-                    timeout_in_seconds = 0;
-                }
-            break;
-/* why was this here? 160317 hw
-            case BaseInfo:
-                if(status.page == InfoPageLogList)
-                {
-                    exitLog();
-                }
-                else
-                if(status.page == InfoPageLogShow)
-                {
-                    show_logbook_exit();
-                    exitLog();
-                }
-                else
-                if(status.page != InfoPageCompass)
-                {
-                    exitInfo();
-                }
-                timeout_in_seconds = 0;
-            break;
-*/
-            default:
-                break;
-            }
-        }
-        else /* surface mode */
-        {
-            switch(status.base)
-            {
-            case BaseHome:
-                // added hw 161027
-                if(!(stateRealGetPointer()->warnings.lowBattery) && (stateRealGetPointer()->lifeData.battery_charge > 9))
-                {
-                    stateRealGetPointerWrite()->lastKnownBatteryPercentage = stateRealGetPointer()->lifeData.battery_charge;
-                }
-                else if((wasFirmwareUpdateCheckBattery) && (timeout_in_seconds > 3))
-                {
-                    wasFirmwareUpdateCheckBattery = 0;
-                    setButtonResponsiveness(settingsGetPointer()->ButtonResponsiveness); // added 170306
-                    if(	(settingsGetPointer()->lastKnownBatteryPercentage > 0)
-                    && 	(settingsGetPointer()->lastKnownBatteryPercentage <= 100)
-                    && 	(stateRealGetPointer()->warnings.lowBattery))
-                    {
-                        setBatteryPercentage(settingsGetPointer()->lastKnownBatteryPercentage);
-                    }
-                }
-                // stuff before and new @161121 CCR-sensor limit 10 minutes
-                if((settingsGetPointer()->dive_mode == DIVEMODE_CCR) && (settingsGetPointer()->CCR_Mode == CCRMODE_Sensors))
-                {
-                    timeout_limit_Surface_in_seconds = settingsGetPointer()->timeoutSurfacemodeWithSensors;
-                }
-                else
-                {
-                    timeout_limit_Surface_in_seconds = settingsGetPointer()->timeoutSurfacemode;
-                }
-                if(timeout_in_seconds  >= timeout_limit_Surface_in_seconds)
-                {
-                    gotoSleep();
-                }
-                break;
-            case BaseMenu:
-                if((status.line == 0) && ((timeout_in_seconds  >= settingsGetPointer()->timeoutMenuSurface) || modeChange))
-                {
-                    exitMenu();
-                    timeout_in_seconds = 0;
-                }
-                if((status.line != 0) && ((timeout_in_seconds  >= settingsGetPointer()->timeoutMenuEdit) || modeChange))
-                {
-                    if((status.page != (uint8_t)((StMPLAN >> 24) & 0x0F)) || (timeout_in_seconds  >= 10*(settingsGetPointer()->timeoutMenuEdit)))
-                    {
-                        exitMenuEdit_to_Home();
-                        timeout_in_seconds = 0;
-                    }
-                }
-                break;
+			case BaseMenu:
+				if ((status.line == 0)
+						&& ((timeout_in_seconds
+								>= settingsGetPointer()->timeoutMenuDive)
+								|| modeChange)) {
+					exitMenu();
+					timeout_in_seconds = 0;
+				}
+				if ((status.line != 0)
+						&& ((timeout_in_seconds
+								>= settingsGetPointer()->timeoutMenuEdit)
+								|| modeChange)) {
+					exitMenuEdit_to_Home();
+					timeout_in_seconds = 0;
+				}
+				break;
+				/* why was this here? 160317 hw
+				 case BaseInfo:
+				 if(status.page == InfoPageLogList)
+				 {
+				 exitLog();
+				 }
+				 else
+				 if(status.page == InfoPageLogShow)
+				 {
+				 show_logbook_exit();
+				 exitLog();
+				 }
+				 else
+				 if(status.page != InfoPageCompass)
+				 {
+				 exitInfo();
+				 }
+				 timeout_in_seconds = 0;
+				 break;
+				 */
+			default:
+				break;
+			}
+		} else /* surface mode */
+		{
+			switch (status.base) {
+			case BaseHome:
+				// added hw 161027
+				if (!(stateRealGetPointer()->warnings.lowBattery)
+						&& (stateRealGetPointer()->lifeData.battery_charge > 9)) {
+					stateRealGetPointerWrite()->lastKnownBatteryPercentage =
+							stateRealGetPointer()->lifeData.battery_charge;
+				} else if ((wasFirmwareUpdateCheckBattery)
+						&& (timeout_in_seconds > 3)) {
+					wasFirmwareUpdateCheckBattery = 0;
+					setButtonResponsiveness(
+							settingsGetPointer()->ButtonResponsiveness); // added 170306
+					if ((settingsGetPointer()->lastKnownBatteryPercentage > 0)
+							&& (settingsGetPointer()->lastKnownBatteryPercentage
+									<= 100)
+							&& (stateRealGetPointer()->warnings.lowBattery)) {
+						setBatteryPercentage(
+								settingsGetPointer()->lastKnownBatteryPercentage);
+					}
+				}
+				// stuff before and new @161121 CCR-sensor limit 10 minutes
+				if ((settingsGetPointer()->dive_mode == DIVEMODE_CCR)
+						&& (settingsGetPointer()->CCR_Mode == CCRMODE_Sensors)) {
+					timeout_limit_Surface_in_seconds =
+							settingsGetPointer()->timeoutSurfacemodeWithSensors;
+				} else {
+					timeout_limit_Surface_in_seconds =
+							settingsGetPointer()->timeoutSurfacemode;
+				}
+				if (timeout_in_seconds >= timeout_limit_Surface_in_seconds) {
+					gotoSleep();
+				}
+				break;
+			case BaseMenu:
+				if ((status.line == 0)
+						&& ((timeout_in_seconds
+								>= settingsGetPointer()->timeoutMenuSurface)
+								|| modeChange)) {
+					exitMenu();
+					timeout_in_seconds = 0;
+				}
+				if ((status.line != 0)
+						&& ((timeout_in_seconds
+								>= settingsGetPointer()->timeoutMenuEdit)
+								|| modeChange)) {
+					if ((status.page != (uint8_t) ((StMPLAN >> 24) & 0x0F))
+							|| (timeout_in_seconds
+									>= 10
+											* (settingsGetPointer()->timeoutMenuEdit))) {
+						exitMenuEdit_to_Home();
+						timeout_in_seconds = 0;
+					}
+				}
+				break;
 
-            case BaseInfo:
-                if((timeout_in_seconds  >= settingsGetPointer()->timeoutInfo) || modeChange)
-                {
-                    if(status.page == InfoPageLogList)
-                    {
-                        exitLog();
-                        timeout_in_seconds = 0;
-                    }
-                    else
-                    if(status.page == InfoPageLogShow)
-                    {
-                        show_logbook_exit();
-                        exitLog();
-                        timeout_in_seconds = 0;
-                    }
-                    else
-                    if(status.page != InfoPageCompass)
-                    {
-                        exitInfo();
-                        timeout_in_seconds = 0;
-                    }
-                }
-                break;
-            default:
-                break;
-            }
-        }
-    }
+			case BaseInfo:
+				if ((timeout_in_seconds >= settingsGetPointer()->timeoutInfo)
+						|| modeChange) {
+					if (status.page == InfoPageLogList) {
+						exitLog();
+						timeout_in_seconds = 0;
+					} else if (status.page == InfoPageLogShow) {
+						show_logbook_exit();
+						exitLog();
+						timeout_in_seconds = 0;
+					} else if (status.page != InfoPageCompass) {
+						exitInfo();
+						timeout_in_seconds = 0;
+					}
+				}
+				break;
+			default:
+				break;
+			}
+		}
+	}
 
-    get_globalStateList(&status);
+	get_globalStateList(&status);
 
-    switch(status.base)
-    {
-    case BaseHome:
-        tHome_refresh();
-        tM_check_content();
-        break;
-    case BaseMenu:
-        tM_refresh_live_content();
-        tMenuEdit_refresh_live_content();
-        break;
-    case BaseInfo:
-        tInfo_refresh(); ///< only compass at the moment 23.Feb.2015 hw
-        break;
-    case BaseComm:
-         tComm_refresh();
-        break;
-    default:
-        if(get_globalState() == StStop)
-            tHome_sleepmode_fun();
-        break;
-    }
+	switch (status.base) {
+	case BaseHome:
+		tHome_refresh();
+		tM_check_content();
+		break;
+	case BaseMenu:
+		tM_refresh_live_content();
+		tMenuEdit_refresh_live_content();
+		break;
+	case BaseInfo:
+		tInfo_refresh(); ///< only compass at the moment 23.Feb.2015 hw
+		break;
+	case BaseComm:
+		tComm_refresh();
+		break;
+	default:
+		if (get_globalState() == StStop)
+			tHome_sleepmode_fun();
+		break;
+	}
 }
-
 
 /* button and VSYNC IRQ
  *
@@ -775,392 +768,355 @@ base_tempLightLevel =			TIM_BACKLIGHT_adjust();
 /// see GFX_change_LTDC()
 ///
 //  ===============================================================================
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-    if(!GPIO_Pin)
-        return;
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	if (!GPIO_Pin)
+		return;
 
-    uint8_t action = 0;
-    SStateList status;
+	uint8_t action = 0;
+	SStateList status;
 
-    if(GPIO_Pin == VSYNC_IRQ_PIN) // rechts, unten
-    {
-        GFX_change_LTDC();
-        housekeepingFrame();
-/*
+	if (GPIO_Pin == VSYNC_IRQ_PIN) // rechts, unten
+	{
+		GFX_change_LTDC();
+		housekeepingFrame();
+		/*
+		 #ifdef DEMOMODE
+		 static uint8_t countCall = 0;
+		 if(countCall++ < 10)
+		 return;
+		 countCall = 0;
+		 uint8_t buttonAction = demoGetCommand();
+		 if(buttonAction)
+		 GPIO_Pin = buttonAction;
+		 else
+		 #endif
+		 */
+		return;
+	}
+
 #ifdef DEMOMODE
-    static uint8_t countCall = 0;
-    if(countCall++ < 10)
-        return;
-    countCall = 0;
-    uint8_t buttonAction = demoGetCommand();
-    if(buttonAction)
-        GPIO_Pin = buttonAction;
-    else
-#endif
-*/
-        return;
-    }
-
-#ifdef DEMOMODE
-    uint8_t demoMachineCall = 0;
-    if(GPIO_Pin & 0x80)
-    {
-        demoMachineCall = 1;
-        GPIO_Pin &= 0x7F;
-    }
+	uint8_t demoMachineCall = 0;
+	if(GPIO_Pin & 0x80)
+	{
+		demoMachineCall = 1;
+		GPIO_Pin &= 0x7F;
+	}
 #endif
 
-    time_without_button_pressed_deciseconds	= 0;
+	time_without_button_pressed_deciseconds = 0;
 
-    if(GFX_logoStatus() != 0)
-        return;
+	if (GFX_logoStatus() != 0)
+		return;
 
-    if(GPIO_Pin == BUTTON_BACK_PIN) // links
-        action = ACTION_BUTTON_BACK;
-    else
-    if(GPIO_Pin == BUTTON_ENTER_PIN) // mitte
-        action = ACTION_BUTTON_ENTER;
-    else
-    if(GPIO_Pin == BUTTON_NEXT_PIN) // rechts
-        action = ACTION_BUTTON_NEXT;
+	if (GPIO_Pin == BUTTON_BACK_PIN) { // links
+		HAL_Delay(BUTTON_DEBOUNCE_DELAY);
+		if (HAL_GPIO_ReadPin(BUTTON_BACK_GPIO_PORT, BUTTON_BACK_PIN) == 1) {
+			action = ACTION_BUTTON_BACK;
+		}
+	}
+
+	else if (GPIO_Pin == BUTTON_ENTER_PIN) { // mitte
+		HAL_Delay(BUTTON_DEBOUNCE_DELAY);
+		if (HAL_GPIO_ReadPin(BUTTON_ENTER_GPIO_PORT, BUTTON_ENTER_PIN) == 1) {
+			action = ACTION_BUTTON_ENTER;
+		}
+	}
+
+	else if (GPIO_Pin == BUTTON_NEXT_PIN) { // rechts
+		HAL_Delay(BUTTON_DEBOUNCE_DELAY);
+		if (HAL_GPIO_ReadPin(BUTTON_NEXT_GPIO_PORT, BUTTON_NEXT_PIN) == 1) {
+			action = ACTION_BUTTON_NEXT;
+		}
+	}
+
 #ifdef BUTTON_CUSTOM_PIN
-    else
-    if(GPIO_Pin == BUTTON_CUSTOM_PIN) // extra
-        action = ACTION_BUTTON_CUSTOM;
+	else
+	if(GPIO_Pin == BUTTON_CUSTOM_PIN) // extra
+	action = ACTION_BUTTON_CUSTOM;
 #endif
 
 #ifdef DEMOMODE // user pressed button ?
-    if((!demoMachineCall) && demoModeActive())
-    {
-        demoSendCommand(action);
-        return;
-    }
+	if((!demoMachineCall) && demoModeActive())
+	{
+		demoSendCommand(action);
+		return;
+	}
 #endif
 
-    get_globalStateList(&status);
+	get_globalStateList(&status);
 
-    if(action == ACTION_BUTTON_CUSTOM)
-    {
-        GFX_screenshot();
-    }
+	if (action == ACTION_BUTTON_CUSTOM) {
+		GFX_screenshot();
+	}
 
-    switch(status.base)
-    {
-    case BaseStop:
-        if(action == ACTION_BUTTON_BACK)
-            resetToFirmwareUpdate();
-        break;
-    case BaseComm:
-        if(action == ACTION_BUTTON_BACK)
-        {
-            settingsGetPointer()->bluetoothActive = 0;
-            MX_Bluetooth_PowerOff();
-            tComm_exit();
-        }
-        break;
-    case BaseHome:
-        if(action == ACTION_BUTTON_NEXT)
-        {
-            if(status.page == PageSurface)
-                openMenu(1);
-            else
-                tHomeDiveMenuControl(action);
-        }
-        else
-        if(action == ACTION_BUTTON_BACK)
-        {
-            if(get_globalState() == StS)
-                openInfo(StILOGLIST);
-            else
-            if((status.page == PageDive) && (settingsGetPointer()->design < 7))
-            {
-                settingsGetPointer()->design = 7; // auto switch to 9 if necessary
-            }
-            else
-            if((status.page == PageDive) && (status.line != 0))
-            {
-                if(settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT)
-                    settingsGetPointer()->design = 3;
-                else
-                if(settingsGetPointer()->extraDisplay == EXTRADISPLAY_DECOGAME)
-                    settingsGetPointer()->design = 4;
+	switch (status.base) {
+	case BaseStop:
+		if (action == ACTION_BUTTON_BACK)
+			resetToFirmwareUpdate();
+		break;
+	case BaseComm:
+		if (action == ACTION_BUTTON_BACK) {
+			settingsGetPointer()->bluetoothActive = 0;
+			MX_Bluetooth_PowerOff();
+			tComm_exit();
+		}
+		break;
+	case BaseHome:
+		if (action == ACTION_BUTTON_NEXT) {
+			if (status.page == PageSurface)
+				openMenu(1);
+			else
+				tHomeDiveMenuControl(action);
+		} else if (action == ACTION_BUTTON_BACK) {
+			if (get_globalState() == StS)
+				openInfo(StILOGLIST);
+			else if ((status.page == PageDive)
+					&& (settingsGetPointer()->design < 7)) {
+				settingsGetPointer()->design = 7; // auto switch to 9 if necessary
+			} else if ((status.page == PageDive) && (status.line != 0)) {
+				if (settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT)
+					settingsGetPointer()->design = 3;
+				else if (settingsGetPointer()->extraDisplay
+						== EXTRADISPLAY_DECOGAME)
+					settingsGetPointer()->design = 4;
 
-                set_globalState(StD);
-            }
-            else
-                tHome_change_field_button_pressed();
-        }
-        else
-        if(action == ACTION_BUTTON_ENTER)
-        {
-            if((status.page == PageDive) && (status.line == 0))
-                tHome_change_customview_button_pressed();
-            else
-            if(status.page == PageSurface)
-                tHome_change_customview_button_pressed();
-            else
-                tHomeDiveMenuControl(action);
-        }
-        break;
+				set_globalState(StD);
+			} else
+				tHome_change_field_button_pressed();
+		} else if (action == ACTION_BUTTON_ENTER) {
+			if ((status.page == PageDive) && (status.line == 0))
+				tHome_change_customview_button_pressed();
+			else if (status.page == PageSurface)
+				tHome_change_customview_button_pressed();
+			else
+				tHomeDiveMenuControl(action);
+		}
+		break;
 
-    case BaseMenu:
-        if(status.line == 0)
-            sendActionToMenu(action);
-        else
-            sendActionToMenuEdit(action);
-        break;
+	case BaseMenu:
+		if (status.line == 0)
+			sendActionToMenu(action);
+		else
+			sendActionToMenuEdit(action);
+		break;
 
-    case BaseInfo:
-        if(status.page == InfoPageLogList)
-            sendActionToInfoLogList(action);
-        else
-        if(status.page == InfoPageLogShow)
-            sendActionToInfoLogShow(action);
-        else
-            sendActionToInfo(action);
-        break;
+	case BaseInfo:
+		if (status.page == InfoPageLogList)
+			sendActionToInfoLogList(action);
+		else if (status.page == InfoPageLogShow)
+			sendActionToInfoLogShow(action);
+		else
+			sendActionToInfo(action);
+		break;
 
-    default:
-        break;
-    }
+	default:
+		break;
+	}
 }
 
-
-void gotoSleep(void)
-{
-    /* not at the moment of testing */
+void gotoSleep(void) {
+	/* not at the moment of testing */
 //	ext_flash_erase_firmware_if_not_empty();
-    GFX_logoAutoOff();
-    set_globalState(StStop);
+	GFX_logoAutoOff();
+	set_globalState(StStop);
 }
-
 
 // -----------------------------
 
-uint8_t get_globalMode(void)
-{
-    return globalModeID;
+uint8_t get_globalMode(void) {
+	return globalModeID;
 }
 
+void set_globalMode(uint8_t newMode) {
+	if ((newMode != DIVEMODE) && (newMode != SURFMODE))
+		return;
 
-void set_globalMode(uint8_t newMode)
-{
-    if((newMode != DIVEMODE) && (newMode != SURFMODE))
-        return;
-
-    globalModeID = newMode;
+	globalModeID = newMode;
 }
 
-
-uint32_t get_globalState(void)
-{
-    return globalStateID;
+uint32_t get_globalState(void) {
+	return globalStateID;
 }
 
-
-void get_globalStateList(SStateList *output)
-{
-    output->base  = (uint8_t)((globalStateID >> 28) & 0x0F);
-    output->page  = (uint8_t)((globalStateID >> 24) & 0x0F);
-    output->line  = (uint8_t)((globalStateID >> 16) & 0xFF);
-    output->field = (uint8_t)((globalStateID >> 8) & 0xFF);
-    output->mode  = (uint8_t)((globalStateID     ) & 0xFF);
+void get_globalStateList(SStateList *output) {
+	output->base = (uint8_t) ((globalStateID >> 28) & 0x0F);
+	output->page = (uint8_t) ((globalStateID >> 24) & 0x0F);
+	output->line = (uint8_t) ((globalStateID >> 16) & 0xFF);
+	output->field = (uint8_t) ((globalStateID >> 8) & 0xFF);
+	output->mode = (uint8_t) ((globalStateID) & 0xFF);
 }
 
-
-void get_idSpecificStateList(uint32_t id, SStateList *output)
-{
-    output->base  = (uint8_t)((id >> 28) & 0x0F);
-    output->page  = (uint8_t)((id >> 24) & 0x0F);
-    output->line  = (uint8_t)((id >> 16) & 0xFF);
-    output->field = (uint8_t)((id >> 8) & 0xFF);
-    output->mode  = (uint8_t)((id     ) & 0xFF);
+void get_idSpecificStateList(uint32_t id, SStateList *output) {
+	output->base = (uint8_t) ((id >> 28) & 0x0F);
+	output->page = (uint8_t) ((id >> 24) & 0x0F);
+	output->line = (uint8_t) ((id >> 16) & 0xFF);
+	output->field = (uint8_t) ((id >> 8) & 0xFF);
+	output->mode = (uint8_t) ((id) & 0xFF);
 }
 
-
-void set_globalState_Menu_Page(uint8_t page)
-{
-    globalStateID = ((BaseMenu << 28) + (page << 24));
+void set_globalState_Menu_Page(uint8_t page) {
+	globalStateID = ((BaseMenu << 28) + (page << 24));
 }
 
-void set_globalState_Log_Page(uint8_t pageIsLine)
-{
-    globalStateID = StILOGLIST + (pageIsLine << 16);
+void set_globalState_Log_Page(uint8_t pageIsLine) {
+	globalStateID = StILOGLIST + (pageIsLine << 16);
 }
 
-
-void set_globalState_Menu_Line(uint8_t line)
-{
-    globalStateID = ((globalStateID & MaskLineFieldDigit) + (line << 16));
+void set_globalState_Menu_Line(uint8_t line) {
+	globalStateID = ((globalStateID & MaskLineFieldDigit) + (line << 16));
 }
 
-
-void set_globalState(uint32_t newID)
-{
-    globalStateID = newID;
+void set_globalState(uint32_t newID) {
+	globalStateID = newID;
 }
 
-void set_returnFromComm(void)
-{
-    returnFromCommCleanUpRequest = 1;
+void set_returnFromComm(void) {
+	returnFromCommCleanUpRequest = 1;
 }
 
-uint8_t font_update_required(void)
-{
-    uint8_t *fontVersionHigh;
-    uint8_t *fontVersionLow;
+uint8_t font_update_required(void) {
+	uint8_t *fontVersionHigh;
+	uint8_t *fontVersionLow;
 
-    fontVersionHigh = (uint8_t *)0x08132000;
-    fontVersionLow = (uint8_t *)0x08132001;
+	fontVersionHigh = (uint8_t *) 0x08132000;
+	fontVersionLow = (uint8_t *) 0x08132001;
 
-    if(FONTminimum_required_high() < *fontVersionHigh)
-        return 0;
+	if (FONTminimum_required_high() < *fontVersionHigh)
+		return 0;
 
-    if((FONTminimum_required_high() == *fontVersionHigh) && (FONTminimum_required_low() <= *fontVersionLow))
-        return 0;
+	if ((FONTminimum_required_high() == *fontVersionHigh)
+			&& (FONTminimum_required_low() <= *fontVersionLow))
+		return 0;
 
-    return 1;
+	return 1;
 }
 
-
-void delayMicros(uint32_t micros)
-{
-    micros = micros * (168/4) - 10;
-    while(micros--);
+void delayMicros(uint32_t micros) {
+	micros = micros * (168 / 4) - 10;
+	while (micros--)
+		;
 }
 
-
-void get_RTC_DateTime(RTC_DateTypeDef * sdatestructureget, RTC_TimeTypeDef * stimestructureget)
-{
-    /* Get the RTC current Time */
-    if(sdatestructureget)
-        HAL_RTC_GetTime(&RtcHandle, stimestructureget, FORMAT_BIN);
-    /* Get the RTC current Date */
-    if(stimestructureget)
-        HAL_RTC_GetDate(&RtcHandle, sdatestructureget, FORMAT_BIN);
+void get_RTC_DateTime(RTC_DateTypeDef * sdatestructureget,
+		RTC_TimeTypeDef * stimestructureget) {
+	/* Get the RTC current Time */
+	if (sdatestructureget)
+		HAL_RTC_GetTime(&RtcHandle, stimestructureget, FORMAT_BIN);
+	/* Get the RTC current Date */
+	if (stimestructureget)
+		HAL_RTC_GetDate(&RtcHandle, sdatestructureget, FORMAT_BIN);
 }
 
+void set_RTC_DateTime(RTC_DateTypeDef * sdatestructure,
+		RTC_TimeTypeDef * stimestructure) {
+	if (sdatestructure)
+		if (HAL_RTC_SetDate(&RtcHandle, sdatestructure, FORMAT_BCD) != HAL_OK) {
+			/* Initialization Error */
+			Error_Handler();
+		}
 
-void set_RTC_DateTime(RTC_DateTypeDef * sdatestructure, RTC_TimeTypeDef * stimestructure)
-{
-    if(sdatestructure)
-        if(HAL_RTC_SetDate(&RtcHandle,sdatestructure,FORMAT_BCD) != HAL_OK)
-        {
-            /* Initialization Error */
-            Error_Handler();
-        }
-
-    if(stimestructure)
-        if(HAL_RTC_SetTime(&RtcHandle,stimestructure,FORMAT_BCD) != HAL_OK)
-        {
-            /* Initialization Error */
-            Error_Handler();
-        }
+	if (stimestructure)
+		if (HAL_RTC_SetTime(&RtcHandle, stimestructure, FORMAT_BCD) != HAL_OK) {
+			/* Initialization Error */
+			Error_Handler();
+		}
 }
 
-static void TIM_init(void)
-{
-    uint16_t uwPrescalerValue = 0;
+static void TIM_init(void) {
+	uint16_t uwPrescalerValue = 0;
 
-    uwPrescalerValue = (uint32_t) ((SystemCoreClock /2) / 10000) - 1;
+	uwPrescalerValue = (uint32_t) ((SystemCoreClock / 2) / 10000) - 1;
 
-    /* Set TIMx instance */
-    TimHandle.Instance = TIMx;
+	/* Set TIMx instance */
+	TimHandle.Instance = TIMx;
 
-    /* Initialize TIM3 peripheral as follows:
-             + Period = 10000 - 1
-             + Prescaler = ((SystemCoreClock/2)/10000) - 1
-             + ClockDivision = 0
-             + Counter direction = Up
-    */
-    TimHandle.Init.Period = 1000 - 1;
-    TimHandle.Init.Prescaler = uwPrescalerValue;
-    TimHandle.Init.ClockDivision = 0;
-    TimHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
-    if(HAL_TIM_Base_Init(&TimHandle) != HAL_OK)
-    {
-        /* Initialization Error */
-        Error_Handler();
-    }
+	/* Initialize TIM3 peripheral as follows:
+	 + Period = 10000 - 1
+	 + Prescaler = ((SystemCoreClock/2)/10000) - 1
+	 + ClockDivision = 0
+	 + Counter direction = Up
+	 */
+	TimHandle.Init.Period = 1000 - 1;
+	TimHandle.Init.Prescaler = uwPrescalerValue;
+	TimHandle.Init.ClockDivision = 0;
+	TimHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
+	if (HAL_TIM_Base_Init(&TimHandle) != HAL_OK) {
+		/* Initialization Error */
+		Error_Handler();
+	}
 
-    /*##-2- Start the TIM Base generation in interrupt mode ####################*/
-    /* Start Channel1 */
-    if(HAL_TIM_Base_Start_IT(&TimHandle) != HAL_OK)
-    {
-        /* Starting Error */
-        Error_Handler();
-    }
+	/*##-2- Start the TIM Base generation in interrupt mode ####################*/
+	/* Start Channel1 */
+	if (HAL_TIM_Base_Start_IT(&TimHandle) != HAL_OK) {
+		/* Starting Error */
+		Error_Handler();
+	}
 }
 
 #ifdef DEMOMODE
 static void TIM_DEMO_init(void)
 {
-    uint16_t uwPrescalerValue = 0;
+	uint16_t uwPrescalerValue = 0;
 
-    uwPrescalerValue = (uint32_t) ((SystemCoreClock /2) / 10000) - 1;
+	uwPrescalerValue = (uint32_t) ((SystemCoreClock /2) / 10000) - 1;
 
-    /* Set TIMx instance */
-    TimDemoHandle.Instance = TIM7;
+	/* Set TIMx instance */
+	TimDemoHandle.Instance = TIM7;
 
-    /* Initialize TIM3 peripheral as follows:
-             + Period = 10000 - 1
-             + Prescaler = ((SystemCoreClock/2)/10000) - 1
-             + ClockDivision = 0
-             + Counter direction = Up
-    */
-    TimDemoHandle.Init.Period = 1000 - 1;
-    TimDemoHandle.Init.Prescaler = uwPrescalerValue;
-    TimDemoHandle.Init.ClockDivision = 0;
-    TimHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
-    if(HAL_TIM_Base_Init(&TimDemoHandle) != HAL_OK)
-    {
-        /* Initialization Error */
-        Error_Handler();
-    }
+	/* Initialize TIM3 peripheral as follows:
+	 + Period = 10000 - 1
+	 + Prescaler = ((SystemCoreClock/2)/10000) - 1
+	 + ClockDivision = 0
+	 + Counter direction = Up
+	 */
+	TimDemoHandle.Init.Period = 1000 - 1;
+	TimDemoHandle.Init.Prescaler = uwPrescalerValue;
+	TimDemoHandle.Init.ClockDivision = 0;
+	TimHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
+	if(HAL_TIM_Base_Init(&TimDemoHandle) != HAL_OK)
+	{
+		/* Initialization Error */
+		Error_Handler();
+	}
 
-    /*##-2- Start the TIM Base generation in interrupt mode ####################*/
-    /* Start Channel1 */
-    if(HAL_TIM_Base_Start_IT(&TimDemoHandle) != HAL_OK)
-    {
-        /* Starting Error */
-        Error_Handler();
-    }
+	/*##-2- Start the TIM Base generation in interrupt mode ####################*/
+	/* Start Channel1 */
+	if(HAL_TIM_Base_Start_IT(&TimDemoHandle) != HAL_OK)
+	{
+		/* Starting Error */
+		Error_Handler();
+	}
 }
 #endif
-
-
 
 #ifndef TIM_BACKLIGHT
 
 static uint32_t TIM_BACKLIGHT_adjust(void)
 {
-    return 0;
+	return 0;
 }
 
 static void TIM_BACKLIGHT_init(void)
 {
 }
 #else
-static uint32_t TIM_BACKLIGHT_adjust(void)
-{
-    static uint32_t levelActual = 12000;
-    static uint8_t brightnessModeLast = 0;
+static uint32_t TIM_BACKLIGHT_adjust(void) {
+	static uint32_t levelActual = 12000;
+	static uint8_t brightnessModeLast = 0;
 //	static _Bool wasLostConnection = 0;
 
-    uint32_t levelAmbient;
-    uint32_t levelMax;
-    uint32_t levelMin;
-    uint32_t levelUpStep_100ms	= 200;
-    uint32_t levelDnStep_100ms	= 20;
+	uint32_t levelAmbient;
+	uint32_t levelMax;
+	uint32_t levelMin;
+	uint32_t levelUpStep_100ms = 200;
+	uint32_t levelDnStep_100ms = 20;
 
-    TIM_OC_InitTypeDef sConfig;
-    sConfig.OCMode     = TIM_OCMODE_PWM1;
-    sConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
-    sConfig.OCFastMode = TIM_OCFAST_DISABLE;
+	TIM_OC_InitTypeDef sConfig;
+	sConfig.OCMode = TIM_OCMODE_PWM1;
+	sConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
+	sConfig.OCFastMode = TIM_OCFAST_DISABLE;
 
-    const SDiveState * pStateReal = stateRealGetPointer();
-
+	const SDiveState * pStateReal = stateRealGetPointer();
 
 //	if(pStateReal->data_old__lost_connection_to_slave)
 //	{
@@ -1172,582 +1128,562 @@ static uint32_t TIM_BACKLIGHT_adjust(void)
 //	}
 //	else
 //	{
-        SSettings *pSettings = settingsGetPointer();
-        /* 300 - 4000 */
-        /* important levelAmbient 300 - 1200 */
-        levelAmbient = 10 * pStateReal->lifeData.ambient_light_level;
+	SSettings *pSettings = settingsGetPointer();
+	/* 300 - 4000 */
+	/* important levelAmbient 300 - 1200 */
+	levelAmbient = 10 * pStateReal->lifeData.ambient_light_level;
 
-        switch(	pSettings->brightness)
-        {
-        case 0: /* Cave */
-            levelMax = 3000;/* max 25 % (x2) */
-            levelMin = 1500;
-            break;
-        case 1: /* Eco */
-            levelMax = 6000;/* max 50 % (x2) */
-            levelMin = 3000;
-            break;
-        case 2: /* Std */
-            levelAmbient += 1000;
-            levelMax = 9000;
-            levelMin = 4500;
-            levelUpStep_100ms += levelUpStep_100ms/2; // 4500 instead of 3000
-            levelDnStep_100ms += levelDnStep_100ms/2;
-            break;
-        case 3: /* High */
-        default:
-            levelAmbient += 3000;
-            levelMax = 12000; /* max 100% (x2) */
-            levelMin = 6000;
-            levelUpStep_100ms += levelUpStep_100ms; // 6000 instead of 3000
-            levelDnStep_100ms += levelDnStep_100ms;
-            break;
-        case 4: /* New Max */
-            levelAmbient = 12000;
-            levelMax = 12000; /* max 100% (x2) */
-            levelMin = 12000;
-            levelUpStep_100ms += 12000;
-            levelDnStep_100ms += 0;
-            break;
-        }
+	switch (pSettings->brightness) {
+	case 0: /* Cave */
+		levelMax = 3000;/* max 25 % (x2) */
+		levelMin = 1500;
+		break;
+	case 1: /* Eco */
+		levelMax = 6000;/* max 50 % (x2) */
+		levelMin = 3000;
+		break;
+	case 2: /* Std */
+		levelAmbient += 1000;
+		levelMax = 9000;
+		levelMin = 4500;
+		levelUpStep_100ms += levelUpStep_100ms / 2; // 4500 instead of 3000
+		levelDnStep_100ms += levelDnStep_100ms / 2;
+		break;
+	case 3: /* High */
+	default:
+		levelAmbient += 3000;
+		levelMax = 12000; /* max 100% (x2) */
+		levelMin = 6000;
+		levelUpStep_100ms += levelUpStep_100ms; // 6000 instead of 3000
+		levelDnStep_100ms += levelDnStep_100ms;
+		break;
+	case 4: /* New Max */
+		levelAmbient = 12000;
+		levelMax = 12000; /* max 100% (x2) */
+		levelMin = 12000;
+		levelUpStep_100ms += 12000;
+		levelDnStep_100ms += 0;
+		break;
+	}
 
-        if((pSettings->brightness != brightnessModeLast))// || wasLostConnection)
-        {
-            levelActual = levelAmbient;
-            brightnessModeLast = pSettings->brightness;
+	if ((pSettings->brightness != brightnessModeLast)) // || wasLostConnection)
+	{
+		levelActual = levelAmbient;
+		brightnessModeLast = pSettings->brightness;
 //			wasLostConnection = 0;
-        }
+	}
 //	}
 
-    if(levelAmbient > levelActual)
-        levelActual += levelUpStep_100ms;
-    else
-    if((levelAmbient < levelActual) && (levelActual > levelMin) && (levelActual > levelDnStep_100ms))
-        levelActual -= levelDnStep_100ms;
+	if (levelAmbient > levelActual)
+		levelActual += levelUpStep_100ms;
+	else if ((levelAmbient < levelActual) && (levelActual > levelMin)
+			&& (levelActual > levelDnStep_100ms))
+		levelActual -= levelDnStep_100ms;
 
-    if(levelActual > levelMax)
-        levelActual = levelMax;
-    else
-    if(levelActual < levelMin)
-        levelActual = levelMin;
+	if (levelActual > levelMax)
+		levelActual = levelMax;
+	else if (levelActual < levelMin)
+		levelActual = levelMin;
 
 //	sConfig.Pulse = levelActual / 20;
-    sConfig.Pulse = (levelMin + ((levelMax - levelMin)/2)) / 20; // added 170306
+	sConfig.Pulse = (levelMin + ((levelMax - levelMin) / 2)) / 20; // added 170306
 
-    /* xx - 600 */
-    if(sConfig.Pulse > 600)
-        sConfig.Pulse = 600;
-    else
-    if(sConfig.Pulse < 100)
-        sConfig.Pulse = 100;
+	/* xx - 600 */
+	if (sConfig.Pulse > 600)
+		sConfig.Pulse = 600;
+	else if (sConfig.Pulse < 100)
+		sConfig.Pulse = 100;
 
-    HAL_TIM_PWM_ConfigChannel(&TimBacklightHandle, &sConfig, TIM_BACKLIGHT_CHANNEL);
-    HAL_TIM_PWM_Start(&TimBacklightHandle, TIM_BACKLIGHT_CHANNEL);
+	HAL_TIM_PWM_ConfigChannel(&TimBacklightHandle, &sConfig,
+			TIM_BACKLIGHT_CHANNEL);
+	HAL_TIM_PWM_Start(&TimBacklightHandle, TIM_BACKLIGHT_CHANNEL);
 
-    return levelActual;
+	return levelActual;
 }
 
-static void TIM_BACKLIGHT_init(void)
-{
-    uint32_t uwPrescalerValue = 0;
-    TIM_OC_InitTypeDef sConfig;
+static void TIM_BACKLIGHT_init(void) {
+	uint32_t uwPrescalerValue = 0;
+	TIM_OC_InitTypeDef sConfig;
 
-    uwPrescalerValue = (uint32_t) ((SystemCoreClock /2) / 18000000) - 1;
+	uwPrescalerValue = (uint32_t) ((SystemCoreClock / 2) / 18000000) - 1;
 
-    TimBacklightHandle.Instance = TIM_BACKLIGHT;
+	TimBacklightHandle.Instance = TIM_BACKLIGHT;
 
-    /* Initialize TIM3 peripheral as follows:
-        30 kHz
-    */
-    TimBacklightHandle.Init.Period = 600 - 1;
-    TimBacklightHandle.Init.Prescaler = uwPrescalerValue;
-    TimBacklightHandle.Init.ClockDivision = 0;
-    TimBacklightHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
-    HAL_TIM_PWM_Init(&TimBacklightHandle);
+	/* Initialize TIM3 peripheral as follows:
+	 30 kHz
+	 */
+	TimBacklightHandle.Init.Period = 600 - 1;
+	TimBacklightHandle.Init.Prescaler = uwPrescalerValue;
+	TimBacklightHandle.Init.ClockDivision = 0;
+	TimBacklightHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
+	HAL_TIM_PWM_Init(&TimBacklightHandle);
 
-    sConfig.OCMode     = TIM_OCMODE_PWM1;
-    sConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
-    sConfig.OCFastMode = TIM_OCFAST_DISABLE;
-    sConfig.Pulse = 50 * 6;
+	sConfig.OCMode = TIM_OCMODE_PWM1;
+	sConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
+	sConfig.OCFastMode = TIM_OCFAST_DISABLE;
+	sConfig.Pulse = 50 * 6;
 
-    HAL_TIM_PWM_ConfigChannel(&TimBacklightHandle, &sConfig, TIM_BACKLIGHT_CHANNEL);
-    HAL_TIM_PWM_Start(&TimBacklightHandle, TIM_BACKLIGHT_CHANNEL);
+	HAL_TIM_PWM_ConfigChannel(&TimBacklightHandle, &sConfig,
+			TIM_BACKLIGHT_CHANNEL);
+	HAL_TIM_PWM_Start(&TimBacklightHandle, TIM_BACKLIGHT_CHANNEL);
 }
 #endif
 
+static void EXTILine_Buttons_Config(void) {
+	GPIO_InitTypeDef GPIO_InitStructure;
 
-static void EXTILine_Buttons_Config(void)
-{
-    GPIO_InitTypeDef   GPIO_InitStructure;
+	BUTTON_ENTER_GPIO_ENABLE();
+	BUTTON_NEXT_GPIO_ENABLE();
+	BUTTON_BACK_GPIO_ENABLE();
 
-    BUTTON_ENTER_GPIO_ENABLE();
-    BUTTON_NEXT_GPIO_ENABLE();
-    BUTTON_BACK_GPIO_ENABLE();
+	/* Configure pin as weak PULLUP input  */
+	/* buttons */
+	GPIO_InitStructure.Mode = GPIO_MODE_IT_RISING;
+	GPIO_InitStructure.Pull = GPIO_NOPULL;
+	GPIO_InitStructure.Speed = GPIO_SPEED_LOW;
 
-    /* Configure pin as weak PULLUP input  */
-    /* buttons */
-    GPIO_InitStructure.Mode = GPIO_MODE_IT_RISING;
-    GPIO_InitStructure.Pull = GPIO_NOPULL;
-    GPIO_InitStructure.Speed = GPIO_SPEED_LOW;
+	GPIO_InitStructure.Pin = BUTTON_ENTER_PIN;
+	HAL_GPIO_Init(BUTTON_ENTER_GPIO_PORT, &GPIO_InitStructure);
 
-    GPIO_InitStructure.Pin = BUTTON_ENTER_PIN;
-    HAL_GPIO_Init(BUTTON_ENTER_GPIO_PORT, &GPIO_InitStructure);
+	GPIO_InitStructure.Pin = BUTTON_NEXT_PIN;
+	HAL_GPIO_Init(BUTTON_NEXT_GPIO_PORT, &GPIO_InitStructure);
 
-    GPIO_InitStructure.Pin = BUTTON_NEXT_PIN;
-    HAL_GPIO_Init(BUTTON_NEXT_GPIO_PORT, &GPIO_InitStructure);
+	GPIO_InitStructure.Pin = BUTTON_BACK_PIN;
+	HAL_GPIO_Init(BUTTON_BACK_GPIO_PORT, &GPIO_InitStructure);
 
-    GPIO_InitStructure.Pin = BUTTON_BACK_PIN;
-    HAL_GPIO_Init(BUTTON_BACK_GPIO_PORT, &GPIO_InitStructure);
-
-    /* Enable and set EXTI Line0 Interrupt to the lowest priority */
-    HAL_NVIC_SetPriority(BUTTON_ENTER_EXTI_IRQn, 2, 0);
-    HAL_NVIC_SetPriority(BUTTON_NEXT_EXTI_IRQn,  2, 0);
-    HAL_NVIC_SetPriority(BUTTON_BACK_EXTI_IRQn,  2, 0);
-    HAL_NVIC_EnableIRQ(BUTTON_ENTER_EXTI_IRQn);
-    HAL_NVIC_EnableIRQ(BUTTON_NEXT_EXTI_IRQn);
-    HAL_NVIC_EnableIRQ(BUTTON_BACK_EXTI_IRQn);
+	/* Enable and set EXTI Line0 Interrupt to the lowest priority */
+	HAL_NVIC_SetPriority(BUTTON_ENTER_EXTI_IRQn, 2, 0);
+	HAL_NVIC_SetPriority(BUTTON_NEXT_EXTI_IRQn, 2, 0);
+	HAL_NVIC_SetPriority(BUTTON_BACK_EXTI_IRQn, 2, 0);
+	HAL_NVIC_EnableIRQ(BUTTON_ENTER_EXTI_IRQn);
+	HAL_NVIC_EnableIRQ(BUTTON_NEXT_EXTI_IRQn);
+	HAL_NVIC_EnableIRQ(BUTTON_BACK_EXTI_IRQn);
 
 #ifdef BUTTON_CUSTOM_PIN
-    BUTTON_CUSTOM_GPIO_ENABLE();
-    GPIO_InitStructure.Pin = BUTTON_CUSTOM_PIN;
-    HAL_GPIO_Init(BUTTON_CUSTOM_GPIO_PORT, &GPIO_InitStructure);
-    HAL_NVIC_SetPriority(BUTTON_CUSTOM_EXTI_IRQn,  2, 0);
-    HAL_NVIC_EnableIRQ(BUTTON_CUSTOM_EXTI_IRQn);
+	BUTTON_CUSTOM_GPIO_ENABLE();
+	GPIO_InitStructure.Pin = BUTTON_CUSTOM_PIN;
+	HAL_GPIO_Init(BUTTON_CUSTOM_GPIO_PORT, &GPIO_InitStructure);
+	HAL_NVIC_SetPriority(BUTTON_CUSTOM_EXTI_IRQn, 2, 0);
+	HAL_NVIC_EnableIRQ(BUTTON_CUSTOM_EXTI_IRQn);
 #endif
 }
 
-
 /**
-    * @brief  System Clock Configuration
-    *         The system Clock is configured as follow :
-    *            System Clock source            = PLL (HSE)
-    *            SYSCLK(Hz)                     = 180000000
-    *            HCLK(Hz)                       = 180000000
-    *            AHB Prescaler                  = 1
-    *            APB1 Prescaler                 = 4
-    *            APB2 Prescaler                 = 2
-    *            HSE Frequency(Hz)              = 8000000
-    *            PLL_M                          = 8
-    *            PLL_N                          = 360
-    *            PLL_P                          = 2
-    *            PLL_Q                          = 7
-    *            VDD(V)                         = 3.3
-    *            Main regulator output voltage  = Scale1 mode
-    *            Flash Latency(WS)              = 5
-    *         The LTDC Clock is configured as follow :
-    *            PLLSAIN                        = 192
-    *            PLLSAIR                        = 4
-    *            PLLSAIDivR                     = 8
-    * @param  None
-    * @retval None
-    */
-static void SystemClock_Config(void)
-{
+ * @brief  System Clock Configuration
+ *         The system Clock is configured as follow :
+ *            System Clock source            = PLL (HSE)
+ *            SYSCLK(Hz)                     = 180000000
+ *            HCLK(Hz)                       = 180000000
+ *            AHB Prescaler                  = 1
+ *            APB1 Prescaler                 = 4
+ *            APB2 Prescaler                 = 2
+ *            HSE Frequency(Hz)              = 8000000
+ *            PLL_M                          = 8
+ *            PLL_N                          = 360
+ *            PLL_P                          = 2
+ *            PLL_Q                          = 7
+ *            VDD(V)                         = 3.3
+ *            Main regulator output voltage  = Scale1 mode
+ *            Flash Latency(WS)              = 5
+ *         The LTDC Clock is configured as follow :
+ *            PLLSAIN                        = 192
+ *            PLLSAIR                        = 4
+ *            PLLSAIDivR                     = 8
+ * @param  None
+ * @retval None
+ */
+static void SystemClock_Config(void) {
 
-    /* Enable Power Control clock */
-    __PWR_CLK_ENABLE();
+	/* Enable Power Control clock */
+	__PWR_CLK_ENABLE();
 
-    /* The voltage scaling allows optimizing the power consumption when the device is
-     clocked below the maximum system frequency, to update the voltage scaling value
-     regarding system frequency refer to product datasheet.  */
-    __HAL_PWR_VOLTAGESCALING_CONFIG( PWR_REGULATOR_VOLTAGE_SCALE1 );
+	/* The voltage scaling allows optimizing the power consumption when the device is
+	 clocked below the maximum system frequency, to update the voltage scaling value
+	 regarding system frequency refer to product datasheet.  */
+	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-    /*##-1- System Clock Configuration #########################################*/
-    /* Enable HighSpeed Oscillator and activate PLL with HSE/HSI as source */
-    RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
+	/*##-1- System Clock Configuration #########################################*/
+	/* Enable HighSpeed Oscillator and activate PLL with HSE/HSI as source */
+	RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
 #ifdef DISC1_BOARD
-    // Use High Speed Internal (HSI) oscillator, running at 16MHz.
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-    RCC_OscInitStruct.HSIState       = RCC_HSI_ON;
-    RCC_OscInitStruct.HSICalibrationValue = 0x10;
-    RCC_OscInitStruct.PLL.PLLSource  = RCC_PLLSOURCE_HSI;
-    RCC_OscInitStruct.PLL.PLLM       = 16;				// HSI/16 is 1Mhz.
+	// Use High Speed Internal (HSI) oscillator, running at 16MHz.
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+	RCC_OscInitStruct.HSICalibrationValue = 0x10;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+	RCC_OscInitStruct.PLL.PLLM = 16;// HSI/16 is 1Mhz.
 #else
-    // Use High Speed External oscillator, running at 8MHz
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-    RCC_OscInitStruct.HSEState       = RCC_HSE_ON;
-    RCC_OscInitStruct.PLL.PLLSource  = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLM       = 8;               // HSE/8 is 1Mhz.
+	// Use High Speed External oscillator, running at 8MHz
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+	RCC_OscInitStruct.PLL.PLLM = 8;               // HSE/8 is 1Mhz.
 #endif
-    // System clock = PLL (1MHz) * N/p = 180 MHz.
-    RCC_OscInitStruct.PLL.PLLN = 360;
-    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-    RCC_OscInitStruct.PLL.PLLQ = 7;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    HAL_RCC_OscConfig( &RCC_OscInitStruct );
+	// System clock = PLL (1MHz) * N/p = 180 MHz.
+	RCC_OscInitStruct.PLL.PLLN = 360;
+	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+	RCC_OscInitStruct.PLL.PLLQ = 7;
+	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+	HAL_RCC_OscConfig(&RCC_OscInitStruct);
 
 //  HAL_PWREx_ActivateOverDrive();
-    HAL_PWREx_DeactivateOverDrive();
+	HAL_PWREx_DeactivateOverDrive();
 
-    /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 clocks dividers */
-    RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
-    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK
-                                                            | RCC_CLOCKTYPE_PCLK1  | RCC_CLOCKTYPE_PCLK2;
-    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
-    HAL_RCC_ClockConfig( &RCC_ClkInitStruct, FLASH_LATENCY_8 );	//FLASH_LATENCY_5);
+	/* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 clocks dividers */
+	RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
+	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK
+			| RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+	HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_8);//FLASH_LATENCY_5);
 
-    /*##-2- LTDC Clock Configuration ###########################################*/
-    /* LCD clock configuration */
-    /* PLLSAI_VCO Input = HSE_VALUE/PLL_M = 1 Mhz */
-    /* PLLSAI_VCO Output = PLLSAI_VCO Input * PLLSAIN = 192 Mhz */
-    /* PLLLCDCLK = PLLSAI_VCO Output/PLLSAIR = 192/4 = 48 Mhz */
-    /* LTDC clock frequency = PLLLCDCLK / RCC_PLLSAIDIVR_8 = 48/8 = 6 Mhz */
+	/*##-2- LTDC Clock Configuration ###########################################*/
+	/* LCD clock configuration */
+	/* PLLSAI_VCO Input = HSE_VALUE/PLL_M = 1 Mhz */
+	/* PLLSAI_VCO Output = PLLSAI_VCO Input * PLLSAIN = 192 Mhz */
+	/* PLLLCDCLK = PLLSAI_VCO Output/PLLSAIR = 192/4 = 48 Mhz */
+	/* LTDC clock frequency = PLLLCDCLK / RCC_PLLSAIDIVR_8 = 48/8 = 6 Mhz */
 
-    /* neu: 8MHz/8*300/5/8 = 7,5 MHz = 19,5 Hz bei 800 x 480 */
-    RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
-    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_LTDC;
-    PeriphClkInitStruct.PLLSAI.PLLSAIN = 300;				//192;
-    PeriphClkInitStruct.PLLSAI.PLLSAIR = 5;				//4;
-    PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_8;//RCC_PLLSAIDIVR_4;// RCC_PLLSAIDIVR_2; // RCC_PLLSAIDIVR_8
-    HAL_RCCEx_PeriphCLKConfig( &PeriphClkInitStruct );
+	/* neu: 8MHz/8*300/5/8 = 7,5 MHz = 19,5 Hz bei 800 x 480 */
+	RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = { 0 };
+	PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_LTDC;
+	PeriphClkInitStruct.PLLSAI.PLLSAIN = 300;				//192;
+	PeriphClkInitStruct.PLLSAI.PLLSAIR = 5;				//4;
+	PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_8;//RCC_PLLSAIDIVR_4;// RCC_PLLSAIDIVR_2; // RCC_PLLSAIDIVR_8
+	HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
 }
 
-
 /**
-    * @brief  This function is executed in case of error occurrence.
-    * @param  None
-    * @retval None
-    */
-static void Error_Handler(void)
-{
-    /* Turn LED3 on */
+ * @brief  This function is executed in case of error occurrence.
+ * @param  None
+ * @retval None
+ */
+static void Error_Handler(void) {
+	/* Turn LED3 on */
 //    BSP_LED_On(LED3);
-    while(1)
-    {
-    }
+	while (1) {
+	}
 }
 
 /**
-    * @brief  Perform the SDRAM exernal memory inialization sequence
-    * @param  hsdram: SDRAM handle
-    * @param  Command: Pointer to SDRAM command structure
-    * @retval None
-    */
-static void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram, FMC_SDRAM_CommandTypeDef *Command)
-{
-    __IO uint32_t tmpmrd =0;
-    /* Step 3:  Configure a clock configuration enable command */
-    Command->CommandMode 			 = FMC_SDRAM_CMD_CLK_ENABLE;
-    Command->CommandTarget 		 = FMC_SDRAM_CMD_TARGET_BANK2;
-    Command->AutoRefreshNumber 	 = 1;
-    Command->ModeRegisterDefinition = 0;
+ * @brief  Perform the SDRAM exernal memory inialization sequence
+ * @param  hsdram: SDRAM handle
+ * @param  Command: Pointer to SDRAM command structure
+ * @retval None
+ */
+static void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram,
+		FMC_SDRAM_CommandTypeDef *Command) {
+	__IO uint32_t tmpmrd = 0;
+	/* Step 3:  Configure a clock configuration enable command */
+	Command->CommandMode = FMC_SDRAM_CMD_CLK_ENABLE;
+	Command->CommandTarget = FMC_SDRAM_CMD_TARGET_BANK2;
+	Command->AutoRefreshNumber = 1;
+	Command->ModeRegisterDefinition = 0;
 
-    /* Send the command */
-    HAL_SDRAM_SendCommand(hsdram, Command, 0x1000);
+	/* Send the command */
+	HAL_SDRAM_SendCommand(hsdram, Command, 0x1000);
 
-    /* Step 4: Insert 100 ms delay */
-    HAL_Delay(100);
+	/* Step 4: Insert 100 ms delay */
+	HAL_Delay(100);
 
-    /* Step 5: Configure a PALL (precharge all) command */
-    Command->CommandMode 			 = FMC_SDRAM_CMD_PALL;
-    Command->CommandTarget 	     = FMC_SDRAM_CMD_TARGET_BANK2;
-    Command->AutoRefreshNumber 	 = 1;
-    Command->ModeRegisterDefinition = 0;
+	/* Step 5: Configure a PALL (precharge all) command */
+	Command->CommandMode = FMC_SDRAM_CMD_PALL;
+	Command->CommandTarget = FMC_SDRAM_CMD_TARGET_BANK2;
+	Command->AutoRefreshNumber = 1;
+	Command->ModeRegisterDefinition = 0;
 
-    /* Send the command */
-    HAL_SDRAM_SendCommand(hsdram, Command, 0x1000);
+	/* Send the command */
+	HAL_SDRAM_SendCommand(hsdram, Command, 0x1000);
 
-    /* Step 6 : Configure a Auto-Refresh command */
-    Command->CommandMode 			 = FMC_SDRAM_CMD_AUTOREFRESH_MODE;
-    Command->CommandTarget 		 = FMC_SDRAM_CMD_TARGET_BANK2;
-    Command->AutoRefreshNumber 	 = 4;
-    Command->ModeRegisterDefinition = 0;
+	/* Step 6 : Configure a Auto-Refresh command */
+	Command->CommandMode = FMC_SDRAM_CMD_AUTOREFRESH_MODE;
+	Command->CommandTarget = FMC_SDRAM_CMD_TARGET_BANK2;
+	Command->AutoRefreshNumber = 4;
+	Command->ModeRegisterDefinition = 0;
 
-    /* Send the command */
-    HAL_SDRAM_SendCommand(hsdram, Command, 0x1000);
+	/* Send the command */
+	HAL_SDRAM_SendCommand(hsdram, Command, 0x1000);
 
-    /* Step 7: Program the external memory mode register */
-    tmpmrd = (uint32_t)SDRAM_MODEREG_BURST_LENGTH_2          |
-                                         SDRAM_MODEREG_BURST_TYPE_SEQUENTIAL   |
-                                         SDRAM_MODEREG_CAS_LATENCY_3           |
-                                         SDRAM_MODEREG_OPERATING_MODE_STANDARD |
-                                         SDRAM_MODEREG_WRITEBURST_MODE_SINGLE;
+	/* Step 7: Program the external memory mode register */
+	tmpmrd = (uint32_t) SDRAM_MODEREG_BURST_LENGTH_2 |
+	SDRAM_MODEREG_BURST_TYPE_SEQUENTIAL |
+	SDRAM_MODEREG_CAS_LATENCY_3 |
+	SDRAM_MODEREG_OPERATING_MODE_STANDARD |
+	SDRAM_MODEREG_WRITEBURST_MODE_SINGLE;
 
-    Command->CommandMode = FMC_SDRAM_CMD_LOAD_MODE;
-    Command->CommandTarget 		 = FMC_SDRAM_CMD_TARGET_BANK2;
-    Command->AutoRefreshNumber 	 = 1;
-    Command->ModeRegisterDefinition = tmpmrd;
+	Command->CommandMode = FMC_SDRAM_CMD_LOAD_MODE;
+	Command->CommandTarget = FMC_SDRAM_CMD_TARGET_BANK2;
+	Command->AutoRefreshNumber = 1;
+	Command->ModeRegisterDefinition = tmpmrd;
 
-    /* Send the command */
-    HAL_SDRAM_SendCommand(hsdram, Command, 0x1000);
+	/* Send the command */
+	HAL_SDRAM_SendCommand(hsdram, Command, 0x1000);
 
-    /* Step 8: Set the refresh rate counter */
-    /* (15.62 us x Freq) - 20 */
-    /* neu: (8 us x Freq) - 20 */
-    /* Set the device refresh counter */
-    HAL_SDRAM_ProgramRefreshRate(hsdram, REFRESH_COUNT);
+	/* Step 8: Set the refresh rate counter */
+	/* (15.62 us x Freq) - 20 */
+	/* neu: (8 us x Freq) - 20 */
+	/* Set the device refresh counter */
+	HAL_SDRAM_ProgramRefreshRate(hsdram, REFRESH_COUNT);
 }
 
+/**
+ ******************************************************************************
+ ******************************************************************************
+ ******************************************************************************
+ */
 
 /**
-******************************************************************************
-******************************************************************************
-******************************************************************************
-*/
+ * @brief DMA2D configuration.
+ * @note  This function Configure tha DMA2D peripheral :
+ *        1) Configure the transfer mode : memory to memory W/ pixel format conversion
+ *        2) Configure the output color mode as ARGB4444
+ *        3) Configure the output memory address at SRAM memory
+ *        4) Configure the data size : 320x120 (pixels)
+ *        5) Configure the input color mode as ARGB8888
+ *        6) Configure the input memory address at FLASH memory
+ * @retval
+ *  None
+ */
 
+static void SDRAM_Config(void) {
+	/*##-1- Configure the SDRAM device #########################################*/
+	/* SDRAM device configuration */
+	hsdram.Instance = FMC_SDRAM_DEVICE;
 
-/**
-    * @brief DMA2D configuration.
-    * @note  This function Configure tha DMA2D peripheral :
-    *        1) Configure the transfer mode : memory to memory W/ pixel format conversion
-    *        2) Configure the output color mode as ARGB4444
-    *        3) Configure the output memory address at SRAM memory
-    *        4) Configure the data size : 320x120 (pixels)
-    *        5) Configure the input color mode as ARGB8888
-    *        6) Configure the input memory address at FLASH memory
-    * @retval
-    *  None
-    */
+	/* Timing configuration for 90 Mhz of SD clock frequency (180Mhz/2) */
+	/* TMRD: 2 Clock cycles */
+	SDRAM_Timing.LoadToActiveDelay = 2;
+	/* TXSR: min=70ns (6x11.90ns) */
+	SDRAM_Timing.ExitSelfRefreshDelay = 7;
+	/* TRAS: min=42ns (4x11.90ns) max=120k (ns) */
+	SDRAM_Timing.SelfRefreshTime = 4;
+	/* TRC:  min=63 (6x11.90ns) */
+	SDRAM_Timing.RowCycleDelay = 7;
+	/* TWR:  2 Clock cycles */
+	SDRAM_Timing.WriteRecoveryTime = 2;
+	/* TRP:  15ns => 2x11.90ns */
+	SDRAM_Timing.RPDelay = 2;
+	/* TRCD: 15ns => 2x11.90ns */
+	SDRAM_Timing.RCDDelay = 2;
 
-static void SDRAM_Config(void)
-{
-    /*##-1- Configure the SDRAM device #########################################*/
-    /* SDRAM device configuration */
-    hsdram.Instance = FMC_SDRAM_DEVICE;
+	hsdram.Init.SDBank = FMC_SDRAM_BANK2;
+	hsdram.Init.ColumnBitsNumber = FMC_SDRAM_COLUMN_BITS_NUM_9;
+	hsdram.Init.RowBitsNumber = FMC_SDRAM_ROW_BITS_NUM_13;
+	hsdram.Init.MemoryDataWidth = SDRAM_MEMORY_WIDTH;
+	hsdram.Init.InternalBankNumber = FMC_SDRAM_INTERN_BANKS_NUM_4;
+	hsdram.Init.CASLatency = FMC_SDRAM_CAS_LATENCY_3;
+	hsdram.Init.WriteProtection = FMC_SDRAM_WRITE_PROTECTION_DISABLE;
+	hsdram.Init.SDClockPeriod = SDCLOCK_PERIOD;
+	hsdram.Init.ReadBurst = FMC_SDRAM_RBURST_DISABLE;
+	hsdram.Init.ReadPipeDelay = FMC_SDRAM_RPIPE_DELAY_1;
 
-    /* Timing configuration for 90 Mhz of SD clock frequency (180Mhz/2) */
-    /* TMRD: 2 Clock cycles */
-    SDRAM_Timing.LoadToActiveDelay    = 2;
-    /* TXSR: min=70ns (6x11.90ns) */
-    SDRAM_Timing.ExitSelfRefreshDelay = 7;
-    /* TRAS: min=42ns (4x11.90ns) max=120k (ns) */
-    SDRAM_Timing.SelfRefreshTime      = 4;
-    /* TRC:  min=63 (6x11.90ns) */
-    SDRAM_Timing.RowCycleDelay        = 7;
-    /* TWR:  2 Clock cycles */
-    SDRAM_Timing.WriteRecoveryTime    = 2;
-    /* TRP:  15ns => 2x11.90ns */
-    SDRAM_Timing.RPDelay              = 2;
-    /* TRCD: 15ns => 2x11.90ns */
-    SDRAM_Timing.RCDDelay             = 2;
+	/* Initialize the SDRAM controller */
+	if (HAL_SDRAM_Init(&hsdram, &SDRAM_Timing) != HAL_OK) {
+		/* Initialization Error */
+		Error_Handler();
+	}
 
-    hsdram.Init.SDBank             = FMC_SDRAM_BANK2;
-    hsdram.Init.ColumnBitsNumber   = FMC_SDRAM_COLUMN_BITS_NUM_9;
-    hsdram.Init.RowBitsNumber      = FMC_SDRAM_ROW_BITS_NUM_13;
-    hsdram.Init.MemoryDataWidth    = SDRAM_MEMORY_WIDTH;
-    hsdram.Init.InternalBankNumber = FMC_SDRAM_INTERN_BANKS_NUM_4;
-    hsdram.Init.CASLatency         = FMC_SDRAM_CAS_LATENCY_3;
-    hsdram.Init.WriteProtection    = FMC_SDRAM_WRITE_PROTECTION_DISABLE;
-    hsdram.Init.SDClockPeriod      = SDCLOCK_PERIOD;
-    hsdram.Init.ReadBurst          = FMC_SDRAM_RBURST_DISABLE;
-    hsdram.Init.ReadPipeDelay      = FMC_SDRAM_RPIPE_DELAY_1;
-
-    /* Initialize the SDRAM controller */
-    if(HAL_SDRAM_Init(&hsdram, &SDRAM_Timing) != HAL_OK)
-    {
-        /* Initialization Error */
-        Error_Handler();
-    }
-
-    /* Program the SDRAM external device */
-    SDRAM_Initialization_Sequence(&hsdram, &command);
+	/* Program the SDRAM external device */
+	SDRAM_Initialization_Sequence(&hsdram, &command);
 }
-
 
 #ifdef  USE_FULL_ASSERT
 
 /**
-    * @brief  Reports the name of the source file and the source line number
-    *         where the assert_param error has occurred.
-    * @param  file: pointer to the source file name
-    * @param  line: assert_param error line source number
-    * @retval None
-    */
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
 void assert_failed(uint8_t* file, uint32_t line)
 {
-    /* User can add his own implementation to report the file name and line number,
-         ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+	/* User can add his own implementation to report the file name and line number,
+	 ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
 
-    /* Infinite loop */
-    while (1)
-    {
-    }
+	/* Infinite loop */
+	while (1)
+	{
+	}
 }
 #endif
 
+void deco_loop(void) {
+	typedef enum {
+		CALC_VPM, CALC_VPM_FUTURE, CALC_BUEHLMANN, CALC_BUEHLMANN_FUTURE,
+	} CALC_WHAT;
 
-void deco_loop(void)
-{
-    typedef enum
-    {
-        CALC_VPM,
-        CALC_VPM_FUTURE,
-        CALC_BUEHLMANN,
-        CALC_BUEHLMANN_FUTURE,
-    } CALC_WHAT;
+	static int what = -1;
+	int counter = 0;
+	if ((stateUsed->mode != MODE_DIVE)
+			|| (stateUsed->diveSettings.diveMode == DIVEMODE_Apnea)
+			|| (decoLock != DECO_CALC_ready))
+		return;
 
-    static int what = -1;
-    int counter = 0;
-    if((stateUsed->mode != MODE_DIVE) || (stateUsed->diveSettings.diveMode == DIVEMODE_Apnea) || (decoLock != DECO_CALC_ready ))
-        return;
+	decoLock = DECO_CALC_running;
 
-    decoLock = DECO_CALC_running;
-
-    if(stateDeco.diveSettings.deco_type.ub.standard == GF_MODE)
-    {
+	if (stateDeco.diveSettings.deco_type.ub.standard == GF_MODE) {
 // hw 151110 mh wants future TTS even in deco zone     if((what == CALC_BUEHLMANN) && (stateDeco.lifeData.pressure_ambient_bar > stateDeco.diveSettings.internal__pressure_first_stop_ambient_bar_as_upper_limit_for_gf_low_otherwise_zero))
-        if(what == CALC_BUEHLMANN)
-        {
-            //Calc future
-            what = CALC_BUEHLMANN_FUTURE;
-        }
-        else
-            what = CALC_BUEHLMANN;
+		if (what == CALC_BUEHLMANN) {
+			//Calc future
+			what = CALC_BUEHLMANN_FUTURE;
+		} else
+			what = CALC_BUEHLMANN;
 
-    }
-    else
-    {
+	} else {
 // hw 151110 mh wants future TTS even in deco zone           if((what == CALC_VPM) && (!stateDeco.vpm.deco_zone_reached))
-        if(what == CALC_VPM)
-        {
-            //Calc future
-            what = CALC_VPM_FUTURE;
-        }
-        else
-            what = CALC_VPM;
-    }
+		if (what == CALC_VPM) {
+			//Calc future
+			what = CALC_VPM_FUTURE;
+		} else
+			what = CALC_VPM;
+	}
 
-    //In one of ten calc the other option
-    if(counter == 10)
-    {
-        if(what == CALC_VPM)
-             what = CALC_BUEHLMANN;
-        if(what == CALC_BUEHLMANN)
-                what = CALC_VPM;
-        counter = 0;
-    }
+	//In one of ten calc the other option
+	if (counter == 10) {
+		if (what == CALC_VPM)
+			what = CALC_BUEHLMANN;
+		if (what == CALC_BUEHLMANN)
+			what = CALC_VPM;
+		counter = 0;
+	}
 
-    decom_CreateGasChangeList(&stateDeco.diveSettings, &stateDeco.lifeData);
+	decom_CreateGasChangeList(&stateDeco.diveSettings, &stateDeco.lifeData);
 
-    switch(what)
-    {
-    case CALC_VPM:
-            vpm_calc(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.vpm,&stateDeco.decolistVPM, DECOSTOPS);
-            decoLock = DECO_CALC_FINSHED_vpm;
-            return;
-     case CALC_VPM_FUTURE:
-            decom_tissues_exposure(stateDeco.diveSettings.future_TTS_minutes * 60,&stateDeco.lifeData);
-            vpm_calc(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.vpm,&stateDeco.decolistFutureVPM, FUTURESTOPS);
-            decoLock = DECO_CALC_FINSHED_Futurevpm;
-            return;
-    case CALC_BUEHLMANN:
-            buehlmann_calc_deco(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
-            buehlmann_ceiling_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
-            buehlmann_relative_gradient_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
-            decoLock = DECO_CALC_FINSHED_Buehlmann;
-            return;
-     case CALC_BUEHLMANN_FUTURE:
-            decom_tissues_exposure(stateDeco.diveSettings.future_TTS_minutes * 60,&stateDeco.lifeData);
-            buehlmann_calc_deco(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistFutureBuehlmann);
-            //buehlmann_ceiling_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
-            decoLock = DECO_CALC_FINSHED_FutureBuehlmann;
-            return;
-    }
-    counter++;
+	switch (what) {
+	case CALC_VPM:
+		vpm_calc(&stateDeco.lifeData, &stateDeco.diveSettings, &stateDeco.vpm,
+				&stateDeco.decolistVPM, DECOSTOPS);
+		decoLock = DECO_CALC_FINSHED_vpm;
+		return;
+	case CALC_VPM_FUTURE:
+		decom_tissues_exposure(stateDeco.diveSettings.future_TTS_minutes * 60,
+				&stateDeco.lifeData);
+		vpm_calc(&stateDeco.lifeData, &stateDeco.diveSettings, &stateDeco.vpm,
+				&stateDeco.decolistFutureVPM, FUTURESTOPS);
+		decoLock = DECO_CALC_FINSHED_Futurevpm;
+		return;
+	case CALC_BUEHLMANN:
+		buehlmann_calc_deco(&stateDeco.lifeData, &stateDeco.diveSettings,
+				&stateDeco.decolistBuehlmann);
+		buehlmann_ceiling_calculator(&stateDeco.lifeData,
+				&stateDeco.diveSettings, &stateDeco.decolistBuehlmann);
+		buehlmann_relative_gradient_calculator(&stateDeco.lifeData,
+				&stateDeco.diveSettings, &stateDeco.decolistBuehlmann);
+		decoLock = DECO_CALC_FINSHED_Buehlmann;
+		return;
+	case CALC_BUEHLMANN_FUTURE:
+		decom_tissues_exposure(stateDeco.diveSettings.future_TTS_minutes * 60,
+				&stateDeco.lifeData);
+		buehlmann_calc_deco(&stateDeco.lifeData, &stateDeco.diveSettings,
+				&stateDeco.decolistFutureBuehlmann);
+		//buehlmann_ceiling_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
+		decoLock = DECO_CALC_FINSHED_FutureBuehlmann;
+		return;
+	}
+	counter++;
 }
 
-void resetToFirmwareUpdate(void)
-{
-    __HAL_RCC_CLEAR_RESET_FLAGS();
-    HAL_NVIC_SystemReset();
+void resetToFirmwareUpdate(void) {
+	__HAL_RCC_CLEAR_RESET_FLAGS();
+	HAL_NVIC_SystemReset();
 }
 
 // debugging by https://blog.feabhas.com/2013/02/developing-a-generic-hard-fault-handler-for-arm-cortex-m3cortex-m4/
 
 /*
-void printErrorMsg(const char * errMsg)
-{
+ void printErrorMsg(const char * errMsg)
+ {
 
-//	printf(errMsg);
-//	return;
+ //	printf(errMsg);
+ //	return;
 
-     while(*errMsg != 0){
-            ITM_SendChar(*errMsg);
-            ++errMsg;
-     }
-}
+ while(*errMsg != 0){
+ ITM_SendChar(*errMsg);
+ ++errMsg;
+ }
+ }
 
-enum { r0, r1, r2, r3, r12, lr, pc, psr};
+ enum { r0, r1, r2, r3, r12, lr, pc, psr};
 
-void stackDump(uint32_t stack[])
-{
-     static char msg[80];
-     sprintf(msg, "r0  = 0x%08x\n", stack[r0]);  printErrorMsg(msg);
-     sprintf(msg, "r1  = 0x%08x\n", stack[r1]);  printErrorMsg(msg);
-     sprintf(msg, "r2  = 0x%08x\n", stack[r2]);  printErrorMsg(msg);
-     sprintf(msg, "r3  = 0x%08x\n", stack[r3]);  printErrorMsg(msg);
-     sprintf(msg, "r12 = 0x%08x\n", stack[r12]); printErrorMsg(msg);
-     sprintf(msg, "lr  = 0x%08x\n", stack[lr]);  printErrorMsg(msg);
-     sprintf(msg, "pc  = 0x%08x\n", stack[pc]);  printErrorMsg(msg);
-     sprintf(msg, "psr = 0x%08x\n", stack[psr]); printErrorMsg(msg);
-}
+ void stackDump(uint32_t stack[])
+ {
+ static char msg[80];
+ sprintf(msg, "r0  = 0x%08x\n", stack[r0]);  printErrorMsg(msg);
+ sprintf(msg, "r1  = 0x%08x\n", stack[r1]);  printErrorMsg(msg);
+ sprintf(msg, "r2  = 0x%08x\n", stack[r2]);  printErrorMsg(msg);
+ sprintf(msg, "r3  = 0x%08x\n", stack[r3]);  printErrorMsg(msg);
+ sprintf(msg, "r12 = 0x%08x\n", stack[r12]); printErrorMsg(msg);
+ sprintf(msg, "lr  = 0x%08x\n", stack[lr]);  printErrorMsg(msg);
+ sprintf(msg, "pc  = 0x%08x\n", stack[pc]);  printErrorMsg(msg);
+ sprintf(msg, "psr = 0x%08x\n", stack[psr]); printErrorMsg(msg);
+ }
 
-void printUsageErrorMsg(uint32_t CFSRValue)
-{
-     printErrorMsg("Usage fault: ");
-     CFSRValue >>= 16;                  // right shift to lsb
-     if((CFSRValue & (1 << 9)) != 0) {
-            printErrorMsg("Divide by zero\n");
-     }
-}
+ void printUsageErrorMsg(uint32_t CFSRValue)
+ {
+ printErrorMsg("Usage fault: ");
+ CFSRValue >>= 16;                  // right shift to lsb
+ if((CFSRValue & (1 << 9)) != 0) {
+ printErrorMsg("Divide by zero\n");
+ }
+ }
 
-void Hard_Fault_Handler()//uint32_t stack[])
-    {
-     static char msg[80];
-     printErrorMsg("In Hard Fault Handler\n");
-     sprintf(msg, "SCB->HFSR = 0x%08x\n", SCB->HFSR);
-     printErrorMsg(msg);
-     if ((SCB->HFSR & (1 << 30)) != 0) {
-             printErrorMsg("Forced Hard Fault\n");
-             sprintf(msg, "SCB->CFSR = 0x%08x\n", SCB->CFSR );
-             printErrorMsg(msg);
-             if((SCB->CFSR & 0xFFFF0000) != 0) {
-                 printUsageErrorMsg(SCB->CFSR);
-            }
-     }
-     __ASM volatile("BKPT #01");
-     while(1);
-}
+ void Hard_Fault_Handler()//uint32_t stack[])
+ {
+ static char msg[80];
+ printErrorMsg("In Hard Fault Handler\n");
+ sprintf(msg, "SCB->HFSR = 0x%08x\n", SCB->HFSR);
+ printErrorMsg(msg);
+ if ((SCB->HFSR & (1 << 30)) != 0) {
+ printErrorMsg("Forced Hard Fault\n");
+ sprintf(msg, "SCB->CFSR = 0x%08x\n", SCB->CFSR );
+ printErrorMsg(msg);
+ if((SCB->CFSR & 0xFFFF0000) != 0) {
+ printUsageErrorMsg(SCB->CFSR);
+ }
+ }
+ __ASM volatile("BKPT #01");
+ while(1);
+ }
 
-int my_store_of_MSP;
+ int my_store_of_MSP;
 
-void HardFault_Handler(void)
-{
-    __asm ("MRS my_store_of_MSP, MSP");
-    Hard_Fault_Handler();
-}
-*/
+ void HardFault_Handler(void)
+ {
+ __asm ("MRS my_store_of_MSP, MSP");
+ Hard_Fault_Handler();
+ }
+ */
 
 /*
-__asm void HardFault_Handler(void)
-{
-    TST lr, #4     // Test for MSP or PSP
-    ITE EQ
-    MRSEQ r0, MSP
-    MRSNE r0, PSP
-    B __cpp(Hard_Fault_Handler)
-}
-*/
+ __asm void HardFault_Handler(void)
+ {
+ TST lr, #4     // Test for MSP or PSP
+ ITE EQ
+ MRSEQ r0, MSP
+ MRSNE r0, PSP
+ B __cpp(Hard_Fault_Handler)
+ }
+ */
 /*
-HardFault_Handler\
+ HardFault_Handler\
     PROC
-    EXPORT  HardFault_Handler
-    B       .
-    ENDP
-*/
+ EXPORT  HardFault_Handler
+ B       .
+ ENDP
+ */
 
 /*
-__asm int f(int i)
-{
-        ADD i, i, #1 // error
-}
+ __asm int f(int i)
+ {
+ ADD i, i, #1 // error
+ }
 
-EXPORT HardFault_Handler
-HardFault_Handler FUNCTION
-    MRS r0, MSP
-    B __cpp(Hard_Fault_Handler)
-ENDFUNC
-*/
+ EXPORT HardFault_Handler
+ HardFault_Handler FUNCTION
+ MRS r0, MSP
+ B __cpp(Hard_Fault_Handler)
+ ENDFUNC
+ */
