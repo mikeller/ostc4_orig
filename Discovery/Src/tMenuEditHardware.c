@@ -36,6 +36,7 @@
 #include "tCCR.h"
 #include "tMenuEdit.h"
 
+
 /* Private function prototypes -----------------------------------------------*/
 void openEdit_Bluetooth(void);
 void openEdit_Compass(void);
@@ -758,16 +759,16 @@ uint8_t OnAction_Button(uint32_t editId, uint8_t blockNumber, uint8_t digitNumbe
     if(action == ACTION_BUTTON_NEXT)
     {
         digitContentNew = digitContent - '0';
-        if(digitContentNew >= 110)
+        if(digitContentNew >= MAX_BUTTONRESPONSIVENESS_GUI)
         {
-            digitContentNew = 70;
+            digitContentNew = MIN_BUTTONRESPONSIVENESS_GUI;
         }
         else
         {
             remainder = digitContentNew%5;
             digitContentNew += 5 - remainder;
-            if(digitContentNew >= 110)
-                digitContentNew = 110;
+            if(digitContentNew >= MAX_BUTTONRESPONSIVENESS_GUI)
+                digitContentNew = MAX_BUTTONRESPONSIVENESS_GUI;
         }
         return '0' + digitContentNew;
     }
@@ -775,8 +776,8 @@ uint8_t OnAction_Button(uint32_t editId, uint8_t blockNumber, uint8_t digitNumbe
     if(action == ACTION_BUTTON_BACK)
     {
         digitContentNew = digitContent - '0';
-        if(digitContentNew <= 70)
-            digitContentNew = 110;
+        if(digitContentNew <= MIN_BUTTONRESPONSIVENESS_GUI)
+            digitContentNew = MAX_BUTTONRESPONSIVENESS_GUI;
         else
         {
             remainder = digitContentNew%5;

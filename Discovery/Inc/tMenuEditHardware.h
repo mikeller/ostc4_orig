@@ -31,6 +31,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
 #include "gfx_engine.h"
+#include "global_constants.h"
 #include "settings.h"
 #include "data_central.h"
 

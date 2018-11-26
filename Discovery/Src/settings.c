@@ -55,7 +55,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
 {
     .versionFirst   = 1,
     .versionSecond 	= 4,
-    .versionThird   = 3,
+    .versionThird   = 6,
     .versionBeta    = 2,
 
     /* 4 bytes with trailing 0 */
@@ -256,10 +256,10 @@ const SSettings SettingsStandard = {
     .totalDiveCounter = 0,
     .personalDiveCount = 0,
     .showDebugInfo = 0,
-    .ButtonResponsiveness[0] = 90, // new hw 170306
-    .ButtonResponsiveness[1] = 90, // new hw 170306
-    .ButtonResponsiveness[2] = 90, // new hw 170306
-    .ButtonResponsiveness[3] = 90, // new hw 170306
+    .ButtonResponsiveness[0] = DEFAULT_BUTTONRESPONSIVENESS_GUI, // new hw 170306
+    .ButtonResponsiveness[1] = DEFAULT_BUTTONRESPONSIVENESS_GUI, // new hw 170306
+    .ButtonResponsiveness[2] = DEFAULT_BUTTONRESPONSIVENESS_GUI, // new hw 170306
+    .ButtonResponsiveness[3] = DEFAULT_BUTTONRESPONSIVENESS_GUI, // new hw 170306
     .nonMetricalSystem = 0,
     .fallbackToFixedSetpoint = 1,
     .bluetoothActive = 0,
@@ -301,7 +301,7 @@ const SSettings SettingsStandard = {
     .timeoutSurfacemodeWithSensors = 600,
     .VPM_model = 0,
     .GF_model = 0,
-    .FactoryButtonBase = 90,
+    .FactoryButtonBase = DEFAULT_BUTTONRESPONSIVENESS_GUI,
     .FactoryButtonBalance[0] = 3,
     .FactoryButtonBalance[1] = 3,
     .FactoryButtonBalance[2] = 3,
@@ -2655,14 +2655,14 @@ void settingsHelperButtonSens_keepPercentageValues(uint32_t inputValueRaw, uint8
 {
     uint32_t newSensitivity;
 
-    if(inputValueRaw > 110)
+    if(inputValueRaw > MAX_BUTTONRESPONSIVENESS)
     {
-            inputValueRaw = 110;
+            inputValueRaw = MAX_BUTTONRESPONSIVENESS;
     }
     else
-    if(inputValueRaw < 50)
+    if(inputValueRaw < MIN_BUTTONRESPONSIVENESS)
     {
-            inputValueRaw = 50;
+            inputValueRaw = MIN_BUTTONRESPONSIVENESS;
     }
 
     // the unbalanced value
@@ -2690,9 +2690,9 @@ void settingsHelperButtonSens_keepPercentageValues(uint32_t inputValueRaw, uint8
             break;
         }
 
-        if(newSensitivity > 110)
+        if(newSensitivity > MAX_BUTTONRESPONSIVENESS)
         {
-                newSensitivity = 110;
+                newSensitivity = MAX_BUTTONRESPONSIVENESS;
         }
         outArray4Values[i] = newSensitivity;
     }
