@@ -35,4 +35,8 @@
 #define MAX_BUTTONRESPONSIVENESS MAX_BUTTONRESPONSIVENESS_GUI+20//MIN_BUTTONRESPONSIVENESS_GUI+20correction
 #define BUTTON_DEBOUNCE_DELAY 7 //Delay for debounce filter for piezo buttons
 
+
+//Spi sync data debug
+#define SPI_SHOW_SYNC_STATS 1
+#define SPI_MIN_ERROR_SHOW 2
 #endif

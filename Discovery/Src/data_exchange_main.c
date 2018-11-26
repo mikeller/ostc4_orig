@@ -167,7 +167,7 @@ SDataReceiveFromMaster * dataOutGetPointer(void)
 void DataEX_init(void)
 {
 	SDiveState * pStateReal = stateRealGetPointerWrite();
-	pStateReal->data_old__lost_connection_to_slave = 1;
+	pStateReal->data_old__lost_connection_to_slave = 0; //initial value
 	data_old__lost_connection_to_slave_counter_temp = 0;
 	data_old__lost_connection_to_slave_counter_total = 0;
 
