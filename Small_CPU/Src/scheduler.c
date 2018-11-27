@@ -292,7 +292,7 @@ void scheduleSpecial_Evaluate_DataSendToSlave(void)
 //
 	copyPressureData();
 	battery_gas_gauge_get_data();
-	if(global.mode==MODE_CALIB)copyCompassData();
+	copyCompassData();
 	copyCnsAndOtuData();
 	copyTimeData();
 	copyBatteryData();

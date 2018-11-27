@@ -678,7 +678,7 @@ void t9_refresh_customview(void)
             // Wechseltiefe
             if(pGasLine[gasId].depth_meter)
             {
-                textpointer += snprintf(&text[textpointer],6,"\t%u m",pGasLine[gasId].depth_meter);
+
             }
             GFX_write_string(&FontT42, &t9cY0free, text, gasId);
         }
