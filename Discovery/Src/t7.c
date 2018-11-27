@@ -775,7 +775,7 @@ void t7_refresh_surface(void)
     /* surface pressure  and temperature */
     if(stateUsed->sensorErrorsRTE == 0)
     {
-        snprintf(text,30,"%01.0f\022\016\016 mbar", stateUsed->lifeData.pressure_surface_bar * 1000.0f);
+        snprintf(text,30,"%01.0f\022\016\016 hPa", stateUsed->lifeData.pressure_surface_bar * 1000.0f);
         GFX_write_string(&FontT48,&t7surfaceL,text,3);
 
         if(settingsGetPointer()->nonMetricalSystem)
@@ -786,7 +786,7 @@ void t7_refresh_surface(void)
     }
     else
     {
-        snprintf(text,30,"ERR\022\016\016 mbar");
+        snprintf(text,30,"ERR\022\016\016 hPa");
         GFX_write_string(&FontT48,&t7surfaceL,text,3);
 
         if(settingsGetPointer()->nonMetricalSystem)
@@ -1090,7 +1090,7 @@ void t7_refresh_surface_debugmode(void)
         Gfx_write_label_var(&t7screen,  0,400,255,&FontT48,CLUT_Font020,TextL1);
         return;
     }
-    snprintf(TextL1,TEXTSIZE,"%01.0f mbar",stateUsed->lifeData.pressure_ambient_bar * 1000.0f);
+    snprintf(TextL1,TEXTSIZE,"%01.0f hPa",stateUsed->lifeData.pressure_ambient_bar * 1000.0f);
     Gfx_write_label_var(&t7screen,  0,400,  0,&FontT42,CLUT_DiveMainLabel,"Ambient Pressure");
     Gfx_write_label_var(&t7screen,  0,400, 45,&FontT48,CLUT_Font020,TextL1);
 
@@ -1102,7 +1102,7 @@ void t7_refresh_surface_debugmode(void)
     Gfx_write_label_var(&t7screen,  0,400,200,&FontT42,CLUT_DiveMainLabel,"Heading Roll Pitch");
     Gfx_write_label_var(&t7screen,  0,400,255,&FontT48,CLUT_Font020,TextL1);
 
-    snprintf(TextL1,TEXTSIZE,"%01.0f mbar",stateUsed->lifeData.pressure_surface_bar * 1000.0f);
+    snprintf(TextL1,TEXTSIZE,"%01.0f hPa",stateUsed->lifeData.pressure_surface_bar * 1000.0f);
     Gfx_write_label_var(&t7screen,  0,400,310,&FontT42,CLUT_DiveMainLabel,"Surface Pressure");
     Gfx_write_label_var(&t7screen,  0,400,355,&FontT48,CLUT_Font020,TextL1);
 
