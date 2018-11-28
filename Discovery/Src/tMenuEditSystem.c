@@ -1237,7 +1237,7 @@ void refresh_InformationPage(void)
         write_label_var(  20, 800, ME_Y_LINE4, &FontT42, text_content);
 
         offsetTemperature = ((float)settingsGetPointer()->offsetTemperature_centigrad) / 10;
-        snprintf(text_content,80,"%i hPa  /  %0.2f\140C",settingsGetPointer()->offsetPressure_mbar, offsetTemperature);
+        snprintf(text_content,80,"%i %s  /  %0.2f\140C",settingsGetPointer()->offsetPressure_mbar, TEXT_PRESSURE_UNIT, offsetTemperature);
         write_label_var(  20, 800, ME_Y_LINE5, &FontT42, text_content);
 
         text_button[0] = TXT_2BYTE;
