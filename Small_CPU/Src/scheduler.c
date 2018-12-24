@@ -441,7 +441,7 @@ uint16_t schedule_update_timer_helper(int8_t thisSeconds)
   */
 void schedule_check_resync(void)
 {
-	//TODO: убрать к хуям
+	//TODO: REMOVE
 	if((global.check_sync_not_running >= 2))
 	{
 //		global.dataSendToSlaveIsNotValidCount = 0;

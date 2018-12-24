@@ -466,7 +466,7 @@ int main(void) {
 			compass_init(0, 7);
 			accelerator_init();
 			wireless_init();
-			SPI_synchronize_with_Master(); //one manual start cycle.
+//			SPI_synchronize_with_Master(); TODO: REMOVE
 			MX_DMA_Init();
 			MX_SPI1_Init();
 			MX_EXTI_wireless_Init();
