@@ -370,7 +370,7 @@ int main(void) {
 			MX_DMA_Init();
 			MX_SPI1_Init();
 			MX_EXTI_wireless_Init();
-			SPI_Start_single_TxRx_with_Master();
+//			SPI_Start_single_TxRx_with_Master();
 			EXTI_Test_Button_Init();
 
 			/*
@@ -466,11 +466,11 @@ int main(void) {
 			compass_init(0, 7);
 			accelerator_init();
 			wireless_init();
-			SPI_synchronize_with_Master();
+			SPI_synchronize_with_Master(); //one manual start cycle.
 			MX_DMA_Init();
 			MX_SPI1_Init();
 			MX_EXTI_wireless_Init();
-			SPI_Start_single_TxRx_with_Master();
+//			SPI_Start_single_TxRx_with_Master();
 
 			// EXTILine0_Button_DeInit(); not now, later after testing
 			break;
@@ -1079,7 +1079,25 @@ void assert_failed(uint8_t* file, uint32_t line)
 /**
  * @}
  */
+/**
+  * @brief  This function handles SysTick Handler.
+  * @param  None
+  * @retval None
+  */
 
+/*TxRx only here. Every 100 ms.*/
+uint8_t ticks100ms=0;
+void SysTick_Handler(void)
+{
+  HAL_IncTick();
+  if(ticks100ms<100){
+	  ticks100ms++;
+  }else
+  {
+	  ticks100ms=0;
+	  SPI_Start_single_TxRx_with_Master();
+  }
+}
 /**
  * @}
  */

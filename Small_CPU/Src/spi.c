@@ -124,7 +124,7 @@ void MX_SPI1_Init(void) {
 	hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
 	hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
 	hspi1.Init.NSS = SPI_NSS_HARD_INPUT; //SPI_NSS_SOFT;
-	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
+	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
 	hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
 	hspi1.Init.TIMode = SPI_TIMODE_DISABLED;
 	hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLED; //_DISABLED; _ENABLED;
@@ -325,16 +325,20 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
 //		GPIO_new_DEBUG_LOW(); //For debug.
 			global.dataSendToSlaveIsValid = 0;
 			global.dataSendToSlaveIsNotValidCount++;
+			MX_SPI_DeInit();
+			HAL_Delay(30);
+			MX_DMA_Init();
+			MX_SPI1_Init();
 		}
 		global.dataSendToMaster.power_on_reset = 0;
 		global.deviceDataSendToMaster.power_on_reset = 0;
 
-
+//TODO:REMOVE
 //		if ( !global.dataSendToSlaveStopEval ) {
 //			scheduleSpecial_Evaluate_DataSendToSlave();
 //		}
 		scheduleSpecial_Evaluate_DataSendToSlave();
-		SPI_Start_single_TxRx_with_Master();
+		SPI_Start_single_TxRx_with_Master(); //Send data always.
 	}
 }
 

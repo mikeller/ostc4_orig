@@ -38,7 +38,7 @@
 
 //Spi sync data debug
 #define SPI_SHOW_SYNC_STATS 1
-#define SPI_MIN_ERROR_SHOW 2
+#define SPI_MIN_ERROR_SHOW 10
 
 
 //Text data

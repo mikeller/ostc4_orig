@@ -446,8 +446,8 @@ uint8_t tHome_show_lost_connection_count(GFX_DrawCfgScreen *ScreenToWriteOn)
     snprintf(text,32,"spi err:\002 %i/%i",DataEX_lost_connection_count(),get_num_SPI_CALLBACKS());
     Gfx_write_label_var(ScreenToWriteOn,  100,300, 0,&FontT24,CLUT_ButtonSymbols,text);
 
-    snprintf(text,32,"header:\002%X%X%X%X",dataIn->header.checkCode[0],dataIn->header.checkCode[1],dataIn->header.checkCode[2],dataIn->header.checkCode[3]);
-    Gfx_write_label_var(ScreenToWriteOn,  350,550, 0,&FontT24,CLUT_ButtonSymbols,text);
+//    snprintf(text,32,"header:\002%X%X%X%X",dataIn->header.checkCode[0],dataIn->header.checkCode[1],dataIn->header.checkCode[2],dataIn->header.checkCode[3]);
+//    Gfx_write_label_var(ScreenToWriteOn,  350,550, 0,&FontT24,CLUT_ButtonSymbols,text);
 
     snprintf(text,32,"footer:\002%X%X%X%X",dataIn->footer.checkCode[0],dataIn->footer.checkCode[1],dataIn->footer.checkCode[2],dataIn->footer.checkCode[3]);
     Gfx_write_label_var(ScreenToWriteOn,  600,800, 0,&FontT24,CLUT_ButtonSymbols,text);

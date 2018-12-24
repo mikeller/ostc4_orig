@@ -181,6 +181,11 @@ void initGlobals(void)
 
 void scheduleSpecial_Evaluate_DataSendToSlave(void)
 {
+	//TEMPORARY fix for compass calibration.
+	//TODO: Fix I2C timeout for complete solving problem.
+	if(global.mode==MODE_CALIB){
+		return;
+	}
 
 	global.dataSendToSlavePending = 0;
 	if(!global.dataSendToSlaveIsValid) return;
@@ -243,8 +248,10 @@ void scheduleSpecial_Evaluate_DataSendToSlave(void)
 
 	if(global.dataSendToSlave.setBatteryGaugeNow)
 	{
+		if(global.mode!=MODE_CALIB){
 		global.dataSendToMaster.confirmRequest.ub.batterygauge = 1;
 		battery_gas_gauge_set(global.dataSendToSlave.data.newBatteryGaugePercentageFloat);
+		}
 	}		
 
 	if((global.mode == MODE_SURFACE) && (global.dataSendToSlave.mode == MODE_SHUTDOWN))
@@ -272,30 +279,26 @@ void scheduleSpecial_Evaluate_DataSendToSlave(void)
 	deviceDataFlashValid = 1;
 
 
-	//TODO: (kittz) split by current mode.
-// new hw 170523
-//	if (global.I2C_SystemStatus != HAL_OK) {
-//		MX_I2C1_TestAndClear();
-//		MX_I2C1_Init();
-//		if (!is_init_pressure_done()) {
-//			init_pressure();
-//		}
-//	}
-
-
-//	pressure_update();
-//
-//	compass_read();
-//	acceleration_read();
-//	compass_calc();
-//
-//
+	//TODO: Temporary placed here. Duration ~210 ms.
+	if (global.I2C_SystemStatus != HAL_OK) {
+		MX_I2C1_TestAndClear();
+		MX_I2C1_Init();
+//		init_pressure();
+//		compass_init(0, 7);
+//		accelerator_init();
+	}
+//Collect and copy sensor data just in one place.
+//TODO: compass_calib_common needs big refactor.
+	compass_read();
+	acceleration_read();
+	compass_calc();
+	pressure_update();
 	copyPressureData();
 	battery_gas_gauge_get_data();
 	copyCompassData();
-	copyCnsAndOtuData();
+//	copyCnsAndOtuData(); //TODO: move here.
 	copyTimeData();
-	copyBatteryData();
+//	copyBatteryData(); // TODO: move here.
 	copyDeviceData();
 	copyVpmCrushingData();
 //
@@ -438,7 +441,7 @@ uint16_t schedule_update_timer_helper(int8_t thisSeconds)
   */
 void schedule_check_resync(void)
 {
-	//TODO: (kittz) test for stability
+	//TODO: убрать к хуям
 	if((global.check_sync_not_running >= 2))
 	{
 //		global.dataSendToSlaveIsNotValidCount = 0;
@@ -448,7 +451,7 @@ void schedule_check_resync(void)
 //		HAL_Delay(30); /* could be closer to length of data transmission 23.Feb.2015 hw */
 //		MX_DMA_Init();
 //		MX_SPI1_Init();
-		SPI_Start_single_TxRx_with_Master();
+//		SPI_Start_single_TxRx_with_Master();
 	}
 }
 
@@ -509,8 +512,8 @@ void scheduleDiveMode(void)
 		if(ticksdiff >= counterPressure100msec * 100 + 20)
 		{
 				global.check_sync_not_running++;
-				pressure_update();
-				scheduleUpdateDeviceData();
+//				pressure_update();
+//				scheduleUpdateDeviceData();
 				if(global.demo_mode)
 				{
 					turbo_seconds = demo_modify_temperature_and_pressure(global.lifeData.dive_time_seconds, counterPressure100msec, global.ceiling_from_main_CPU_mbar);
@@ -541,18 +544,18 @@ void scheduleDiveMode(void)
 //					if(global.demo_mode)
 //						global.lifeData.ascent_rate_meter_per_min /= 4;
 				}
-				copyPressureData();
+//				copyPressureData();
 				counterPressure100msec++;
 		}
 			//evaluate compass data at 50 ms, 150 ms, 250 ms,....
-		if(ticksdiff >= counterCompass100msec * 100 + 50)
-		{
-			compass_read();
-			acceleration_read();
-			compass_calc();
-			copyCompassData();
-			counterCompass100msec++;
-		}
+//		if(ticksdiff >= counterCompass100msec * 100 + 50)
+//		{
+//			compass_read();
+//			acceleration_read();
+//			compass_calc();
+//			copyCompassData();
+//			counterCompass100msec++;
+//		}
 		
 		if(ticksdiff >= counterAmbientLight100msec * 100 + 70)
 		{
@@ -719,10 +722,10 @@ void scheduleTestMode(void)
 		{
 				global.check_sync_not_running++;
 
-pressure_update();
-scheduleUpdateDeviceData();
+//pressure_update();
+//scheduleUpdateDeviceData();
 global.lifeData.ascent_rate_meter_per_min = 0;
-copyPressureData();
+//copyPressureData();
 
 				if(temperature_carousel > 20.0f)
 				{
@@ -801,10 +804,10 @@ void scheduleSurfaceMode(void)
 		if(ticksdiff >= counterPressure100msec * 100 + 20)
 		{
 				global.check_sync_not_running++;
-				pressure_update();
-				scheduleUpdateDeviceData();
+//				pressure_update();
+//				scheduleUpdateDeviceData();
 				global.lifeData.ascent_rate_meter_per_min = 0;
-				copyPressureData();
+//				copyPressureData();
 				counterPressure100msec++;
 
 				if(scheduleCheck_pressure_reached_dive_mode_level())
@@ -813,14 +816,14 @@ void scheduleSurfaceMode(void)
 		
 		//evaluate compass data at 50 ms, 150 ms, 250 ms,...
 
-		if(ticksdiff >= counterCompass100msec * 100 + 50)
-		{
-			compass_read();
-			acceleration_read();
-			compass_calc();
-			copyCompassData();
-			counterCompass100msec++;
-		}
+//		if(ticksdiff >= counterCompass100msec * 100 + 50)
+//		{
+////			compass_read();
+////			acceleration_read();
+//			compass_calc();
+//			copyCompassData();
+//			counterCompass100msec++;
+//		}
 
 		//evaluate compass data at 70 ms, 170 ms, 270 ms,...
 		if(ticksdiff >= counterAmbientLight100msec * 100 + 70)

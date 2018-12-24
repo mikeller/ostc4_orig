@@ -656,21 +656,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			switch (status.base) {
 			case BaseHome:
 				// added hw 161027
-				if (!(stateRealGetPointer()->warnings.lowBattery)
-						&& (stateRealGetPointer()->lifeData.battery_charge > 9)) {
-					stateRealGetPointerWrite()->lastKnownBatteryPercentage =
-							stateRealGetPointer()->lifeData.battery_charge;
-				} else if ((wasFirmwareUpdateCheckBattery)
-						&& (timeout_in_seconds > 3)) {
+				if (!(stateRealGetPointer()->warnings.lowBattery) && (stateRealGetPointer()->lifeData.battery_charge > 9)) {
+					stateRealGetPointerWrite()->lastKnownBatteryPercentage =stateRealGetPointer()->lifeData.battery_charge;
+				} else if ((wasFirmwareUpdateCheckBattery) && (timeout_in_seconds > 3)) {
 					wasFirmwareUpdateCheckBattery = 0;
-					setButtonResponsiveness(
-							settingsGetPointer()->ButtonResponsiveness); // added 170306
-					if ((settingsGetPointer()->lastKnownBatteryPercentage > 0)
-							&& (settingsGetPointer()->lastKnownBatteryPercentage
-									<= 100)
-							&& (stateRealGetPointer()->warnings.lowBattery)) {
-						setBatteryPercentage(
-								settingsGetPointer()->lastKnownBatteryPercentage);
+					setButtonResponsiveness(settingsGetPointer()->ButtonResponsiveness); // added 170306
+					if ((settingsGetPointer()->lastKnownBatteryPercentage > 0) &&
+							(settingsGetPointer()->lastKnownBatteryPercentage <= 100) &&
+							(stateRealGetPointer()->warnings.lowBattery))
+					{
+//						If PowerOff, and battery is <=100, and lifeData.battery_charge < 10 - ALWAYS!!! set DataOutnewBatteryGaugePercentageFloat
+//						Need to fix in smallCPU handled. Compeled.
+						//upd.Fixed.
+						setBatteryPercentage(settingsGetPointer()->lastKnownBatteryPercentage);
+
 					}
 				}
 				// stuff before and new @161121 CCR-sensor limit 10 minutes
