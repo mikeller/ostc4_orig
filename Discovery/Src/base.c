@@ -781,6 +781,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
     uint8_t action = 0;
     SStateList status;
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
 
     if(GPIO_Pin == VSYNC_IRQ_PIN) // rechts, unten
     {
@@ -816,18 +818,34 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         return;
 
     if(GPIO_Pin == BUTTON_BACK_PIN) // links
-        action = ACTION_BUTTON_BACK;
+    {
+    	if(!pSettings->FlipDisplay)
+    	{
+    		action = ACTION_BUTTON_BACK;
+    	}
+    	else
+    	{
+    		action = ACTION_BUTTON_NEXT;
+    	}
+    }
     else
-    if(GPIO_Pin == BUTTON_ENTER_PIN) // mitte
-        action = ACTION_BUTTON_ENTER;
-    else
-    if(GPIO_Pin == BUTTON_NEXT_PIN) // rechts
-        action = ACTION_BUTTON_NEXT;
-#ifdef BUTTON_CUSTOM_PIN
-    else
-    if(GPIO_Pin == BUTTON_CUSTOM_PIN) // extra
-        action = ACTION_BUTTON_CUSTOM;
-#endif
+    {
+		if(GPIO_Pin == BUTTON_ENTER_PIN) // mitte
+			action = ACTION_BUTTON_ENTER;
+		else
+		{
+			if(GPIO_Pin == BUTTON_NEXT_PIN) // rechts
+			{
+				if(!pSettings->FlipDisplay)	action = ACTION_BUTTON_NEXT;
+				 else action = ACTION_BUTTON_BACK;
+			}
+		}
+    }
+	#ifdef BUTTON_CUSTOM_PIN
+		else
+		if(GPIO_Pin == BUTTON_CUSTOM_PIN) // extra
+			action = ACTION_BUTTON_CUSTOM;
+	#endif
 
 #ifdef DEMOMODE // user pressed button ?
     if((!demoMachineCall) && demoModeActive())
