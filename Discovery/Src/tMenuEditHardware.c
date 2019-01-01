@@ -44,6 +44,7 @@ void openEdit_Brightness(void);
 //void openEdit_Luftintegration(void);
 void openEdit_ButtonSens(void);
 void openEdit_ScooterControl(void);
+void openEdit_FlipDisplay(void);
 
 /* Announced function prototypes -----------------------------------------------*/
 uint8_t OnAction_Compass		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
@@ -88,7 +89,14 @@ void openEdit_Hardware(uint8_t line)
         openEdit_ButtonSens();
     break;
     case 6:
-        openEdit_ScooterControl();
+    	if(getLicence() == LICENCEBONEX)
+    	{
+    		openEdit_ScooterControl();
+    	}
+    	else
+    	{
+    		openEdit_FlipDisplay();
+    	}
     break;
     }
 }
@@ -113,6 +121,32 @@ void openEdit_Bluetooth(void)
     exitMenuEdit_to_Menu_with_Menu_Update_do_not_write_settings_for_this_only();
 }
 
+void openEdit_FlipDisplay(void)
+{
+/* does not work like this	resetEnterPressedToStateBeforeButtonAction(); */
+
+    SSettings *pSettings = settingsGetPointer();
+
+    if(pSettings->FlipDisplay == 0)
+    {
+        pSettings->FlipDisplay = 1;
+    }
+    else
+    {
+        pSettings->FlipDisplay = 0;
+    }
+    /* reinit all views */
+    tHome_init();
+    tI_init();
+    tM_init();
+    tMenuEdit_init();
+    tInfoLog_init();
+    tM_build_pages();
+
+
+    exitEditWithUpdate();
+    exitMenuEdit_to_Home();
+}
 /*
 void refresh_ScooterControl(void)
 {
@@ -469,7 +503,7 @@ uint8_t OnAction_ExitHardw (uint32_t editId, uint8_t blockNumber, uint8_t digitN
 
 void refresh_O2Sensors(void)
 {
-    char text[10];
+    char text[16];
     uint16_t y_line;
 
     text[0] = '\001';

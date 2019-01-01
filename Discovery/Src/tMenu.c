@@ -49,7 +49,12 @@
 #include "tMenuXtra.h"
 
 /* Private types -------------------------------------------------------------*/
-#define MAXPAGES 10
+#define MAXPAGES 		10
+#define CURSOR_HIGH 	25
+#define TAB_HEADER_HIGH	25
+#define TAB_BAR_HIGH	5
+#define MENU_WDW_HIGH	390
+#define KEY_LABEL_HIGH	25	/* Height of the label used for the the user keys */
 
 typedef struct
 {
@@ -123,6 +128,9 @@ void tM_init(void)
 {
     uint8_t i;
 
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
     tMdesignCursor.FBStartAdress = getFrame(3);
     tMdesignCursor.ImageHeight = 390;
     tMdesignCursor.ImageWidth = 800;
@@ -155,9 +163,17 @@ void tM_init(void)
     tMwindow.WindowTab = 400;
     tMwindow.WindowX0 = 20;
     tMwindow.WindowX1 = 779;
-    tMwindow.WindowY0 = 4 + 25;
-    tMwindow.WindowY1 = 390 + 25;
 
+    if(!pSettings->FlipDisplay)
+    {
+		tMwindow.WindowY0 = 4 + KEY_LABEL_HIGH;
+		tMwindow.WindowY1 = 390 + KEY_LABEL_HIGH;
+    }
+    else
+    {
+		tMwindow.WindowY0 = 480 - MENU_WDW_HIGH - TAB_HEADER_HIGH;// - TAB_BAR_HIGH;
+		tMwindow.WindowY1 = 480 - TAB_HEADER_HIGH - TAB_BAR_HIGH;
+    }
     actual_menu_content = MENU_UNDEFINED;
 }
 
@@ -196,8 +212,7 @@ void tM_rebuild_menu_after_tComm(void)
     tM_rebuild_pages();
 }
 
-#
-    void tM_check_content(void)
+void tM_check_content(void)
 {
     uint8_t mode = 0;
 
@@ -272,19 +287,19 @@ void update_content_with_new_frame(uint8_t page, char *text, uint16_t tab, char 
     localtext[0] = TXT_2BYTE;
     localtext[1] = TXT2BYTE_ButtonBack;
     localtext[2] = 0;
-    write_content_simple(&tMscreen, 0, 800, 480-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
+    write_content_simple(&tMscreen, 0, 800, 480-KEY_LABEL_HIGH, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
 
     localtext[0] = '\001';
     localtext[1] = TXT_2BYTE;
     localtext[2] = TXT2BYTE_ButtonEnter;
     localtext[3] = 0;
-    write_content_simple(&tMscreen, 0, 800, 480-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
+    write_content_simple(&tMscreen, 0, 800, 480-KEY_LABEL_HIGH, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
 
     localtext[0] = '\002';
     localtext[1] = TXT_2BYTE;
     localtext[2] = TXT2BYTE_ButtonNext;
     localtext[3] = 0;
-    write_content_simple(&tMscreen, 0, 800, 480-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
+    write_content_simple(&tMscreen, 0, 800, 480-KEY_LABEL_HIGH, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
 
 //	gfx_write_page_number(&tMscreen ,menu.pageCountNumber[page],menu.pageCountTotal,0);
 
@@ -388,19 +403,19 @@ void tM_build_page(uint32_t id, char *text, uint16_t tab, char *subtext)
     localtext[0] = TXT_2BYTE;
     localtext[1] = TXT2BYTE_ButtonBack;
     localtext[2] = 0;
-    write_content_simple(&tMscreen, 0, 800, 480-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
+    write_content_simple(&tMscreen, 0, 800, 480-KEY_LABEL_HIGH, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
 
     localtext[0] = '\001';
     localtext[1] = TXT_2BYTE;
     localtext[2] = TXT2BYTE_ButtonEnter;
     localtext[3] = 0;
-    write_content_simple(&tMscreen, 0, 800, 480-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
+    write_content_simple(&tMscreen, 0, 800, 480-KEY_LABEL_HIGH, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
 
     localtext[0] = '\002';
     localtext[1] = TXT_2BYTE;
     localtext[2] = TXT2BYTE_ButtonNext;
     localtext[3] = 0;
-    write_content_simple(&tMscreen, 0, 800, 480-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
+    write_content_simple(&tMscreen, 0, 800, 480-KEY_LABEL_HIGH, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
 }
 
 /*
@@ -782,6 +797,8 @@ void openMenu_first_page_with_OC_gas_update(void)
 void openMenu(uint8_t freshWithFlipPages)
 {
     uint8_t page, line;
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
 
     callerID = get_globalState();
 
@@ -818,10 +835,24 @@ void openMenu(uint8_t freshWithFlipPages)
 
     GFX_SetFrameTop(menu.StartAddressForPage[page]);
     /* new test for 3button design */
-    if(freshWithFlipPages)
-        GFX_SetFrameBottom(tMdesignSolo.FBStartAdress, 0, 25, 800, 390);
+
+    if(!pSettings->FlipDisplay)
+    {
+		if(freshWithFlipPages)
+			GFX_SetFrameBottom(tMdesignSolo.FBStartAdress, 0, 25, 800, 390);
+		else
+			GFX_SetFrameBottom((tMdesignCursor.FBStartAdress) + 65*2*(line - 1), 0, 25, 800, 390);
+    }
     else
-        GFX_SetFrameBottom((tMdesignCursor.FBStartAdress) + 65*2*(line - 1), 0, 25, 800, 390);
+    {
+		if(freshWithFlipPages)
+		{
+			GFX_SetFrameBottom((tMdesignSolo.FBStartAdress), 0, 480-390-KEY_LABEL_HIGH, 800, 390); //- (25 * 2 * 800), 0, 25, 800, 390);
+		}
+		else
+			GFX_SetFrameBottom((tMdesignCursor.FBStartAdress + (390 - 65 *(line)) *2), 0,480-390-KEY_LABEL_HIGH, 800, 390); //480-390-KEY_LABEL_HIGH + 65*2*(line - 1)
+    }
+
 }
 
 void block_diluent_handler(_Bool Unblock)
@@ -857,6 +888,9 @@ void nextPage(void)
 {
     uint8_t page, line;
 
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
     menu.pageMemoryForNavigation += 1;
 
     findValidPosition(&page, &line);
@@ -873,14 +907,23 @@ void nextPage(void)
 
     GFX_SetFrameTop(menu.StartAddressForPage[page]);
     /* new test for 3button design */
-    //GFX_SetFrameBottom((tMdesignCursor.FBStartAdress) + 65*2*(line - 1), 0, 25, 800, 390);
-    GFX_SetFrameBottom(tMdesignSolo.FBStartAdress, 0, 25, 800, 390);
+    //GFX_SetFrameBottom((.FBStartAdress) + 65*2*(line - 1), 0, 25, 800, 390);
+    if(!pSettings->FlipDisplay)
+    {
+    	GFX_SetFrameBottom(tMdesignSolo.FBStartAdress, 0, 25, 800, 390);
+    }
+    else
+    {
+    	GFX_SetFrameBottom(tMdesignSolo.FBStartAdress, 0, 65, 800, 390);
+    }
 }
 
 
 void nextLine(void)
 {
     uint8_t page, line;
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
 
     page = menu.pageMemoryForNavigation;
     menu.lineMemoryForNavigationForPage[page] += 1;
@@ -890,8 +933,14 @@ void nextLine(void)
 
     /* new test for 3button design */
     menu.modeFlipPages = 0;
-
-    GFX_SetFrameBottom((tMdesignCursor.FBStartAdress) + 65*2*(line - 1), 0, 25, 800, 390);
+    if(!pSettings->FlipDisplay)
+    {
+    	GFX_SetFrameBottom((tMdesignCursor.FBStartAdress) + 65*2*(line - 1), 0, 25, 800, 390);
+    }
+    else
+    {
+    	GFX_SetFrameBottom((tMdesignCursor.FBStartAdress)+ (390 - 65 *(line)) *2, 0, 480-390-KEY_LABEL_HIGH, 800, 390);
+    }
 }
 
 
@@ -901,10 +950,19 @@ void stepBackMenu(void)
     {
         menu.lineMemoryForNavigationForPage[menu.pageMemoryForNavigation] = 0;
         menu.modeFlipPages = 1;
-        GFX_SetFrameBottom(tMdesignSolo.FBStartAdress, 0, 25, 800, 390);
+        if(!settingsGetPointer()->FlipDisplay)
+        {
+        	GFX_SetFrameBottom(tMdesignSolo.FBStartAdress, 0, 25, 800, 390);
+        }
+		else
+		{
+			GFX_SetFrameBottom(tMdesignSolo.FBStartAdress, 0, 480-390-KEY_LABEL_HIGH, 800, 390);
+		}
     }
     else
+    {
         exitMenu();
+    }
 }
 
 
@@ -1023,6 +1081,8 @@ void draw_tMdesignSubUnselected(uint32_t *ppDestination)
         uint16_t al88;
     };
 
+    uint16_t* prunning = *ppDestination;
+
     union al88_u color_seperator;
     union al88_u color_unselected;
     int i;
@@ -1033,21 +1093,18 @@ void draw_tMdesignSubUnselected(uint32_t *ppDestination)
     color_seperator.al8[1] = 0xFF;
     color_unselected.al8[1] = 0xFF;
 
-    *(__IO uint16_t*)*ppDestination = color_seperator.al88;
-        *ppDestination += 2;
-    *(__IO uint16_t*)*ppDestination = color_seperator.al88;
-        *ppDestination += 2;
+    *(__IO uint16_t*)prunning++ = color_seperator.al88;
+    *(__IO uint16_t*)prunning++ = color_seperator.al88;
 
     for(i = 61; i > 0; i--)
     {
-        *(__IO uint16_t*)*ppDestination = color_unselected.al88;
-        *ppDestination += 2;
+        *(__IO uint16_t*)prunning++ = color_unselected.al88;
     }
 
-    *(__IO uint16_t*)*ppDestination = color_seperator.al88;
-        *ppDestination += 2;
-    *(__IO uint16_t*)*ppDestination = color_seperator.al88;
-        *ppDestination += 2;
+    *(__IO uint16_t*)prunning++ = color_seperator.al88;
+    *(__IO uint16_t*)prunning++ = color_seperator.al88;
+
+    *ppDestination = prunning;
 }
 
 
@@ -1129,6 +1186,7 @@ void draw_tMcursorDesign(void)
             draw_tMdesignSubSelected(&pDestination);
     }
 
+/* Draw menu background boxes which are visible if nothing is selected */
     pDestination = tMdesignSolo.FBStartAdress;
 
     for(j = 801; j > 0; j--)
@@ -1151,7 +1209,7 @@ void draw_tMheader(uint8_t page)
     union al88_u color_top;
     int i,j, k, k4text;
     uint32_t pBackup;
-    uint32_t pDestination;
+    uint16_t* pDestination;
     uint8_t colorText;
     uint16_t positionText;
     uint8_t pageText;
@@ -1230,35 +1288,67 @@ void draw_tMheader(uint8_t page)
             if((text8max[k][0] == 0) && (menu.pageCountNumber[k-1] == 0))
                 write_content_simple(&tMscreen,positionText,775,0,&FontT42,text8max[k-1],colorText);
     */
-            pDestination += 2 * 5 * 480;
-
-            for(j = 60; j > 0; j--)
+/* Draw color bars */
+            if(!settingsGetPointer()->FlipDisplay)
             {
-                pDestination += (390 + 26)* 2;
+				pDestination +=  5 * 480;
 
-//				for(i = 64; i > 0; i--)
-                for(i = 16; i > 0; i--)
-                {
-                *(__IO uint16_t*)pDestination = color_top.al88;
-                    pDestination += 2;
-                }
-                pDestination += 2 * 48;
-            }
+					for(j = 60; j > 0; j--)
+					{
+						pDestination += (390 + 26);
 
-            pDestination += 2 * 5 * 480;
-            positionText += 70;
+						for(i = 16; i > 0; i--)
+						{
+							*(__IO uint16_t*)pDestination++ = color_top.al88;
+						}
+						pDestination += 48;
+					}
 
-            if((k == 4) || ((k == 6) && (menu.pageCountNumber[5] == 0)))
-            {
-                pDestination += 2 * 70 * 480;
-                positionText += 70;
-            }
+					pDestination += 5 * 480;
+					positionText += 70;
 
-            if(spacing[k])
-            {
-                pDestination += 35 * 2 * 480;
-                positionText += 35;
-            }
+					if((k == 4) || ((k == 6) && (menu.pageCountNumber[5] == 0)))
+					{
+						pDestination += 70 * 480;
+						positionText += 70;
+					}
+
+					if(spacing[k])
+					{
+						pDestination += 35 * 480;
+						positionText += 35;
+					}
+				}
+			else
+			{
+				pDestination += (800 - 5)* 480;
+
+				for(j = 60; j > 0; j--)
+				{
+					pDestination -= (390 + 26);
+
+					for(i = 16; i > 0; i--)
+					{
+					*(__IO uint16_t*)pDestination-- = color_top.al88;
+					}
+					pDestination -= 48;
+				}
+
+				pDestination -= (800) * 480;
+				positionText += 70;
+
+				if((k == 4) || ((k == 6) && (menu.pageCountNumber[5] == 0)))
+				{
+					pDestination -= 70 * 480;
+					positionText += 70;
+				}
+
+				if(spacing[k])
+				{
+					pDestination -= 35 * 480;
+					positionText += 35;
+				}
+			}
         }
     }
     tMscreen.FBStartAdress = pBackup;

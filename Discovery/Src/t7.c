@@ -187,15 +187,23 @@ const uint8_t *customviewsSurface	= customviewsSurfaceStandard;
 
 #define CUSTOMBOX_LINE_LEFT (250)
 #define CUSTOMBOX_LINE_RIGHT (549)
+#define CUSTOMBOX_LINE_TOP	  (0)
+#define CUSTOMBOX_LINE_MIDDLE  (142)
+#define CUSTOMBOX_LINE_BOTTOM  (318)
 #define CUSTOMBOX_INSIDE_OFFSET (2)
 #define CUSTOMBOX_OUTSIDE_OFFSET (2)
 #define CUSTOMBOX_SPACE_INSIDE (CUSTOMBOX_LINE_RIGHT + 1 - (CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET + CUSTOMBOX_INSIDE_OFFSET))
-
+#define TOP_LINE_HIGHT (25)
 
 /* Exported functions --------------------------------------------------------*/
 
 void t7_init(void)
 {
+
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
+
     if(getLicence() == LICENCEBONEX)
     {
         customviewsDive     = customviewsDiveScooter;
@@ -215,48 +223,217 @@ void t7_init(void)
     t7screenCompass.ImageWidth = 1600;
     t7screenCompass.LayerIndex = 0;
 
+    if(!pSettings->FlipDisplay)
+    {
+		t7l1.Image = &t7screen;
+		t7l1.WindowNumberOfTextLines = 2;
+		t7l1.WindowLineSpacing = 19; // Abstand von Y0
+		t7l1.WindowTab = 100; // vermtl. ohne Verwendung in diesem Fenster
+		t7l1.WindowX0 = 0;
+		t7l1.WindowX1 = CUSTOMBOX_LINE_LEFT - CUSTOMBOX_OUTSIDE_OFFSET;
+		t7l1.WindowY0 = 318;
+		t7l1.WindowY1 = 479;
+
+		t7l2.Image = &t7screen;
+		t7l2.WindowNumberOfTextLines = 2;
+		t7l2.WindowLineSpacing = 22; // Abstand von Y0
+		t7l2.WindowTab = 100; // vermtl. ohne Verwendung in diesem Fenster
+		t7l2.WindowX0 = 0;
+		t7l2.WindowX1 = t7l1.WindowX1;
+		t7l2.WindowY0 = 142;
+		t7l2.WindowY1 = t7l1.WindowY0 - 5;
+
+		t7l3.Image = &t7screen;
+		t7l3.WindowNumberOfTextLines = 2;
+		t7l3.WindowLineSpacing = 58; // Abstand von Y0
+		t7l3.WindowTab = 100; // vermtl. ohne Verwendung in diesem Fenster
+		t7l3.WindowX0 = 0;
+		t7l3.WindowX1 = t7l1.WindowX1;
+		t7l3.WindowY0 = 0;
+		t7l3.WindowY1 = t7l2.WindowY0 - 5;
+
+		t7r1.Image = &t7screen;
+		t7r1.WindowNumberOfTextLines = 2;
+		t7r1.WindowLineSpacing = t7l1.WindowLineSpacing;
+		t7r1.WindowTab = 100;
+		t7r1.WindowX0 = 550;
+		t7r1.WindowX1 = 799;
+		t7r1.WindowY0 = t7l1.WindowY0;
+		t7r1.WindowY1 = 479;
+
+		t7r2.Image = &t7screen;
+		t7r2.WindowNumberOfTextLines = 2;
+		t7r2.WindowLineSpacing = t7l2.WindowLineSpacing;
+		t7r2.WindowTab = 100;
+		t7r2.WindowX0 = 550;
+		t7r2.WindowX1 = 799;
+		t7r2.WindowY0 = t7l2.WindowY0;
+		t7r2.WindowY1 = t7l2.WindowY1;
+
+		t7r3.Image = &t7screen;
+		t7r3.WindowNumberOfTextLines = 2;
+		t7r3.WindowLineSpacing = 0;//t7l3.WindowLineSpacing;
+		t7r3.WindowTab = 100;
+		t7r3.WindowX0 = CUSTOMBOX_LINE_RIGHT + CUSTOMBOX_OUTSIDE_OFFSET;
+		t7r3.WindowX1 = 799;
+		t7r3.WindowY0 = t7l3.WindowY0;
+		t7r3.WindowY1 = t7l3.WindowY1;
+
+		t7cC.Image = &t7screen;
+		t7cC.WindowNumberOfTextLines = 3;
+		t7cC.WindowLineSpacing = 95; // Abstand von Y0
+		t7cC.WindowTab = 100;
+		t7cC.WindowX0 = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
+		t7cC.WindowX1 = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_INSIDE_OFFSET;
+		t7cC.WindowY0 = 90;
+		t7cC.WindowY1 = 434 - 95;
+
+		t7cH.Image = &t7screen;
+		t7cH.WindowNumberOfTextLines = 1;
+		t7cH.WindowLineSpacing = 95; // Abstand von Y0
+		t7cH.WindowTab = 100;
+		t7cH.WindowX0 = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
+		t7cH.WindowX1 = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_INSIDE_OFFSET;
+		t7cH.WindowY0 = 434 - 94;
+		t7cH.WindowY1 = 434;
+
+		t7cW.Image = &t7screen;
+		t7cW.WindowNumberOfTextLines = 3;
+		t7cW.WindowLineSpacing = 95; // Abstand von Y0
+		t7cW.WindowTab = 100;
+		t7cW.WindowX0 = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
+		t7cW.WindowX1 = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_INSIDE_OFFSET;
+		t7cW.WindowY0 = 90;
+		t7cW.WindowY1 = 434 - 95;
+
+
+		t7surfaceL.Image = &t7screen;
+		t7surfaceL.WindowNumberOfTextLines = 9;
+		t7surfaceL.WindowLineSpacing = 53;
+		t7surfaceL.WindowTab = 100;
+		t7surfaceL.WindowX0 = 0;
+		t7surfaceL.WindowX1 = CUSTOMBOX_LINE_LEFT - CUSTOMBOX_OUTSIDE_OFFSET;
+		t7surfaceL.WindowY0 = 0;
+		t7surfaceL.WindowY1 = 480;
+
+		t7surfaceR.Image = &t7screen;
+		t7surfaceR.WindowNumberOfTextLines = 9;
+		t7surfaceR.WindowLineSpacing = 53;
+		t7surfaceR.WindowTab = 100;
+		t7surfaceR.WindowX0 = CUSTOMBOX_LINE_RIGHT + CUSTOMBOX_OUTSIDE_OFFSET;
+		t7surfaceR.WindowX1 = 800;
+		t7surfaceR.WindowY0 = 0;
+		t7surfaceR.WindowY1 = 480;
+
+		t7cY0free.Image = &t7screen;
+		t7cY0free.WindowNumberOfTextLines = 1;
+		t7cY0free.WindowLineSpacing = 95;
+		t7cY0free.WindowTab = 100;
+		t7cY0free.WindowX0 = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
+		t7cY0free.WindowX1 = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_INSIDE_OFFSET;
+		t7cY0free.WindowY0 = 90;
+		t7cY0free.WindowY1 = 434 - 95;
+
+		t7batt.Image = &t7screen;
+		t7batt.WindowNumberOfTextLines = 1;
+		t7batt.WindowLineSpacing = 10;
+		t7batt.WindowTab = 100;
+		t7batt.WindowX1 = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_INSIDE_OFFSET;
+		t7batt.WindowX0 = t7batt.WindowX1 - (52+52);
+		t7batt.WindowY1 = 479;
+		t7batt.WindowY0 = t7batt.WindowY1 - 25;
+
+		t7charge.Image = &t7screen;
+		t7charge.WindowNumberOfTextLines = 1;
+		t7charge.WindowLineSpacing = 10;
+		t7charge.WindowTab = 100;
+		t7charge.WindowX1 = t7batt.WindowX1 - 18;
+		t7charge.WindowX0 = t7charge.WindowX1 - 14;
+		t7charge.WindowY1 = 479;
+		t7charge.WindowY0 = t7batt.WindowY1 - 25;
+
+		t7voltage.Image = &t7screen;
+		t7voltage.WindowNumberOfTextLines = 1;
+		t7voltage.WindowLineSpacing = 10;
+		t7voltage.WindowTab = 100;
+		t7voltage.WindowX0 = t7charge.WindowX0 - 30; //10
+		t7voltage.WindowX1 = t7voltage.WindowX0 + (18*3)+ 9;
+		t7voltage.WindowY1 = 479;
+		t7voltage.WindowY0 = t7batt.WindowY1 - 25;
+
+		t7c1.Image = &t7screen;
+		t7c1.WindowNumberOfTextLines = 1;
+		t7c1.WindowLineSpacing = 10;
+		t7c1.WindowTab = 100;
+		t7c1.WindowX0 = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
+		t7c1.WindowX1 = t7batt.WindowX0 - 18;
+		t7c1.WindowY0 = 435;
+		t7c1.WindowY1 = 479;
+
+		t7c2.Image = &t7screen;
+		t7c2.WindowNumberOfTextLines = 1;
+		t7c2.WindowLineSpacing = 0; // Abstand von Y0
+		t7c2.WindowTab = 100;
+		t7c2.WindowX0 = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
+		t7c2.WindowX1 = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_INSIDE_OFFSET;
+		t7c2.WindowY0 = 0;
+		t7c2.WindowY1 = 69;
+
+		t7pCompass.Image = &t7screenCompass;
+		t7pCompass.WindowNumberOfTextLines = 1;
+		t7pCompass.WindowLineSpacing = 100; // Abstand von Y0
+		t7pCompass.WindowTab = 100;
+		t7pCompass.WindowX0 = 0;
+		t7pCompass.WindowX1 = 1600-1;
+		t7pCompass.WindowY0 = 0;
+		t7pCompass.WindowY1 = 100-1;
+    }
+    else
+    {
+/* 6 segments (left / right) used to show data during dive */
+
     t7l1.Image = &t7screen;
     t7l1.WindowNumberOfTextLines = 2;
     t7l1.WindowLineSpacing = 19; // Abstand von Y0
     t7l1.WindowTab = 100; // vermtl. ohne Verwendung in diesem Fenster
-    t7l1.WindowX0 = 0;
-    t7l1.WindowX1 = CUSTOMBOX_LINE_LEFT - CUSTOMBOX_OUTSIDE_OFFSET;
-    t7l1.WindowY0 = 318;
-    t7l1.WindowY1 = 479;
+    t7l1.WindowX0 = CUSTOMBOX_LINE_RIGHT + CUSTOMBOX_OUTSIDE_OFFSET;
+    t7l1.WindowX1 = 799;
+    t7l1.WindowY0 = CUSTOMBOX_LINE_TOP;
+    t7l1.WindowY1 = 150 + TOP_LINE_HIGHT;
 
     t7l2.Image = &t7screen;
     t7l2.WindowNumberOfTextLines = 2;
     t7l2.WindowLineSpacing = 22; // Abstand von Y0
     t7l2.WindowTab = 100; // vermtl. ohne Verwendung in diesem Fenster
-    t7l2.WindowX0 = 0;
+    t7l2.WindowX0 = t7l1.WindowX0;
     t7l2.WindowX1 = t7l1.WindowX1;
-    t7l2.WindowY0 = 142;
-    t7l2.WindowY1 = t7l1.WindowY0 - 5;
+    t7l2.WindowY0 = t7l1.WindowY1 + 5;
+    t7l2.WindowY1 = t7l2.WindowY0 + 146;
 
     t7l3.Image = &t7screen;
     t7l3.WindowNumberOfTextLines = 2;
     t7l3.WindowLineSpacing = 58; // Abstand von Y0
     t7l3.WindowTab = 100; // vermtl. ohne Verwendung in diesem Fenster
-    t7l3.WindowX0 = 0;
-    t7l3.WindowX1 = t7l1.WindowX1;
-    t7l3.WindowY0 = 0;
-    t7l3.WindowY1 = t7l2.WindowY0 - 5;
+    t7l3.WindowX0 = t7l1.WindowX0;
+    t7l3.WindowX1 = t7l1.WindowX1;;
+    t7l3.WindowY0 = 479 - 150;
+    t7l3.WindowY1 = 479;
 
     t7r1.Image = &t7screen;
     t7r1.WindowNumberOfTextLines = 2;
     t7r1.WindowLineSpacing = t7l1.WindowLineSpacing;
     t7r1.WindowTab = 100;
-    t7r1.WindowX0 = 550;
-    t7r1.WindowX1 = 799;
+    t7r1.WindowX0 = 0;
+    t7r1.WindowX1 = CUSTOMBOX_LINE_LEFT - CUSTOMBOX_OUTSIDE_OFFSET;
     t7r1.WindowY0 = t7l1.WindowY0;
-    t7r1.WindowY1 = 479;
+    t7r1.WindowY1 = t7l1.WindowY1;
 
     t7r2.Image = &t7screen;
     t7r2.WindowNumberOfTextLines = 2;
     t7r2.WindowLineSpacing = t7l2.WindowLineSpacing;
     t7r2.WindowTab = 100;
-    t7r2.WindowX0 = 550;
-    t7r2.WindowX1 = 799;
+    t7r2.WindowX0 = t7r1.WindowX0;
+    t7r2.WindowX1 = t7r1.WindowX1;
     t7r2.WindowY0 = t7l2.WindowY0;
     t7r2.WindowY1 = t7l2.WindowY1;
 
@@ -264,118 +441,132 @@ void t7_init(void)
     t7r3.WindowNumberOfTextLines = 2;
     t7r3.WindowLineSpacing = 0;//t7l3.WindowLineSpacing;
     t7r3.WindowTab = 100;
-    t7r3.WindowX0 = CUSTOMBOX_LINE_RIGHT + CUSTOMBOX_OUTSIDE_OFFSET;
-    t7r3.WindowX1 = 799;
+    t7r3.WindowX0 = t7r1.WindowX0;
+    t7r3.WindowX1 = t7r1.WindowX1;
     t7r3.WindowY0 = t7l3.WindowY0;
     t7r3.WindowY1 = t7l3.WindowY1;
 
+/* screen for CustomText / serial number */
     t7cC.Image = &t7screen;
     t7cC.WindowNumberOfTextLines = 3;
     t7cC.WindowLineSpacing = 95; // Abstand von Y0
     t7cC.WindowTab = 100;
     t7cC.WindowX0 = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
     t7cC.WindowX1 = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_INSIDE_OFFSET;
-    t7cC.WindowY0 = 90;
-    t7cC.WindowY1 = 434 - 95;
+    t7cC.WindowY0 = 165; //90;
+    t7cC.WindowY1 = 415;
 
+    /* used by warning message box */
     t7cH.Image = &t7screen;
     t7cH.WindowNumberOfTextLines = 1;
     t7cH.WindowLineSpacing = 95; // Abstand von Y0
     t7cH.WindowTab = 100;
     t7cH.WindowX0 = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
     t7cH.WindowX1 = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_INSIDE_OFFSET;
-    t7cH.WindowY0 = 434 - 94;
-    t7cH.WindowY1 = 434;
+    t7cH.WindowY0 = 46; //480 - 434;
+    t7cH.WindowY1 = 390 - 46;// - 90; //46 + 390; //480 - (434 - 94); //434;
 
+    /* used by warning custom box */
     t7cW.Image = &t7screen;
     t7cW.WindowNumberOfTextLines = 3;
     t7cW.WindowLineSpacing = 95; // Abstand von Y0
     t7cW.WindowTab = 100;
     t7cW.WindowX0 = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
     t7cW.WindowX1 = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_INSIDE_OFFSET;
-    t7cW.WindowY0 = 90;
-    t7cW.WindowY1 = 434 - 95;
+    t7cW.WindowY0 = 480 - (434 - 90);
+    t7cW.WindowY1 = 480 - 90; //434 - 95;
 
+/* time and environment */
     t7surfaceL.Image = &t7screen;
     t7surfaceL.WindowNumberOfTextLines = 9;
     t7surfaceL.WindowLineSpacing = 53;
     t7surfaceL.WindowTab = 100;
-    t7surfaceL.WindowX0 = 0;
-    t7surfaceL.WindowX1 = CUSTOMBOX_LINE_LEFT - CUSTOMBOX_OUTSIDE_OFFSET;
+    t7surfaceL.WindowX0 = CUSTOMBOX_LINE_RIGHT + CUSTOMBOX_OUTSIDE_OFFSET;
+    t7surfaceL.WindowX1 = 799;
     t7surfaceL.WindowY0 = 0;
-    t7surfaceL.WindowY1 = 480;
+    t7surfaceL.WindowY1 = 479;
 
     t7surfaceR.Image = &t7screen;
     t7surfaceR.WindowNumberOfTextLines = 9;
     t7surfaceR.WindowLineSpacing = 53;
     t7surfaceR.WindowTab = 100;
-    t7surfaceR.WindowX0 = CUSTOMBOX_LINE_RIGHT + CUSTOMBOX_OUTSIDE_OFFSET;
-    t7surfaceR.WindowX1 = 800;
+    t7surfaceR.WindowX0 = 0;
+    t7surfaceR.WindowX1 = CUSTOMBOX_LINE_LEFT - CUSTOMBOX_OUTSIDE_OFFSET;
     t7surfaceR.WindowY0 = 0;
-    t7surfaceR.WindowY1 = 480;
+    t7surfaceR.WindowY1 = 479;
 
+/* info screen in the middle */
     t7cY0free.Image = &t7screen;
     t7cY0free.WindowNumberOfTextLines = 1;
     t7cY0free.WindowLineSpacing = 95;
     t7cY0free.WindowTab = 100;
     t7cY0free.WindowX0 = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
     t7cY0free.WindowX1 = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_INSIDE_OFFSET;
-    t7cY0free.WindowY0 = 90;
-    t7cY0free.WindowY1 = 434 - 95;
+    t7cY0free.WindowY0 = 115;
+    t7cY0free.WindowY1 = 365;
 
-    t7batt.Image = &t7screen;
-    t7batt.WindowNumberOfTextLines = 1;
-    t7batt.WindowLineSpacing = 10;
-    t7batt.WindowTab = 100;
-    t7batt.WindowX1 = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_INSIDE_OFFSET;
-    t7batt.WindowX0 = t7batt.WindowX1 - (52+52);
-    t7batt.WindowY1 = 479;
-    t7batt.WindowY0 = t7batt.WindowY1 - 25;
-
-    t7charge.Image = &t7screen;
-    t7charge.WindowNumberOfTextLines = 1;
-    t7charge.WindowLineSpacing = 10;
-    t7charge.WindowTab = 100;
-    t7charge.WindowX1 = t7batt.WindowX1 - 18;
-    t7charge.WindowX0 = t7charge.WindowX1 - 14;
-    t7charge.WindowY1 = 479;
-    t7charge.WindowY0 = t7batt.WindowY1 - 25;
-
+/* voltage value (V or %) */
     t7voltage.Image = &t7screen;
     t7voltage.WindowNumberOfTextLines = 1;
     t7voltage.WindowLineSpacing = 10;
     t7voltage.WindowTab = 100;
-    t7voltage.WindowX0 = t7charge.WindowX0 - 10;
-    t7voltage.WindowX1 = t7voltage.WindowX0 + (18*3)+ 9;
-    t7voltage.WindowY1 = 479;
-    t7voltage.WindowY0 = t7batt.WindowY1 - 25;
+    t7voltage.WindowX0 = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
+    t7voltage.WindowX1 = t7voltage.WindowX0 + (18*3) +9;
+    t7voltage.WindowY1 = TOP_LINE_HIGHT;
+    t7voltage.WindowY0 = 0;
 
+/* battery symbol */
+    t7batt.Image = &t7screen;
+    t7batt.WindowNumberOfTextLines = 1;
+    t7batt.WindowLineSpacing = 10;
+    t7batt.WindowTab = 100;
+    t7batt.WindowX0 = t7voltage.WindowX1;
+    t7batt.WindowX1 = t7batt.WindowX0 + (52);
+    t7batt.WindowY1 = TOP_LINE_HIGHT;
+    t7batt.WindowY0 = 0;
+
+/* charger symbol */
+    t7charge.Image = &t7screen;
+    t7charge.WindowNumberOfTextLines = 1;
+    t7charge.WindowLineSpacing = 10;
+    t7charge.WindowTab = 100;
+    t7charge.WindowX1 = t7batt.WindowX0 - 18;
+    t7charge.WindowX0 = t7charge.WindowX1 - 14;
+
+    t7charge.WindowY1 = TOP_LINE_HIGHT;
+    t7charge.WindowY0 = 0;
+
+/* show dive mode OC / CC */
     t7c1.Image = &t7screen;
     t7c1.WindowNumberOfTextLines = 1;
     t7c1.WindowLineSpacing = 10;
     t7c1.WindowTab = 100;
-    t7c1.WindowX0 = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
-    t7c1.WindowX1 = t7batt.WindowX0 - 18;
-    t7c1.WindowY0 = 435;
-    t7c1.WindowY1 = 479;
+    t7c1.WindowX0 = t7batt.WindowX1 + 18; //CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
+    t7c1.WindowX1 = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_INSIDE_OFFSET; //t7batt.WindowX1 + 18;
+    t7c1.WindowY0 = 0;
+    t7c1.WindowY1 = 479 - 435;
 
+/* Gas warnings and exit Sim*/
     t7c2.Image = &t7screen;
     t7c2.WindowNumberOfTextLines = 1;
     t7c2.WindowLineSpacing = 0; // Abstand von Y0
     t7c2.WindowTab = 100;
     t7c2.WindowX0 = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
     t7c2.WindowX1 = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_INSIDE_OFFSET;
-    t7c2.WindowY0 = 0;
-    t7c2.WindowY1 = 69;
+    t7c2.WindowY0 = 480 - 69;
+    t7c2.WindowY1 = 479;
 
+/* Rotating compass */
     t7pCompass.Image = &t7screenCompass;
     t7pCompass.WindowNumberOfTextLines = 1;
     t7pCompass.WindowLineSpacing = 100; // Abstand von Y0
     t7pCompass.WindowTab = 100;
     t7pCompass.WindowX0 = 0;
     t7pCompass.WindowX1 = 1600-1;
-    t7pCompass.WindowY0 = 0;
-    t7pCompass.WindowY1 = 100-1;
+    t7pCompass.WindowY0 = 479 - 75;
+    t7pCompass.WindowY1 = 479;
+
+    }
 
     init_t7_compass();
 }
@@ -538,6 +729,10 @@ void t7_refresh_surface(void)
 //	uint16_t bottleFirstGas_bar;
     point_t start, stop;//, other;
 
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
+
     // update in all customview modes
     if(DataEX_check_RTE_version__needs_update() || font_update_required())
         updateNecessary = 1;
@@ -548,19 +743,19 @@ void t7_refresh_surface(void)
     text[0] = TXT_2BYTE;
     text[1] = TXT2BYTE_ButtonLogbook;
     text[2] = 0;
-    write_content_simple(&t7screen, 0, 800, 480-24, &FontT24,text,CLUT_ButtonSurfaceScreen);
+    write_content_simple(&t7screen, 0, 799, 479-TOP_LINE_HIGHT, &FontT24,text,CLUT_ButtonSurfaceScreen);
 
     text[0] = '\001';
     text[1] = TXT_2BYTE;
     text[2] = TXT2BYTE_ButtonView;
     text[3] = 0;
-    write_content_simple(&t7screen, 0, 800, 480-24, &FontT24,text,CLUT_ButtonSurfaceScreen);
+    write_content_simple(&t7screen, 0, 799, 479-TOP_LINE_HIGHT, &FontT24,text,CLUT_ButtonSurfaceScreen);
 
     text[0] = '\002';
     text[1] = TXT_2BYTE;
     text[2] = TXT2BYTE_ButtonMenu;
     text[3] = 0;
-    write_content_simple(&t7screen, 0, 800, 480-24, &FontT24,text,CLUT_ButtonSurfaceScreen);
+    write_content_simple(&t7screen, 0, 799, 479-TOP_LINE_HIGHT, &FontT24,text,CLUT_ButtonSurfaceScreen);
 
 /*
     // scooter connected?
@@ -865,8 +1060,17 @@ void t7_refresh_surface(void)
         // after gas name :-)
         if(actualGasID > gasOffset) // security
         {
-            start.y = t7surfaceL.WindowY0 + (3 * t7surfaceL.WindowLineSpacing);
-            start.x = t7surfaceL.WindowX0 + ((stateUsed->lifeData.actualGas.GasIdInSettings - gasOffset - 1) * 35);
+        	if(!pSettings->FlipDisplay)
+        	{
+        		start.y = t7surfaceL.WindowY0 + (3 * t7surfaceL.WindowLineSpacing);
+        		start.x = t7surfaceL.WindowX0 + ((stateUsed->lifeData.actualGas.GasIdInSettings - gasOffset - 1) * 35);
+        	}
+			else
+			{
+				start.y = t7surfaceR.WindowY0 + (3 * t7surfaceR.WindowLineSpacing);
+				start.x = t7surfaceR.WindowX0 + ((stateUsed->lifeData.actualGas.GasIdInSettings - gasOffset - 1) * 35);
+			}
+
             stop.x = start.x + 25;
             stop.y = start.y + 52;
             GFX_draw_box2(&t7screen, start, stop, CLUT_Font020, 1);
@@ -921,7 +1125,7 @@ void t7_refresh_surface(void)
                 snprintf(text,16,"\004\025\f\002%u%%",(uint8_t)stateUsed->lifeData.battery_charge);
                 if(warning_count_high_time)
                     text[0] = '\a';
-                GFX_write_string(&FontT24,&t7batt,text,0);
+                GFX_write_string(&FontT24,&t7voltage,text,0);
             }
             else
             {
@@ -936,7 +1140,8 @@ void t7_refresh_surface(void)
             if((stateUsed->lifeData.battery_charge > 0) && (stateUsed->lifeData.battery_charge < 140))
             {
                 snprintf(text,16,"\f\002%u%%",(uint8_t)stateUsed->lifeData.battery_charge);
-                GFX_write_string(&FontT24,&t7batt,text,0);
+        //        GFX_write_string(&FontT24,&t7batt,text,0);
+                GFX_write_string(&FontT24,&t7voltage,text,0);
             }
             else
             {
@@ -1403,16 +1608,6 @@ uint8_t t7_get_length_of_customtext(void)
 
 void t7_refresh_customview(void)
 {
-    if((selection_customview == CVIEW_Scooter) && (getLicence() != LICENCEBONEX))
-        t7_change_customview();
-    if((selection_customview == CVIEW_Scooter) && (!DataEX_scooterFoundAndValidLicence() && (stateRealGetPointer()->mode == MODE_DIVE)))
-        t7_change_customview();
-    if((selection_customview == CVIEW_sensors) &&(stateUsed->diveSettings.ccrOption == 0))
-        t7_change_customview();
-    if((selection_customview == CVIEW_sensors_mV) &&(stateUsed->diveSettings.ccrOption == 0))
-        t7_change_customview();
-    if((selection_customview == CVIEW_sensors) &&(stateUsed->diveSettings.ccrOption == 0))
-        t7_change_customview();
 
     char text[256];
     uint16_t textpointer = 0;
@@ -1425,6 +1620,21 @@ void t7_refresh_customview(void)
     const SGasLine * pGasLine; // CVIEW_Gaslist
     uint8_t oxygen, helium; // CVIEW_Gaslist
     float depth, surface, fraction_nitrogen, fraction_helium, ead, end; // CVIEW_EADTime
+
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
+
+    if((selection_customview == CVIEW_Scooter) && (getLicence() != LICENCEBONEX))
+        t7_change_customview();
+    if((selection_customview == CVIEW_Scooter) && (!DataEX_scooterFoundAndValidLicence() && (stateRealGetPointer()->mode == MODE_DIVE)))
+        t7_change_customview();
+    if((selection_customview == CVIEW_sensors) &&(stateUsed->diveSettings.ccrOption == 0))
+        t7_change_customview();
+    if((selection_customview == CVIEW_sensors_mV) &&(stateUsed->diveSettings.ccrOption == 0))
+        t7_change_customview();
+    if((selection_customview == CVIEW_sensors) &&(stateUsed->diveSettings.ccrOption == 0))
+        t7_change_customview();
 
     switch(selection_customview)
     {
@@ -1547,7 +1757,15 @@ void t7_refresh_customview(void)
         GFX_write_string(&FontT42,&t7cH,text,0);
         // content
         textpointer = 0;
-        t7cY0free.WindowY0 = t7cC.WindowY0 - 10;
+
+        if(!pSettings->FlipDisplay)
+        {
+        	t7cY0free.WindowY0 = t7cC.WindowY0 - 10;
+        }
+        else
+        {
+        	t7cY0free.WindowY1 = 400;
+        }
         t7cY0free.WindowLineSpacing = 48+9;
         t7cY0free.WindowNumberOfTextLines = 5; // NUM_GASES == 5
         t7cY0free.WindowTab = 420;
@@ -1588,6 +1806,10 @@ void t7_refresh_customview(void)
         textpointer = 0;
 
         t7cY0free.WindowY0 = t7cC.WindowY0 - 10;
+        if(pSettings->FlipDisplay)
+        {
+        	t7cY0free.WindowY1 = 400;
+        }
         t7cY0free.WindowLineSpacing = 48;
         t7cY0free.WindowNumberOfTextLines = 6;
 
@@ -1716,11 +1938,28 @@ void t7_refresh_customview(void)
         snprintf(text,100,"\032\f\001%c%c",TXT_2BYTE, TXT2BYTE_Compass);
         GFX_write_string(&FontT42,&t7cH,text,0);
         t7_compass((uint16_t)stateUsed->lifeData.compass_heading, stateUsed->diveSettings.compassHeading);
-        t7cY0free.WindowY0 = 230;
-        t7cY0free.WindowX0 += 15;
+
+        if(!pSettings->FlipDisplay)
+        {
+        	t7cY0free.WindowX0 += 15;
+        	t7cY0free.WindowY0 = 230;
+        }
+        else
+        {
+        	t7cY0free.WindowX0 -= 15;
+        	t7cY0free.WindowY0 = 0;
+        	t7cY0free.WindowY1 = 250;
+        }
         snprintf(text,100,"\030\001%03i`",(uint16_t)stateUsed->lifeData.compass_heading);
         GFX_write_string(&FontT54,&t7cY0free,text,0);
-        t7cY0free.WindowX0 -= 15;
+        if(!pSettings->FlipDisplay)
+        {
+        	t7cY0free.WindowX0 -= 15;
+        }
+        else
+        {
+        	t7cY0free.WindowX0 += 15;
+        }
         break;
 
     case CVIEW_Decolist:
@@ -1765,7 +2004,16 @@ void t7_refresh_customview(void)
                 textpointer += snprintf(&text[textpointer],20,"\031\034   %2u\016\016%c%c\017\n\r",depthNext, unit_depth_char1(), unit_depth_char2());
             if(textpointer > 200) break;
         }
-        t7cY0free.WindowY0 = t7cC.WindowY0 - 10;
+        if(!pSettings->FlipDisplay)
+        {
+        	t7cY0free.WindowY0 = t7cC.WindowY0 - 10;
+        }
+        else
+        {
+        	t7cY0free.WindowY0 = t7cC.WindowY0 - 10;
+        	t7cY0free.WindowY1 = 400;
+        }
+
         t7cY0free.WindowLineSpacing = 48;
         t7cY0free.WindowNumberOfTextLines = 6;
         GFX_write_string(&FontT42, &t7cY0free, text, 1);
@@ -1802,6 +2050,9 @@ void t7_refresh_divemode(void)
     SDivetime TimeoutTime = {0,0,0,0};
     uint8_t  customview_warnings = 0;
     const SDecoinfo * pDecoinfo;
+
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
 
     Divetime.Total = stateUsed->lifeData.dive_time_seconds_without_surface_time;
     Divetime.Minutes = Divetime.Total / 60;
@@ -1898,7 +2149,15 @@ void t7_refresh_divemode(void)
     /* ascentrate graph */
     if(stateUsed->lifeData.ascent_rate_meter_per_min > 0)
     {
-        start.y = t7l1.WindowY0 - 1;
+    	if(!pSettings->FlipDisplay)
+    	{
+    		start.y = t7l1.WindowY0 - 1;
+    	}
+    	else
+    	{
+    		start.y = t7l3.WindowY0 - 25;
+    	}
+
         for(int i = 0; i<4;i++)
         {
             start.y += 5*6;
@@ -1913,7 +2172,14 @@ void t7_refresh_divemode(void)
         // new thick bar design Sept. 2015
         start.x = CUSTOMBOX_LINE_LEFT - CUSTOMBOX_OUTSIDE_OFFSET - 3 - 5;
         stop.x = start.x;
-        start.y = t7l1.WindowY0 - 1;
+    	if(!pSettings->FlipDisplay)
+    	{
+    		start.y = t7l1.WindowY0 - 1;
+    	}
+    	else
+    	{
+    		start.y = t7l3.WindowY0 - 25;
+    	}
         stop.y = start.y + (uint16_t)(stateUsed->lifeData.ascent_rate_meter_per_min * 6);
         stop.y -= 3; // wegen der Liniendicke von 12 anstelle von 9
         if(stop.y >= 470)
@@ -2227,7 +2493,7 @@ void t7_refresh_divemode(void)
             snprintf(TextC1,16,"\004\025\f\002%u%%",(uint8_t)stateUsed->lifeData.battery_charge);
             if(warning_count_high_time)
                 TextC1[0] = '\a';
-            GFX_write_string(&FontT24,&t7batt,TextC1,0);
+            GFX_write_string(&FontT24,&t7voltage,TextC1,0);
         }
     }
     else
@@ -2239,7 +2505,7 @@ void t7_refresh_divemode(void)
         {
             snprintf(TextC1,16,"\020\f\002%u%%",(uint8_t)stateUsed->lifeData.battery_charge);
             t7_colorscheme_mod(TextC1);
-            GFX_write_string(&FontT24,&t7batt,TextC1,0);
+            GFX_write_string(&FontT24,&t7voltage,TextC1,0); // t7batt
         }
     }
 
@@ -2484,6 +2750,9 @@ void draw_frame(_Bool PluginBoxHeader, _Bool LinesOnTheSides, uint8_t colorBox, 
     point_t LeftLow, WidthHeight;
     point_t start, stop;
 
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
     // plugin box
     LeftLow.x = CUSTOMBOX_LINE_LEFT;
     WidthHeight.x = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_LINE_LEFT;
@@ -2505,17 +2774,47 @@ void draw_frame(_Bool PluginBoxHeader, _Bool LinesOnTheSides, uint8_t colorBox, 
         // aufteilung links
         start.x = 0;
         stop.x = CUSTOMBOX_LINE_LEFT;
-        stop.y = start.y = t7l1.WindowY0 - 1;
+        if(!pSettings->FlipDisplay)
+        {
+        	stop.y = start.y = t7l1.WindowY0 - 1;
+        }
+        else
+        {
+        	stop.y = start.y = 480 - t7l1.WindowY1 - 1;
+        }
+
         GFX_draw_line(&t7screen, start, stop, colorLinesOnTheSide);
-        stop.y = start.y = t7l2.WindowY0 -1;
+        if(!pSettings->FlipDisplay)
+        {
+        	stop.y = start.y = t7l2.WindowY0 -1;
+        }
+        else
+        {
+        	stop.y = start.y = 480 - t7l2.WindowY1 -1;
+        }
         GFX_draw_line(&t7screen, start, stop, colorLinesOnTheSide);
 
         // aufteilung rechts
         start.x = CUSTOMBOX_LINE_RIGHT;
         stop.x = 799;
-        stop.y = start.y = t7l1.WindowY0 - 1;
+        if(!pSettings->FlipDisplay)
+        {
+        	stop.y = start.y = t7l1.WindowY0 - 1;
+        }
+        else
+        {
+        	stop.y = start.y = 480 - t7l1.WindowY1 - 1;
+        }
+
         GFX_draw_line(&t7screen, start, stop, colorLinesOnTheSide);
-        stop.y = start.y = t7l2.WindowY0 - 1;
+        if(!pSettings->FlipDisplay)
+        {
+        	stop.y = start.y = t7l2.WindowY0 - 1;
+        }
+        else
+        {
+        	stop.y = start.y = 480 - t7l2.WindowY1 - 1;
+        }
         GFX_draw_line(&t7screen, start, stop, colorLinesOnTheSide);
     }
 }
@@ -2541,7 +2840,7 @@ point_t t7_compass_circle(uint8_t id, uint16_t degree)
 
     static point_t r[4][360] = { 0 };
 
-    if(r[0][0].y == 0)
+    if(r[0][0].y == 0)		/* calc table at first call only */
     {
         for(int i=0;i<360;i++)
         {
@@ -2576,10 +2875,21 @@ void t7_tissues(const SDiveState * pState)
     float partial_pressure_N2;
     float partial_pressure_He;
 
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
 
     /* N2 */
     t7cY0free.WindowLineSpacing = 28 + 48 + 14;
-    t7cY0free.WindowY0 = t7cH.WindowY0 - 5 - 2 * t7cY0free.WindowLineSpacing;
+    if(!pSettings->FlipDisplay)
+    {
+    	t7cY0free.WindowY0 = t7cH.WindowY0 - 5 - 2 * t7cY0free.WindowLineSpacing;
+    }
+    else
+    {
+    	t7cY0free.WindowY0 = t7cH.WindowY0 + 15;
+    	t7cY0free.WindowY1 = t7cY0free.WindowY0 + 250;
+    }
     t7cY0free.WindowNumberOfTextLines = 3;
 
     text[textpointer++] = '\030';
@@ -2597,7 +2907,14 @@ void t7_tissues(const SDiveState * pState)
 
     GFX_write_string(&FontT24, &t7cY0free, text, 1);
 
-    start.y = t7cH.WindowY0 - 5;
+    if(!pSettings->FlipDisplay)
+    {
+    	start.y = t7cH.WindowY0 - 5;
+    }
+    else
+    {
+    	start.y = t7cH.WindowY1 - 5;
+    }
     start.x = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
     stop.x = start.x + CUSTOMBOX_SPACE_INSIDE;
 
@@ -2694,7 +3011,15 @@ void t7_tissues(const SDiveState * pState)
     partial_pressure_He = (pState->lifeData.pressure_ambient_bar - WATER_VAPOUR_PRESSURE) * percent_He;
 
     // Nitrogen vertical bar
-    start.y = t7cH.WindowY0 + 1 - 5;
+    if(!pSettings->FlipDisplay)
+    {
+    	start.y = t7cH.WindowY0 + 1 - 5;
+    }
+    else
+    {
+    	start.y = t7cH.WindowY1 - 5;
+    }
+
     stop.y = start.y - (3 * 15) - 1;
     if((percent_N2 > 0) && (partial_pressure_N2 > 0.8f))//(0.8f + 0.5f)))
     {
@@ -2718,7 +3043,15 @@ void t7_tissues(const SDiveState * pState)
 
 
     // Helium vertical bar
-    start.y = t7cH.WindowY0 + 1 - 5 - 3*16 - 28 - 14;
+    if(!pSettings->FlipDisplay)
+    {
+    	start.y = t7cH.WindowY0 + 1 - 5 - 3*16 - 28 - 14;
+    }
+    else
+    {
+    	start.y = t7cH.WindowY1 - 5 - 3*16 - 28 - 14;
+    }
+
     stop.y = start.y - (3 * 15) - 1;
     if((percent_He > 0) && (partial_pressure_He > 0.01f)) // 0.5f
     {
@@ -2743,12 +3076,21 @@ void t7_tissues(const SDiveState * pState)
     GFX_draw_thick_line(2,&t7screen, start, stop, CLUT_EverythingOkayGreen);
 
     // Oxygen vertical bar
-    start.y = t7cH.WindowY0 + 1 - 5 - 6*16 - 2*28 - 2*14;
+    if(!pSettings->FlipDisplay)
+    {
+    	start.y = t7cH.WindowY0 + 1 - 5 - 6*16 - 2*28 - 2*14;
+    }
+    else
+    {
+    	start.y = t7cH.WindowY1 - 5 - 6*16 - 2*28 - 2*14;
+    }
+
     stop.y = start.y - (3 * 15) - 1;
 
     start.x = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET + cns100pixel;
     stop.x = start.x;
     GFX_draw_thick_line(2, &t7screen, start, stop, CLUT_WarningRed);
+
 }
 
 
@@ -3367,16 +3709,21 @@ void t7_compass(uint16_t ActualHeading, uint16_t UserSetHeading)
 
     lastHeading = ActualHeading;
 */
+	uint16_t ActualHeadingRose;
     uint16_t LeftBorderHeading, LineHeading;
     uint32_t offsetPicture;
     point_t start, stop, center;
     static int32_t LastHeading = 0;
     int32_t newHeading = 0;
+    int32_t FlipHeading = 0;
     int32_t diff = 0;
     int32_t diff2 = 0;
 
     int32_t diffAbs = 0;
     int32_t diffAbs2 = 0;
+
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
 
     newHeading = ActualHeading;
 
@@ -3409,6 +3756,7 @@ void t7_compass(uint16_t ActualHeading, uint16_t UserSetHeading)
 
     LastHeading = newHeading;
     ActualHeading = newHeading;
+    ActualHeadingRose = ActualHeading;
 /*
     if (ActualHeading < 90)
         ActualHeading += 360;
@@ -3425,20 +3773,42 @@ void t7_compass(uint16_t ActualHeading, uint16_t UserSetHeading)
             ActualHeading = LastHeading - 1;
     }
 */
-    if (ActualHeading < 90)
-        ActualHeading += 360;
+    if(pSettings->FlipDisplay)
+    {
+    	ActualHeadingRose = 360 - ActualHeadingRose;
+    	if (ActualHeadingRose < 170) ActualHeadingRose += 360;
+    }
+    else
+    {
+    	if (ActualHeadingRose < 90) ActualHeadingRose += 360;
+    	ActualHeading = ActualHeadingRose;
+    }
 
     // new hw 160822
 //	if (ActualHeading >= 360 + 90)
 //		ActualHeading = 360;
 
-    LeftBorderHeading = 2 * (ActualHeading - (CUSTOMBOX_SPACE_INSIDE/4));
+    LeftBorderHeading = 2 * (ActualHeadingRose - (CUSTOMBOX_SPACE_INSIDE/4));
+
+    if(pSettings->FlipDisplay) /* add offset caused by mirrowed drawing */
+    {
+    	LeftBorderHeading += 2 * 80;
+    }
 
     offsetPicture = LeftBorderHeading * t7screenCompass.ImageHeight * 2;
 
+/* the background is used to draw the rotating compass rose */
     background.pointer = t7screenCompass.FBStartAdress+offsetPicture;
     background.x0 = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
-    background.y0 = 65;
+    if(!pSettings->FlipDisplay)
+    {
+    	background.y0 = 65;
+    }
+    else
+    {
+    	background.y0 = 480 - t7screenCompass.ImageHeight - 65;
+    }
+
     background.width = CUSTOMBOX_SPACE_INSIDE;
     background.height = t7screenCompass.ImageHeight;
 
@@ -3644,10 +4014,21 @@ void init_t7_compass(void)
 void t7_miniLiveLogProfile(void)
 {
     SWindowGimpStyle wintemp;
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
     wintemp.left = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
     wintemp.right = wintemp.left + CUSTOMBOX_SPACE_INSIDE;
-    wintemp.top = 480 - t7l1.WindowY0;
-    wintemp.bottom = wintemp. top + 200;
+    if(!pSettings->FlipDisplay)
+    {
+    	wintemp.top = 480 - t7l1.WindowY0;
+    	wintemp.bottom = wintemp. top + 200;
+    }
+    else
+    {
+    	wintemp.top = t7l1.WindowY1;
+    	wintemp.bottom = wintemp. top + 200;
+    }
 
     uint16_t max_depth = (uint16_t)(stateUsed->lifeData.max_depth_meter * 10);
 
@@ -3657,8 +4038,19 @@ void t7_miniLiveLogProfile(void)
 void t7_logo_OSTC(void)
 {
     SWindowGimpStyle windowGimp;
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
     /* OSTC logo */
-    windowGimp.left = t7l1.WindowX1 + 32;
+	if(!pSettings->FlipDisplay)
+	{
+		windowGimp.left = t7l1.WindowX1 + 32;
+	}
+	else
+	{
+		windowGimp.left = t7r1.WindowX1 + 32;
+	}
+
     windowGimp.top = 40 + 32;
     GFX_draw_image_monochrome(&t7screen, windowGimp, &ImgOSTC, 0);
 }

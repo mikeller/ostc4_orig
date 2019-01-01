@@ -80,8 +80,16 @@ void tInfoLog_init(void)
     INFOLOGwindow.WindowTab = 400;
     INFOLOGwindow.WindowX0 = 20;
     INFOLOGwindow.WindowX1 = 779;
-    INFOLOGwindow.WindowY0 = 4 + 25;
-    INFOLOGwindow.WindowY1 = 390 + 25;
+    if(!settingsGetPointer()->FlipDisplay)
+    {
+    	INFOLOGwindow.WindowY0 = 4 + 25;
+    	INFOLOGwindow.WindowY1 = 390 + 25;
+    }
+    else
+    {
+    	INFOLOGwindow.WindowY0 = 479 - 390;
+    	INFOLOGwindow.WindowY1 = 479 - 25;
+    }
 }
 
 
@@ -209,7 +217,16 @@ void stepBackInfo(void)
     {
         infolog.line = 0;
         infolog.modeFlipPages = 1;
-        GFX_SetFrameBottom(pMenuCursorDesignSolo->FBStartAdress, 0, 25, 800, 390);
+
+        if(!settingsGetPointer()->FlipDisplay)
+        {
+        	GFX_SetFrameBottom(pMenuCursorDesignSolo->FBStartAdress, 0, 25, 800, 390);
+        }
+        else
+        {
+        	GFX_SetFrameBottom(pMenuCursorDesignSolo->FBStartAdress, 0, 65, 800, 390);
+        }
+
     }
     else
         exitLog();
@@ -367,7 +384,14 @@ void tInfoLog_nextLine(void)
 
     infolog.modeFlipPages = 0;
 
-    GFX_SetFrameBottom((pMenuCursor->FBStartAdress) + 65*2*(infolog.line - 1), 0, 25, 800, 390);
+    if(!settingsGetPointer()->FlipDisplay)
+    {
+    	GFX_SetFrameBottom((pMenuCursor->FBStartAdress) + 65*2*(infolog.line - 1), 0, 25, 800, 390);
+    }
+    else
+    {
+    	GFX_SetFrameBottom((pMenuCursor->FBStartAdress)+ (390 - 65 *(infolog.line)) *2, 0, 480-390-25, 800, 390);
+    }
 }
 
 
