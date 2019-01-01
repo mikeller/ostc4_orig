@@ -322,6 +322,7 @@ extern const tText text_array2[];
 		TXT2BYTE_ApneaTotal,
 		TXT2BYTE_ApneaSurface,
 		/* */
+		TXT2BYTE_FLIPDISPLAY,
 		TXT2BYTE_END
 
 		// unused TXT2BYTE_Button1,

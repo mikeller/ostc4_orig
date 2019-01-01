@@ -1651,6 +1651,12 @@ static uint8_t text_IT_Luftintegration[] = "ARIA";
 static uint8_t text_ES_Luftintegration[] = "";
 */
 
+static uint8_t text_EN_FlipDisplay[] = "Flip display";
+static uint8_t text_DE_FlipDisplay[] = "Anzeige spiegeln";
+static uint8_t text_FR_FlipDisplay[] = "";
+static uint8_t text_IT_FlipDisplay[] = "";
+static uint8_t text_ES_FlipDisplay[] = "";
+
 /* Lookup Table -------------------------------------------------------------*/
 
 const tText text_array[] =
@@ -1890,6 +1896,9 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_ApneaLast,		{text_EN_ApneaLast, text_DE_ApneaLast, text_FR_ApneaLast, text_IT_ApneaLast, text_ES_ApneaLast}},
     {(uint8_t)TXT2BYTE_ApneaTotal,		{text_EN_ApneaTotal, text_DE_ApneaTotal, text_FR_ApneaTotal, text_IT_ApneaTotal, text_ES_ApneaTotal}},
     {(uint8_t)TXT2BYTE_ApneaSurface,	{text_EN_ApneaSurface, text_DE_ApneaSurface, text_FR_ApneaSurface, text_IT_ApneaSurface, text_ES_ApneaSurface}},
+
+	{(uint8_t)TXT2BYTE_FLIPDISPLAY,		{text_EN_FlipDisplay, text_DE_FlipDisplay, text_FR_FlipDisplay, text_IT_FlipDisplay, text_ES_FlipDisplay}},
+
 
 //	{(uint8_t)TXT2BYTE_ApneaCount,          {text_EN_ApneaCount, text_DE_ApneaCount, text_FR_ApneaCount, text_IT_ApneaCount, text_ES_ApneaCount}},
     // unused {(uint8_t)TXT2BYTE_Button1,	{text_EN_Button1, text_DE_Button1, text_FR_Button1, text_IT_Button1, text_ES_Button1}},
