@@ -55,7 +55,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
 {
     .versionFirst   = 1,
     .versionSecond 	= 4,
-    .versionThird   = 0,
+    .versionThird   = 3,
     .versionBeta    = 0,
 
     /* 4 bytes with trailing 0 */
@@ -82,7 +82,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
  * There might even be entries with fixed values that have no range
  */
 const SSettings SettingsStandard = {
-    .header = 0xFFFF0017,
+    .header = 0xFFFF0018,
     .warning_blink_dsec = 8 * 2,
     .lastDiveLogId = 0,
     .logFlashNextSampleStartAddress = 0,
@@ -305,6 +305,7 @@ const SSettings SettingsStandard = {
     .FactoryButtonBalance[0] = 3,
     .FactoryButtonBalance[1] = 3,
     .FactoryButtonBalance[2] = 3,
+	.FlipDisplay = 0,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -442,6 +443,9 @@ void set_new_settings_missing_in_ext_flash(void)
         pSettings->FactoryButtonBalance[1]          = pStandard->FactoryButtonBalance[1];
         pSettings->FactoryButtonBalance[2]          = pStandard->FactoryButtonBalance[2];
         // no break
+    case 0xFFFF0017:
+    	pSettings->FlipDisplay = 0;
+    	// no break
     default:
         pSettings->header 																= pStandard->header;
         break; // no break before!!
@@ -1381,6 +1385,11 @@ uint8_t check_and_correct_settings(void)
         corrections++;
     }
 
+    if(Settings.FlipDisplay > 1) /* only boolean values allowed */
+   	{
+    	Settings.FlipDisplay = 0;
+	    corrections++;
+   	}
 
     if(corrections > 255)
         return 255;
