@@ -214,6 +214,9 @@ typedef struct
 	uint8_t FactoryButtonBase;
 	uint8_t FactoryButtonBalance[3];
 
+	/* new in 0xFFFF0018 */
+	uint8_t FlipDisplay;
+
 //to be continued
 } SSettings;
 
