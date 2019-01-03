@@ -55,8 +55,8 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
 {
     .versionFirst   = 1,
     .versionSecond 	= 4,
-    .versionThird   = 3,
-    .versionBeta    = 0,
+    .versionThird   = 4,
+    .versionBeta    = 1,
 
     /* 4 bytes with trailing 0 */
     .signature = "mh",
@@ -256,10 +256,10 @@ const SSettings SettingsStandard = {
     .totalDiveCounter = 0,
     .personalDiveCount = 0,
     .showDebugInfo = 0,
-    .ButtonResponsiveness[0] = 90, // new hw 170306
-    .ButtonResponsiveness[1] = 90, // new hw 170306
-    .ButtonResponsiveness[2] = 90, // new hw 170306
-    .ButtonResponsiveness[3] = 90, // new hw 170306
+    .ButtonResponsiveness[0] = DEFAULT_BUTTONRESPONSIVENESS_GUI, // new hw 170306
+    .ButtonResponsiveness[1] = DEFAULT_BUTTONRESPONSIVENESS_GUI, // new hw 170306
+    .ButtonResponsiveness[2] = DEFAULT_BUTTONRESPONSIVENESS_GUI, // new hw 170306
+    .ButtonResponsiveness[3] = DEFAULT_BUTTONRESPONSIVENESS_GUI, // new hw 170306
     .nonMetricalSystem = 0,
     .fallbackToFixedSetpoint = 1,
     .bluetoothActive = 0,
@@ -301,7 +301,7 @@ const SSettings SettingsStandard = {
     .timeoutSurfacemodeWithSensors = 600,
     .VPM_model = 0,
     .GF_model = 0,
-    .FactoryButtonBase = 90,
+    .FactoryButtonBase = DEFAULT_BUTTONRESPONSIVENESS_GUI,
     .FactoryButtonBalance[0] = 3,
     .FactoryButtonBalance[1] = 3,
     .FactoryButtonBalance[2] = 3,
@@ -1049,29 +1049,29 @@ uint8_t check_and_correct_settings(void)
 /*	uint8_t ButtonResponsiveness[4];
  */
     // Base value, index 3
-    if(Settings.ButtonResponsiveness[3] < 70)
+    if(Settings.ButtonResponsiveness[3] < MIN_BUTTONRESPONSIVENESS_GUI)
     {
-        Settings.ButtonResponsiveness[3] = 70;
+        Settings.ButtonResponsiveness[3] = MIN_BUTTONRESPONSIVENESS_GUI;
         corrections++;
     }
     else
-    if(Settings.ButtonResponsiveness[3] > 110)
+    if(Settings.ButtonResponsiveness[3] > MIN_BUTTONRESPONSIVENESS_GUI)
     {
-        Settings.ButtonResponsiveness[3] = 130;
+        Settings.ButtonResponsiveness[3] = MIN_BUTTONRESPONSIVENESS;
         corrections++;
     }
     // flex values 0, 1, 2
     for(int i=0; i<3;i++)
     {
-        if(Settings.ButtonResponsiveness[i] < 60) // 70-10
+        if(Settings.ButtonResponsiveness[i] < MIN_BUTTONRESPONSIVENESS) // 50-10  //Fix for broken buttons. :)
         {
-            Settings.ButtonResponsiveness[i] = 70;
+            Settings.ButtonResponsiveness[i] = MIN_BUTTONRESPONSIVENESS;
             corrections++;
         }
         else
-        if(Settings.ButtonResponsiveness[i] > 130) // 110+20
+        if(Settings.ButtonResponsiveness[i] > MAX_BUTTONRESPONSIVENESS) // 110+20
         {
-            Settings.ButtonResponsiveness[i] = 130;
+            Settings.ButtonResponsiveness[i] = MAX_BUTTONRESPONSIVENESS;
             corrections++;
         }
     }
@@ -2664,14 +2664,14 @@ void settingsHelperButtonSens_keepPercentageValues(uint32_t inputValueRaw, uint8
 {
     uint32_t newSensitivity;
 
-    if(inputValueRaw > 110)
+    if(inputValueRaw > MAX_BUTTONRESPONSIVENESS)
     {
-            inputValueRaw = 110;
+            inputValueRaw = MAX_BUTTONRESPONSIVENESS;
     }
     else
-    if(inputValueRaw < 70)
+    if(inputValueRaw < MIN_BUTTONRESPONSIVENESS)
     {
-            inputValueRaw = 70;
+            inputValueRaw = MIN_BUTTONRESPONSIVENESS;
     }
 
     // the unbalanced value
@@ -2699,9 +2699,9 @@ void settingsHelperButtonSens_keepPercentageValues(uint32_t inputValueRaw, uint8
             break;
         }
 
-        if(newSensitivity > 110)
+        if(newSensitivity > MAX_BUTTONRESPONSIVENESS)
         {
-                newSensitivity = 110;
+                newSensitivity = MAX_BUTTONRESPONSIVENESS;
         }
         outArray4Values[i] = newSensitivity;
     }

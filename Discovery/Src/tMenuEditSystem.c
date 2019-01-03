@@ -506,14 +506,14 @@ void openEdit_Language(void)
         active = 0;
     write_field_on_off(StMSYS2_Italian,			 30, 800, ME_Y_LINE4,  &FontT48, text, active);
 
-/*
+
     pSettings->selected_language = LANGUAGE_Espanol;
     if(	actualLanguage == pSettings->selected_language)
         active = 1;
     else
         active = 0;
     write_field_on_off(StMSYS2_Espanol,			 30, 800, ME_Y_LINE5,  &FontT48, text, active);
-*/
+
     pSettings->selected_language = actualLanguage;
 
     write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
@@ -522,7 +522,7 @@ void openEdit_Language(void)
     setEvent(StMSYS2_German, 	(uint32_t)OnAction_German);
     setEvent(StMSYS2_French,	(uint32_t)OnAction_French);
     setEvent(StMSYS2_Italian,	(uint32_t)OnAction_Italian);
-    //setEvent(StMSYS2_Espanol,	(uint32_t)OnAction_Espanol);
+    setEvent(StMSYS2_Espanol,	(uint32_t)OnAction_Espanol);
 }
 
 
@@ -1237,7 +1237,7 @@ void refresh_InformationPage(void)
         write_label_var(  20, 800, ME_Y_LINE4, &FontT42, text_content);
 
         offsetTemperature = ((float)settingsGetPointer()->offsetTemperature_centigrad) / 10;
-        snprintf(text_content,80,"%i mbar  /  %0.2f\140C",settingsGetPointer()->offsetPressure_mbar, offsetTemperature);
+        snprintf(text_content,80,"%i %s  /  %0.2f\140C",settingsGetPointer()->offsetPressure_mbar, TEXT_PRESSURE_UNIT, offsetTemperature);
         write_label_var(  20, 800, ME_Y_LINE5, &FontT42, text_content);
 
         text_button[0] = TXT_2BYTE;

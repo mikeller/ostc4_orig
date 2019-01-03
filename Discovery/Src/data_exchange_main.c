@@ -167,7 +167,7 @@ SDataReceiveFromMaster * dataOutGetPointer(void)
 void DataEX_init(void)
 {
 	SDiveState * pStateReal = stateRealGetPointerWrite();
-	pStateReal->data_old__lost_connection_to_slave = 1;
+	pStateReal->data_old__lost_connection_to_slave = 0; //initial value
 	data_old__lost_connection_to_slave_counter_temp = 0;
 	data_old__lost_connection_to_slave_counter_total = 0;
 
@@ -306,8 +306,8 @@ uint8_t DataEX_call(void)
 	uint8_t SPI_DMA_answer = 0;
 	
 	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_SET);
-	delayMicros(10);
-
+	delayMicros(20); //~exchange time(+20% reserve)
+	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
 	/* one cycle with NotChipSelect true to clear slave spi buffer */
 
 	if(data_old__lost_connection_to_slave_counter_temp >= 3)
@@ -315,10 +315,10 @@ uint8_t DataEX_call(void)
 		data_old__lost_connection_to_slave_counter_temp = 0;
 		data_old__lost_connection_to_slave_counter_retry++;
 	}
-	else
-	{
-		HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
-	}
+//	else
+//	{
+//		HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
+//	}
 
 	DataEx_call_helper_requests();
 
@@ -326,14 +326,41 @@ uint8_t DataEX_call(void)
 
 //HAL_GPIO_WritePin(OSCILLOSCOPE2_GPIO_PORT,OSCILLOSCOPE2_PIN,GPIO_PIN_RESET); /* only for testing with Oscilloscope */
 
-	SPI_DMA_answer = HAL_SPI_TransmitReceive_DMA(&cpu2DmaSpi, (uint8_t *)&dataOut, (uint8_t *)&dataIn, EXCHANGE_BUFFERSIZE+1);
+	SPI_DMA_answer = HAL_SPI_TransmitReceive_DMA(&cpu2DmaSpi, (uint8_t *)&dataOut, (uint8_t *)&dataIn, EXCHANGE_BUFFERSIZE);
+//	HAL_Delay(3);
 	if(SPI_DMA_answer != HAL_OK)
     DataEX_Error_Handler(SPI_DMA_answer);
+//	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_SET);
 //HAL_Delay(3);
 //HAL_GPIO_WritePin(OSCILLOSCOPE2_GPIO_PORT,OSCILLOSCOPE2_PIN,GPIO_PIN_SET); /* only for testing with Oscilloscope */
 
 	return 1;
 }
+
+
+uint32_t SPI_CALLBACKS;
+uint32_t get_num_SPI_CALLBACKS(void){
+	return SPI_CALLBACKS;
+}
+
+SDataExchangeSlaveToMaster* get_dataInPointer(void){
+	return &dataIn;
+}
+
+
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+
+
+	if(hspi == &cpu2DmaSpi)
+	{
+		SPI_CALLBACKS+=1;
+	}
+}
+
+
+
+
 
 void DateEx_copy_to_dataOut(void)
 {
@@ -431,9 +458,9 @@ void DataEX_copy_to_deco(void)
         return;
 	if(stateUsed == stateRealGetPointer())
 		pStateUsed = stateRealGetPointerWrite();
-	else
+	else{
 		pStateUsed = stateSimGetPointerWrite();
-
+	}
 
 		if(decoLock == DECO_CALC_init_as_is_start_of_dive)
 		{

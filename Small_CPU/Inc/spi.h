@@ -36,7 +36,9 @@ void MX_SPI_DeInit(void);
 void MX_SPI3_Init(void);
 void MX_SPI3_DeInit(void);
 uint8_t SPI3_ButtonAdjust(uint8_t *arrayInput, uint8_t *arrayOutput);
-	 
+void MX_SPI_DeInit(void);
+
+
 #ifdef __cplusplus
 }
 #endif

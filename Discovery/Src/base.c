@@ -774,48 +774,87 @@ base_tempLightLevel =			TIM_BACKLIGHT_adjust();
 /// see GFX_change_LTDC()
 ///
 //  ===============================================================================
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-    if(!GPIO_Pin)
-        return;
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	if (!GPIO_Pin)
+		return;
 
-    uint8_t action = 0;
-    SStateList status;
+	uint8_t action = 0;
+	SStateList status;
+
+	if (GPIO_Pin == VSYNC_IRQ_PIN) // rechts, unten
+	{
+		GFX_change_LTDC();
+		housekeepingFrame();
+		/*
+		 #ifdef DEMOMODE
+		 static uint8_t countCall = 0;
+		 if(countCall++ < 10)
+		 return;
+		 countCall = 0;
+		 uint8_t buttonAction = demoGetCommand();
+		 if(buttonAction)
+		 GPIO_Pin = buttonAction;
+		 else
+		 #endif
+		 */
+		return;
+	}
+	
 	SSettings* pSettings;
 	pSettings = settingsGetPointer();
+	if (GPIO_Pin == VSYNC_IRQ_PIN) // rechts, unten
+	{
+		GFX_change_LTDC();
+		housekeepingFrame();
+		/*
+		 #ifdef DEMOMODE
+		 static uint8_t countCall = 0;
+		 if(countCall++ < 10)
+		 return;
+		 countCall = 0;
+		 uint8_t buttonAction = demoGetCommand();
+		 if(buttonAction)
+		 GPIO_Pin = buttonAction;
+		 else
+		 #endif
+		 */
+		return;
+	}
 
-    if(GPIO_Pin == VSYNC_IRQ_PIN) // rechts, unten
-    {
-        GFX_change_LTDC();
-        housekeepingFrame();
-/*
 #ifdef DEMOMODE
-    static uint8_t countCall = 0;
-    if(countCall++ < 10)
-        return;
-    countCall = 0;
-    uint8_t buttonAction = demoGetCommand();
-    if(buttonAction)
-        GPIO_Pin = buttonAction;
-    else
-#endif
-*/
-        return;
-    }
-
-#ifdef DEMOMODE
-    uint8_t demoMachineCall = 0;
-    if(GPIO_Pin & 0x80)
-    {
-        demoMachineCall = 1;
-        GPIO_Pin &= 0x7F;
-    }
+	uint8_t demoMachineCall = 0;
+	if(GPIO_Pin & 0x80)
+	{
+		demoMachineCall = 1;
+		GPIO_Pin &= 0x7F;
+	}
 #endif
 
-    time_without_button_pressed_deciseconds	= 0;
+	time_without_button_pressed_deciseconds = 0;
 
-    if(GFX_logoStatus() != 0)
-        return;
+	if (GFX_logoStatus() != 0)
+		return;
+
+	if (GPIO_Pin == BUTTON_BACK_PIN) { // links
+		HAL_Delay(BUTTON_DEBOUNCE_DELAY);
+		if (HAL_GPIO_ReadPin(BUTTON_BACK_GPIO_PORT, BUTTON_BACK_PIN) == 1) {
+			action = ACTION_BUTTON_BACK;
+		}
+	}
+
+	else if (GPIO_Pin == BUTTON_ENTER_PIN) { // mitte
+		HAL_Delay(BUTTON_DEBOUNCE_DELAY);
+		if (HAL_GPIO_ReadPin(BUTTON_ENTER_GPIO_PORT, BUTTON_ENTER_PIN) == 1) {
+			action = ACTION_BUTTON_ENTER;
+		}
+	}
+
+	else if (GPIO_Pin == BUTTON_NEXT_PIN) { // rechts
+		HAL_Delay(BUTTON_DEBOUNCE_DELAY);
+		if (HAL_GPIO_ReadPin(BUTTON_NEXT_GPIO_PORT, BUTTON_NEXT_PIN) == 1) {
+			action = ACTION_BUTTON_NEXT;
+		}
+	}
 
     if(GPIO_Pin == BUTTON_BACK_PIN) // links
     {
@@ -848,99 +887,82 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	#endif
 
 #ifdef DEMOMODE // user pressed button ?
-    if((!demoMachineCall) && demoModeActive())
-    {
-        demoSendCommand(action);
-        return;
-    }
+	if((!demoMachineCall) && demoModeActive())
+	{
+		demoSendCommand(action);
+		return;
+	}
 #endif
 
-    get_globalStateList(&status);
+	get_globalStateList(&status);
 
-    if(action == ACTION_BUTTON_CUSTOM)
-    {
-        GFX_screenshot();
-    }
+	if (action == ACTION_BUTTON_CUSTOM) {
+		GFX_screenshot();
+	}
 
-    switch(status.base)
-    {
-    case BaseStop:
-        if(action == ACTION_BUTTON_BACK)
-            resetToFirmwareUpdate();
-        break;
-    case BaseComm:
-        if(action == ACTION_BUTTON_BACK)
-        {
-            settingsGetPointer()->bluetoothActive = 0;
-            MX_Bluetooth_PowerOff();
-            tComm_exit();
-        }
-        break;
-    case BaseHome:
-        if(action == ACTION_BUTTON_NEXT)
-        {
-            if(status.page == PageSurface)
-                openMenu(1);
-            else
-                tHomeDiveMenuControl(action);
-        }
-        else
-        if(action == ACTION_BUTTON_BACK)
-        {
-            if(get_globalState() == StS)
-                openInfo(StILOGLIST);
-            else
-            if((status.page == PageDive) && (settingsGetPointer()->design < 7))
-            {
-                settingsGetPointer()->design = 7; // auto switch to 9 if necessary
-            }
-            else
-            if((status.page == PageDive) && (status.line != 0))
-            {
-                if(settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT)
-                    settingsGetPointer()->design = 3;
-                else
-                if(settingsGetPointer()->extraDisplay == EXTRADISPLAY_DECOGAME)
-                    settingsGetPointer()->design = 4;
+	switch (status.base) {
+	case BaseStop:
+		if (action == ACTION_BUTTON_BACK)
+			resetToFirmwareUpdate();
+		break;
+	case BaseComm:
+		if (action == ACTION_BUTTON_BACK) {
+			settingsGetPointer()->bluetoothActive = 0;
+			MX_Bluetooth_PowerOff();
+			tComm_exit();
+		}
+		break;
+	case BaseHome:
+		if (action == ACTION_BUTTON_NEXT) {
+			if (status.page == PageSurface)
+				openMenu(1);
+			else
+				tHomeDiveMenuControl(action);
+		} else if (action == ACTION_BUTTON_BACK) {
+			if (get_globalState() == StS)
+				openInfo(StILOGLIST);
+			else if ((status.page == PageDive)
+					&& (settingsGetPointer()->design < 7)) {
+				settingsGetPointer()->design = 7; // auto switch to 9 if necessary
+			} else if ((status.page == PageDive) && (status.line != 0)) {
+				if (settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT)
+					settingsGetPointer()->design = 3;
+				else if (settingsGetPointer()->extraDisplay
+						== EXTRADISPLAY_DECOGAME)
+					settingsGetPointer()->design = 4;
 
-                set_globalState(StD);
-            }
-            else
-                tHome_change_field_button_pressed();
-        }
-        else
-        if(action == ACTION_BUTTON_ENTER)
-        {
-            if((status.page == PageDive) && (status.line == 0))
-                tHome_change_customview_button_pressed();
-            else
-            if(status.page == PageSurface)
-                tHome_change_customview_button_pressed();
-            else
-                tHomeDiveMenuControl(action);
-        }
-        break;
+				set_globalState(StD);
+			} else
+				tHome_change_field_button_pressed();
+		} else if (action == ACTION_BUTTON_ENTER) {
+			if ((status.page == PageDive) && (status.line == 0))
+				tHome_change_customview_button_pressed();
+			else if (status.page == PageSurface)
+				tHome_change_customview_button_pressed();
+			else
+				tHomeDiveMenuControl(action);
+		}
+		break;
 
-    case BaseMenu:
-        if(status.line == 0)
-            sendActionToMenu(action);
-        else
-            sendActionToMenuEdit(action);
-        break;
+	case BaseMenu:
+		if (status.line == 0)
+			sendActionToMenu(action);
+		else
+			sendActionToMenuEdit(action);
+		break;
 
-    case BaseInfo:
-        if(status.page == InfoPageLogList)
-            sendActionToInfoLogList(action);
-        else
-        if(status.page == InfoPageLogShow)
-            sendActionToInfoLogShow(action);
-        else
-            sendActionToInfo(action);
-        break;
+	case BaseInfo:
+		if (status.page == InfoPageLogList)
+			sendActionToInfoLogList(action);
+		else if (status.page == InfoPageLogShow)
+			sendActionToInfoLogShow(action);
+		else
+			sendActionToInfo(action);
+		break;
 
-    default:
-        break;
-    }
+	default:
+		break;
+	}
 }
 
 
