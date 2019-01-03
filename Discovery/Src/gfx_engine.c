@@ -913,12 +913,14 @@ static inline void gfx_brush(uint8_t thickness, GFX_DrawCfgScreen *hgfx, uint16_
 
 	if(pSettings->FlipDisplay)
 	{
-		pDestination = hgfx->FBStartAdress + (2*hgfx->ImageHeight * (hgfx->ImageWidth - x0 + offset)) + 2*(480 - y0+offset);
+		pDestination = (uint16_t*)hgfx->FBStartAdress;
+		pDestination += (hgfx->ImageHeight * (hgfx->ImageWidth - x0 + offset)) + (480 - y0+offset);
 		stepdir = -1;
 	}
 	else
 	{
-		pDestination = hgfx->FBStartAdress + 2*(x0 - offset)*hgfx->ImageHeight + 2*(y0-offset);
+		pDestination = (uint16_t*)hgfx->FBStartAdress;
+		pDestination += (x0 - offset)*hgfx->ImageHeight + (y0-offset);
 		stepdir = 1;
 	}
 	for(int x=thickness;x>0;x--)
@@ -993,7 +995,7 @@ void GFX_draw_line(GFX_DrawCfgScreen *hgfx, point_t start, point_t stop, uint8_t
 	{
 		if(start.y > stop.y) gfx_flip(&start,&stop);
 
-		pDestination = (uint32_t)hgfx->FBStartAdress;
+		pDestination = (uint16_t*)hgfx->FBStartAdress;
 		if(pSettings->FlipDisplay)
 		{
 			pDestination += (800 - start.x) * hgfx->ImageHeight;
@@ -1016,7 +1018,7 @@ void GFX_draw_line(GFX_DrawCfgScreen *hgfx, point_t start, point_t stop, uint8_t
 	if(start.y == stop.y)
 	{
 		if(start.x > stop.x) gfx_flip(&start,&stop);
-		pDestination = (uint32_t)hgfx->FBStartAdress;
+		pDestination = (uint16_t*)hgfx->FBStartAdress;
 
 		if(pSettings->FlipDisplay)
 		{
@@ -1089,13 +1091,13 @@ void GFX_draw_image_monochrome(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window,
 	{
 		for(int xx = start.x; xx < stop.x; xx++)
 		{
-			pDestination = hgfx->FBStartAdress;
+			pDestination = (uint16_t*)hgfx->FBStartAdress;
 			pDestination += (hgfx->ImageHeight - start.y) + (stop.x * hgfx->ImageHeight) ;
 			pDestination -= (xx - start.x) * hgfx->ImageHeight;
 
 			for(int yy = start.y; yy < stop.y; yy++)
 			{
-				*(__IO uint16_t*)pDestination-- = image->data[j++] << 8 + color;
+				*(__IO uint16_t*)pDestination-- = (image->data[j++] << 8) + color;
 			}
 		}
 	}
@@ -1103,12 +1105,12 @@ void GFX_draw_image_monochrome(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window,
 	{
 		for(int xx = start.x; xx < stop.x; xx++)
 		{
-			pDestination = (uint32_t)hgfx->FBStartAdress;
+			pDestination = (uint16_t*)hgfx->FBStartAdress;
 			pDestination += xx * hgfx->ImageHeight;
 			pDestination += start.y;
 			for(int yy = start.y; yy < stop.y; yy++)
 			{
-				*(__IO uint16_t*)pDestination++ = image->data[j++] << 8 + color;
+				*(__IO uint16_t*)pDestination++ = (image->data[j++] << 8) + color;
 			}
 		}
 	}
@@ -1150,7 +1152,7 @@ void GFX_draw_image_color(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window, cons
 	{
 		for(int xx = start.x; xx < stop.x; xx++)
 		{
-			pDestination = (uint32_t)hgfx->FBStartAdress;
+			pDestination = (uint16_t*)hgfx->FBStartAdress;
 			pDestination += xx * hgfx->ImageHeight;
 			pDestination += start.y;
 			for(int yy = start.y; yy < stop.y; yy++)
@@ -1636,7 +1638,7 @@ void GFX_graph_print(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, c
 			}
 			else if(drawVeilUntil < 0 )
 			{
-					pDestination_zero_veil = hgfx->FBStartAdress;
+					pDestination_zero_veil = (uint16_t*)hgfx->FBStartAdress;
 					pDestination_zero_veil += ((479 + (drawVeilUntil)) + ((w1 + window->left) * hgfx->ImageHeight) );
 			}
 		}
@@ -1644,12 +1646,12 @@ void GFX_graph_print(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, c
 		{
 			if(drawVeilUntil > 0)
 			{
-				pDestination_zero_veil = hgfx->FBStartAdress;
+				pDestination_zero_veil = (uint16_t*)hgfx->FBStartAdress;
 				pDestination_zero_veil += (((drawVeilUntil) ) + ( (window->right - w1) * hgfx->ImageHeight) );
 							}
 			else if(drawVeilUntil < 0 )
 			{
-				pDestination_zero_veil = hgfx->FBStartAdress;
+				pDestination_zero_veil = (uint16_t*)hgfx->FBStartAdress;
 				pDestination_zero_veil += 479 -  drawVeilUntil + ( (window->right - w1 -1) * hgfx->ImageHeight);
 			}
 		}
@@ -1665,7 +1667,7 @@ void GFX_graph_print(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, c
 			//output_mask[pointer] = true;
 			if(w1 > 0)
 			{
-				pDestination_start = hgfx->FBStartAdress;
+				pDestination_start = (uint16_t*)hgfx->FBStartAdress;
 				if(!pSettings->FlipDisplay)
 				{
 					pDestination_start += (((479 - (window->top)) + ((w1 + window->left) * hgfx->ImageHeight)));
@@ -1877,7 +1879,7 @@ void GFX_draw_box(GFX_DrawCfgScreen *hgfx, point_t LeftLow, point_t WidthHeight,
 
 	lineWidth = WidthHeight.x;
 	lineHeight = WidthHeight.y;
-	pStart = (uint32_t)hgfx->FBStartAdress;
+	pStart = (uint16_t*)hgfx->FBStartAdress;
 
 	if(!pSettings->FlipDisplay)
 	{
@@ -1891,7 +1893,6 @@ void GFX_draw_box(GFX_DrawCfgScreen *hgfx, point_t LeftLow, point_t WidthHeight,
 		pStart += (480 - LeftLow.y);
 		stepdir = -1;
 	}
-	pStart = pStart;
 
 	// Untere Linie
 	pDestination = pStart;
@@ -2585,7 +2586,6 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 	uint32_t width, height;
 	uint32_t found;
 	uint16_t* pDestination;
-	uint32_t pDestinationColor;
 	uint32_t pSource;
 	uint32_t OffsetDestination;
 	uint32_t width_left;
@@ -2627,7 +2627,7 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 		return cfg->Xdelta;
 
 	pSource = ((uint32_t)Font->chars[i].image->data);
-	pDestination = 1 + (uint32_t)hgfx->Image->FBStartAdress;
+	pDestination = (uint16_t*)(hgfx->Image->FBStartAdress+1);
 
 	heightFont = Font->chars[i].image->height;
 	widthFont = Font->chars[i].image->width;
@@ -2967,7 +2967,6 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 	uint32_t width, height;
 	uint32_t found;
 	uint16_t* pDestination;
-	uint32_t pDestinationColor;
 	uint32_t pSource;
 	uint32_t OffsetDestination;
 	uint32_t width_left;
@@ -3016,7 +3015,7 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 
 
 	pSource = ((uint32_t)Font->chars[i].image->data);
-	pDestination = (uint32_t)hgfx->Image->FBStartAdress + 1;
+	pDestination = (uint16_t*)(hgfx->Image->FBStartAdress + 1);
 
 	height = Font->chars[i].image->height;
 	width = Font->chars[i].image->width;
