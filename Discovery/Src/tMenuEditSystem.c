@@ -610,7 +610,7 @@ void refresh_Design(void)
     text[0] = TXT_2BYTE;
     text[1] = TXT2BYTE_Farbschema;
     text[2] = 0;
-    write_label_var(  30, 200, ME_Y_LINE2, &FontT48, text);
+    write_label_var(  30, 300, ME_Y_LINE2, &FontT48, text);
 
     text[0] = '0' + settingsGetPointer()->tX_colorscheme;
     text[1] = 0;
