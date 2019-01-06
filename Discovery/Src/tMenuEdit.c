@@ -1602,14 +1602,15 @@ void set_cursorNew(uint8_t forThisIdentID)
    if(!settingsGetPointer()->FlipDisplay)
    {
 	   y0 = (int16_t)ident[forThisIdentID].coord[2];
+	   y0 -= ME_Y_LINE1;
 	}
 	else
 	{
-    	y0 = 390 - (int16_t)ident[forThisIdentID].coord[2];
+    	y0 = 390 + 25 - (int16_t)ident[forThisIdentID].coord[2];
 	}
-    y0 -= ME_Y_LINE1;
+
     y0 /= ME_Y_LINE_STEP;
-    if((y0 >= 0) && (y0 <=5))
+    if((y0 >= 0) && (y0 <=6)) 
         lineMinusOne = y0;
     else
         lineMinusOne = 0;
@@ -1620,7 +1621,7 @@ void set_cursorNew(uint8_t forThisIdentID)
     }
     else
     {
-    	GFX_SetFrameBottom((tMEcursorNew.FBStartAdress)+ (390 - 65 *(5-lineMinusOne-1)) *2, 0, 480-390-25, 800, 390);
+    	GFX_SetFrameBottom((tMEcursorNew.FBStartAdress)+ (390 - 65 *(6-lineMinusOne)) *2, 0, 480-390-25, 800, 390);
     }
 }
 
@@ -1658,7 +1659,7 @@ void write_buttonTextline( uint8_t left2ByteCode, char middle2ByteCode, char rig
 
 	if(!pSettings->FlipDisplay)
 	{
-		GFX_clean_area(&tMEscreen, 0, 800, 480-24,480);
+		GFX_clean_area(&tMEscreen, 0, 800, 479-24,480);
 	}
 	else
 	{
@@ -1672,14 +1673,8 @@ void write_buttonTextline( uint8_t left2ByteCode, char middle2ByteCode, char rig
         localtext[0] = TXT_2BYTE;
         localtext[1] = left2ByteCode;
         localtext[2] = 0;
-        if(!pSettings->FlipDisplay)
-        {
-        	write_content_simple(&tMEscreen, 0, 800, 480-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
-        }
-        else
-        {
-        	write_content_simple(&tMEscreen, 0, 800, 0, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
-        }
+
+        write_content_simple(&tMEscreen, 0, 800, 479-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
     }
 
     if(middle2ByteCode)
@@ -1688,14 +1683,8 @@ void write_buttonTextline( uint8_t left2ByteCode, char middle2ByteCode, char rig
         localtext[1] = TXT_2BYTE;
         localtext[2] = middle2ByteCode;
         localtext[3] = 0;
-        if(!pSettings->FlipDisplay)
-        {
-        	write_content_simple(&tMEscreen, 0, 800, 480-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
-        }
-        else
-        {
-        	write_content_simple(&tMEscreen, 0, 800, 0, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
-        }
+
+       	write_content_simple(&tMEscreen, 0, 800, 479-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
     }
 
     if(right2ByteCode)
@@ -1704,14 +1693,8 @@ void write_buttonTextline( uint8_t left2ByteCode, char middle2ByteCode, char rig
         localtext[1] = TXT_2BYTE;
         localtext[2] = right2ByteCode;
         localtext[3] = 0;
-        if(!pSettings->FlipDisplay)
-        {
-        	write_content_simple(&tMEscreen, 0, 800, 480-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
-        }
-        else
-        {
-        	write_content_simple(&tMEscreen, 0, 800, 0, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
-        }
+
+        write_content_simple(&tMEscreen, 0, 800, 479-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
     }
 }
 
