@@ -2627,7 +2627,7 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 		return cfg->Xdelta;
 
 	pSource = ((uint32_t)Font->chars[i].image->data);
-	pDestination = (uint16_t*)(hgfx->Image->FBStartAdress+1);
+	pDestination = (uint16_t*)(hgfx->Image->FBStartAdress);
 
 	heightFont = Font->chars[i].image->height;
 	widthFont = Font->chars[i].image->width;
@@ -2695,9 +2695,9 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 		{
 			for (j = height; j > 0; j--)
 			{
-				*(__IO uint16_t*)pDestination =  cfg->color << 8 | fill;
+				*(__IO uint16_t*)pDestination =  fill << 8 | cfg->color;
 				pDestination += stepdir;
-				*(__IO uint16_t*)pDestination =  cfg->color << 8 | fill;
+				*(__IO uint16_t*)pDestination =  fill << 8 | cfg->color;
 				pDestination += stepdir;
 			}
 			pDestination += stepdir * OffsetDestination;
@@ -2715,35 +2715,35 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 				{
 					for (j = heightFont; j > 0; j--)
 					{
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
-						pDestination += stepdir;
-						pSource++;
-
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
-						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
 						pDestination += stepdir;
 						pSource++;
 
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
 						pDestination += stepdir;
 						pSource++;
 
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						pDestination += stepdir;
+						pSource++;
+
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
 						pDestination += stepdir;
 						pSource++;
 					}
@@ -2754,29 +2754,29 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 					pSource++;
 					for (j = height; j > 0; j--)
 					{
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
 						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 |0xFF;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | 0xFF;
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | 0xFF;
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
 						*(__IO uint16_t*)pDestination =  cfg->color << 8 |0xFF;
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | 0xFF;
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | 0xFF;
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | 0xFF;
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | 0xFF;
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
 					}
 				}
@@ -2792,19 +2792,19 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 				{
 					for (j = heightFont; j > 0; j--)
 					{
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
 						pDestination += stepdir;
 						pSource++;
 
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource);
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
 						pDestination += stepdir;
 						pSource++;
 					}
@@ -2815,17 +2815,17 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 					pSource++;
 					for (j = heightFont; j > 0; j--)
 					{
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | 0xFF;
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | 0xFF;
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | 0xFF;
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | 0xFF;
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
 					}
 				}
@@ -2844,35 +2844,35 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 				{
 					for (j = heightFont; j > 0; j--)
 					{
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource;
-						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =  cfg->color << 8 |  *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource;
-						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =  cfg->color << 8 |  *(uint8_t*)pSource;
-						pDestination += stepdir;
-						pSource++;
-
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource;
-						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =  cfg->color << 8 |  *(uint8_t*)pSource;
-						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource;
-						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =  cfg->color << 8 |  *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
 						pDestination += stepdir;
 						pSource++;
 
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource;
-						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =  cfg->color << 8 |  *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource;
-						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =  cfg->color << 8 |  *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
 						pDestination += stepdir;
 						pSource++;
 
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource;
-						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =  cfg->color << 8 |  *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource;
-						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =  cfg->color << 8 |  *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
+						pDestination += stepdir;
+						pSource++;
+
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
 						pDestination += stepdir;
 						pSource++;
 					}
@@ -2895,19 +2895,19 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 				{
 					for (j = heightFont; j > 0; j--)
 					{
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource;
-						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =  cfg->color << 8 |  *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource;
-						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =  cfg->color << 8 |  *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
 						pDestination += stepdir;
 						pSource++;
 
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource;
-						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =  cfg->color << 8 |  *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource;
-						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =  cfg->color << 8 |  *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
 						pDestination += stepdir;
 						pSource++;
 					}
@@ -2967,6 +2967,7 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 	uint32_t width, height;
 	uint32_t found;
 	uint16_t* pDestination;
+	uint16_t* pDestination2;
 	uint32_t pSource;
 	uint32_t OffsetDestination;
 	uint32_t width_left;
@@ -3015,7 +3016,8 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 
 
 	pSource = ((uint32_t)Font->chars[i].image->data);
-	pDestination = (uint16_t*)(hgfx->Image->FBStartAdress + 1);
+	pDestination = (uint16_t*)(hgfx->Image->FBStartAdress);
+
 
 	height = Font->chars[i].image->height;
 	width = Font->chars[i].image->width;
@@ -3080,9 +3082,9 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 		{
 			for (j = height; j > 0; j--)
 			{
-				*(__IO uint16_t*)pDestination =  cfg->color << 8 | fill;
+				*(__IO uint16_t*)pDestination =  fill << 8 | cfg->color;
 				pDestination += stepdir;
-				*(__IO uint16_t*)pDestination =  cfg->color << 8 | fill;
+				*(__IO uint16_t*)pDestination =  fill << 8 | cfg->color;
 				pDestination += stepdir;
 			}
 			pDestination += stepdir * OffsetDestination;
@@ -3101,13 +3103,13 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 
 					for (j = height; j > 0; j--)
 					{
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource++);
+						*(__IO uint16_t*)pDestination =   (0xFF - *(uint8_t*)pSource++) << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource++);
+						*(__IO uint16_t*)pDestination =   (0xFF - *(uint8_t*)pSource++) << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource++);
+						*(__IO uint16_t*)pDestination =   (0xFF - *(uint8_t*)pSource++) << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource++);
+						*(__IO uint16_t*)pDestination =   (0xFF - *(uint8_t*)pSource++) << 8 | cfg->color;
 						pDestination += stepdir;
 					}
 					pSource += char_truncated_Height;
@@ -3117,13 +3119,13 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 					pSource++;
 					for (j = height; j > 0; j--)
 					{
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
 					}
 				}
@@ -3139,9 +3141,9 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 				{
 					for (j = height; j > 0; j--)
 					{
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource++);
+						*(__IO uint16_t*)pDestination =   (0xFF - *(uint8_t*)pSource++) << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | (0xFF - *(uint8_t*)pSource++);
+						*(__IO uint16_t*)pDestination =   (0xFF - *(uint8_t*)pSource++) << 8 | cfg->color;
 						pDestination += stepdir;
 					}
 					pSource += char_truncated_Height;
@@ -3151,9 +3153,9 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 					pSource++;
 					for (j = height; j > 0; j--)
 					{
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 | 0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
 					}
 				}
@@ -3174,26 +3176,35 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 				{
 					for (j = height; j > 0; j--)
 					{
-							*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource++;
+							*(__IO uint16_t*)pDestination =  ( *(uint8_t*)pSource++ << 8) | (cfg->color);
 							pDestination += stepdir;
-							*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource++;
+							*(__IO uint16_t*)pDestination =  ( *(uint8_t*)pSource++ << 8) | (cfg->color);
 							pDestination += stepdir;
-							*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource++;
+							*(__IO uint16_t*)pDestination =  ( *(uint8_t*)pSource++ << 8) | (cfg->color);
 							pDestination += stepdir;
-							*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource++;
+							*(__IO uint16_t*)pDestination =  ( *(uint8_t*)pSource++ << 8) | (cfg->color);
 							pDestination += stepdir;
 					}
 					pSource += char_truncated_Height;
 				}
-				else
+				else  /* clear line */
 				{
 					pSource++;
-					pDestination += stepdir * height * 4;
+					for (j = height; j > 0; j--)
+					{
+						*(__IO uint16_t*)pDestination =  cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  cfg->color;
+						pDestination += stepdir;
+					}
 				}
 				pDestination += stepdir * OffsetDestination;
 			}
 		}
-
 		else
 		{
 			height /= 2;
@@ -3203,17 +3214,23 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 				{
 					for (j = height; j > 0; j--)
 					{
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource++;
+						*(__IO uint16_t*)pDestination =  ( *(uint8_t*)pSource++ << 8) | (cfg->color);
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 |  *(uint8_t*)pSource++;
+						*(__IO uint16_t*)pDestination =  ( *(uint8_t*)pSource++ << 8) | (cfg->color);
 						pDestination += stepdir;
 					}
 					pSource += char_truncated_Height;
 				}
-				else
+				else /* clear line */
 				{
 					pSource++;
-					pDestination += stepdir * height * 2;
+					for (j = height; j > 0; j--)
+					{
+						*(__IO uint16_t*)pDestination =  cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  cfg->color;
+						pDestination += stepdir;
+					}
 				}
 				pDestination += stepdir * OffsetDestination;
 			}
