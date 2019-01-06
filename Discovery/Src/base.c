@@ -325,7 +325,11 @@ int fputc(int ch, FILE *f) {
     return(ch);
 }
 */
-
+/* #define DEBUG_RUNTIME TRUE */
+#ifdef DEBUG_RUNTIME
+#define MEASURECNT 60	/* number of measuremets to be stored */
+static uint32_t loopcnt[MEASURECNT];
+#endif
 //  ===============================================================================
 //	main
 /// @brief	This function makes initializations and has the nonIRQ endless loop
@@ -336,6 +340,12 @@ int main(void)
 {
     uint32_t pLayerInvisible;
     uint16_t totalDiveCounterFound;
+#ifdef DEBUG_RUNTIME
+    RTC_TimeTypeDef Stime;
+    uint8_t measurementindex = 0;
+    uint8_t lastsecond = 0xFF;
+#endif
+
 
     set_globalState( StBoot0 );
 
@@ -350,6 +360,20 @@ int main(void)
     MX_UART_Init();
     SDRAM_Config();
     HAL_Delay( 100 );
+
+    stateRealGetPointerWrite()->lastKnownBatteryPercentage = 0; // damit das nicht in settings kopiert wird.
+    set_settings_to_Standard();
+    mod_settings_for_first_start_with_empty_ext_flash();
+    ext_flash_read_settings();
+    if( newFirmwareVersionCheckViaSettings() ) // test for old firmware version in loaded settings
+    {
+        wasFirmwareUpdateCheckBattery = 1;
+        set_settings_button_to_standard_with_individual_buttonBalance(); // will adapt individual values
+    }
+    //settingsGetPointer()->bluetoothActive = 0; 	/* MX_Bluetooth_PowerOff();  unnecessary as part of MX_GPIO_Init() */
+    //settingsGetPointer()->compassBearing = 0;
+    set_new_settings_missing_in_ext_flash(); // inlcudes update of firmware version  161121
+
     GFX_init( &pLayerInvisible );
 
     TIM_init();
@@ -365,18 +389,7 @@ int main(void)
         GFX_helper_font_memory_list(&FontT144);
     */
 
-    stateRealGetPointerWrite()->lastKnownBatteryPercentage = 0; // damit das nicht in settings kopiert wird.
-    set_settings_to_Standard();
-    mod_settings_for_first_start_with_empty_ext_flash();
-    ext_flash_read_settings();
-    if( newFirmwareVersionCheckViaSettings() ) // test for old firmware version in loaded settings
-    {
-        wasFirmwareUpdateCheckBattery = 1;
-        set_settings_button_to_standard_with_individual_buttonBalance(); // will adapt individual values
-    }
-    //settingsGetPointer()->bluetoothActive = 0; 	/* MX_Bluetooth_PowerOff();  unnecessary as part of MX_GPIO_Init() */
-    //settingsGetPointer()->compassBearing = 0;
-    set_new_settings_missing_in_ext_flash(); // inlcudes update of firmware version  161121
+
 
     // new 170508: bluetooth on at start
     settingsGetPointer()->bluetoothActive = 1;
@@ -500,6 +513,27 @@ int main(void)
             }
         }
         */
+
+#ifdef DEBUG_RUNTIME
+        translateTime(stateUsed->lifeData.timeBinaryFormat, &Stime);
+        if(lastsecond == 0xFF)
+        {
+        	measurementindex = 0;
+        	loopcnt[measurementindex] = 0;
+        	lastsecond = Stime.Seconds;
+        }
+        loopcnt[measurementindex]++;
+
+        if(lastsecond != Stime.Seconds)
+        {
+        	measurementindex++;
+        	if (measurementindex == MEASURECNT) measurementindex = 0;
+        	loopcnt[measurementindex] = 0;
+        	lastsecond = Stime.Seconds;
+        	if(measurementindex +1 < MEASURECNT) loopcnt[measurementindex +1] = 0xffff;	/* helps to identify the latest value */
+        }
+#endif
+
     }
 }
 
