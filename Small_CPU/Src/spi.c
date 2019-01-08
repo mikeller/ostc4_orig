@@ -21,13 +21,16 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "spi.h"
+#include "dma.h"
 //#include "gpio.h"
 
 /* USER CODE BEGIN 0 */
 #include "scheduler.h"
 
+#ifdef DEBUG_GPIO
 extern void GPIO_new_DEBUG_LOW(void);
 extern void GPIO_new_DEBUG_HIGH(void);
+#endif
 
 uint8_t data_error = 0;
 uint32_t data_error_time = 0;

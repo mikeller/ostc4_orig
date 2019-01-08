@@ -778,7 +778,7 @@ void scheduleSurfaceMode(void)
 
 	while(global.mode == MODE_SURFACE)
 	{
-	    printf("surface...\n");
+	/*    printf("surface...\n"); */
 //	    SPI_Start_single_TxRx_with_Master();
 		schedule_check_resync();
 		lasttick = HAL_GetTick();

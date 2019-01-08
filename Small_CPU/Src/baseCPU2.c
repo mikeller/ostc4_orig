@@ -278,8 +278,21 @@ int __io_putchar(int ch) {
  * @param  None
  * @retval None
  */
+/* #define DEBUG_RUNTIME TRUE */
+#ifdef DEBUG_RUNTIME
+#define MEASURECNT 60	/* number of measuremets to be stored */
+static uint32_t loopcnt[MEASURECNT];
+extern RTC_HandleTypeDef RTCHandle;
+#endif
 
 int main(void) {
+
+#ifdef DEBUG_RUNTIME
+    RTC_TimeTypeDef Stime;
+    uint8_t measurementindex = 0;
+    uint8_t lastsecond = 0xFF;
+#endif
+
 	HAL_Init();
 	SystemClock_Config();
 
@@ -292,7 +305,7 @@ int main(void) {
 	GPIO_new_DEBUG_Init(); // added 170322 hw
 	initGlobals();
 
-	printf("CPU2-RTE running...\n");
+/*	printf("CPU2-RTE running...\n"); */
 
 	MX_I2C1_Init();
 	if (global.I2C_SystemStatus != HAL_OK) {
@@ -352,7 +365,7 @@ int main(void) {
 	global.mode = MODE_TEST;
 #endif
 	while (1) {
-		printf("Global mode = %d\n", global.mode);
+/*		printf("Global mode = %d\n", global.mode); */
 
 		switch (global.mode) {
 		case MODE_POWERUP:
@@ -475,6 +488,27 @@ int main(void) {
 			// EXTILine0_Button_DeInit(); not now, later after testing
 			break;
 		}
+
+#ifdef DEBUG_RUNTIME
+		HAL_RTC_GetTime(&RTCHandle, &Stime, RTC_FORMAT_BCD);
+
+        if(lastsecond == 0xFF)
+        {
+        	measurementindex = 0;
+        	loopcnt[measurementindex] = 0;
+        	lastsecond = Stime.Seconds;
+        }
+        loopcnt[measurementindex]++;
+
+        if(lastsecond != Stime.Seconds)
+        {
+        	measurementindex++;
+        	if (measurementindex == MEASURECNT) measurementindex = 0;
+        	loopcnt[measurementindex] = 0;
+        	lastsecond = Stime.Seconds;
+        	if(measurementindex +1 < MEASURECNT) loopcnt[measurementindex +1] = 0xffff;	/* helps to identify the latest value */
+        }
+#endif
 	}
 }
 
