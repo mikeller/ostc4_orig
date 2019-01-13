@@ -813,17 +813,13 @@ return HAL_OK;
 void GFX_clear_frame_immediately(uint32_t pDestination)
 {
 	uint32_t i;
+	uint32_t* pfill = (uint32_t*) pDestination;
+
 
 	for(i = 200*480; i > 0; i--)
 	{
-		*(__IO uint16_t*)pDestination = 0;
-		pDestination += 2;
-		*(__IO uint16_t*)pDestination = 0;
-		pDestination += 2;
-		*(__IO uint16_t*)pDestination = 0;
-		pDestination += 2;
-		*(__IO uint16_t*)pDestination = 0;
-		pDestination += 2;
+		*pfill++ = 0;
+		*pfill++ = 0;
 	}
 }
 
@@ -872,22 +868,23 @@ void  GFX_clear_frame_dma2d(uint8_t frameId)
 void GFX_fill_buffer(uint32_t pDestination, uint8_t alpha, uint8_t color)
 {
 
-		union al88_u
+	union al88_u
 	{
 		uint8_t al8[2];
 		uint16_t al88;
 	};
-
 	union al88_u colorcombination;
 	uint32_t i;
+	uint32_t* pfill = (uint32_t*) pDestination;
+	uint32_t fillpattern;
 
 	colorcombination.al8[0] = color;
 	colorcombination.al8[1] = alpha;
 
-	for(i = 800*480; i > 0; i--)
+	fillpattern = (colorcombination.al88 << 16) | colorcombination.al88;
+	for(i = 800*480/2; i > 0; i--)
 	{
-		*(__IO uint16_t*)pDestination = colorcombination.al88;
-		pDestination += 2;
+		*pfill++ = fillpattern;
 	}
 }
 
@@ -1143,7 +1140,6 @@ void GFX_draw_image_color(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window, cons
 
 			for(int yy = start.y; yy < stop.y; yy++)
 			{
-			//	*(__IO uint16_t*)pDestination-- = image->data[j++] << 8 | 0xFF;
 				*(__IO uint16_t*)pDestination-- = 0xFF << 8 | image->data[j++];
 			}
 		}
@@ -2967,7 +2963,6 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 	uint32_t width, height;
 	uint32_t found;
 	uint16_t* pDestination;
-	uint16_t* pDestination2;
 	uint32_t pSource;
 	uint32_t OffsetDestination;
 	uint32_t width_left;
@@ -2975,6 +2970,7 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 	uint32_t char_truncated_WidthFlag;
 	uint32_t char_truncated_Height;
 	uint8_t fill;
+	uint32_t fillpattern;
 	int16_t stepdir;
 
 	SSettings* pSettings;
@@ -3117,17 +3113,18 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 				else /* empty line => fast fill */
 				{
 					pSource++;
+					fillpattern = (( 0xFF << 8 | cfg->color) << 16) | ( 0xFF << 8 | cfg->color);
+					if(pSettings->FlipDisplay) pDestination--; /* address fill from high to low */
 					for (j = height; j > 0; j--)
 					{
-						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint32_t*)pDestination =  fillpattern;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint32_t*)pDestination =  fillpattern;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
 					}
+					if(pSettings->FlipDisplay) pDestination++;
 				}
 				pDestination += stepdir * OffsetDestination;
 			}
@@ -3185,22 +3182,25 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 							*(__IO uint16_t*)pDestination =  ( *(uint8_t*)pSource++ << 8) | (cfg->color);
 							pDestination += stepdir;
 					}
+
 					pSource += char_truncated_Height;
 				}
 				else  /* clear line */
 				{
 					pSource++;
+					fillpattern = (cfg->color << 16) | cfg->color;
+					if(pSettings->FlipDisplay) pDestination--; /* address fill from high to low */
+
 					for (j = height; j > 0; j--)
 					{
-						*(__IO uint16_t*)pDestination =  cfg->color;
+						*(__IO uint32_t*)pDestination =  fillpattern;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color;
+						*(__IO uint32_t*)pDestination =  fillpattern;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color;
 						pDestination += stepdir;
 					}
+					if(pSettings->FlipDisplay) pDestination++;
 				}
 				pDestination += stepdir * OffsetDestination;
 			}
