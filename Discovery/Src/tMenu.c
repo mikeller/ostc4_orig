@@ -240,7 +240,10 @@ void clean_line_actual_page(void)
 
     page = menu.pageMemoryForNavigation;
     line =  menu.lineMemoryForNavigationForPage[page];
-
+	if(settingsGetPointer()->FlipDisplay) /* Reselect line to be deleted if display is rotated */
+	{
+		line = 6 - line + 1;
+	}
     tMscreen.FBStartAdress = menu.StartAddressForPage[page];
     GFX_clean_line(&tMwindow, line);
 }
