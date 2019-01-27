@@ -298,7 +298,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     GPIO_InitStruct.Pin = GPIO_PIN_5|GPIO_PIN_7;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_MEDIUM;//GPIO_SPEED_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FAST; /* Decision is based on errata which recomments FAST for GPIO at 90Mhz */
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
     GPIO_InitStruct.Pin = GPIO_PIN_4;
@@ -393,7 +393,7 @@ hdma_spi1_rx.Init.PeriphBurst         = DMA_PBURST_INC4;
     GPIO_InitStruct.Pin = GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_MEDIUM;//GPIO_SPEED_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH; //GPIO_SPEED_MEDIUM;//GPIO_SPEED_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI5;
     HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
