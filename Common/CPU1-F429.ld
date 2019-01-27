@@ -124,7 +124,6 @@ SECTIONS
     *(.glue_7)         /* glue arm to thumb code */
     *(.glue_7t)        /* glue thumb to arm code */
     *(.eh_frame)
-
     . = ALIGN(4);
     _etext = .;        /* define a global symbols at end of code */
   } >ROM
@@ -195,54 +194,9 @@ SECTIONS
  	KEEP( *(.bootloader_firmware_data) )
  } > ROM
  	
-
-   .upper_font_dir 0x081DEF00 : { /* Flash Sector 23 is protected (bootloader font + image) => use end of sector 22 */
-  
     /* Define Known Address for Each Font */
-  	__font_directory = .;
-	
-	
-	*(.upper_font_directory.Awe48)
-	*(.upper_font_directory.FontT24)
-	*(.upper_font_directory.FontT42)
-	*(.upper_font_directory.FontT48)
-	*(.upper_font_directory.FontT54)
-	*(.upper_font_directory.FontT84)
-	*(.upper_font_directory.FontT105)
-	*(.upper_font_directory.FontT144)
-	*(.upper_font_directory.Batt24*)
+    /* Flash Sector 23 is protected (bootloader font + image) => use end of sector 22 */
 
-	__font_directory_end = .;
-  	LONG( -1 );	/* Magic End Marker */
-	
-    /* and for Each Image */
-/*	__image_directory = .; */
-/*	PROVIDE( ImgHWcolor = __image_directory + 0 * 8 );
-	PROVIDE( ImgOSTC    = __image_directory + 1 * 8 ); */
-/*	__image_directory_end = __image_directory + 2 * 8; */
-
-/*	KEEP( *(.upper_image_directory) ) */
-
-	/* FIXME: shall KEEP images here */
-  	LONG( -1 );	/* Magic End Marker */
-	
-    /* and for CLUT */
-/*	PROVIDE( indexHWcolor = . ); */
-	. += 0x100; 
-  	LONG( -1 );	/* Magic End Marker */
-  } >UPPER  
-
-  
-
-
-  /* Put fonts and images in UPPER region */  
- /*
-  .upper_images : {
-  	__upper_image_data = .;
-  	KEEP( *(.newupper_images) )
-  	__upper_image_data_end = .;
-  } > UPPER
-  */
   
 
 /* TODO: the linker does not seem to work as the one of used for initial bootloader ==> Reconstruct layout to keep it compatible with the first version */
@@ -516,14 +470,30 @@ SECTIONS
   
 /* moving of fonts from lower to upper */  	 
   	 
-	 *(.upper_fonts*) 
+	 *(.upper_fonts.*) 
 	 
   	__upper_font_data_end = .;
   } >UPPER
 
  
 
-  	
+  .upper_directory 0x081DEF00 : {
+      __font_directory = .;
+	*(.upper_font_directory.Awe48)
+	*(.upper_font_directory.FontT24)
+	*(.upper_font_directory.FontT42)
+	*(.upper_font_directory.FontT48)
+	*(.upper_font_directory.FontT54)
+	*(.upper_font_directory.FontT84)
+	*(.upper_font_directory.FontT105)
+	*(.upper_font_directory.FontT144)
+	*(.upper_font_directory.Batt24*)
+		
+	__font_directory_end = .;
+  	LONG( -1 );	/* Magic End Marker */
+
+  } >UPPER  
+  
 
   
   
@@ -570,6 +540,7 @@ _sidata = LOADADDR(.data);
     . = ALIGN(8);
     PROVIDE ( end = . );
     PROVIDE ( _end = . );
+    PROVIDE ( __end__ = . );
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
