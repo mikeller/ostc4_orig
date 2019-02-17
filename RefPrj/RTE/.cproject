@@ -20,24 +20,26 @@
 							<option id="fr.ac6.managedbuild.option.gnu.cross.mcu.1069997727" name="Mcu" superClass="fr.ac6.managedbuild.option.gnu.cross.mcu" useByScannerDiscovery="false" value="STM32F411RETx" valueType="string"/>
 							<option id="fr.ac6.managedbuild.option.gnu.cross.fpu.1337322285" name="Floating point hardware" superClass="fr.ac6.managedbuild.option.gnu.cross.fpu" useByScannerDiscovery="false" value="fr.ac6.managedbuild.option.gnu.cross.fpu.fpv4-sp-d16" valueType="enumerated"/>
 							<option id="fr.ac6.managedbuild.option.gnu.cross.floatabi.2128124622" name="Floating-point ABI" superClass="fr.ac6.managedbuild.option.gnu.cross.floatabi" useByScannerDiscovery="false" value="fr.ac6.managedbuild.option.gnu.cross.floatabi.hard" valueType="enumerated"/>
-							<option id="fr.ac6.managedbuild.option.gnu.cross.board.719527989" name="Board" superClass="fr.ac6.managedbuild.option.gnu.cross.board" useByScannerDiscovery="false" value="OTSTC4_RTE" valueType="string"/>
+							<option id="fr.ac6.managedbuild.option.gnu.cross.board.719527989" name="Board" superClass="fr.ac6.managedbuild.option.gnu.cross.board" useByScannerDiscovery="false" value="OSTC4_RTE2" valueType="string"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="fr.ac6.managedbuild.targetPlatform.gnu.cross.2036507469" isAbstract="false" osList="all" superClass="fr.ac6.managedbuild.targetPlatform.gnu.cross"/>
 							<builder buildPath="${workspace_loc:/OSTC4_RTE}/Debug" id="fr.ac6.managedbuild.builder.gnu.cross.646520610" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="fr.ac6.managedbuild.builder.gnu.cross"/>
 							<tool id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.1064816811" name="MCU GCC Compiler" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler">
-								<option id="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level.587576579" name="Optimization Level" superClass="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="fr.ac6.managedbuild.gnu.c.optimization.level.more" valueType="enumerated"/>
+								<option id="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level.587576579" name="Optimization Level" superClass="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="fr.ac6.managedbuild.gnu.c.optimization.level.debug" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.debugging.level.493106502" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1649922014" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="STM32"/>
 									<listOptionValue builtIn="false" value="STM32F4"/>
+									<listOptionValue builtIn="false" value="STM32F411xE"/>
 								</option>
 								<option id="gnu.c.compiler.option.include.paths.1618459940" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Small_CPU/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Discovery/Inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/STM32F4xx_HAL_DRIVER_v120/Inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/STM32F4xx_v220/Include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/CMSIS_v210}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/STM32F4xx_HAL_Driver/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/STM32F4xx/Include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/CMSIS/Include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Inc}&quot;"/>
 								</option>
+								<option id="gnu.c.compiler.option.dialect.std.224885314" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.c.compiler.dialect.default" valueType="enumerated"/>
 								<inputType id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c.2126749510" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c"/>
 								<inputType id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.s.1160433093" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.s"/>
 							</tool>
@@ -47,6 +49,7 @@
 							</tool>
 							<tool id="fr.ac6.managedbuild.tool.gnu.cross.c.linker.829628376" name="MCU GCC Linker" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.linker">
 								<option id="fr.ac6.managedbuild.tool.gnu.cross.c.linker.script.1343275553" name="Linker Script (-T)" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.linker.script" useByScannerDiscovery="false" value="${ProjDirPath}\..\ostc4\Small_CPU\CPU2-RTE.ld" valueType="string"/>
+								<option id="gnu.c.link.option.nodeflibs.1383905067" name="Do not use default libraries (-nodefaultlibs)" superClass="gnu.c.link.option.nodeflibs" useByScannerDiscovery="false" value="false" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.60862160" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -61,7 +64,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="Drivers/STM32F4xx_v220/Source/Templates|Drivers/STM32F4xx_HAL_DRIVER_v120/Src/stm32f4xx_hal_msp_template.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Common"/>
+						<entry excluding="Drivers/STM32F4xx/Source/Templates/system_stm32f4xx.c|Drivers/STM32F4xx/Source/Templates/iar|Drivers/STM32F4xx/Source/Templates/gcc|Drivers/STM32F4xx/Source/Templates/arm|Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_timebase_tim_template.c|Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_timebase_rtc_wakeup_template.c|Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_timebase_rtc_alarm_template.c|Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_msp_template.c|Drivers/STM32F4xx_v220/Source/Templates|Drivers/STM32F4xx_HAL_DRIVER_v120/Src/stm32f4xx_hal_msp_template.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Common"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Small_CPU"/>
 					</sourceEntries>
 				</configuration>
@@ -96,13 +99,14 @@
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.787678213" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="STM32"/>
 									<listOptionValue builtIn="false" value="STM32F4"/>
+									<listOptionValue builtIn="false" value="STM32F411xE"/>
 								</option>
 								<option id="gnu.c.compiler.option.include.paths.1685792522" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Small_CPU/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Discovery/Inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/STM32F4xx_HAL_DRIVER_v120/Inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/STM32F4xx_v220/Include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/CMSIS_v210}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/STM32F4xx_HAL_Driver/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/STM32F4xx/Include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/CMSIS/Include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Inc}&quot;"/>
 								</option>
 								<inputType id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c.925384553" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c"/>
@@ -114,6 +118,7 @@
 							</tool>
 							<tool id="fr.ac6.managedbuild.tool.gnu.cross.c.linker.1224776758" name="MCU GCC Linker" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.linker">
 								<option id="fr.ac6.managedbuild.tool.gnu.cross.c.linker.script.477531566" name="Linker Script (-T)" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.linker.script" useByScannerDiscovery="false" value="${ProjDirPath}\..\ostc4\Small_CPU\CPU2-RTE.ld" valueType="string"/>
+								<option id="gnu.c.link.option.nodeflibs.1006660034" name="Do not use default libraries (-nodefaultlibs)" superClass="gnu.c.link.option.nodeflibs" useByScannerDiscovery="false" value="false" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.1337752943" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -128,7 +133,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="Drivers/STM32F4xx_v220/Source/Templates|Drivers/STM32F4xx_HAL_DRIVER_v120/Src/stm32f4xx_hal_msp_template.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Common"/>
+						<entry excluding="Drivers/STM32F4xx/Source/Templates/system_stm32f4xx.c|Drivers/STM32F4xx/Source/Templates/iar|Drivers/STM32F4xx/Source/Templates/gcc|Drivers/STM32F4xx/Source/Templates/arm|Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_timebase_tim_template.c|Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_timebase_rtc_wakeup_template.c|Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_timebase_rtc_alarm_template.c|Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_msp_template.c|Drivers/STM32F4xx_v220/Source/Templates|Drivers/STM32F4xx_HAL_DRIVER_v120/Src/stm32f4xx_hal_msp_template.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Common"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Small_CPU"/>
 					</sourceEntries>
 				</configuration>

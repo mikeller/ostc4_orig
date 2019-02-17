@@ -29,14 +29,15 @@
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.407363475" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="STM32"/>
 									<listOptionValue builtIn="false" value="STM32F4"/>
+									<listOptionValue builtIn="false" value="STM32F429xx"/>
 									<listOptionValue builtIn="false" value="STM32F429IITx"/>
 									<listOptionValue builtIn="false" value="DEBUG"/>
 								</option>
 								<option id="gnu.c.compiler.option.include.paths.701319749" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Discovery/Inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/CMSIS_v210}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/STM32F4xx_v220/Include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/STM32F4xx_HAL_DRIVER_v120/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/CMSIS/Include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/STM32F4xx/Include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/STM32F4xx_HAL_Driver/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Inc}&quot;"/>
 								</option>
 								<option id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.ffunction.2126645055" name="Place the function in their own section (-ffunction-sections)" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.ffunction" useByScannerDiscovery="false" value="false" valueType="boolean"/>
@@ -91,7 +92,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="Drivers/STM32F4xx_v220/Source/Templates|Drivers/STM32F4xx_HAL_DRIVER_v120/Src/stm32f4xx_hal_msp_template.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Common"/>
+						<entry excluding="Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_timebase_tim_template.c|Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_timebase_rtc_wakeup_template.c|Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_timebase_rtc_alarm_template.c|Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_msp_template.c|Drivers/STM32F4xx/Source|Drivers/STM32F4xx_v220/Source/Templates|Drivers/STM32F4xx_HAL_DRIVER_v120/Src/stm32f4xx_hal_msp_template.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Common"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Discovery"/>
 					</sourceEntries>
 				</configuration>
@@ -101,7 +102,7 @@
 		<cconfiguration id="fr.ac6.managedbuild.config.gnu.cross.exe.release.1554475450">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="fr.ac6.managedbuild.config.gnu.cross.exe.release.1554475450" moduleId="org.eclipse.cdt.core.settings" name="Release">
 				<macros>
-					<stringMacro name="ProjDirPath" type="VALUE_TEXT" value="D:/Data/Stm32/workspace/OSTC4_Firmware"/>
+					<stringMacro name="ProjDirPath" type="VALUE_TEXT" value="D:\Projekte\OSTC\workspace\OSTC4_Firmware"/>
 				</macros>
 				<externalSettings/>
 				<extensions>
@@ -124,18 +125,19 @@
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="fr.ac6.managedbuild.targetPlatform.gnu.cross.865062975" isAbstract="false" osList="all" superClass="fr.ac6.managedbuild.targetPlatform.gnu.cross"/>
 							<builder buildPath="${workspace_loc:/CustOstc}/Release" id="fr.ac6.managedbuild.builder.gnu.cross.1554706190" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="fr.ac6.managedbuild.builder.gnu.cross"/>
 							<tool id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.550035949" name="MCU GCC Compiler" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler">
-								<option id="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level.2106449990" name="Optimization Level" superClass="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="fr.ac6.managedbuild.gnu.c.optimization.level.size" valueType="enumerated"/>
+								<option id="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level.2106449990" name="Optimization Level" superClass="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="fr.ac6.managedbuild.gnu.c.optimization.level.more" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.debugging.level.6738674" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.245710686" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="STM32"/>
 									<listOptionValue builtIn="false" value="STM32F4"/>
+									<listOptionValue builtIn="false" value="STM32F429xx"/>
 									<listOptionValue builtIn="false" value="STM32F429IITx"/>
 								</option>
 								<option id="gnu.c.compiler.option.include.paths.235541181" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Discovery/Inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/CMSIS_v210}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/STM32F4xx_v220/Include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/STM32F4xx_HAL_DRIVER_v120/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/CMSIS/Include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/STM32F4xx/Include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Drivers/STM32F4xx_HAL_Driver/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ostc4/Common/Inc}&quot;"/>
 								</option>
 								<option id="gnu.c.compiler.option.dialect.std.476812004" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.c.compiler.dialect.default" valueType="enumerated"/>
@@ -179,7 +181,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="Drivers/STM32F4xx_v220/Source/Templates|Drivers/STM32F4xx_HAL_DRIVER_v120/Src/stm32f4xx_hal_msp_template.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Common"/>
+						<entry excluding="Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_timebase_tim_template.c|Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_timebase_rtc_wakeup_template.c|Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_timebase_rtc_alarm_template.c|Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_msp_template.c|Drivers/STM32F4xx/Source|Drivers/STM32F4xx_v220/Source/Templates|Drivers/STM32F4xx_HAL_DRIVER_v120/Src/stm32f4xx_hal_msp_template.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Common"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Discovery"/>
 					</sourceEntries>
 				</configuration>
