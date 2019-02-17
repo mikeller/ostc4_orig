@@ -105,7 +105,7 @@ typedef struct{
 
 S9Background t9_background =
 {
-    .pointer = NULL,
+    .pointer = 0,
 };
 
 /* Private types -------------------------------------------------------------*/
@@ -567,23 +567,28 @@ void t9_change_customview(void)
     const uint8_t *pViews;
 
     if(stateUsed->mode == MODE_DIVE)
+    {
         pViews = t9_customviewsDive;
+        while((*pViews != CVIEW_END) && (*pViews != t9_selection_customview))
+        	{pViews++;}
 
-    while((*pViews != CVIEW_END) && (*pViews != t9_selection_customview))
-        {pViews++;}
-
-    if(*pViews < CVIEW_END)
-        pViews++;
+		if(*pViews < CVIEW_END)
+			pViews++;
+		else
+		{
+			if(stateUsed->mode == MODE_DIVE)
+				pViews = t9_customviewsDive;
+		}
+		 t9_selection_customview = *pViews;
+    }
     else
     {
-        if(stateUsed->mode == MODE_DIVE)
-            pViews = t9_customviewsDive;
+    	t9_selection_customview = 0;
     }
-
 //	if((*pViews == CVIEW_Scooter) && (getLicence() != LICENCEBONEX))
 //		pViews++;
 
-    t9_selection_customview = *pViews;
+
 }
 
 

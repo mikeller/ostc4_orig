@@ -78,13 +78,12 @@ _____________________________________________________________
 
 SDecoinfo gDecotable;
 float gSurface_pressure_bar;
-
 float gPressure;
 int gGas_id;
 float gTTS;
 float gTissue_nitrogen_bar[16];
 float gTissue_helium_bar[16];
-float	gGF_value;
+float gGF_value;
 float gCNS;
 //float gMax_ceiling_bar = 0;
 int gNDL;

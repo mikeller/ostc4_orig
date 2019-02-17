@@ -419,7 +419,7 @@ void logbook_writeSample(SDiveState state)
     eventByte1.uw = 0;
     eventByte2.uw = 0;
     //uint16_t tmpU16 = 0;
-		const SDecoinfo * pDecoinfo; // new hw 160620
+	const SDecoinfo * pDecoinfo; // new hw 160620
 
     //BuildEevntyte 1
 		// sub old 0-3 only one at a time

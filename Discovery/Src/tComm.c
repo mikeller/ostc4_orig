@@ -1610,6 +1610,7 @@ uint8_t receive_update_data_mainCPU_firmware_subrotuine(uint8_t region, uint8_t*
     uint32_t checksum, checksumCalc;
     uint8_t id;
 
+    checksumCalc = 0;
 
     //Get length
     if(HAL_UART_Receive(&UartHandle, sBuffer, 4,5000)!= HAL_OK) // 58000

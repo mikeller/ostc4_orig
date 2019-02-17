@@ -35,7 +35,11 @@
 #include "ostc.h"
 #include "tCCR.h"
 #include "tMenuEdit.h"
+#include "tHome.h"
+#include "tInfo.h"
+#include "tInfoLog.h"
 
+extern void tM_build_pages(void);
 
 /* Private function prototypes -----------------------------------------------*/
 void openEdit_Bluetooth(void);

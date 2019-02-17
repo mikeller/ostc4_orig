@@ -31,6 +31,7 @@
 
 #include "gfx_fonts.h"
 #include "tMenuEdit.h"
+#include "unit.h"
 
 /* Private variables ---------------------------------------------------------*/
 uint8_t lineSelected = 0;

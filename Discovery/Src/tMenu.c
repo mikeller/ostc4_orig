@@ -1084,7 +1084,7 @@ void draw_tMdesignSubUnselected(uint32_t *ppDestination)
         uint16_t al88;
     };
 
-    uint16_t* prunning = *ppDestination;
+    uint16_t* prunning = (uint16_t*)*ppDestination;
 
     union al88_u color_seperator;
     union al88_u color_unselected;
@@ -1107,7 +1107,7 @@ void draw_tMdesignSubUnselected(uint32_t *ppDestination)
     *(__IO uint16_t*)prunning++ = color_seperator.al88;
     *(__IO uint16_t*)prunning++ = color_seperator.al88;
 
-    *ppDestination = prunning;
+    *ppDestination = (uint32_t)prunning;
 }
 
 
@@ -1247,7 +1247,7 @@ void draw_tMheader(uint8_t page)
 
     pBackup = tMscreen.FBStartAdress;
     tMscreen.FBStartAdress = menu.StartAddressForPage[page];
-    pDestination = menu.StartAddressForPage[page];
+    pDestination = (uint16_t*) menu.StartAddressForPage[page];
     positionText = 10;
     pageText = page;
 
