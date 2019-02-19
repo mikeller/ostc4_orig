@@ -589,12 +589,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     case BaseMenu:
     case BaseInfo:
         updateSetpointStateUsed();
+
         DateEx_copy_to_dataOut();
-        DataEX_call();
         DataEX_copy_to_LifeData(&modeChange);
 //foto session :-)  stateRealGetPointerWrite()->lifeData.battery_charge = 99;
 //foto session :-)  stateSimGetPointerWrite()->lifeData.battery_charge = 99;
         DataEX_copy_to_deco();
+        DataEX_call();
+
         if(stateUsed == stateSimGetPointer())
             simulation_UpdateLifeData(1);
         check_warning();
@@ -602,7 +604,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             logbook_InitAndWrite();
         updateMiniLiveLogbook(1);
         timer_UpdateSecond(1);
-base_tempLightLevel =			TIM_BACKLIGHT_adjust();
+        base_tempLightLevel = TIM_BACKLIGHT_adjust();
         tCCR_tick();
         tHome_tick();
         if(status.base == BaseHome)
@@ -1097,7 +1099,7 @@ uint8_t font_update_required(void)
 }
 
 
-void delayMicros(uint32_t micros)
+__attribute__((optimize("O0"))) void delayMicros(uint32_t micros)
 {
     micros = micros * (168/4) - 10;
     while(micros--);
