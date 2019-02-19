@@ -164,8 +164,8 @@ uint8_t hasExternalClock(void) {
 // See CPU2-RTE.ld
 const SFirmwareData cpu2_FirmwareData __attribute__(( section(".firmware_data") ))= {
 		.versionFirst = 1,
-		.versionSecond = 5,
-		.versionThird = 1,
+		.versionSecond = 6,
+		.versionThird = 0,
 		.versionBeta = 0,
 
 /* 4 bytes with trailing 0 */
@@ -383,7 +383,7 @@ int main(void) {
 			MX_DMA_Init();
 			MX_SPI1_Init();
 			MX_EXTI_wireless_Init();
-//			SPI_Start_single_TxRx_with_Master();
+			SPI_Start_single_TxRx_with_Master(); /* be prepared for the first data exchange */
 			EXTI_Test_Button_Init();
 
 			/*
@@ -1129,7 +1129,6 @@ void SysTick_Handler(void)
   }else
   {
 	  ticks100ms=0;
-	  SPI_Start_single_TxRx_with_Master();
   }
 }
 /**
