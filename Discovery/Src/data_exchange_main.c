@@ -55,6 +55,7 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
+#include <stdlib.h>
 #include <string.h> // for memcopy
 #include "stm32f4xx_hal.h"
 #include "stdio.h"
@@ -89,6 +90,7 @@ SDataReceiveFromMaster dataOut;
 SDataExchangeSlaveToMaster dataIn;
 
 uint32_t systick_last;
+uint32_t systick_last_spi;
 uint8_t data_old__lost_connection_to_slave_counter_temp = 0;
 uint8_t data_old__lost_connection_to_slave_counter_retry = 0;
 uint32_t data_old__lost_connection_to_slave_counter_total = 0;
@@ -135,6 +137,15 @@ void DataEX_Error_Handler(uint8_t answer)
 {
 	count_DataEX_Error_Handler++;
 	last_error_DataEX_Error_Handler = answer;
+
+	/* A wrong footer indicates a communication interrupt. Statemachine is waiting for new data which is not received because no new transmission is triggered */
+	/* ==> Abort data exchange to enable a new RX / TX cycle */
+	if(answer == HAL_BUSY)
+	{
+		HAL_SPI_Abort_IT(&cpu2DmaSpi);
+		data_old__lost_connection_to_slave_counter_total = 1000; /* add significant error offset to indicate error causing an abort event */
+	}
+	data_old__lost_connection_to_slave_counter_total = answer;
   return;
 }
 
@@ -313,12 +324,10 @@ uint8_t DataEX_call(void)
 	if(data_old__lost_connection_to_slave_counter_temp >= 3)
 	{
 		data_old__lost_connection_to_slave_counter_temp = 0;
+		HAL_SPI_Abort_IT(&cpu2DmaSpi);
+		__HAL_SPI_CLEAR_OVRFLAG(&cpu2DmaSpi);
 		data_old__lost_connection_to_slave_counter_retry++;
 	}
-//	else
-//	{
-//		HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
-//	}
 
 	DataEx_call_helper_requests();
 
@@ -326,10 +335,12 @@ uint8_t DataEX_call(void)
 
 //HAL_GPIO_WritePin(OSCILLOSCOPE2_GPIO_PORT,OSCILLOSCOPE2_PIN,GPIO_PIN_RESET); /* only for testing with Oscilloscope */
 
+
 	SPI_DMA_answer = HAL_SPI_TransmitReceive_DMA(&cpu2DmaSpi, (uint8_t *)&dataOut, (uint8_t *)&dataIn, EXCHANGE_BUFFERSIZE);
 //	HAL_Delay(3);
 	if(SPI_DMA_answer != HAL_OK)
-    DataEX_Error_Handler(SPI_DMA_answer);
+		DataEX_Error_Handler(SPI_DMA_answer);
+
 //	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_SET);
 //HAL_Delay(3);
 //HAL_GPIO_WritePin(OSCILLOSCOPE2_GPIO_PORT,OSCILLOSCOPE2_PIN,GPIO_PIN_SET); /* only for testing with Oscilloscope */
@@ -354,6 +365,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 
 	if(hspi == &cpu2DmaSpi)
 	{
+		systick_last_spi = HAL_GetTick();
 		SPI_CALLBACKS+=1;
 	}
 }
