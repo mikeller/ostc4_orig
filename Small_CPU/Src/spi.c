@@ -270,27 +270,30 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi) {
 }
 
 void SPI_synchronize_with_Master(void) {
-//	GPIO_InitTypeDef GPIO_InitStruct;
+	GPIO_InitTypeDef GPIO_InitStruct;
 //
-//	__GPIOA_CLK_ENABLE();
-//	/**SPI1 GPIO Configuration
-//	 PA5   ------> SPI1_SCK
-//	 */
-//	GPIO_InitStruct.Pin = GPIO_PIN_4 | GPIO_PIN_5;
-//	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-//	GPIO_InitStruct.Pull = GPIO_PULLUP;
-//	GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
-//	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+#if 0
+	__GPIOA_CLK_ENABLE();
+	/**SPI1 GPIO Configuration
+	 PA5   ------> SPI1_SCK
+	 */
+	GPIO_InitStruct.Pin = GPIO_PIN_4 | GPIO_PIN_5;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 //
-//	HAL_Delay(10);
-//	while (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) == 0);
-//	HAL_Delay(10);
-//	while (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_5) == 1);
-//	HAL_Delay(20);
+	HAL_Delay(10);
+	while (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) == 0);
+	HAL_Delay(10);
+	while (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_5) == 1);
+	HAL_Delay(20);
+#endif
 }
 
 void SPI_Start_single_TxRx_with_Master(void) {
 	uint8_t * pOutput;
+	HAL_StatusTypeDef retval;
 
 	if (global.dataSendToSlave.getDeviceDataNow) {
 		global.dataSendToSlave.getDeviceDataNow = 0;
@@ -298,17 +301,16 @@ void SPI_Start_single_TxRx_with_Master(void) {
 	} else {
 		pOutput = (uint8_t*) &(global.dataSendToMaster);
 	}
-
-	if (HAL_SPI_TransmitReceive_DMA(&hspi1, pOutput,(uint8_t*) &(global.dataSendToSlave), EXCHANGE_BUFFERSIZE)!= HAL_OK) {
-		// Transfer error in transmission process
+	retval = HAL_SPI_TransmitReceive_DMA(&hspi1, pOutput,(uint8_t*) &(global.dataSendToSlave), EXCHANGE_BUFFERSIZE);
+	if ( retval!= HAL_OK) {
 		SPI_Error_Handler();
 	}
 }
 
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
 	/* restart SPI */
-	if (hspi == &hspi1) {
-
+	if (hspi == &hspi1)
+	{
 		global.check_sync_not_running = 0;
 		/* stop data exchange? */
 		if (global.mode == MODE_SHUTDOWN) {
@@ -326,13 +328,12 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
 			global.dataSendToSlaveIsNotValidCount = 0;
 		} else {
 //		GPIO_new_DEBUG_LOW(); //For debug.
-			global.dataSendToSlaveIsValid = 0;
-			global.dataSendToSlaveIsNotValidCount++;
-			MX_SPI_DeInit();
-			HAL_Delay(30);
-			MX_DMA_Init();
-			MX_SPI1_Init();
-		}
+				global.dataSendToSlaveIsValid = 0;
+				global.dataSendToSlaveIsNotValidCount++;
+				HAL_SPI_Abort_IT(&hspi1);
+				global.dataSendToSlaveIsNotValidCount = 1;
+			}
+	}
 		global.dataSendToMaster.power_on_reset = 0;
 		global.deviceDataSendToMaster.power_on_reset = 0;
 
@@ -340,10 +341,12 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
 //		if ( !global.dataSendToSlaveStopEval ) {
 //			scheduleSpecial_Evaluate_DataSendToSlave();
 //		}
-		scheduleSpecial_Evaluate_DataSendToSlave();
-		SPI_Start_single_TxRx_with_Master(); //Send data always.
-	}
+	scheduleSpecial_Evaluate_DataSendToSlave();
+
+	SPI_Start_single_TxRx_with_Master(); //Send data always.
 }
+
+
 
 static uint8_t SPI_check_header_and_footer_ok(void) {
 	if (global.dataSendToSlave.header.checkCode[0] != 0xBB)
