@@ -964,21 +964,3 @@ _Bool is_ambient_pressure_close_to_surface(SLifeData *lifeData)
 	else
 		return false;
 }
-
-uint8_t stateUsed_scooterRemainingBattCapacity(void)
-{
-	const uint8_t useCapacityValue = 1; // 2 is the new one, 1 = scooterRestkapazitaetWhBased is the official used
-	
-	switch(useCapacityValue)
-	{
-		case 0:
-		default:
-			return stateUsed->lifeData.scooterRestkapazitaet;
-
-		case 1:
-			return stateUsed->lifeData.scooterRestkapazitaetWhBased;
-			
-		case 2:
-			return stateUsed->lifeData.scooterRestkapazitaetVoltageBased;
-	}		
-}

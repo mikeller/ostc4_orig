@@ -250,16 +250,6 @@ void tMenuEdit_refresh_live_content(void)
         GFX_SetFrameTop(tMEscreen.FBStartAdress);
         releaseFrame(9,rememberPage);
     }
-/*
-    else if(get_globalState() == (StMHARD6_ScooterDrag & MaskFieldDigit))
-    {
-        uint32_t rememberPage = tMEscreen.FBStartAdress;
-        tMEscreen.FBStartAdress = getFrame(9);
-        refresh_ScooterControl();
-        GFX_SetFrameTop(tMEscreen.FBStartAdress);
-        releaseFrame(9,rememberPage);
-    }
-*/
     else if(get_globalState() == (StMSYS3_Units & MaskFieldDigit))
     {
         uint32_t rememberPage = tMEscreen.FBStartAdress;

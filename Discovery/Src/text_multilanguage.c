@@ -1079,13 +1079,6 @@ static uint8_t text_FR_Warning[] = "Alerte";
 static uint8_t text_IT_Warning[] = "Pericolo";
 static uint8_t text_ES_Warning[] = "Peligro";
 
-// Customview Header (Bonex Computer)
-static uint8_t text_EN_ScooterMonitor[] = "bonex";
-static uint8_t text_DE_ScooterMonitor[] = "";
-static uint8_t text_FR_ScooterMonitor[] = "";
-static uint8_t text_IT_ScooterMonitor[] = "Bonex DPV";
-static uint8_t text_ES_ScooterMonitor[] = "bonex";
-
 // Menu SYS2 sub Information
 static uint8_t text_EN_Usage_Battery[] = "Battery life";
 static uint8_t text_DE_Usage_Battery[] = "Batterie-Nutzung";
@@ -1198,125 +1191,6 @@ static uint8_t text_DE_Saturday[] = "Samstag";
 static uint8_t text_FR_Saturday[] = "Samedi";
 static uint8_t text_IT_Saturday[] = "Sabato";
 static uint8_t text_ES_Saturday[] = "Sábado";
-
-// Dive Mode und Customview Content (Bonex Computer)
-static uint8_t text_EN_ScooterRestkapazitaet[] = "Battery Capacity";
-static uint8_t text_DE_ScooterRestkapazitaet[] = "Batterie Kapazität";
-static uint8_t text_FR_ScooterRestkapazitaet[] = "Charge Batterie";     // Ok for "...  = 35%"
-static uint8_t text_IT_ScooterRestkapazitaet[] = "Carica Batteria";
-static uint8_t text_ES_ScooterRestkapazitaet[] = "Capacidad carga";
-
-// Dive Mode und Customview Content (Bonex Computer)
-static uint8_t text_EN_ScooterTemperature[] = "Motor Temp.";
-static uint8_t text_DE_ScooterTemperature[] = "";
-static uint8_t text_FR_ScooterTemperature[] = "Temp. moteur"; // "Température moteur";
-static uint8_t text_IT_ScooterTemperature[] = "Temp. Motore";
-static uint8_t text_ES_ScooterTemperature[] = "Temp. del motor";
-
-// Dive Mode und Customview Content (Bonex Computer)
-static uint8_t text_EN_ScooterSpeed[] = "Speed";
-static uint8_t text_DE_ScooterSpeed[] = "Geschwindigkeit";
-static uint8_t text_FR_ScooterSpeed[] = "Vitesse";
-static uint8_t text_IT_ScooterSpeed[] = "Velocita";
-static uint8_t text_ES_ScooterSpeed[] = "Velocidad";
-
-// Menu SYS1 (Bonex Computer)
-static uint8_t text_EN_ScooterSetup[] = "Bonex Setup";
-static uint8_t text_DE_ScooterSetup[] = "";
-static uint8_t text_FR_ScooterSetup[] = "Config. Bonex"; // "Configuration Bonex";
-static uint8_t text_IT_ScooterSetup[] = "Settaggio DPV";
-static uint8_t text_ES_ScooterSetup[] = "Configuración Bonex";
-
-// Menu SYS1 (Bonex Computer)
-static uint8_t text_EN_ScooterDrag[] = "Drag";
-static uint8_t text_DE_ScooterDrag[] = "";
-static uint8_t text_FR_ScooterDrag[] = "";// "Traction";  // ?? No!! The traction force ? inhibition hw
-static uint8_t text_IT_ScooterDrag[] = "Spinta";
-static uint8_t text_ES_ScooterDrag[] = "Arrastre";
-
-// Menu SYS1 (Bonex Computer)
-static uint8_t text_EN_ScooterLoad[] = "Load";
-static uint8_t text_DE_ScooterLoad[] = "";
-static uint8_t text_FR_ScooterLoad[] = ""; // "Charge";    // ?? Kg
-static uint8_t text_IT_ScooterLoad[] = "Caricamento";
-static uint8_t text_ES_ScooterLoad[] = "Carga";
-
-// Menu SYS1 (Bonex Computer)
-static uint8_t text_EN_ScooterVolt[] = "Voltage";
-static uint8_t text_DE_ScooterVolt[] = "Spannung";
-static uint8_t text_FR_ScooterVolt[] = "";
-static uint8_t text_IT_ScooterVolt[] = "Voltaggio";
-static uint8_t text_ES_ScooterVolt[] = "Voltaje";
-
-// Menu SYS1 (Bonex Computer)
-static uint8_t text_EN_ScooterD0Apnoe[] = "Apnea";
-static uint8_t text_DE_ScooterD0Apnoe[] = "Apnoe";
-static uint8_t text_FR_ScooterD0Apnoe[] = "Apnée";
-static uint8_t text_IT_ScooterD0Apnoe[] = "Apnea";
-static uint8_t text_ES_ScooterD0Apnoe[] = "Apnea";
-
-// Menu SYS1 (Bonex Computer)
-static uint8_t text_EN_ScooterD1Scuba[] = "Scuba";
-static uint8_t text_DE_ScooterD1Scuba[] = "";
-static uint8_t text_FR_ScooterD1Scuba[] = "Plongée";
-static uint8_t text_IT_ScooterD1Scuba[] = "Immersione";
-static uint8_t text_ES_ScooterD1Scuba[] = "Buceo";
-
-// Menu SYS1 (Bonex Computer)
-static uint8_t text_EN_ScooterD2Tech[] = "Tech";
-static uint8_t text_DE_ScooterD2Tech[] = "";
-static uint8_t text_FR_ScooterD2Tech[] = ""; // Technique
-static uint8_t text_IT_ScooterD2Tech[] = "Immersione tecnica";
-static uint8_t text_ES_ScooterD2Tech[] = "Técnico";
-
-// Menu SYS1 (Bonex Computer)
-static uint8_t text_EN_ScooterD3Heavy[] = "Heavy Tech";
-static uint8_t text_DE_ScooterD3Heavy[] = "";
-static uint8_t text_FR_ScooterD3Heavy[] = "";// Technique engagée
-static uint8_t text_IT_ScooterD3Heavy[] = "Immersione profonda";
-static uint8_t text_ES_ScooterD3Heavy[] = "Técnico intenso";
-
-// Menu SYS1 (Bonex Computer)
-static uint8_t text_EN_ScooterL0None[] = "none gear";
-static uint8_t text_DE_ScooterL0None[] = "";
-static uint8_t text_FR_ScooterL0None[] = "sans";
-static uint8_t text_IT_ScooterL0None[] = "in Folle";
-static uint8_t text_ES_ScooterL0None[] = "Punto muerto";
-
-// Menu SYS1 (Bonex Computer)
-static uint8_t text_EN_ScooterL1Small[] = "Monotank / small double";
-static uint8_t text_DE_ScooterL1Small[] = "";
-static uint8_t text_FR_ScooterL1Small[] = "Mono / petit bi";
-static uint8_t text_IT_ScooterL1Small[] = "Mono / Bibo";
-static uint8_t text_ES_ScooterL1Small[] = "Monobotella / Bibotella";
-
-// Menu SYS1 (Bonex Computer)
-static uint8_t text_EN_ScooterL2Stages[] = "Rebreather & Stages";
-static uint8_t text_DE_ScooterL2Stages[] = "";
-static uint8_t text_FR_ScooterL2Stages[] = "Recycleur";
-static uint8_t text_IT_ScooterL2Stages[] = "Rebreather & Stage";
-static uint8_t text_ES_ScooterL2Stages[] = "Rebreather y estapa";
-
-// Menu SYS1 (Bonex Computer)
-static uint8_t text_EN_ScooterL3Full[] = "Multistage & Backup";
-static uint8_t text_DE_ScooterL3Full[] = "";
-static uint8_t text_FR_ScooterL3Full[] = "Multi-blocs & backup";
-static uint8_t text_IT_ScooterL3Full[] = "Immersione multigas";
-static uint8_t text_ES_ScooterL3Full[] = "Multi etapa";
-
-// Menu SYS1 (Bonex Computer)
-static uint8_t text_EN_ScooterL4Towing[] = "Towing";
-static uint8_t text_DE_ScooterL4Towing[] = "";
-static uint8_t text_FR_ScooterL4Towing[] = "Remorquage";
-static uint8_t text_IT_ScooterL4Towing[] = "Traino";
-static uint8_t text_ES_ScooterL4Towing[] = "Remolque";
-
-// Menu SYS1 (Bonex Computer)
-static uint8_t text_EN_ScooterBattTyp[] = "Accu";
-static uint8_t text_DE_ScooterBattTyp[] = "";
-static uint8_t text_FR_ScooterBattTyp[] = "";
-static uint8_t text_IT_ScooterBattTyp[] = "";
-static uint8_t text_ES_ScooterBattTyp[] = "";
 
 // Menu SYS1 sub (Sensors)
 static uint8_t text_EN_HUDBattery[] = "HUD battery";
@@ -1838,9 +1712,6 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_Thursday,		{text_EN_Thursday, text_DE_Thursday, text_FR_Thursday, text_IT_Thursday, text_ES_Thursday}},
     {(uint8_t)TXT2BYTE_Friday,			{text_EN_Friday, text_DE_Friday, text_FR_Friday, text_IT_Friday, text_ES_Friday}},
     {(uint8_t)TXT2BYTE_Saturday,		{text_EN_Saturday, text_DE_Saturday, text_FR_Saturday, text_IT_Saturday, text_ES_Saturday}},
-    {(uint8_t)TXT2BYTE_ScooterRestkapazitaet,{text_EN_ScooterRestkapazitaet, text_DE_ScooterRestkapazitaet, text_FR_ScooterRestkapazitaet, text_IT_ScooterRestkapazitaet, text_ES_ScooterRestkapazitaet}},
-    {(uint8_t)TXT2BYTE_ScooterTemperature,{text_EN_ScooterTemperature, text_DE_ScooterTemperature, text_FR_ScooterTemperature, text_IT_ScooterTemperature, text_ES_ScooterTemperature}},
-    {(uint8_t)TXT2BYTE_ScooterSpeed,	{text_EN_ScooterSpeed, text_DE_ScooterSpeed, text_FR_ScooterSpeed, text_IT_ScooterSpeed, text_ES_ScooterSpeed}},
     {(uint8_t)TXT2BYTE_Layout,			{text_EN_Design, text_DE_Design, text_FR_Design, text_IT_Design, text_ES_Design}},
     {(uint8_t)TXT2BYTE_Units,			{text_EN_Units, text_DE_Units, text_FR_Units, text_IT_Units, text_ES_Units}},
     {(uint8_t)TXT2BYTE_Units_metric,	{text_EN_Design_t7_metric, text_DE_Design_t7_metric, text_FR_Design_t7_metric, text_IT_Design_t7_metric, text_ES_Design_t7_metric}},
@@ -1865,23 +1736,8 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_DecoDataLost,	{text_EN_DecoDataLost, text_DE_DecoDataLost, text_FR_DecoDataLost, text_IT_DecoDataLost, text_ES_DecoDataLost}},
     {(uint8_t)TXT2BYTE_Info,			{text_EN_Info, text_DE_Info, text_FR_Info, text_IT_Info, text_ES_Info}},
     {(uint8_t)TXT2BYTE_Korrekturwerte,  {text_EN_Korrekturwerte, text_DE_Korrekturwerte, text_FR_Korrekturwerte, text_IT_Korrekturwerte, text_ES_Korrekturwerte}},
-    {(uint8_t)TXT2BYTE_ScooterMonitor,  {text_EN_ScooterMonitor, text_DE_ScooterMonitor, text_FR_ScooterMonitor, text_IT_ScooterMonitor, text_ES_ScooterMonitor}},
     {(uint8_t)TXT2BYTE_SetBearing,		{text_EN_SetBearing, text_DE_SetBearing, text_FR_SetBearing, text_IT_SetBearing, text_ES_SetBearing}},
     {(uint8_t)TXT2BYTE_ResetBearing,	{text_EN_ResetBearing, text_DE_ResetBearing, text_FR_ResetBearing, text_IT_ResetBearing, text_ES_ResetBearing}},
-    {(uint8_t)TXT2BYTE_ScooterSetup,	{text_EN_ScooterSetup, text_DE_ScooterSetup, text_FR_ScooterSetup, text_IT_ScooterSetup, text_ES_ScooterSetup}},
-    {(uint8_t)TXT2BYTE_ScooterDrag,		{text_EN_ScooterDrag, text_DE_ScooterDrag, text_FR_ScooterDrag, text_IT_ScooterDrag, text_ES_ScooterDrag}},
-    {(uint8_t)TXT2BYTE_ScooterLoad,		{text_EN_ScooterLoad, text_DE_ScooterLoad, text_FR_ScooterLoad, text_IT_ScooterLoad, text_ES_ScooterLoad}},
-    {(uint8_t)TXT2BYTE_ScooterD0Apnoe,  {text_EN_ScooterD0Apnoe, text_DE_ScooterD0Apnoe, text_FR_ScooterD0Apnoe, text_IT_ScooterD0Apnoe, text_ES_ScooterD0Apnoe}},
-    {(uint8_t)TXT2BYTE_ScooterD1Scuba,  {text_EN_ScooterD1Scuba, text_DE_ScooterD1Scuba, text_FR_ScooterD1Scuba, text_IT_ScooterD1Scuba, text_ES_ScooterD1Scuba}},
-    {(uint8_t)TXT2BYTE_ScooterD2Tech,	{text_EN_ScooterD2Tech, text_DE_ScooterD2Tech, text_FR_ScooterD2Tech, text_IT_ScooterD2Tech, text_ES_ScooterD2Tech}},
-    {(uint8_t)TXT2BYTE_ScooterD3Heavy,  {text_EN_ScooterD3Heavy, text_DE_ScooterD3Heavy, text_FR_ScooterD3Heavy, text_IT_ScooterD3Heavy, text_ES_ScooterD3Heavy}},
-    {(uint8_t)TXT2BYTE_ScooterL0None,	{text_EN_ScooterL0None, text_DE_ScooterL0None, text_FR_ScooterL0None, text_IT_ScooterL0None, text_ES_ScooterL0None}},
-    {(uint8_t)TXT2BYTE_ScooterL1Small,  {text_EN_ScooterL1Small, text_DE_ScooterL1Small, text_FR_ScooterL1Small, text_IT_ScooterL1Small, text_ES_ScooterL1Small}},
-    {(uint8_t)TXT2BYTE_ScooterL2Stages, {text_EN_ScooterL2Stages, text_DE_ScooterL2Stages, text_FR_ScooterL2Stages, text_IT_ScooterL2Stages, text_ES_ScooterL2Stages}},
-    {(uint8_t)TXT2BYTE_ScooterL3Full,	{text_EN_ScooterL3Full, text_DE_ScooterL3Full, text_FR_ScooterL3Full, text_IT_ScooterL3Full, text_ES_ScooterL3Full}},
-    {(uint8_t)TXT2BYTE_ScooterL4Towing, {text_EN_ScooterL4Towing, text_DE_ScooterL4Towing, text_FR_ScooterL4Towing, text_IT_ScooterL4Towing, text_ES_ScooterL4Towing}},
-    {(uint8_t)TXT2BYTE_ScooterBattTyp,  {text_EN_ScooterBattTyp, text_DE_ScooterBattTyp, text_FR_ScooterBattTyp, text_IT_ScooterBattTyp, text_ES_ScooterBattTyp}},
-    {(uint8_t)TXT2BYTE_ScooterVolt,		{text_EN_ScooterVolt, text_DE_ScooterVolt, text_FR_ScooterVolt, text_IT_ScooterVolt, text_ES_ScooterVolt}},
     {(uint8_t)TXT2BYTE_Sensor,			{text_EN_SensorList, text_DE_SensorList, text_FR_SensorList, text_IT_SensorList, text_ES_SensorList}},
     {(uint8_t)TXT2BYTE_Maintenance,		{text_EN_Maintenance, text_DE_Maintenance, text_FR_Maintenance, text_IT_Maintenance, text_ES_Maintenance}},
     {(uint8_t)TXT2BYTE_SetBatteryCharge,{text_EN_SetBatteryCharge, text_DE_SetBatteryCharge, text_FR_SetBatteryCharge, text_IT_SetBatteryCharge, text_ES_SetBatteryCharge}},

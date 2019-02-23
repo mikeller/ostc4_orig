@@ -274,9 +274,6 @@ char customview_TXT2BYTE_helper(uint8_t customViewId)
 
     switch(customViewId)
     {
-    case CVIEW_Scooter:
-        text = TXT2BYTE_ScooterMonitor;
-        break;
     case CVIEW_sensors:
         text = TXT2BYTE_O2monitor;
         break;

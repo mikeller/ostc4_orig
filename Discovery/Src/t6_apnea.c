@@ -308,45 +308,6 @@ void t6_battery_low_customview_extra(void)
 }
 
 
-void t6_battery_scooter_customview_extra(void)
-{
-    char TextC1[256];
-
-    TextC1[0] = '\001';
-    TextC1[1] = '\f';
-    TextC1[2] = '\032';
-    TextC1[3] = '3';
-    TextC1[4] = '1';
-    TextC1[5] = '1';
-    TextC1[6] = '1';
-    TextC1[7] = '1';
-    TextC1[8] = '1';
-    TextC1[9] = '1';
-    TextC1[10] = '1';
-    TextC1[11] = '1';
-    TextC1[12] = '1';
-    TextC1[13] = '1';
-    TextC1[14] = '0';
-    TextC1[15] = 0;
-
-    for(int i=1;i<=10;i++)
-    {
-        if(	stateUsed_scooterRemainingBattCapacity()  > (9 * i))
-            TextC1[i+3] += 1;
-    }
-
-    if(stateUsed_scooterRemainingBattCapacity() < 10)
-        TextC1[2] = '\025';
-
-    if(!warning_count_high_time)
-        TextC1[4] = '2';
-
-    if(stateUsed->lifeData.scooterAgeInMilliSeconds > 1500)
-        TextC1[2] = '\031';
-
-    GFX_write_string(&Batt24,&t6c1,TextC1,0);
-}
-
 
 void t6_change_customview(void)
 {

@@ -230,7 +230,6 @@
 #include "timer.h"
 #include "logbook_miniLive.h"
 #include "test_vpm.h"
-//#include "bonexConnect.h"
 #include "tDebug.h"
 
 #ifdef DEMOMODE
@@ -402,15 +401,6 @@ int main(void)
     //  settingsGetPointer()->showDebugInfo = 1;
 
     /*
-    if(settingsGetPointer()->scooterControl)
-    {
-         settingsGetPointer()->bluetoothActive = 1;
-         MX_Bluetooth_PowerOn();
-         if(settingsGetPointer()->scooterDeviceAddress[0] != 0)
-            bC_setConnectRequest();
-    }
-    */
-    /*
     if( (hardwareDataGetPointer()->primarySerial == 20+18)
      || (hardwareDataGetPointer()->primarySerial == 20+25)
      || (hardwareDataGetPointer()->primarySerial == 20+27))
@@ -501,18 +491,6 @@ int main(void)
             ext_flash_write_settings();
         }
         deco_loop();
-        /*
-        bonexControl();
-        if(bC_getStatus() == BC_DISCONNECTED)
-        {
-            if(tComm_control())			// will stop while loop if tComm Mode started until exit from UART
-            {
-                createDiveSettings();
-                updateMenu();
-                ext_flash_write_settings();
-            }
-        }
-        */
 
 #ifdef DEBUG_RUNTIME
         translateTime(stateUsed->lifeData.timeBinaryFormat, &Stime);

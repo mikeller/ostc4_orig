@@ -29,7 +29,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "t7.h"
 
-//#include "bonexConnect.h"
 #include "data_exchange_main.h"
 #include "decom.h"
 #include "gfx_fonts.h"
@@ -53,7 +52,6 @@ void draw_frame(_Bool PluginBoxHeader, _Bool LinesOnTheSides, uint8_t colorBox, 
 
 void t7_tissues(const SDiveState * pState);
 void t7_compass(uint16_t ActualHeading, uint16_t UserSetHeading);
-void t7_scooter(void);
 void t7_SummaryOfLeftCorner(void);
 void t7_debug(void);
 
@@ -144,36 +142,6 @@ const uint8_t customviewsSurfaceStandard[] =
     CVIEW_END
 };
 
-const uint8_t customviewsDiveScooter[] =
-{
-    CVIEW_Scooter,
-    CVIEW_sensors,
-    CVIEW_Compass,
-    CVIEW_Decolist,
-    CVIEW_Tissues,
-    CVIEW_Profile,
-    CVIEW_Gaslist,
-    CVIEW_sensors_mV,
-    CVIEW_EADTime,
-    CVIEW_SummaryOfLeftCorner,
-    CVIEW_noneOrDebug,
-    CVIEW_END,
-    CVIEW_END
-};
-
-const uint8_t customviewsSurfaceScooter[] =
-{
-//  CVIEW_CompassDebug,
-    CVIEW_Scooter,
-    CVIEW_Hello,
-    CVIEW_sensors,
-    CVIEW_Compass,
-    CVIEW_Tissues,
-    CVIEW_sensors_mV,
-    CVIEW_END,
-    CVIEW_END
-};
-
 const uint8_t *customviewsDive		= customviewsDiveStandard;
 const uint8_t *customviewsSurface	= customviewsSurfaceStandard;
 
@@ -202,13 +170,6 @@ void t7_init(void)
 
 	SSettings* pSettings;
 	pSettings = settingsGetPointer();
-
-
-    if(getLicence() == LICENCEBONEX)
-    {
-        customviewsDive     = customviewsDiveScooter;
-        customviewsSurface	= customviewsSurfaceScooter;
-    }
 
     selection_custom_field = 1;
     selection_customview = customviewsSurface[0];
@@ -632,13 +593,6 @@ void t7_refresh(void)
             releaseFrame(22,t7screen.FBStartAdress);
             return;
         }
-        else if(DataEX_scooterFoundAndValidLicence()) // new for t9 hw 160711
-        {
-            settingsGetPointer()->design = 9;
-            releaseAllFramesExcept(22,t7screen.FBStartAdress);
-            releaseFrame(22,t7screen.FBStartAdress);
-            return;
-        }
         else
         {
             t7_refresh_divemode();
@@ -756,18 +710,6 @@ void t7_refresh_surface(void)
     text[2] = TXT2BYTE_ButtonMenu;
     text[3] = 0;
     write_content_simple(&t7screen, 0, 799, 479-TOP_LINE_HIGHT, &FontT24,text,CLUT_ButtonSurfaceScreen);
-
-/*
-    // scooter connected?
-    if(bC_getData(0,0,0,0) == BC_CONNECTED)
-    {
-        text[0] = '\f';
-        text[1] = '\002';
-        memcpy(&text[2],&settingsGetPointer()->scooterDeviceName,19);
-        text[21] = 0;
-        GFX_write_string_color(&FontT24,&t7r1,text,0,CLUT_NiceGreen);
-    }
-*/
 
     /* was power on reset */
 //.....
@@ -1587,11 +1529,6 @@ void t7_change_customview(void)
             }
         } while(cv_disabled);
     }
-
-
-//	if((*pViews == CVIEW_Scooter) && (getLicence() != LICENCEBONEX))
-//		pViews++;
-
     selection_customview = *pViews;
 }
 
@@ -1624,11 +1561,6 @@ void t7_refresh_customview(void)
 	SSettings* pSettings;
 	pSettings = settingsGetPointer();
 
-
-    if((selection_customview == CVIEW_Scooter) && (getLicence() != LICENCEBONEX))
-        t7_change_customview();
-    if((selection_customview == CVIEW_Scooter) && (!DataEX_scooterFoundAndValidLicence() && (stateRealGetPointer()->mode == MODE_DIVE)))
-        t7_change_customview();
     if((selection_customview == CVIEW_sensors) &&(stateUsed->diveSettings.ccrOption == 0))
         t7_change_customview();
     if((selection_customview == CVIEW_sensors_mV) &&(stateUsed->diveSettings.ccrOption == 0))
@@ -1742,12 +1674,6 @@ void t7_refresh_customview(void)
             );
             GFX_write_string(&FontT24,&t7cC,text,0);
         }
-        break;
-
-    case CVIEW_Scooter:
-        snprintf(text,100,"\032\f\001Scooter");
-        GFX_write_string(&FontT42,&t7cH,text,0);
-        t7_scooter();
         break;
 
     case CVIEW_Gaslist:
@@ -3205,305 +3131,6 @@ void t7_SummaryOfLeftCorner(void)
 }
 
 
-void t7_scooter(void)
-{
-    float scooterTemperatureLocal;
-    uint16_t scooterSpeedLocal;
-//	uint16_t scooterDrehzhl;
-    uint8_t scooterResidualCapacity;
-//	float scooterVoltage;
-//	uint8_t scooterCurrent;
-    //uint16_t scooterWattHours;
-//	uint16_t bkpX0, bkpX1;
-    uint16_t ageInMilliSeconds;
-
-    uint8_t textSize;
-
-    scooterTemperatureLocal = unit_temperature_float(((float)(stateUsed->lifeData.scooterTemperature)) / 10.0f);
-    scooterSpeedLocal = unit_speed_integer(stateUsed->lifeData.scooterSpeed);
-    scooterResidualCapacity = stateUsed_scooterRemainingBattCapacity();
-
-//	scooterDrehzhl = stateUsed->lifeData.scooterDrehzahl;
-//	scooterVoltage = stateUsed->lifeData.scooterSpannung;
-//	scooterCurrent = stateUsed->lifeData.scooterAmpere;
-//	scooterWattHours = stateUsed->lifeData.scooterWattstunden;
-
-    ageInMilliSeconds = stateUsed->lifeData.scooterAgeInMilliSeconds;
-    if(!ageInMilliSeconds)
-        ageInMilliSeconds = 9999;
-
-    char text[256+60];
-    uint8_t textpointer = 0;
-
-    t7cY0free.WindowLineSpacing = 28 + 48 + 14;
-    t7cY0free.WindowY0 = t7cH.WindowY0 - 5 - 2 * t7cY0free.WindowLineSpacing;
-    t7cY0free.WindowNumberOfTextLines = 3;
-
-    // header
-//	text[textpointer++] = '\032';
-    text[textpointer++] = TXT_2BYTE;
-    text[textpointer++] = TXT2BYTE_ScooterRestkapazitaet;
-    text[textpointer++] = '\n';
-    text[textpointer++] = '\r';
-    text[textpointer++] = TXT_2BYTE;
-    text[textpointer++] = TXT2BYTE_ScooterTemperature;
-    text[textpointer++] = '\n';
-    text[textpointer++] = '\r';
-    text[textpointer++] = TXT_2BYTE;
-    text[textpointer++] = TXT2BYTE_ScooterSpeed;
-    text[textpointer++] = 0;
-    GFX_write_string(&FontT24, &t7cY0free, text, 1);
-
-/*
-    snprintf(text,60,
-                "\032"
-                "%0u" "\016\016 Wh used\017"
-                ,stateUsed->lifeData.scooterWattstunden);
-*/
-
-    GFX_write_string(&FontT24, &t7cY0free, text, 1);
-
-/*
-    snprintf(text,60,
-                "\030"
-                "\n\r"
-                "\n\r"
-                "%0u" "\022\016\016 rpm\017\030"
-                ,stateUsed->lifeData.scooterDrehzahl);
-    GFX_write_string(&FontT24, &t7cY0free, text, 1);
-*/
-    // data
-    t7cY0free.WindowY0 -= 52;
-    if(settingsGetPointer()->nonMetricalSystem == 0)
-    {
-        textSize = snprintf(text,60,
-            "\030"
-            "%0u" "\022\016\016 %%\017\030"
-            "\n\r"
-            "%0.0f\140" "\022\016\016 C\017\030"
-            "\n\r"
-            "%u"  "\022\016\016 m/min\017\030"
-            ,scooterResidualCapacity,scooterTemperatureLocal,scooterSpeedLocal);
-    }
-    else
-    {
-        textSize = snprintf(text,60,
-            "\030"
-            "%0u" "\022\016\016 %%\017\030"
-            "\n\r"
-            "%0.0f\140" "\022\016\016 Fht\017\030"
-            "\n\r"
-            "%u"  "\022\016\016 ft/min\017\030"
-            ,scooterResidualCapacity,scooterTemperatureLocal,scooterSpeedLocal);
-    }
-    // connection active
-    if(ageInMilliSeconds > 1500)
-    {
-        for(int i=0; i < textSize -2; i++)
-        {
-            if(text[i] == '\030')
-                text[i] = '\031';
-        }
-    }
-    // write data
-    GFX_write_string(&FontT42, &t7cY0free, text, 1);
-
-    // age stamp
-    if(ageInMilliSeconds < 9999)
-    {
-        t7cY0free.WindowY0 -= 30;
-        snprintf(text,60,
-            "\021\001%u"
-            ,ageInMilliSeconds);
-        GFX_write_string(&FontT24, &t7cY0free, text, 0);
-    }
-}
-
-
-void t7_scooter_May2016_01(void)
-{
-    float scooterTemperature;
-    uint16_t scooterDrehzhl;
-    uint8_t scooterResidualCapacity;
-    float scooterSpeed;
-    float scooterVoltage;
-    uint8_t scooterCurrent;
-//	uint16_t scooterWattHours;
-    uint16_t bkpX0, bkpX1;
-
-    uint16_t ageInMilliSeconds;
-    uint8_t textSize;
-// old	scooterStatus = bC_getData(0,&scooterTemperature,&scooterDrehzhl,&scooterResidualCapacity);
-
-    scooterDrehzhl = stateUsed->lifeData.scooterDrehzahl;
-    scooterTemperature = ((float)(stateUsed->lifeData.scooterTemperature)) / 10.0f;
-    scooterResidualCapacity = stateUsed_scooterRemainingBattCapacity();
-
-    scooterVoltage = stateUsed->lifeData.scooterSpannung;
-    scooterCurrent = stateUsed->lifeData.scooterAmpere;
-//	scooterWattHours = stateUsed->lifeData.scooterWattstunden;
-
-    ageInMilliSeconds = stateUsed->lifeData.scooterAgeInMilliSeconds;
-
-    scooterSpeed = scooterDrehzhl * 80 / 3300;
-
-    char text[256+60];
-
-    t7cY0free.WindowLineSpacing = (28 + 48 + 14)/2;
-    t7cY0free.WindowY0 = t7cH.WindowY0 - 5 - 5 * t7cY0free.WindowLineSpacing;
-    t7cY0free.WindowNumberOfTextLines = 6;
-
-    t7cY0free.WindowY0 -= 7;
-
-    bkpX0 = t7cY0free.WindowX0;
-    bkpX1 = t7cY0free.WindowX1;
-    t7cY0free.WindowX0 = 430;
-
-    textSize = snprintf(text,120,
-        "\022\016\016"
-        "%%"
-        "\n\r"
-        "celsius"
-        "\n\r"
-        "rpm"
-        "\n\r"
-        "m/min"
-        "\n\r"
-        "Ampere"
-        "\n\r"
-        "Volt"
-//		"\n\r"
-//		"Wh"
-            );
-    GFX_write_string(&FontT42, &t7cY0free, text, 1);
-
-    t7cY0free.WindowX0 = bkpX0;
-    t7cY0free.WindowX1 = 420;
-
-    textSize = snprintf(text,120,
-        "\030"
-        "\002"
-        "%0u"
-        "\n\r"
-        "\002"
-        "%0.0f"
-        "\n\r"
-        "\002"
-        "%0u"
-        "\n\r"
-        "\002"
-        "%0.0f"
-        "\n\r"
-        "\002"
-        "%0u"
-        "\n\r"
-        "\002"
-        "%0.1f"
-//		"\n\r"
-//		"%0u"  "\022\016\016 Wh\017\030"
-        ,scooterResidualCapacity,scooterTemperature,scooterDrehzhl,scooterSpeed
-        ,scooterCurrent,scooterVoltage);//,scooterWattHours);
-
-    if((ageInMilliSeconds > 1500) || (stateUsed->lifeData.scooterType == 0xFF))
-    {
-        for(int i=0; i < textSize -2; i++)
-        {
-            if(text[i] == '\030')
-                text[i] = '\031';
-        }
-    }
-    GFX_write_string(&FontT42, &t7cY0free, text, 1);
-
-    t7cY0free.WindowX0 = bkpX0;
-    t7cY0free.WindowX1 = bkpX1;
-
-    t7cY0free.WindowY0 -= 30;
-    snprintf(text,60,
-        "\021\001%u"
-        ,ageInMilliSeconds);
-    GFX_write_string(&FontT24, &t7cY0free, text, 0);
-
-}
-
-void t7_scooter_alt(void)
-{
-    float scooterTemperature;
-    uint16_t scooterDrehzhl;
-    uint8_t scooterStatus;
-    uint8_t scooterResidualCapacity;
-    float scooterSpeed;
-    uint16_t ageInMilliSeconds;
-    uint8_t textSize;
-// old	scooterStatus = bC_getData(0,&scooterTemperature,&scooterDrehzhl,&scooterResidualCapacity);
-
-    scooterStatus = 2;//BC_CONNECTED;
-    scooterDrehzhl = stateUsed->lifeData.scooterDrehzahl;
-    scooterTemperature = ((float)(stateUsed->lifeData.scooterTemperature)) / 10.0f;
-    scooterResidualCapacity = stateUsed_scooterRemainingBattCapacity();
-    ageInMilliSeconds = stateUsed->lifeData.scooterAgeInMilliSeconds;
-    if(!ageInMilliSeconds)
-        ageInMilliSeconds = 9999;
-
-    scooterSpeed = scooterDrehzhl * 80 / 3300;
-
-    char text[256+60];
-    uint8_t textpointer = 0;
-
-    //float percent_N2;
-    //float percent_He;
-    //float partial_pressure_N2;
-    //float partial_pressure_He;
-
-    t7cY0free.WindowLineSpacing = 28 + 48 + 14;
-    t7cY0free.WindowY0 = t7cH.WindowY0 - 5 - 2 * t7cY0free.WindowLineSpacing;
-    t7cY0free.WindowNumberOfTextLines = 3;
-
-    text[textpointer++] = '\032';
-    text[textpointer++] = TXT_2BYTE;
-    text[textpointer++] = TXT2BYTE_ScooterRestkapazitaet;
-    text[textpointer++] = '\n';
-    text[textpointer++] = '\r';
-    text[textpointer++] = TXT_2BYTE;
-    text[textpointer++] = TXT2BYTE_ScooterTemperature;
-    text[textpointer++] = '\n';
-    text[textpointer++] = '\r';
-    text[textpointer++] = TXT_2BYTE;
-    text[textpointer++] = TXT2BYTE_ScooterSpeed;
-    text[textpointer++] = 0;
-
-    GFX_write_string(&FontT24, &t7cY0free, text, 1);
-
-    if(scooterStatus == 2)//BC_CONNECTED)
-    {
-        t7cY0free.WindowY0 -= 52;
-        textSize = snprintf(text,60,
-            "\030"
-            "%0u" "\022\016\016 %%\017\030"
-            "\n\r"
-            "%0.0f\140" "\022\016\016 celsius\017\030"
-            "\n\r"
-            "%0.0f"  "\022\016\016 m/min\017\030"
-            ,scooterResidualCapacity,scooterTemperature,scooterSpeed);
-
-        if(ageInMilliSeconds > 1500)
-        {
-            for(int i=0; i < textSize -2; i++)
-            {
-                if(text[i] == '\030')
-                    text[i] = '\031';
-            }
-        }
-//		snprintf(text,60,"\031%0.2f\n\r%0.2f\n\r%u",scooterWatt,scooterTemperature,scooterDrehzhl);
-        GFX_write_string(&FontT42, &t7cY0free, text, 1);
-
-        t7cY0free.WindowY0 -= 30;
-        snprintf(text,60,
-            "\021\001%u"
-            ,ageInMilliSeconds);
-        GFX_write_string(&FontT24, &t7cY0free, text, 0);
-
-    }
-}
 
 
 /*

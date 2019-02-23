@@ -71,14 +71,12 @@
 #include "timer.h"
 #include "buehlmann.h"
 #include "externLogbookFlash.h"
-#include "bonex_mini.h" // for voltage to battery percentage
 
 
 /* Expoted variables --------------------------------------------------------*/
 uint8_t	wasPowerOn = 0;
 confirmbit8_Type requestNecessary = { .uw = 0 };
 uint8_t wasUpdateNotPowerOn = 0;
-uint8_t scooterFoundThisPowerOnCylce = 0;
 
 /* Private variables with external access ------------------------------------*/
 
@@ -196,18 +194,6 @@ void DataEX_init(void)
 	dataOut.footer.checkCode[1] = 0xF3;
 	dataOut.footer.checkCode[2] = 0xF2;
 	dataOut.footer.checkCode[3] = 0xF1;
-
-
-	pStateReal->lifeData.scooterType							= 0xFF;
-	pStateReal->lifeData.scooterWattstunden 			= 0;
-	pStateReal->lifeData.scooterRestkapazitaet 		= 0;
-	pStateReal->lifeData.scooterDrehzahl 					= 0;
-	pStateReal->lifeData.scooterSpannung					= 0;
-	pStateReal->lifeData.scooterTemperature 			= 0;
-	pStateReal->lifeData.scooterAmpere				 		= 0;
-	pStateReal->lifeData.scooterRestkapazitaetWhBased	= 0;
-	pStateReal->lifeData.scooterRestkapazitaetVoltageBased	= 0;
-	pStateReal->lifeData.scooterAgeInMilliSeconds = 0;
 	
 	systick_last = HAL_GetTick() - 100;
 }
@@ -1245,86 +1231,7 @@ wirelessData[i][2] = pStateReal->lifeData.wireless_data[i].ageInMilliSeconds;
 		}
 	}
 */
-	// new: Bonex
-	float scooterSpeedFloat;
-	int32_t scooterRemainingBattCapacity;
 	
-	for(int i=0;i<4;i++)
-	{
-		if((wirelessData[i][0]))// && (wirelessData[i][2]) && (wirelessData[i][2] < 60000))
-		{
-			pStateReal->lifeData.scooterType							= (pStateReal->lifeData.wireless_data[i].data[0] >> 4) & 0x07;
-			pStateReal->lifeData.scooterWattstunden 				= ((uint16_t)((((uint16_t)(pStateReal->lifeData.wireless_data[i].data[0] & 0x0F) << 8) | (pStateReal->lifeData.wireless_data[i].data[1]))));
-//			pStateReal->lifeData.scooterWattstunden 		=  pStateReal->lifeData.wireless_data[i].data[0] & 0x0F;
-//			pStateReal->lifeData.scooterWattstunden			*= 256;
-//			pStateReal->lifeData.scooterWattstunden 		+=  pStateReal->lifeData.wireless_data[i].data[1];
-			pStateReal->lifeData.scooterRestkapazitaet 		= pStateReal->lifeData.wireless_data[i].data[2];
-			pStateReal->lifeData.scooterDrehzahl 					= ((uint16_t)( (int16_t)((pStateReal->lifeData.wireless_data[i].data[4] << 8) | (pStateReal->lifeData.wireless_data[i].data[3]))));
-			pStateReal->lifeData.scooterSpannung					= ((float)(pStateReal->lifeData.wireless_data[i].data[5])) / 5.0f;
-			pStateReal->lifeData.scooterTemperature 			= ((uint16_t)( (int16_t)((pStateReal->lifeData.wireless_data[i].data[7] << 8) | (pStateReal->lifeData.wireless_data[i].data[6]))));
-			pStateReal->lifeData.scooterAmpere				 		= pStateReal->lifeData.wireless_data[i].data[9] >> 1;
-			pStateReal->lifeData.scooterAgeInMilliSeconds = pStateReal->lifeData.wireless_data[i].ageInMilliSeconds;
-
-			if(pStateReal->lifeData.scooterWattstunden > 0)
-				scooterRemainingBattCapacity = settingsGetPointer()->scooterBattSize / pStateReal->lifeData.scooterWattstunden;
-			else
-			scooterRemainingBattCapacity = 100;
-			
-			
-			if(scooterRemainingBattCapacity < 0)
-				scooterRemainingBattCapacity = 0;
-			if(scooterRemainingBattCapacity > 100)
-				scooterRemainingBattCapacity = 100;
-			pStateReal->lifeData.scooterRestkapazitaetWhBased = scooterRemainingBattCapacity;
-
-//			BONEX_calc_new_ResidualCapacity(&pStateReal->lifeData.scooterRestkapazitaetVoltageBased, (uint32_t)(1000 * pStateReal->lifeData.scooterSpannung),1000,1);
-			pStateReal->lifeData.scooterRestkapazitaetVoltageBased = BONEX_mini_ResidualCapacityVoltageBased(pStateReal->lifeData.scooterSpannung, pStateReal->lifeData.scooterAgeInMilliSeconds);	
-
-			scooterSpeedFloat = (float)pStateReal->lifeData.scooterDrehzahl;
-			scooterSpeedFloat /= (37.0f / 1.1f); // 3700 rpm = 110 m/min
-			switch(settingsGetPointer()->scooterDrag)
-			{
-				case 1:
-					scooterSpeedFloat *= 0.95f;
-					break;
-				case 2:
-					scooterSpeedFloat *= 0.85f;
-					break;
-				case 3:
-					scooterSpeedFloat *= 0.75f;
-					break;
-				default:
-					break;
-			}
-			switch(settingsGetPointer()->scooterLoad)
-			{
-				case 1:
-					scooterSpeedFloat *= 0.90f;
-					break;
-				case 2:
-					scooterSpeedFloat *= 0.80f;
-					break;
-				case 3:
-					scooterSpeedFloat *= 0.70f;
-					break;
-				case 4:
-					scooterSpeedFloat *= 0.60f;
-					break;
-				default:
-					break;
-			}
-			if(scooterSpeedFloat < 0)
-				pStateReal->lifeData.scooterSpeed = 0;
-			else
-			if(scooterSpeedFloat > 255)
-				pStateReal->lifeData.scooterSpeed = 255;
-			else
-				pStateReal->lifeData.scooterSpeed = (uint16_t)scooterSpeedFloat;
-			
-			if(!scooterFoundThisPowerOnCylce && (pStateReal->lifeData.scooterAgeInMilliSeconds > 0))
-				scooterFoundThisPowerOnCylce = 1;
-		}
-	}
  
 	/* PIC data
  	 */
@@ -1368,22 +1275,6 @@ uint8_t DataEX_check_RTE_version__needs_update(void)
 	}
 }
 
-
-uint8_t DataEX_scooterDataFound(void)
-{
-	return scooterFoundThisPowerOnCylce;
-}
-
-
-uint8_t DataEX_scooterFoundAndValidLicence(void)
-{
-	if(getLicence() != LICENCEBONEX)
-		return 0;
-	else
-		return scooterFoundThisPowerOnCylce;
-//return 0xFF;
-//return LICENCEBONEX;
-}
 
 	/* Private functions ---------------------------------------------------------*/
 

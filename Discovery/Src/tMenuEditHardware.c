@@ -29,7 +29,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "tMenuEditHardware.h"
 
-//#include "bonex4.h"
 #include "externCPU2bootloader.h"
 #include "gfx_fonts.h"
 #include "ostc.h"
@@ -48,7 +47,6 @@ void openEdit_O2Sensors(void);
 void openEdit_Brightness(void);
 //void openEdit_Luftintegration(void);
 void openEdit_ButtonSens(void);
-void openEdit_ScooterControl(void);
 void openEdit_FlipDisplay(void);
 
 /* Announced function prototypes -----------------------------------------------*/
@@ -62,11 +60,7 @@ uint8_t OnAction_Sensor3		(uint32_t editId, uint8_t blockNumber, uint8_t digitNu
 uint8_t OnAction_O2_Fallback	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_Button			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_ButtonBalance	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_ScooterDrag	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_ScooterLoad	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_ScooterBatt    (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 // nicht notwending uint8_t OnAction_Bluetooth				(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-// nicht notwending uint8_t OnAction_ScooterControl		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 
 /* Exported functions --------------------------------------------------------*/
 
@@ -94,14 +88,7 @@ void openEdit_Hardware(uint8_t line)
         openEdit_ButtonSens();
     break;
     case 6:
-    	if(getLicence() == LICENCEBONEX)
-    	{
-    		openEdit_ScooterControl();
-    	}
-    	else
-    	{
-    		openEdit_FlipDisplay();
-    	}
+    	openEdit_FlipDisplay();
     break;
     }
 }
@@ -152,277 +139,6 @@ void openEdit_FlipDisplay(void)
     exitEditWithUpdate();
     exitMenuEdit_to_Home();
 }
-/*
-void refresh_ScooterControl(void)
-{
-    char text[256];
-
-    text[0] = '\001';
-    text[1] = TXT_2BYTE;
-    text[2] = TXT2BYTE_ScooterSetup;
-    text[3] = 0;
-    write_topline(text);
-
-    // drag
-    text[0] = TXT_2BYTE;
-    text[1] = TXT2BYTE_ScooterDrag;
-    text[2] = 0;
-    write_label_var(  30, 180, ME_Y_LINE1, &FontT48, text);
-    // load
-    text[0] = TXT_2BYTE;
-    text[1] = TXT2BYTE_ScooterLoad;
-    text[2] = 0;
-    write_label_var(  30, 180, ME_Y_LINE2, &FontT48, text);
-    // batt type
-    text[0] = TXT_2BYTE;
-    text[1] = TXT2BYTE_ScooterBattTyp;
-    text[2] = 0;
-    write_label_var(  30, 180, ME_Y_LINE3, &FontT48, text);
-
-    // drag
-    text[0] = TXT_2BYTE;
-    text[1] = 0;
-    text[2] = 0;
-    switch(settingsGetPointer()->scooterDrag)
-    {
-        case 0:
-            text[1] = TXT2BYTE_ScooterD0Apnoe;
-            break;
-        case 1:
-            text[1] = TXT2BYTE_ScooterD1Scuba;
-            break;
-        case 2:
-            text[1] = TXT2BYTE_ScooterD2Tech;
-            break;
-        case 3:
-            text[1] = TXT2BYTE_ScooterD3Heavy;
-            break;
-        default:
-            snprintf(&text[4],3,"%02u",settingsGetPointer()->scooterDrag);
-        break;
-    }
-    write_label_var( 200, 700, ME_Y_LINE1, &FontT48, text);
-
-    // load
-    text[0] = TXT_2BYTE;
-    text[1] = 0;
-    text[2] = 0;
-    switch(settingsGetPointer()->scooterLoad)
-    {
-        case 0:
-            text[1] = TXT2BYTE_ScooterL0None;
-            break;
-        case 1:
-            text[1] = TXT2BYTE_ScooterL1Small;
-            break;
-        case 2:
-            text[1] = TXT2BYTE_ScooterL2Stages;
-            break;
-        case 3:
-            text[1] = TXT2BYTE_ScooterL3Full;
-            break;
-        case 4:
-            text[1] = TXT2BYTE_ScooterL4Towing;
-            break;
-        default:
-            snprintf(&text[4],3,"%02u",settingsGetPointer()->scooterLoad);
-        break;
-    }
-    write_label_var( 200, 700, ME_Y_LINE2, &FontT48, text);
-
-    //batt type
-
-//	txtptr = 0;
-//	txtptr += bo4GetBatteryName(text,settingsGetPointer()->scooterBattType);
-//	txtptr += snprintf(&text[txtptr],10," (%0.1f V)",bo4GetBatteryVoltage(settingsGetPointer()->scooterBattType));
-//	write_label_var( 200, 700, ME_Y_LINE3, &FontT48, text);
-}
-*/
-
-void getButtonText_ScooterControl(char *text, uint8_t * pointer)
-{
-
-    if((pointer != &settingsGetPointer()->scooterLoad) && (pointer != &settingsGetPointer()->scooterDrag))
-            return;
-
-    text[0] = TXT_2BYTE;
-    text[1] = 0;
-    text[2] = 0;
-
-    // drag
-    if(pointer == &settingsGetPointer()->scooterDrag)
-    {
-        switch(settingsGetPointer()->scooterDrag)
-        {
-        case 0:
-            text[1] = TXT2BYTE_ScooterD0Apnoe;
-            break;
-        case 1:
-            text[1] = TXT2BYTE_ScooterD1Scuba;
-            break;
-        case 2:
-            text[1] = TXT2BYTE_ScooterD2Tech;
-            break;
-        case 3:
-            text[1] = TXT2BYTE_ScooterD3Heavy;
-            break;
-        default:
-            snprintf(&text[4],3,"%02u",settingsGetPointer()->scooterDrag);
-            break;
-        }
-    }
-    else	// load
-    if(pointer == &settingsGetPointer()->scooterLoad)
-    {
-
-        switch(settingsGetPointer()->scooterLoad)
-        {
-            case 0:
-                text[1] = TXT2BYTE_ScooterL0None;
-                break;
-            case 1:
-                text[1] = TXT2BYTE_ScooterL1Small;
-                break;
-            case 2:
-                text[1] = TXT2BYTE_ScooterL2Stages;
-                break;
-            case 3:
-                text[1] = TXT2BYTE_ScooterL3Full;
-                break;
-            case 4:
-                text[1] = TXT2BYTE_ScooterL4Towing;
-                break;
-            default:
-                snprintf(&text[4],3,"%02u",settingsGetPointer()->scooterLoad);
-            break;
-        }
-    }
-}
-
-
-void openEdit_ScooterControl(void)
-{
-    char text[256];
-    uint16_t battWh;
-
-    text[0] = '\001';
-    text[1] = TXT_2BYTE;
-    text[2] = TXT2BYTE_ScooterSetup;
-    text[3] = 0;
-    write_topline(text);
-
-    // drag
-    text[0] = TXT_2BYTE;
-    text[1] = TXT2BYTE_ScooterDrag;
-    text[2] = 0;
-    write_label_var(  30, 180, ME_Y_LINE1, &FontT48, text);
-    // load
-    text[0] = TXT_2BYTE;
-    text[1] = TXT2BYTE_ScooterLoad;
-    text[2] = 0;
-    write_label_var(  30, 180, ME_Y_LINE2, &FontT48, text);
-    // batt type
-    text[0] = TXT_2BYTE;
-    text[1] = TXT2BYTE_ScooterBattTyp;
-    text[2] = 0;
-    write_label_var(  30, 180, ME_Y_LINE3, &FontT48, text);
-
-    getButtonText_ScooterControl(text,&settingsGetPointer()->scooterDrag);
-    write_field_button(StMHARD6_ScooterDrag,	200, 770, ME_Y_LINE1,  &FontT48, text);
-
-    getButtonText_ScooterControl(text,&settingsGetPointer()->scooterLoad);
-    write_field_button(StMHARD6_ScooterLoad,	200, 770, ME_Y_LINE2,  &FontT48, text);
-
-    battWh = settingsGetPointer()->scooterBattSize;
-    write_field_udigit(StMHARD6_ScooterBatt, 	200, 770, ME_Y_LINE3,	&FontT48, "####\016\016 Wh\017", battWh, 0, 0, 0);
-
-    setEvent(StMHARD6_ScooterDrag,		(uint32_t)OnAction_ScooterDrag);
-    setEvent(StMHARD6_ScooterLoad,		(uint32_t)OnAction_ScooterLoad);
-    setEvent(StMHARD6_ScooterBatt,		(uint32_t)OnAction_ScooterBatt);
-
-    write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
-}
-
-
-uint8_t OnAction_ScooterDrag(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    char text[256];
-
-    settingsGetPointer()->scooterDrag = settingsGetPointer()->scooterDrag + 1;
-    if(settingsGetPointer()->scooterDrag > 3)
-        settingsGetPointer()->scooterDrag = 0;
-
-    getButtonText_ScooterControl(text,&settingsGetPointer()->scooterDrag);
-    tMenuEdit_newButtonText(editId, text);
-
-    return UPDATE_DIVESETTINGS;
-}
-
-
-uint8_t OnAction_ScooterLoad(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    char text[256];
-
-    settingsGetPointer()->scooterLoad = settingsGetPointer()->scooterLoad + 1;
-    if(settingsGetPointer()->scooterLoad > 4)
-        settingsGetPointer()->scooterLoad = 0;
-
-    getButtonText_ScooterControl(text,&settingsGetPointer()->scooterLoad);
-    tMenuEdit_newButtonText(editId, text);
-
-    return UPDATE_DIVESETTINGS;
-}
-
-
-uint8_t OnAction_ScooterBatt(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    uint8_t digitContentNew;
-    uint32_t newWh;
-
-    if(action == ACTION_BUTTON_ENTER)
-    {
-        return digitContent;
-    }
-    if(action == ACTION_BUTTON_ENTER_FINAL)
-    {
-        evaluateNewString(editId, &newWh, 0, 0, 0);
-
-        if(newWh < 300)
-            newWh = 300;
-        if(newWh > 5000)
-            newWh = 5000;
-
-        tMenuEdit_newInput(editId, newWh, 0, 0, 0);
-        settingsGetPointer()->scooterBattSize = newWh;
-        return UPDATE_DIVESETTINGS;
-    }
-    if(action == ACTION_BUTTON_NEXT)
-    {
-        digitContentNew = digitContent + 1;
-        if(digitNumber == 0)
-        {
-            if(digitContentNew > '5')
-                digitContentNew = '0';
-        }
-        else if(digitContentNew > '9')
-            digitContentNew = '0';
-        return digitContentNew;
-    }
-    if(action == ACTION_BUTTON_BACK)
-    {
-        digitContentNew = digitContent - 1;
-        if(digitNumber == 0)
-        {
-            if(digitContentNew < '0')
-                digitContentNew = '5';
-        }
-        else if(digitContentNew < '0')
-            digitContentNew = '9';
-        return digitContentNew;
-    }
-    return UNSPECIFIC_RETURN;
-}
-
 
 void refresh_CompassEdit(void)
 {

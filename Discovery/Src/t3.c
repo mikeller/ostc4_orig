@@ -76,19 +76,6 @@ const uint8_t t3_customviewsStandard[] =
     CVIEW_T3_END
 };
 
-const uint8_t t3_customviewsScooter[] =
-{
-    CVIEW_Scooter,
-    CVIEW_Compass,
-
-    CVIEW_T3_Decostop,
-    CVIEW_T3_MaxDepth,
-    CVIEW_T3_StopWatch,
-    CVIEW_T3_TTS,
-    CVIEW_T3_ppO2andGas,
-
-    CVIEW_T3_END
-};
 
 const uint8_t *t3_customviews = t3_customviewsStandard;
 
@@ -105,11 +92,6 @@ void t3_init(void)
 {
 	SSettings* pSettings;
 	pSettings = settingsGetPointer();
-
-    if(getLicence() == LICENCEBONEX)
-    {
-        t3_customviews = t3_customviewsScooter;
-    }
 
     t3_selection_customview = t3_customviews[0];
 
@@ -524,45 +506,6 @@ void t3_basics_battery_low_customview_extra(GFX_DrawCfgWindow* tXc1)
 }
 
 
-void t3_basics_battery_scooter_customview_extra(GFX_DrawCfgWindow* tXc1)
-{
-    char TextC1[256];
-
-    TextC1[0] = '\001';
-    TextC1[1] = '\f';
-    TextC1[2] = '\032';
-    TextC1[3] = '3';
-    TextC1[4] = '1';
-    TextC1[5] = '1';
-    TextC1[6] = '1';
-    TextC1[7] = '1';
-    TextC1[8] = '1';
-    TextC1[9] = '1';
-    TextC1[10] = '1';
-    TextC1[11] = '1';
-    TextC1[12] = '1';
-    TextC1[13] = '1';
-    TextC1[14] = '0';
-    TextC1[15] = 0;
-
-    for(int i=1;i<=10;i++)
-    {
-        if(	stateUsed_scooterRemainingBattCapacity()  > (9 * i))
-            TextC1[i+3] += 1;
-    }
-
-    if(stateUsed_scooterRemainingBattCapacity() < 10)
-        TextC1[2] = '\025';
-
-    if(!warning_count_high_time)
-        TextC1[4] = '2';
-
-    if(stateUsed->lifeData.scooterAgeInMilliSeconds > 1500)
-        TextC1[2] = '\031';
-
-    GFX_write_string(&Batt24,tXc1,TextC1,0);
-}
-
 
 void t3_refresh_customview(float depth)
 {
@@ -683,7 +626,6 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
 
     // CVIEW_T3_ppO2andGas
     uint8_t oxygen_percentage = 0;
-    float scooterSpeed;
 
     // CVIEW_T3_Temperature
     float temperatureThisCall;
@@ -714,21 +656,6 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
 
     switch(tX_selection_customview)
     {
-    case CVIEW_Scooter:
-        snprintf(text,TEXTSIZE,"\032\fScooter");
-        GFX_write_string(&FontT42,tXc1,text,0);
-
-        t3_basics_battery_scooter_customview_extra(tXc1);
-
-        scooterSpeed = stateUsed->lifeData.scooterDrehzahl * 80 / 3300;
-
-        snprintf(text,100,"\030\003%.1f",scooterSpeed);
-        if(stateUsed->lifeData.scooterAgeInMilliSeconds > 1500)
-            text[0] = '\031';
-        GFX_write_string(&FontT105,tXc1,text,0);
-        break;
-
-
     case CVIEW_T3_ApnoeSurfaceInfo:
         snprintf(text,TEXTSIZE,"\032\f%c",TXT_MaxDepth);
         GFX_write_string(&FontT42,tXc1,text,0);

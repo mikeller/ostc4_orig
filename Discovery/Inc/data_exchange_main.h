@@ -48,8 +48,7 @@ void DateEx_copy_to_dataOut(void);
 uint32_t DataEX_lost_connection_count(void);
 void DataEX_control_connection_while_asking_for_sleep(void);
 uint8_t DataEX_check_RTE_version__needs_update(void);
-uint8_t DataEX_scooterFoundAndValidLicence(void);
-uint8_t DataEX_scooterDataFound(void);
+
 
 SDataReceiveFromMaster * dataOutGetPointer(void);
 

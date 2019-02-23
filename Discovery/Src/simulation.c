@@ -148,21 +148,6 @@ void simulation_UpdateLifeData( _Bool checkOncePerSecond)
     else if(pDiveState->lifeData.depth_meter <= (float)(decom_get_actual_deco_stop(pDiveState) + 0.001))
       sim_reduce_deco_time_one_second(pDiveState);
 
-    if(getLicence() == LICENCEBONEX)
-    {
-        pDiveState->lifeData.scooterType = stateRealGetPointer()->lifeData.scooterType;
-        pDiveState->lifeData.scooterTemperature = stateRealGetPointer()->lifeData.scooterTemperature;
-        pDiveState->lifeData.scooterAgeInMilliSeconds = stateRealGetPointer()->lifeData.scooterAgeInMilliSeconds;
-        pDiveState->lifeData.scooterDrehzahl = stateRealGetPointer()->lifeData.scooterDrehzahl;
-        pDiveState->lifeData.scooterRestkapazitaet = stateRealGetPointer()->lifeData.scooterRestkapazitaet;
-        pDiveState->lifeData.scooterWattstunden = stateRealGetPointer()->lifeData.scooterWattstunden;
-        pDiveState->lifeData.scooterAmpere = stateRealGetPointer()->lifeData.scooterAmpere;
-        pDiveState->lifeData.scooterSpannung = stateRealGetPointer()->lifeData.scooterSpannung;
-        pDiveState->lifeData.scooterSpeed = stateRealGetPointer()->lifeData.scooterSpeed;
-        pDiveState->lifeData.scooterRestkapazitaetWhBased = stateRealGetPointer()->lifeData.scooterRestkapazitaetWhBased;
-        pDiveState->lifeData.scooterRestkapazitaetVoltageBased = stateRealGetPointer()->lifeData.scooterRestkapazitaetVoltageBased;
-    }
-
     pDiveState->lifeData.ppO2Sensor_bar[0] = stateRealGetPointer()->lifeData.ppO2Sensor_bar[0];
     pDiveState->lifeData.ppO2Sensor_bar[1] = stateRealGetPointer()->lifeData.ppO2Sensor_bar[1];
     pDiveState->lifeData.ppO2Sensor_bar[2] = stateRealGetPointer()->lifeData.ppO2Sensor_bar[2];

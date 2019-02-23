@@ -92,14 +92,12 @@ void tHome_init(void)
     t4_init(); // game
     t5_init(); // gauge
     t6_init(); // apnea
-    t9_init(); // bonex
 }
 
 
 void tHome_init_compass(void)
 {
     init_t7_compass();
-    init_t9_compass();
 }
 
 
@@ -141,9 +139,6 @@ void tHome_refresh(void)
     else
     if(pSettings->design == 7)
         t7_refresh();
-    else
-    if(pSettings->design == 9)
-        t9_refresh();
     else
     {
         pSettings->design = 7;
@@ -349,8 +344,6 @@ void tHome_change_field_button_pressed(void)
     tHome_tick_count_field = 0;
     if(settingsGetPointer()->design == 7)
         t7_change_field();
-    if(settingsGetPointer()->design == 9)
-        t9_change_field();
 }
 
 
@@ -359,9 +352,6 @@ void tHome_change_customview_button_pressed(void)
     tHome_tick_count_cview = 0;
     if(settingsGetPointer()->design == 7)
         t7_change_customview();
-    else
-    if(settingsGetPointer()->design == 9)
-        t9_change_customview();
     else
     if(settingsGetPointer()->design == 3)
         t3_change_customview();

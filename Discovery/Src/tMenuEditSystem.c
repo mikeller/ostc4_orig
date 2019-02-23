@@ -29,7 +29,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "tMenuEditSystem.h"
 
-#include "data_exchange_main.h" // for DataEX_scooterDataFound()
+#include "data_exchange_main.h"
 #include "externLogbookFlash.h"
 #include "gfx_fonts.h"
 #include "ostc.h"
@@ -768,10 +768,6 @@ void refresh_Customviews(void)
     text[3] = ' ';
     switch(settingsGetPointer()->tX_customViewPrimary)
     {
-    case CVIEW_Scooter:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_ScooterMonitor;
-        break;
     case CVIEW_sensors:
         text[4] = TXT_2BYTE;
         text[5] = TXT2BYTE_O2monitor;
@@ -937,9 +933,6 @@ uint8_t OnAction_CViewStandard(uint32_t editId, uint8_t blockNumber, uint8_t dig
     uint8_t newValue;
     switch(settingsGetPointer()->tX_customViewPrimary)
     {
-    case CVIEW_Scooter:
-        newValue = CVIEW_sensors;
-        break;
     case CVIEW_sensors:
         newValue = CVIEW_sensors_mV;
         break;
@@ -969,10 +962,7 @@ uint8_t OnAction_CViewStandard(uint32_t editId, uint8_t blockNumber, uint8_t dig
         break;
     case CVIEW_noneOrDebug:
     default:
-        if(getLicence() == LICENCEBONEX)
-            newValue = CVIEW_Scooter;
-        else
-            newValue = CVIEW_sensors;
+         newValue = CVIEW_sensors;
         break;
     }
     settingsGetPointer()->tX_customViewPrimary = newValue;
@@ -1410,13 +1400,6 @@ void openEdit_ResetConfirmation(uint32_t editIdOfCaller)
         text[2] = 0;
         snprintf(&text[2],10,": %01.2fV",stateRealGetPointer()->lifeData.battery_voltage);
         write_label_var(  30, 800, ME_Y_LINE4, &FontT42, text);
-
-
-        if(DataEX_scooterDataFound())
-        {
-            snprintf(&text[0],30,"Ext: %01.1fV @ %01.1f \140C",stateUsed->lifeData.scooterSpannung, stateUsed->lifeData.scooterTemperature / 10.0f);
-            write_label_var(  30, 800, ME_Y_LINE5, &FontT42, text);
-        }
 
         snprintf(&text[0],30,"Code: %X",getLicence());
         write_label_var(  30, 800, ME_Y_LINE6, &FontT42, text);

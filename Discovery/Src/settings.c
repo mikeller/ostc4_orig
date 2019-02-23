@@ -55,7 +55,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
 {
     .versionFirst   = 1,
     .versionSecond 	= 4,
-    .versionThird   = 4,
+    .versionThird   = 5,
     .versionBeta    = 1,
 
     /* 4 bytes with trailing 0 */
@@ -1133,20 +1133,6 @@ uint8_t check_and_correct_settings(void)
 /*	uint32_t updateSettingsAllowedFromHeader;
  */
 
-/*	uint8_t scooterControl;
- */
-    if(Settings.scooterControl > 1)
-    {
-        Settings.scooterControl = 1;
-        corrections++;
-    }
-
-/*	char scooterDeviceAddress[12];
- */
-
-/*	char scooterDeviceName[19];
-*/
-
 /*	uint8_t ppo2sensors_deactivated;
  */
     if(Settings.ppo2sensors_deactivated > (1+2+4))
@@ -1324,39 +1310,6 @@ uint8_t check_and_correct_settings(void)
     if(Settings.compassBearing > 360)
     {
         Settings.compassBearing = 0;
-        corrections++;
-    }
-
-/*	uint8_t scooterDrag;
- */
-    if(Settings.scooterDrag > 3)
-    {
-        Settings.scooterDrag = 3;
-        corrections++;
-    }
-
-/*	uint8_t scooterLoad;
- */
-    if(Settings.scooterLoad > 4)
-    {
-        Settings.scooterLoad = 4;
-        corrections++;
-    }
-
-/*	uint8_t scooterNumberOfBatteries;
- */
-    if(Settings.scooterNumberOfBatteries > 3)
-    {
-        Settings.scooterNumberOfBatteries = 3;
-        corrections++;
-    }
-
-/*	uint16_t scooterBattSize;
- */
-    if((Settings.scooterBattSize < 300) ||
-         (Settings.scooterBattSize > 5000))
-    {
-        Settings.scooterBattSize = 700;
         corrections++;
     }
 
@@ -2568,8 +2521,6 @@ void getActualRTEandFONTversion(uint8_t *RTEhigh, uint8_t *RTElow, uint8_t *FONT
 
 uint8_t getLicence(void)
 {
-    //return 0xFF;
-    //return LICENCEBONEX;
     return hardwareDataGetPointer()->primaryLicence;
 }
 

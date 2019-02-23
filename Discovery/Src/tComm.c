@@ -340,7 +340,6 @@ uint8_t HW_Set_Bluetooth_Name(uint16_t serial, uint8_t withEscapeSequence)
 
     char aTxBufferEscapeSequence[50] = "+++";
     // limit is 19 chars, with 7 chars shown in BLE advertising mode
-    //char aTxBufferName[50] = "AT+BNAME=BONEX-HW%4a\r";
     //________________________123456789012345678901
     char aTxBufferName[50] = "AT+BNAME=OSTC4-12345\r";
     char answerOkay[6] = "\r\nOKr\n";
@@ -908,10 +907,7 @@ uint8_t select_mode(uint8_t type)
         aTxBuffer[count++] = 0x00; // hardware descriptor HIGH byte
         aTxBuffer[count++] = 0x3B; // hardware descriptor LOW byte // 0x3B is OSTC4 //  0x1A is OTSC3
         aTxBuffer[count++] = 0x00; // feature descriptor HIGH byte
-        if(getLicence() == LICENCEBONEX)
-            aTxBuffer[count++] = 0x01; // feature descriptor LOW byte
-        else
-            aTxBuffer[count++] = 0x00; // feature descriptor LOW byte
+        aTxBuffer[count++] = 0x00; // feature descriptor LOW byte
         aTxBuffer[count++] = 0x43; // model id
         aTxBuffer[count++] = prompt4D4C(receiveStartByteUart);
         break;
