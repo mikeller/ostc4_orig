@@ -66,6 +66,8 @@ uint8_t setButtonsNow = 0;
 
 /* has to be in SRAM2 */
 uint8_t secondsCount = 0;
+
+SScheduleCtrl Scheduler;
  
 /* Private function prototypes -----------------------------------------------*/
 
@@ -95,6 +97,7 @@ uint32_t time_elapsed_ms(uint32_t ticksstart,uint32_t ticksnow);
 _Bool scheduleCheck_pressure_reached_dive_mode_level(void);
 void scheduleSetDate(SDeviceLine *line);
 
+extern void SPI_Evaluate_RX_Data();
 /* Exported functions --------------------------------------------------------*/
 
 void initGlobals(void)
@@ -427,7 +430,7 @@ uint16_t schedule_update_timer_helper(int8_t thisSeconds)
 void schedule_check_resync(void)
 {
 	//TODO: REMOVE
-	if((global.check_sync_not_running >= 3))
+	if((global.check_sync_not_running >= 2))
 	{
 //		global.dataSendToSlaveIsNotValidCount = 0;
 		global.check_sync_not_running = 0;
@@ -451,15 +454,10 @@ void schedule_check_resync(void)
   */
 void scheduleDiveMode(void)
 {
-	uint32_t tickstart = 0;
+//	uint32_t tickstart = 0;
 	uint32_t ticksdiff = 0; 
 	uint32_t lasttick = 0;
-	tickstart = HAL_GetTick();
-	uint8_t counterPressure100msec = 0;
-	uint8_t counterCompass100msec = 0;
-	uint8_t counterAmbientLight100msec = 0;
-	uint16_t counterWireless1msec = 0;
-//	uint8_t counterDemo250msec = 0;
+
 	uint32_t turbo_seconds = 0;
 	uint8_t counterAscentRate = 0;
 	float lastPressure_bar = 0.0f;
@@ -468,7 +466,12 @@ void scheduleDiveMode(void)
 	//uint16_t counterSecondsShallowDepth = 0;
 	uint8_t counter_exit = 0;
 	
-	tickstart = HAL_GetTick() - 1000;
+	Scheduler.tickstart = HAL_GetTick() - 1000;
+	Scheduler.counterSPIdata100msec = 0;
+	Scheduler.counterCompass100msec = 0;
+	Scheduler.counterPressure100msec = 0;
+	Scheduler.counterAmbientLight100msec = 0;
+	Scheduler.counterWireless1msec = 0;
 	
 	global.deviceData.diveCycles.value_int32++;
 	scheduleSetDate(&global.deviceData.diveCycles);
@@ -478,13 +481,13 @@ void scheduleDiveMode(void)
 	{
 		schedule_check_resync();
 		lasttick = HAL_GetTick();
-		ticksdiff = time_elapsed_ms(tickstart,lasttick);
+		ticksdiff = time_elapsed_ms(Scheduler.tickstart,lasttick);
 
 
 		//Evaluate wireless data every ms, if present
-		if(ticksdiff > counterWireless1msec)
+		if(ticksdiff > Scheduler.counterWireless1msec)
 		{
-			counterWireless1msec++;
+			Scheduler.counterWireless1msec++;
 			changeAgeWirelessData();
 			global.wirelessReceived = wireless_evaluate(global.wirelessdata,MAX_WIRELESS_BYTES, &global.wirelessConfidenceStatus);
 			if((global.wirelessReceived  > 0) && !wireless_evaluate_crc_error(global.wirelessdata,global.wirelessReceived))
@@ -493,15 +496,21 @@ void scheduleDiveMode(void)
 			}
 		}
 
+		if(ticksdiff >= Scheduler.counterSPIdata100msec * 100 + 10)
+		{
+			SPI_Evaluate_RX_Data();
+			Scheduler.counterSPIdata100msec++;
+		}
+
 		//Evaluate pressure at 20 ms, 120 ms, 220 ms,....
-		if(ticksdiff >= counterPressure100msec * 100 + 20)
+		if(ticksdiff >= Scheduler.counterPressure100msec * 100 + 20)
 		{
 				global.check_sync_not_running++;
 				pressure_update();
 				scheduleUpdateDeviceData();
 				if(global.demo_mode)
 				{
-					turbo_seconds = demo_modify_temperature_and_pressure(global.lifeData.dive_time_seconds, counterPressure100msec, global.ceiling_from_main_CPU_mbar);
+					turbo_seconds = demo_modify_temperature_and_pressure(global.lifeData.dive_time_seconds, Scheduler.counterPressure100msec, global.ceiling_from_main_CPU_mbar);
 					if(turbo_seconds)
 					{
 						global.lifeData.dive_time_seconds += turbo_seconds;
@@ -525,40 +534,33 @@ void scheduleDiveMode(void)
 					}
 					lastPressure_bar = global.lifeData.pressure_ambient_bar;
 					counterAscentRate = 0;
-					
-//					if(global.demo_mode)
-//						global.lifeData.ascent_rate_meter_per_min /= 4;
 				}
 				copyPressureData();
-				counterPressure100msec++;
+				Scheduler.counterPressure100msec++;
 		}
 			//evaluate compass data at 50 ms, 150 ms, 250 ms,....
-		if(ticksdiff >= counterCompass100msec * 100 + 50)
+		if(ticksdiff >= Scheduler.counterCompass100msec * 100 + 50)
 		{
 			compass_read();
 			acceleration_read();
 			compass_calc();
 			copyCompassData();
-			counterCompass100msec++;
+			Scheduler.counterCompass100msec++;
 		}
 		
-		if(ticksdiff >= counterAmbientLight100msec * 100 + 70)
+		if(ticksdiff >= Scheduler.counterAmbientLight100msec * 100 + 70)
 		{
 			adc_ambient_light_sensor_get_data();
 			copyAmbientLightData();
-			counterAmbientLight100msec++;
+			Scheduler.counterAmbientLight100msec++;
 		}
 
-/*		if(global.demo_mode && (ticksdiff >= counterDemo250msec * 250 + 10))
-		{
-			global.lifeData.dive_time_seconds++;
-			copyTimeData();
-			counterDemo250msec++;
-		}
-*/
 		//Evaluate tissues, toxic data, vpm, etc. once a second 
 		if(ticksdiff >= 1000)
 		{
+			/* reset counter */
+			Scheduler.tickstart = HAL_GetTick();
+
 			if(global.dataSendToSlave.diveModeInfo != DIVEMODE_Apnea)
 			{
 				scheduleUpdateLifeData(0); // includes tissues
@@ -653,18 +655,11 @@ void scheduleDiveMode(void)
 					init_pressure();
 				}
 			}
-			
-			counterCompass100msec = 0;
-			counterPressure100msec = 0;
-			counterAmbientLight100msec = 0;
-			counterWireless1msec = 0;
-//			counterDemo250msec = 0;
-
-			/** keep it in rhythm, do not drop the execution time
-			  * therefore do not use tickstart = HAL_GetTick();
-				* here
-				*/
-			tickstart += 1000; 
+			Scheduler.counterSPIdata100msec = 0;
+			Scheduler.counterCompass100msec = 0;
+			Scheduler.counterPressure100msec = 0;
+			Scheduler.counterAmbientLight100msec = 0;
+			Scheduler.counterWireless1msec = 0;
 		}
 	}
 }
@@ -686,12 +681,11 @@ void scheduleDiveMode(void)
 //  ===============================================================================
 void scheduleTestMode(void)
 {
-	uint32_t tickstart = 0;
 	uint32_t ticksdiff = 0; 
 	uint32_t lasttick = 0;
-	tickstart = HAL_GetTick();
+	Scheduler.tickstart = HAL_GetTick();
 
-	uint8_t counterPressure100msec = 0;
+	Scheduler.counterPressure100msec = 0;
 	
 	float temperature_carousel = 0.0f;
 	float temperature_changer = 0.1f;
@@ -700,17 +694,24 @@ void scheduleTestMode(void)
 	{
 		schedule_check_resync();
 		lasttick = HAL_GetTick();
-		ticksdiff = time_elapsed_ms(tickstart,lasttick);
+		ticksdiff = time_elapsed_ms(Scheduler.tickstart,lasttick);
+
+		//Evaluate received data at 10 ms, 110 ms, 210 ms,...
+		if(ticksdiff >= Scheduler.counterSPIdata100msec * 100 + 10)
+		{
+			SPI_Evaluate_RX_Data();
+			Scheduler.counterSPIdata100msec++;
+		}
 		
 		//Evaluate pressure at 20 ms, 120 ms, 220 ms,...
-		if(ticksdiff >= counterPressure100msec * 100 + 20)
+		if(ticksdiff >= Scheduler.counterPressure100msec * 100 + 20)
 		{
 				global.check_sync_not_running++;
 
-pressure_update();
-scheduleUpdateDeviceData();
-global.lifeData.ascent_rate_meter_per_min = 0;
-copyPressureData();
+				pressure_update();
+				scheduleUpdateDeviceData();
+				global.lifeData.ascent_rate_meter_per_min = 0;
+				copyPressureData();
 
 				if(temperature_carousel > 20.0f)
 				{
@@ -728,36 +729,39 @@ copyPressureData();
 				
 				uint8_t boolPressureData = !global.dataSendToMaster.boolPressureData;
 
-global.dataSendToMaster.data[boolPressureData].pressure_mbar = get_pressure_mbar();
+				global.dataSendToMaster.data[boolPressureData].pressure_mbar = get_pressure_mbar();
 
 				global.dataSendToMaster.data[boolPressureData].temperature = temperature_carousel;
 				global.dataSendToMaster.data[boolPressureData].pressure_uTick = HAL_GetTick();
 				global.dataSendToMaster.boolPressureData = boolPressureData;
-
-
-				counterPressure100msec++;
+				Scheduler.counterPressure100msec++;
 		}
 		
 		if(ticksdiff >= 1000)
 		{
 			//Set back tick counter
-			tickstart = HAL_GetTick();
-			counterPressure100msec = 0;
+			Scheduler.tickstart = HAL_GetTick();
+			Scheduler.counterPressure100msec = 0;
+			Scheduler.counterSPIdata100msec = 0;
 		}
 	};	
 }
 
 
+
+
 void scheduleSurfaceMode(void)
 {
-	uint32_t tickstart = 0;
+
 	uint32_t ticksdiff = 0; 
 	uint32_t lasttick = 0;
-	tickstart = HAL_GetTick();
-	uint8_t counterPressure100msec = 0;
-	uint8_t counterCompass100msec = 0;
-	uint8_t counterAmbientLight100msec = 0;
-	uint16_t counterWireless1msec = 0;
+	Scheduler.tickstart = HAL_GetTick();
+	Scheduler.counterSPIdata100msec = 0;
+	Scheduler.counterCompass100msec = 0;
+	Scheduler.counterPressure100msec = 0;
+	Scheduler.counterAmbientLight100msec = 0;
+	Scheduler.counterWireless1msec = 0;
+
 	global.dataSendToMaster.mode = MODE_SURFACE;
 	global.deviceDataSendToMaster.mode = MODE_SURFACE;
 
@@ -767,11 +771,11 @@ void scheduleSurfaceMode(void)
 //	    SPI_Start_single_TxRx_with_Master();
 		schedule_check_resync();
 		lasttick = HAL_GetTick();
-		ticksdiff = time_elapsed_ms(tickstart,lasttick);
+		ticksdiff = time_elapsed_ms(Scheduler.tickstart,lasttick);
 
-		if(ticksdiff > counterWireless1msec)
+		if(ticksdiff > Scheduler.counterWireless1msec)
 		{
-			counterWireless1msec++;
+			Scheduler.counterWireless1msec++;
 			changeAgeWirelessData();
 			global.wirelessReceived = wireless_evaluate(global.wirelessdata,MAX_WIRELESS_BYTES, &global.wirelessConfidenceStatus);
 			if((global.wirelessReceived  > 0) && !wireless_evaluate_crc_error(global.wirelessdata,global.wirelessReceived))
@@ -785,15 +789,23 @@ void scheduleSurfaceMode(void)
 				setButtonsNow = 0;
 		}
 		
+
+		//Evaluate received data at 10 ms, 110 ms, 210 ms,...
+		if(ticksdiff >= Scheduler.counterSPIdata100msec * 100 + 10)
+		{
+			SPI_Evaluate_RX_Data();
+			Scheduler.counterSPIdata100msec++;
+		}
+
 		//Evaluate pressure at 20 ms, 120 ms, 220 ms,...
-		if(ticksdiff >= counterPressure100msec * 100 + 20)
+		if(ticksdiff >= Scheduler.counterPressure100msec * 100 + 20)
 		{
 				global.check_sync_not_running++;
 				pressure_update();
 				scheduleUpdateDeviceData();
 				global.lifeData.ascent_rate_meter_per_min = 0;
 				copyPressureData();
-				counterPressure100msec++;
+				Scheduler.counterPressure100msec++;
 				
 				if(scheduleCheck_pressure_reached_dive_mode_level())
 					global.mode = MODE_DIVE;
@@ -801,25 +813,28 @@ void scheduleSurfaceMode(void)
 		
 		//evaluate compass data at 50 ms, 150 ms, 250 ms,...
 
-		if(ticksdiff >= counterCompass100msec * 100 + 50)
+		if(ticksdiff >= Scheduler.counterCompass100msec * 100 + 50)
 		{
 			compass_read();
 			acceleration_read();
 			compass_calc();
 			copyCompassData();
-			counterCompass100msec++;
+			Scheduler.counterCompass100msec++;
 		}
 
 		//evaluate compass data at 70 ms, 170 ms, 270 ms,...
-		if(ticksdiff >= counterAmbientLight100msec * 100 + 70)
+		if(ticksdiff >= Scheduler.counterAmbientLight100msec * 100 + 70)
 		{
 			adc_ambient_light_sensor_get_data();
 			copyAmbientLightData();
-			counterAmbientLight100msec++;
+			Scheduler.counterAmbientLight100msec++;
 		}
 		//Evaluate tissues, toxic data, etc. once a second
 		if(ticksdiff >= 1000)
 		{
+			//Set back tick counter
+			Scheduler.tickstart = HAL_GetTick();
+
 			if(clearDecoNow)
 			{
 				decom_reset_with_1000mbar(&global.lifeData); ///< this should almost reset desaturation time
@@ -832,10 +847,6 @@ void scheduleSurfaceMode(void)
 				vpm_init(&global.vpm, global.conservatism, global.repetitive_dive, global.seconds_since_last_dive);
 				clearDecoNow = 0;
 			}
-	
-			//Set back tick counter
-			tickstart = HAL_GetTick();
-
 
 			if(global.seconds_since_last_dive)
 			{
@@ -885,15 +896,30 @@ void scheduleSurfaceMode(void)
 					init_pressure();
 				}
 			}
-			
-			counterCompass100msec = 0;
-			counterPressure100msec = 0;
-			counterAmbientLight100msec = 0;
-			counterWireless1msec = 0;
+			Scheduler.counterSPIdata100msec = 0;
+			Scheduler.counterCompass100msec = 0;
+			Scheduler.counterPressure100msec = 0;
+			Scheduler.counterAmbientLight100msec = 0;
+			Scheduler.counterWireless1msec = 0;
 		}
 	}
 }
+static uint8_t dohardspisync = 1;
 
+void HardSyncToSPI()
+{
+	if(dohardspisync)
+	{
+		//Set back tick counter
+		Scheduler.tickstart = HAL_GetTick();
+		Scheduler.counterSPIdata100msec = 0;
+		Scheduler.counterCompass100msec = 0;
+		Scheduler.counterPressure100msec = 0;
+		Scheduler.counterAmbientLight100msec = 0;
+		Scheduler.counterWireless1msec = 0;
+		dohardspisync = 0;
+	}
+}
 
 /**
   ******************************************************************************
