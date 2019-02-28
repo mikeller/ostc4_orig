@@ -75,6 +75,17 @@ typedef struct
 	long no_fly_time_minutes;
 } SBackup;
 
+typedef struct
+{
+	uint8_t counterSPIdata100msec;
+	uint8_t counterPressure100msec;
+	uint8_t counterCompass100msec;
+	uint8_t counterAmbientLight100msec;
+	uint16_t counterWireless1msec;
+	uint32_t tickstart;
+} SScheduleCtrl;
+
+
 /* Variables ---------------------------------------------------------*/
 extern SGlobal global;
 
