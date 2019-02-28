@@ -20,8 +20,11 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
+
+#include "global_constants.h"
 #include "spi.h"
 #include "dma.h"
+
 //#include "gpio.h"
 
 /* USER CODE BEGIN 0 */
@@ -32,14 +35,21 @@ extern void GPIO_new_DEBUG_LOW(void);
 extern void GPIO_new_DEBUG_HIGH(void);
 #endif
 
+// SPI header by index used for synchronization check (package sequence counter)
+#define SPI_HEADER_INDEX_MASTER 1
+#define SPI_HEADER_INDEX_SLAVE 2
+
 uint8_t data_error = 0;
 uint32_t data_error_time = 0;
+uint8_t SPIDataRX = 0; /* Flag to signal that SPI RX callback has been triggered */
 
+extern void HardSyncToSPI(void);
 static void SPI_Error_Handler(void);
 
 /* USER CODE END 0 */
 
 static uint8_t SPI_check_header_and_footer_ok(void);
+static uint8_t DataEX_check_header_and_footer_shifted(void);
 
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi3;
@@ -127,7 +137,7 @@ void MX_SPI1_Init(void) {
 	hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
 	hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
 	hspi1.Init.NSS = SPI_NSS_HARD_INPUT; //SPI_NSS_SOFT;
-	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128; 
 	hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
 	hspi1.Init.TIMode = SPI_TIMODE_DISABLED;
 	hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLED; //_DISABLED; _ENABLED;
@@ -311,6 +321,8 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
 	/* restart SPI */
 	if (hspi == &hspi1)
 	{
+		SPIDataRX = 1;
+
 		global.check_sync_not_running = 0;
 		/* stop data exchange? */
 		if (global.mode == MODE_SHUTDOWN) {
@@ -320,41 +332,67 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
 			global.dataSendToSlaveIsNotValidCount = 0;
 			return;
 		}
+	}
+}
 
+void SPI_Evaluate_RX_Data()
+{
+	if ((global.mode != MODE_SHUTDOWN) && ( global.mode != MODE_SLEEP) && (SPIDataRX))
+	{
+		SPIDataRX = 0;
 		/* data consistent? */
 		if (SPI_check_header_and_footer_ok()) {
-//		GPIO_new_DEBUG_HIGH(); //For debug.
+	//		GPIO_new_DEBUG_HIGH(); //For debug.
 			global.dataSendToSlaveIsValid = 1;
 			global.dataSendToSlaveIsNotValidCount = 0;
+			/* use sequence index from master to indicate correct reception */
+			if(global.dataSendToSlave.header.checkCode[SPI_HEADER_INDEX_SLAVE] > 0x7F)
+			{
+				HAL_SPI_Abort_IT(&hspi1);
+				global.dataSendToMaster.header.checkCode[SPI_HEADER_INDEX_SLAVE] = global.dataSendToSlave.header.checkCode[SPI_HEADER_INDEX_MASTER];
+				global.dataSendToSlave.header.checkCode[SPI_HEADER_INDEX_SLAVE] = 0;
+				return;
+			}
+			 else
+			 {
+				 global.dataSendToMaster.header.checkCode[SPI_HEADER_INDEX_SLAVE] = global.dataSendToSlave.header.checkCode[SPI_HEADER_INDEX_MASTER];
+			 }
+			HardSyncToSPI();
 		} else {
-//		GPIO_new_DEBUG_LOW(); //For debug.
+	//		GPIO_new_DEBUG_LOW(); //For debug.
 				global.dataSendToSlaveIsValid = 0;
 				global.dataSendToSlaveIsNotValidCount++;
-				HAL_SPI_Abort_IT(&hspi1);
-				global.dataSendToSlaveIsNotValidCount = 1;
+				if(DataEX_check_header_and_footer_shifted())
+				{
+					if (global.dataSendToSlaveIsNotValidCount == 1) 
+					{	
+						HAL_SPI_Abort_IT(&hspi1); /* reset DMA only once */
+					}
+				}
 			}
-	}
+
 		global.dataSendToMaster.power_on_reset = 0;
 		global.deviceDataSendToMaster.power_on_reset = 0;
 
-//TODO:REMOVE
-//		if ( !global.dataSendToSlaveStopEval ) {
-//			scheduleSpecial_Evaluate_DataSendToSlave();
-//		}
-	scheduleSpecial_Evaluate_DataSendToSlave();
+	//TODO:REMOVE
+	//		if ( !global.dataSendToSlaveStopEval ) {
+	//			scheduleSpecial_Evaluate_DataSendToSlave();
+	//		}
+		scheduleSpecial_Evaluate_DataSendToSlave();
 
-	SPI_Start_single_TxRx_with_Master(); //Send data always.
+		SPI_Start_single_TxRx_with_Master(); //Send data always.
+	}
 }
-
-
 
 static uint8_t SPI_check_header_and_footer_ok(void) {
 	if (global.dataSendToSlave.header.checkCode[0] != 0xBB)
 		return 0;
+#if USE_OLD_HEADER_FORMAT
 	if (global.dataSendToSlave.header.checkCode[1] != 0x01)
 		return 0;
 	if (global.dataSendToSlave.header.checkCode[2] != 0x01)
 		return 0;
+#endif
 	if (global.dataSendToSlave.header.checkCode[3] != 0xBB)
 		return 0;
 	if (global.dataSendToSlave.footer.checkCode[0] != 0xF4)
@@ -367,6 +405,26 @@ static uint8_t SPI_check_header_and_footer_ok(void) {
 		return 0;
 
 	return 1;
+}
+
+
+/* Check if there is an empty frame providec by RTE (all 0) or even no data provided by RTE (all 0xFF)
+ * If that is not the case the DMA is somehow not in sync
+ */
+uint8_t DataEX_check_header_and_footer_shifted()
+{
+	uint8_t ret = 1;
+	if((global.dataSendToSlave.footer.checkCode[0] == 0x00)
+	&& (global.dataSendToSlave.footer.checkCode[1] == 0x00)
+	&& (global.dataSendToSlave.footer.checkCode[2] == 0x00)
+	&& (global.dataSendToSlave.footer.checkCode[3] == 0x00)) { ret = 0; }
+
+	if((global.dataSendToSlave.footer.checkCode[0] == 0xff)
+	&& (global.dataSendToSlave.footer.checkCode[1] == 0xff)
+	&& (global.dataSendToSlave.footer.checkCode[2] == 0xff)
+	&& (global.dataSendToSlave.footer.checkCode[3] == 0xff)) { ret = 0; }
+
+	return ret;
 }
 
 static void SPI_Error_Handler(void) {
