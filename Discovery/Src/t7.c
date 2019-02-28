@@ -317,7 +317,7 @@ void t7_init(void)
 		t7voltage.WindowNumberOfTextLines = 1;
 		t7voltage.WindowLineSpacing = 10;
 		t7voltage.WindowTab = 100;
-		t7voltage.WindowX0 = t7charge.WindowX0 - 30; //10
+		t7voltage.WindowX0 = t7charge.WindowX0 - 10;
 		t7voltage.WindowX1 = t7voltage.WindowX0 + (18*3)+ 9;
 		t7voltage.WindowY1 = 479;
 		t7voltage.WindowY0 = t7batt.WindowY1 - 25;
