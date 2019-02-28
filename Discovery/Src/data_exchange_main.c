@@ -87,8 +87,6 @@ uint8_t	told_reset_logik_alles_ok = 0;
 SDataReceiveFromMaster dataOut;
 SDataExchangeSlaveToMaster dataIn;
 
-uint32_t systick_last;
-uint32_t systick_last_spi;
 uint8_t data_old__lost_connection_to_slave_counter_temp = 0;
 uint8_t data_old__lost_connection_to_slave_counter_retry = 0;
 uint32_t data_old__lost_connection_to_slave_counter_total = 0;
@@ -194,8 +192,6 @@ void DataEX_init(void)
 	dataOut.footer.checkCode[1] = 0xF3;
 	dataOut.footer.checkCode[2] = 0xF2;
 	dataOut.footer.checkCode[3] = 0xF1;
-	
-	systick_last = HAL_GetTick() - 100;
 }
 
 
@@ -302,25 +298,30 @@ void DataEx_call_helper_requests(void)
 uint8_t DataEX_call(void)
 {
 	uint8_t SPI_DMA_answer = 0;
-	
+
 	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_SET);
-	delayMicros(20); //~exchange time(+20% reserve)
+	delayMicros(10); //~exchange time(+20% reserve)
 	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
 	/* one cycle with NotChipSelect true to clear slave spi buffer */
+
 
 	if(data_old__lost_connection_to_slave_counter_temp >= 3)
 	{
 		data_old__lost_connection_to_slave_counter_temp = 0;
-		if(DataEX_check_header_and_footer_shifted())
+		if((DataEX_check_header_and_footer_shifted()) && (data_old__lost_connection_to_slave_counter_retry == 0))
 		{
 			HAL_SPI_Abort_IT(&cpu2DmaSpi);
+		}
+
+		/* reset of own DMA does not work ==> request reset of slave dma */
+		if((DataEX_check_header_and_footer_shifted()) && (data_old__lost_connection_to_slave_counter_retry >= 2))
+		{
+			dataOut.header.checkCode[SPI_HEADER_INDEX_SLAVE] = 0xA5;
 		}
 		data_old__lost_connection_to_slave_counter_retry++;
 	}
 
 	DataEx_call_helper_requests();
-
-	systick_last = HAL_GetTick();
 
 //HAL_GPIO_WritePin(OSCILLOSCOPE2_GPIO_PORT,OSCILLOSCOPE2_PIN,GPIO_PIN_RESET); /* only for testing with Oscilloscope */
 
@@ -354,7 +355,6 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 
 	if(hspi == &cpu2DmaSpi)
 	{
-		systick_last_spi = HAL_GetTick();
 		SPI_CALLBACKS+=1;
 	}
 }
@@ -805,14 +805,24 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		}
 		return;
 	}
+	else /* RX data OK */
+	{
+		data_old__lost_connection_to_slave_counter_temp = 0;
+		data_old__lost_connection_to_slave_counter_retry = 0;
+		pStateReal->data_old__lost_connection_to_slave = 0;
+	}
 	
+	/* update SPI communication tokens */
+	dataOut.header.checkCode[SPI_HEADER_INDEX_SLAVE] = dataIn.header.checkCode[SPI_HEADER_INDEX_SLAVE];
+	dataOut.header.checkCode[SPI_HEADER_INDEX_MASTER] = (dataOut.header.checkCode[SPI_HEADER_INDEX_MASTER] + 1) & 0x7F;
+
 	if(getDeviceDataAfterStartOfMainCPU)
 	{
 		getDeviceDataAfterStartOfMainCPU--;
 		if(getDeviceDataAfterStartOfMainCPU == 0)
 		{
 			dataOut.getDeviceDataNow = 1;
-			getDeviceDataAfterStartOfMainCPU = 10*60*10;// * 100ms
+			getDeviceDataAfterStartOfMainCPU = 10*60*10; /* * 100ms = 60 second => update device data every 10 minutes */
 		}
 	}
 
@@ -867,64 +877,69 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		pStateReal->pressure_uTick_new = dataIn.data[dataIn.boolPressureData].pressure_uTick;
 		pStateReal->pressure_uTick_local_new = HAL_GetTick();
 
-		if(ambient < (surface + 0.04f))
+		/* what was the code behind this if statement ? */
+		/* if(ambient < (surface + 0.04f)) */
 	
 		pStateReal->lifeData.dateBinaryFormat = dataIn.data[dataIn.boolTimeData].localtime_rtc_dr;
 		pStateReal->lifeData.timeBinaryFormat = dataIn.data[dataIn.boolTimeData].localtime_rtc_tr;
 	}
 	dataOut.setAccidentFlag = 0;
 
-	//Start of diveMode?
-	if(pStateReal->mode != MODE_DIVE && dataIn.mode == MODE_DIVE)
+	if(pStateReal->data_old__lost_connection_to_slave == 0)
 	{
-		if(modeChangeFlag)
-			*modeChangeFlag = 1;
-	  if(stateUsed == stateSimGetPointer())
+		//Start of diveMode?
+		if(pStateReal->mode != MODE_DIVE && dataIn.mode == MODE_DIVE)
+		{
+			if(modeChangeFlag)
+			{
+				*modeChangeFlag = 1;
+			}
+			if(stateUsed == stateSimGetPointer())
 			{
 				simulation_exit();
 			}
-			// new 170508
+				// new 170508
 			settingsGetPointer()->bluetoothActive = 0;
 			MX_Bluetooth_PowerOff();
 			//Init dive Mode
-		decoLock = DECO_CALC_init_as_is_start_of_dive;
-		pStateReal->lifeData.boolResetAverageDepth = 1;
-		pStateReal->lifeData.boolResetStopwatch = 1;
-	}
-	
-	//End of diveMode?
-	if(pStateReal->mode == MODE_DIVE && dataIn.mode != MODE_DIVE)
-	{
-		if(modeChangeFlag)
-			*modeChangeFlag = 1;
-		createDiveSettings();
-
-		if(pStateReal->warnings.cnsHigh)
-		{
-			if(pStateReal->lifeData.cns >= 130)
-				dataOut.setAccidentFlag += ACCIDENT_CNSLVL2;
-			else if(pStateReal->lifeData.cns >= 100)
-				dataOut.setAccidentFlag += ACCIDENT_CNS;
+			decoLock = DECO_CALC_init_as_is_start_of_dive;
+			pStateReal->lifeData.boolResetAverageDepth = 1;
+			pStateReal->lifeData.boolResetStopwatch = 1;
 		}
-		if(pStateReal->warnings.decoMissed)
-			dataOut.setAccidentFlag += ACCIDENT_DECOSTOP;
-	}
-	pStateReal->mode = dataIn.mode;
-	pStateReal->chargeStatus = dataIn.chargeStatus;
 
-	pStateReal->lifeData.pressure_ambient_bar = ambient;
-	pStateReal->lifeData.pressure_surface_bar = surface;
-	if(is_ambient_pressure_close_to_surface(&pStateReal->lifeData))
-	{
-		pStateReal->lifeData.depth_meter = 0;
-	}
-	else
-	{
-		pStateReal->lifeData.depth_meter = meter;
-	}
+		//End of diveMode?
+		if(pStateReal->mode == MODE_DIVE && dataIn.mode != MODE_DIVE)
+		{
+			if(modeChangeFlag)
+			{
+				*modeChangeFlag = 1;
+			}
+			createDiveSettings();
+
+			if(pStateReal->warnings.cnsHigh)
+			{
+				if(pStateReal->lifeData.cns >= 130)
+					dataOut.setAccidentFlag += ACCIDENT_CNSLVL2;
+				else if(pStateReal->lifeData.cns >= 100)
+					dataOut.setAccidentFlag += ACCIDENT_CNS;
+			}
+			if(pStateReal->warnings.decoMissed)
+				dataOut.setAccidentFlag += ACCIDENT_DECOSTOP;
+		}
+		pStateReal->mode = dataIn.mode;
+		pStateReal->chargeStatus = dataIn.chargeStatus;
 	
-	if(pStateReal->data_old__lost_connection_to_slave == 0)
-	{
+		pStateReal->lifeData.pressure_ambient_bar = ambient;
+		pStateReal->lifeData.pressure_surface_bar = surface;
+		if(is_ambient_pressure_close_to_surface(&pStateReal->lifeData))
+		{
+			pStateReal->lifeData.depth_meter = 0;
+		}
+		else
+		{
+			pStateReal->lifeData.depth_meter = meter;
+		}
+
 		pStateReal->lifeData.temperature_celsius = dataIn.data[dataIn.boolPressureData].temperature;
 		pStateReal->lifeData.ascent_rate_meter_per_min = dataIn.data[dataIn.boolPressureData].ascent_rate_meter_per_min;
 		if(pStateReal->mode != MODE_DIVE)
@@ -965,9 +980,9 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		pStateReal->compass_uTick_new = dataIn.data[dataIn.boolCompassData].compass_uTick;
 		pStateReal->compass_uTick_local_new = HAL_GetTick();
 
-	  pStateReal->lifeData.cns = dataIn.data[dataIn.boolToxicData].cns;
+	    pStateReal->lifeData.cns = dataIn.data[dataIn.boolToxicData].cns;
 		pStateReal->lifeData.otu = dataIn.data[dataIn.boolToxicData].otu;
-	  pStateReal->lifeData.no_fly_time_minutes = dataIn.data[dataIn.boolToxicData].no_fly_time_minutes;
+	    pStateReal->lifeData.no_fly_time_minutes = dataIn.data[dataIn.boolToxicData].no_fly_time_minutes;
 		pStateReal->lifeData.desaturation_time_minutes = dataIn.data[dataIn.boolToxicData].desaturation_time_minutes;
 
 		memcpy(pStateReal->lifeData.tissue_nitrogen_bar, dataIn.data[dataIn.boolTisssueData].tissue_nitrogen_bar,sizeof(pStateReal->lifeData.tissue_nitrogen_bar));
@@ -1243,12 +1258,6 @@ wirelessData[i][2] = pStateReal->lifeData.wireless_data[i].ageInMilliSeconds;
 	/* sensorErrors
 	 */
 	pStateReal->sensorErrorsRTE = dataIn.sensorErrors;
-	
-	/* end
-	 */
-	data_old__lost_connection_to_slave_counter_temp = 0;
-	data_old__lost_connection_to_slave_counter_retry = 0;
-	pStateReal->data_old__lost_connection_to_slave = 0;
 }
 
 
@@ -1284,15 +1293,15 @@ uint8_t DataEX_check_RTE_version__needs_update(void)
 uint8_t DataEX_check_header_and_footer_shifted()
 {
 	uint8_t ret = 1;
-	if((dataIn.footer.checkCode[0] != 0x00)
-	&& (dataIn.footer.checkCode[1] != 0x00)
-	&& (dataIn.footer.checkCode[2] != 0x00)
-	&& (dataIn.footer.checkCode[3] != 0x00)) { ret = 0; }
+	if((dataIn.footer.checkCode[0] == 0x00)
+	&& (dataIn.footer.checkCode[1] == 0x00)
+	&& (dataIn.footer.checkCode[2] == 0x00)
+	&& (dataIn.footer.checkCode[3] == 0x00)) { ret = 0; }
 
-	if((dataIn.footer.checkCode[0] != 0xff)
-	&& (dataIn.footer.checkCode[1] != 0xff)
-	&& (dataIn.footer.checkCode[2] != 0xff)
-	&& (dataIn.footer.checkCode[3] != 0xff)) { ret = 0; }
+	if((dataIn.footer.checkCode[0] == 0xff)
+	&& (dataIn.footer.checkCode[1] == 0xff)
+	&& (dataIn.footer.checkCode[2] == 0xff)
+	&& (dataIn.footer.checkCode[3] == 0xff)) { ret = 0; }
 
 	return ret;
 }
@@ -1301,10 +1310,12 @@ uint8_t DataEX_check_header_and_footer_ok(void)
 {
 	if(dataIn.header.checkCode[0] != 0xA1)
 		return 0;
+#if USE_OLD_HEADER_FORMAT
 	if(dataIn.header.checkCode[1] != 0xA2)
 		return 0;
 	if(dataIn.header.checkCode[2] != 0xA3)
 		return 0;
+#endif
 	if(dataIn.header.checkCode[3] != 0xA4)
 		return 0;
 	if(dataIn.footer.checkCode[0] != 0xE1)
