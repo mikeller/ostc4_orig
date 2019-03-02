@@ -36,7 +36,7 @@
 SSettings Settings;
 
 const uint8_t RTErequiredHigh = 1;
-const uint8_t RTErequiredLow = 4;
+const uint8_t RTErequiredLow = 7;
 
 const uint8_t FONTrequiredHigh = 1;
 const uint8_t FONTrequiredLow =	0;
@@ -55,7 +55,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
 {
     .versionFirst   = 1,
     .versionSecond 	= 4,
-    .versionThird   = 5,
+    .versionThird   = 7,
     .versionBeta    = 1,
 
     /* 4 bytes with trailing 0 */
