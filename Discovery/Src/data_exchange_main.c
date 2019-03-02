@@ -302,8 +302,6 @@ uint8_t DataEX_call(void)
 	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_SET);
 	delayMicros(10); //~exchange time(+20% reserve)
 	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
-	/* one cycle with NotChipSelect true to clear slave spi buffer */
-
 
 	if(data_old__lost_connection_to_slave_counter_temp >= 3)
 	{
@@ -312,14 +310,20 @@ uint8_t DataEX_call(void)
 		{
 			HAL_SPI_Abort_IT(&cpu2DmaSpi);
 		}
-
 		/* reset of own DMA does not work ==> request reset of slave dma */
-		if((DataEX_check_header_and_footer_shifted()) && (data_old__lost_connection_to_slave_counter_retry >= 2))
+		if((DataEX_check_header_and_footer_shifted()) && (data_old__lost_connection_to_slave_counter_retry == 2))
 		{
 			dataOut.header.checkCode[SPI_HEADER_INDEX_SLAVE] = 0xA5;
 		}
 		data_old__lost_connection_to_slave_counter_retry++;
 	}
+#if USE_OLD_SYNC_METHOD
+	/* one cycle with NotChipSelect true to clear slave spi buffer */
+	else
+	{
+		HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
+	}
+#endif
 
 	DataEx_call_helper_requests();
 
@@ -327,10 +331,10 @@ uint8_t DataEX_call(void)
 
 
 	SPI_DMA_answer = HAL_SPI_TransmitReceive_DMA(&cpu2DmaSpi, (uint8_t *)&dataOut, (uint8_t *)&dataIn, EXCHANGE_BUFFERSIZE);
-//	HAL_Delay(3);
 	if(SPI_DMA_answer != HAL_OK)
+	{
 		DataEX_Error_Handler(SPI_DMA_answer);
-
+	}		
 //	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_SET);
 //HAL_Delay(3);
 //HAL_GPIO_WritePin(OSCILLOSCOPE2_GPIO_PORT,OSCILLOSCOPE2_PIN,GPIO_PIN_SET); /* only for testing with Oscilloscope */
@@ -851,6 +855,10 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 	float ambient, surface, density, meter;
 	SSettings *pSettings;
 	
+	ambient = 0;
+	surface = 0;
+	meter = 0;
+
 	/*	uint8_t IAmStolenPleaseKillMe;
 	 */
 	pSettings = settingsGetPointer();

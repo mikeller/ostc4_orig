@@ -529,7 +529,6 @@ void setActualGasFirst(SLifeData *lifeData)
 
 void setActualGasAir(SLifeData *lifeData)
 {
-	SSettings* pSettings = settingsGetPointer();
 	uint8_t nitrogen;
 	nitrogen = 79;
 	lifeData->actualGas.GasIdInSettings = 0;
@@ -784,13 +783,16 @@ _Bool deco_zone_reached(void)
 
 void resetEvents(void)
 {
-  SDiveState * pStateUsed;
+    SDiveState * pStateUsed;
 	if(stateUsed == stateRealGetPointer())
+	{
 		pStateUsed = stateRealGetPointerWrite();
+	}
 	else
+	{
 		pStateUsed = stateSimGetPointerWrite();
-
-		memset(&pStateUsed->events,0, sizeof(SEvents));
+	}
+	memset(&pStateUsed->events,0, sizeof(SEvents));
 }
 
 

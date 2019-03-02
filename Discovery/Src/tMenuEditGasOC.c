@@ -1030,9 +1030,6 @@ uint8_t OnAction_First(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber
 {
     uint8_t first, i, gasOne;
 
-
-    SDiveState * pStateReal = stateRealGetPointerWrite();
-
     if(editGasPage.ccr)
         gasOne = 1 + NUM_OFFSET_DILUENT;
     else
@@ -1074,7 +1071,6 @@ uint8_t OnAction_First(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber
 uint8_t OnAction_Deco(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     uint8_t  first, deco, gasOne;
-    SDiveState * pStateReal = stateRealGetPointerWrite();
 
     if(editGasPage.ccr)
         gasOne = 1 + NUM_OFFSET_DILUENT;
@@ -1130,7 +1126,6 @@ uint8_t OnAction_Deco(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber,
 uint8_t OnAction_Travel(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     uint8_t first, travel, gasOne;
-    SDiveState * pStateReal = stateRealGetPointerWrite();
 
     if(editGasPage.ccr)
         gasOne = 1 + NUM_OFFSET_DILUENT;
@@ -1177,7 +1172,6 @@ uint8_t OnAction_Travel(uint32_t editId, uint8_t blockNumber, uint8_t digitNumbe
 uint8_t OnAction_Inactive(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     uint8_t first, inactive, gasOne;
-    SDiveState * pStateReal = stateRealGetPointerWrite();
 
     if(editGasPage.ccr)
         gasOne = 1 + NUM_OFFSET_DILUENT;

@@ -1257,7 +1257,7 @@ void logbook_InitAndWrite(void)
 void logbook_UpdateHeader(void)
 {
 	const SDiveState * pStateReal = stateRealGetPointer();
-	SSettings *pSettings = settingsGetPointer();
+
 //	uint16_t secondsAtShallow = 0;
 	RTC_DateTypeDef Sdate;
 	RTC_TimeTypeDef Stime;

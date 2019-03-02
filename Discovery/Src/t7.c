@@ -3342,7 +3342,6 @@ void t7_compass(uint16_t ActualHeading, uint16_t UserSetHeading)
     point_t start, stop, center;
     static int32_t LastHeading = 0;
     int32_t newHeading = 0;
-    int32_t FlipHeading = 0;
     int32_t diff = 0;
     int32_t diff2 = 0;
 

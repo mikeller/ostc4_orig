@@ -1630,9 +1630,10 @@ void deco_loop(void)
         CALC_VPM_FUTURE,
         CALC_BUEHLMANN,
         CALC_BUEHLMANN_FUTURE,
+		CALC_INVALID
     } CALC_WHAT;
 
-    static int what = -1;
+    static CALC_WHAT what = CALC_INVALID;
     int counter = 0;
     if((stateUsed->mode != MODE_DIVE) || (stateUsed->diveSettings.diveMode == DIVEMODE_Apnea) || (decoLock != DECO_CALC_ready ))
         return;
@@ -1677,27 +1678,28 @@ void deco_loop(void)
 
     switch(what)
     {
-    case CALC_VPM:
-            vpm_calc(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.vpm,&stateDeco.decolistVPM, DECOSTOPS);
-            decoLock = DECO_CALC_FINSHED_vpm;
-            return;
-     case CALC_VPM_FUTURE:
-            decom_tissues_exposure(stateDeco.diveSettings.future_TTS_minutes * 60,&stateDeco.lifeData);
-            vpm_calc(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.vpm,&stateDeco.decolistFutureVPM, FUTURESTOPS);
-            decoLock = DECO_CALC_FINSHED_Futurevpm;
-            return;
-    case CALC_BUEHLMANN:
-            buehlmann_calc_deco(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
-            buehlmann_ceiling_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
-            buehlmann_relative_gradient_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
-            decoLock = DECO_CALC_FINSHED_Buehlmann;
-            return;
-     case CALC_BUEHLMANN_FUTURE:
-            decom_tissues_exposure(stateDeco.diveSettings.future_TTS_minutes * 60,&stateDeco.lifeData);
-            buehlmann_calc_deco(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistFutureBuehlmann);
-            //buehlmann_ceiling_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
-            decoLock = DECO_CALC_FINSHED_FutureBuehlmann;
-            return;
+		case CALC_VPM:
+				vpm_calc(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.vpm,&stateDeco.decolistVPM, DECOSTOPS);
+				decoLock = DECO_CALC_FINSHED_vpm;
+				return;
+		 case CALC_VPM_FUTURE:
+				decom_tissues_exposure(stateDeco.diveSettings.future_TTS_minutes * 60,&stateDeco.lifeData);
+				vpm_calc(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.vpm,&stateDeco.decolistFutureVPM, FUTURESTOPS);
+				decoLock = DECO_CALC_FINSHED_Futurevpm;
+				return;
+		case CALC_BUEHLMANN:
+				buehlmann_calc_deco(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
+				buehlmann_ceiling_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
+				buehlmann_relative_gradient_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
+				decoLock = DECO_CALC_FINSHED_Buehlmann;
+				return;
+		 case CALC_BUEHLMANN_FUTURE:
+				decom_tissues_exposure(stateDeco.diveSettings.future_TTS_minutes * 60,&stateDeco.lifeData);
+				buehlmann_calc_deco(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistFutureBuehlmann);
+				//buehlmann_ceiling_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
+				decoLock = DECO_CALC_FINSHED_FutureBuehlmann;
+				return;
+		 default: break;
     }
     counter++;
 }
