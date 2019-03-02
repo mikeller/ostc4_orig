@@ -88,6 +88,7 @@ typedef struct
 
 /* Variables ---------------------------------------------------------*/
 extern SGlobal global;
+extern uint8_t dohardspisync;
 
 
 /* Function prototypes -----------------------------------------------*/

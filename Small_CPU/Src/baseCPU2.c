@@ -164,7 +164,7 @@ uint8_t hasExternalClock(void) {
 // See CPU2-RTE.ld
 const SFirmwareData cpu2_FirmwareData __attribute__(( section(".firmware_data") ))= {
 		.versionFirst = 1,
-		.versionSecond = 6,
+		.versionSecond = 7,
 		.versionThird = 0,
 		.versionBeta = 0,
 
@@ -384,6 +384,7 @@ int main(void) {
 			MX_SPI1_Init();
 			MX_EXTI_wireless_Init();
 			SPI_Start_single_TxRx_with_Master(); /* be prepared for the first data exchange */
+			dohardspisync = 1;
 			EXTI_Test_Button_Init();
 
 			/*
@@ -479,11 +480,11 @@ int main(void) {
 			compass_init(0, 7);
 			accelerator_init();
 			wireless_init();
-//			SPI_synchronize_with_Master(); TODO: REMOVE
+			SPI_synchronize_with_Master();
 			MX_DMA_Init();
 			MX_SPI1_Init();
 			MX_EXTI_wireless_Init();
-//			SPI_Start_single_TxRx_with_Master();
+			SPI_Start_single_TxRx_with_Master();
 
 			// EXTILine0_Button_DeInit(); not now, later after testing
 			break;

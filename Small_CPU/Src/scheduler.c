@@ -58,6 +58,7 @@ SGlobal global;
 SDevice DeviceDataFlash;
 uint8_t deviceDataFlashValid = 0;
 uint8_t deviceDataSubSeconds = 0;
+uint8_t dohardspisync = 1;
 
 /* Private variables ---------------------------------------------------------*/
 /* can be lost while in sleep */
@@ -181,6 +182,8 @@ void initGlobals(void)
 	global.deviceData.temperatureMaximum.value_int32 = INT32_MIN;
 	global.deviceData.temperatureMinimum.value_int32 = INT32_MAX;
 	global.deviceData.voltageMinimum.value_int32 = INT32_MAX;
+
+	dohardspisync = 1;
 }
 
 
@@ -430,7 +433,7 @@ uint16_t schedule_update_timer_helper(int8_t thisSeconds)
 void schedule_check_resync(void)
 {
 	//TODO: REMOVE
-	if((global.check_sync_not_running >= 2))
+	if((global.check_sync_not_running >= 3))
 	{
 //		global.dataSendToSlaveIsNotValidCount = 0;
 		global.check_sync_not_running = 0;
@@ -904,7 +907,6 @@ void scheduleSurfaceMode(void)
 		}
 	}
 }
-static uint8_t dohardspisync = 1;
 
 void HardSyncToSPI()
 {

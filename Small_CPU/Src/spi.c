@@ -137,7 +137,7 @@ void MX_SPI1_Init(void) {
 	hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
 	hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
 	hspi1.Init.NSS = SPI_NSS_HARD_INPUT; //SPI_NSS_SOFT;
-	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128; 
+	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
 	hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
 	hspi1.Init.TIMode = SPI_TIMODE_DISABLED;
 	hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLED; //_DISABLED; _ENABLED;
@@ -154,6 +154,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi) {
 	GPIO_InitTypeDef GPIO_InitStruct;
 
 	if (hspi->Instance == SPI1) {
+		SPIDataRX = 0;
 		// Peripheral clock enable
 		__SPI1_CLK_ENABLE();
 		__GPIOA_CLK_ENABLE();
@@ -280,9 +281,9 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi) {
 }
 
 void SPI_synchronize_with_Master(void) {
+#ifdef USE_OLD_SYNC_METHOD
 	GPIO_InitTypeDef GPIO_InitStruct;
 //
-#if 0
 	__GPIOA_CLK_ENABLE();
 	/**SPI1 GPIO Configuration
 	 PA5   ------> SPI1_SCK
@@ -290,14 +291,14 @@ void SPI_synchronize_with_Master(void) {
 	GPIO_InitStruct.Pin = GPIO_PIN_4 | GPIO_PIN_5;
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 	GPIO_InitStruct.Pull = GPIO_PULLUP;
-	GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 //
 	HAL_Delay(10);
 	while (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) == 0);
 	HAL_Delay(10);
 	while (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_5) == 1);
-	HAL_Delay(20);
+	HAL_Delay(50);
 #endif
 }
 
@@ -321,6 +322,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
 	/* restart SPI */
 	if (hspi == &hspi1)
 	{
+		HardSyncToSPI();
 		SPIDataRX = 1;
 
 		global.check_sync_not_running = 0;
@@ -330,7 +332,6 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
 			global.dataSendToSlavePending = 0;
 			global.dataSendToSlaveIsValid = 1;
 			global.dataSendToSlaveIsNotValidCount = 0;
-			return;
 		}
 	}
 }
@@ -351,13 +352,11 @@ void SPI_Evaluate_RX_Data()
 				HAL_SPI_Abort_IT(&hspi1);
 				global.dataSendToMaster.header.checkCode[SPI_HEADER_INDEX_SLAVE] = global.dataSendToSlave.header.checkCode[SPI_HEADER_INDEX_MASTER];
 				global.dataSendToSlave.header.checkCode[SPI_HEADER_INDEX_SLAVE] = 0;
-				return;
 			}
 			 else
 			 {
 				 global.dataSendToMaster.header.checkCode[SPI_HEADER_INDEX_SLAVE] = global.dataSendToSlave.header.checkCode[SPI_HEADER_INDEX_MASTER];
 			 }
-			HardSyncToSPI();
 		} else {
 	//		GPIO_new_DEBUG_LOW(); //For debug.
 				global.dataSendToSlaveIsValid = 0;
@@ -387,7 +386,7 @@ void SPI_Evaluate_RX_Data()
 static uint8_t SPI_check_header_and_footer_ok(void) {
 	if (global.dataSendToSlave.header.checkCode[0] != 0xBB)
 		return 0;
-#if USE_OLD_HEADER_FORMAT
+#ifdef USE_OLD_HEADER_FORMAT
 	if (global.dataSendToSlave.header.checkCode[1] != 0x01)
 		return 0;
 	if (global.dataSendToSlave.header.checkCode[2] != 0x01)
