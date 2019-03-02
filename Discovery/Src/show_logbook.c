@@ -642,14 +642,14 @@ void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t StepBac
 
     // CNS
     snprintf(text,20,"CNS: %i %%",logbookHeader.maxCNS);
-    Gfx_write_label_var(hgfx, 30, 250,750, &FontT42,CLUT_GasSensor1,text);
+    Gfx_write_label_var(hgfx, 30, 250,440, &FontT42,CLUT_GasSensor1,text);
 
 // Surface Pressure
 //		snprintf(text,20,"\001%i\016\016 mbar",logbookHeader.surfacePressure_mbar);
 //		Gfx_write_label_var(hgfx,300,500,750, &FontT42,CLUT_GasSensor1,text);
 //		snprintf(text,40,"%i\016\016 mbar\017  (%i\016\016 m\017)",logbookHeader.surfacePressure_mbar, unit_SeaLevelRelation_integer(logbookHeader.surfacePressure_mbar));
     snprintf(text,40,"%i\016\016 hPa\017",logbookHeader.surfacePressure_mbar);
-    Gfx_write_label_var(hgfx,320,600,750, &FontT42,CLUT_GasSensor1,text);
+    Gfx_write_label_var(hgfx,320,600,440, &FontT42,CLUT_GasSensor1,text);
 
 
     //--- print coordinate system & depth graph with gaschanges ---
