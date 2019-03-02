@@ -1881,6 +1881,7 @@ int compass_calib_common(void)
 				}	
 				HAL_Delay(1);
 				ticks = lasttick - tickstart;
+				SPI_Evaluate_RX_Data();
     }
         
     compass_solve_calibration(&g);
