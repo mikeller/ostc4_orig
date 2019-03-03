@@ -36,9 +36,13 @@
 #define BUTTON_DEBOUNCE_DELAY 50 //Delay for debounce filter for piezo buttons
 
 
-//Spi sync data debug
+// Spi sync data debug
 #define SPI_SHOW_SYNC_STATS 1
 #define SPI_MIN_ERROR_SHOW 10
+
+// SPI header by index used for synchronization check (package sequence counter)
+#define SPI_HEADER_INDEX_MASTER 1
+#define SPI_HEADER_INDEX_SLAVE 2
 
 
 //Text data
