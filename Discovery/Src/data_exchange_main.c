@@ -299,8 +299,6 @@ uint8_t DataEX_call(void)
 {
 	uint8_t SPI_DMA_answer = 0;
 
-	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_SET);
-	delayMicros(10); //~exchange time(+20% reserve)
 	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
 
 	if(data_old__lost_connection_to_slave_counter_temp >= 3)
@@ -355,10 +353,9 @@ SDataExchangeSlaveToMaster* get_dataInPointer(void){
 
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
-
-
 	if(hspi == &cpu2DmaSpi)
 	{
+		HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_SET);
 		SPI_CALLBACKS+=1;
 	}
 }
