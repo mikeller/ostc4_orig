@@ -432,7 +432,7 @@ uint16_t schedule_update_timer_helper(int8_t thisSeconds)
 
 void schedule_check_resync(void)
 {
-	//TODO: REMOVE
+	/* counter is incremented in cyclic 100ms loop and reset to 0 if the transmission complete callback is called */
 	if((global.check_sync_not_running >= 3))
 	{
 //		global.dataSendToSlaveIsNotValidCount = 0;
@@ -443,6 +443,10 @@ void schedule_check_resync(void)
 		 * function error handler
 		 */
 		SPI_Start_single_TxRx_with_Master();
+	}
+	if((global.check_sync_not_running == 10)) /* connection lost for about a second. Could be debugging or Firmware update */
+	{
+		dohardspisync = 1;
 	}
 }
 
