@@ -1055,9 +1055,9 @@ uint8_t check_and_correct_settings(void)
         corrections++;
     }
     else
-    if(Settings.ButtonResponsiveness[3] > MIN_BUTTONRESPONSIVENESS_GUI)
+    if(Settings.ButtonResponsiveness[3] > MAX_BUTTONRESPONSIVENESS_GUI)
     {
-        Settings.ButtonResponsiveness[3] = MIN_BUTTONRESPONSIVENESS;
+        Settings.ButtonResponsiveness[3] = MAX_BUTTONRESPONSIVENESS_GUI;
         corrections++;
     }
     // flex values 0, 1, 2
