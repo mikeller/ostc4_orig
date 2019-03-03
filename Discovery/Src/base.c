@@ -868,9 +868,12 @@ void EvaluateButton()
 				{
 					action = ACTION_BUTTON_NEXT;
 				}
-				if (action == ACTION_BUTTON_NEXT)
+				else
 				{
-					action = ACTION_BUTTON_BACK;
+					if (action == ACTION_BUTTON_NEXT)
+					{
+						action = ACTION_BUTTON_BACK;
+					}
 				}
 			}
 		}
