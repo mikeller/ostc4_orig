@@ -135,12 +135,11 @@ void DataEX_Error_Handler(uint8_t answer)
 	count_DataEX_Error_Handler++;
 	last_error_DataEX_Error_Handler = answer;
 
-	/* A wrong footer indicates a communication interrupt. Statemachine is waiting for new data which is not received because no new transmission is triggered */
+	/* A wrong footer indicates a communication interrupt. State machine is waiting for new data which is not received because no new transmission is triggered */
 	/* ==> Abort data exchange to enable a new RX / TX cycle */
 	if(answer == HAL_BUSY)
 	{
 		HAL_SPI_Abort_IT(&cpu2DmaSpi);
-		data_old__lost_connection_to_slave_counter_total += 1000; /* add significant error offset to indicate error causing an abort event */
 	}
 
   return;
