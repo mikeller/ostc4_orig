@@ -411,6 +411,11 @@ unsigned int crc32c_checksum(unsigned char* message, int length) {
 int main(int argc, char** argv) {
 	
 	
+	if (argc != 3) {
+		fprintf(stderr, "Usage: OSTC4pack_V4 <type> <bin file>\n");
+		return(-1);
+	}
+
 	FILE *fp, * fpout;
 	size_t len;
 	unsigned char buf[1050000];
@@ -440,7 +445,7 @@ int main(int argc, char** argv) {
 		sprintf(filenameout,"%s_upload.bin",filename);
 	else
 	if(type == 2)
-		sprintf(filenameout,"OSTC4_FONT_upload.bin",filename);
+		sprintf(filenameout,"%s_upload.bin",filename);
 	else
 		sprintf(filenameout,"%s_upload.bin",filename);
 	
@@ -513,8 +518,3 @@ int main(int argc, char** argv) {
     fwrite(buf2,sizeof(char),4,fp);
      
 }
-
-
-
-
-
