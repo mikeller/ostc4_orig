@@ -149,18 +149,19 @@ void show_logbook_draw_depth_graph(GFX_DrawCfgScreen *hgfx, uint8_t StepBackward
     winsmal.right = wintemp.left -1;
     winsmal.bottom = winsmal.top + 16;
 
-    write_label_(hgfx, winsmal,&FontT24,CLUT_GasSensor1,"[m]");
-    winsmal.left = wintemp.left - 48;
+    Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_GasSensor1,"[m]");
+
+ //   winsmal.left = wintemp.left - 48;
     char msg[3];
     float deltaline = ((float)(wintemp.bottom - wintemp.top))/5;
     for(int i = 1; i<=5; i++)
     {
-
         winsmal.top	= wintemp.top + deltaline * i - 14;
         winsmal.bottom = winsmal.top + 16;
-        winsmal.right = wintemp.left - 2;
+
+    //    winsmal.right = wintemp.left - 2;
         snprintf(msg,5,"%i",i * vstep);
-        write_label_(hgfx, winsmal,&FontT24,CLUT_GasSensor1,msg);
+        Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_GasSensor1,msg);
     }
 
     //vertical (Time) *******************************************************************
@@ -188,18 +189,17 @@ void show_logbook_draw_depth_graph(GFX_DrawCfgScreen *hgfx, uint8_t StepBackward
     winsmal.right = winsmal.left + 60;
     winsmal.bottom = winsmal.top + 16;
 
-
+    Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_GasSensor1,"min");
     for(int i = 1; i<=lines; i++)
     {
         winsmal.left= wintemp.left + vdeltaline * i - 15;
         winsmal.right = winsmal.left + 30;
         snprintf(msg,5,"%3i",i * timestep);
-        write_label_(hgfx, winsmal,&FontT24,CLUT_GasSensor1,msg);
+        Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_GasSensor1,msg);
     }
     winsmal.left = wintemp.left;// - 9;
     winsmal.top	=  wintemp.top - 40;
     winsmal.right = winsmal.left + 60;
-    write_label_(hgfx, winsmal,&FontT24,CLUT_GasSensor1,"min");;
 
     //--- print depth graph ---
     //adapt window
@@ -238,21 +238,35 @@ void show_logbook_draw_depth_graph(GFX_DrawCfgScreen *hgfx, uint8_t StepBackward
             GFX_graph_print(hgfx,&wintemp,saveTop,1,0,datamax, decostopdata,dataLength, CLUT_NiceGreen, NULL);
     }
 
+    if(settingsGetPointer()->FlipDisplay)
+    {
+		winsmal.right = 800 - wintemp.left;
+		winsmal.left = 800 - wintemp.right;
+		winsmal.bottom = wintemp.bottom;
+		winsmal.top = wintemp.top;
+    }
+    else
+    {
+		winsmal.right = wintemp.right;
+		winsmal.left = wintemp.left;
+		winsmal.bottom = wintemp.bottom;
+		winsmal.top = wintemp.top;
+    }
+
     switch(mode)
     {
     case 0:
-        GFX_graph_print(hgfx,&wintemp,0,1,0,datamax, depthdata,dataLength,CLUT_GasSensor1, NULL);
+        GFX_graph_print(hgfx,&winsmal,0,1,0,datamax, depthdata,dataLength,CLUT_GasSensor1, NULL);
         break;
     case 1:
-        GFX_graph_print(hgfx,&wintemp,saveBottom,1,0,datamax, depthdata,dataLength,CLUT_GasSensor0,colordata);
+        GFX_graph_print(hgfx,&winsmal,saveBottom,1,0,datamax, depthdata,dataLength,CLUT_GasSensor0,colordata);
         break;
     case 2:
         if(*colordata)
-            GFX_graph_print(hgfx,&wintemp,0,1,0,datamax, depthdata,dataLength,CLUT_GasSensor0,colordata);
+            GFX_graph_print(hgfx,&winsmal,0,1,0,datamax, depthdata,dataLength,CLUT_GasSensor0,colordata);
         else
-            GFX_graph_print(hgfx,&wintemp,0,1,0,datamax, depthdata,dataLength,CLUT_GasSensor1, NULL);
+            GFX_graph_print(hgfx,&winsmal,0,1,0,datamax, depthdata,dataLength,CLUT_GasSensor1, NULL);
     }
-
 }
 
 
@@ -452,7 +466,9 @@ void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t StepBac
     uint8_t day =  logbookHeader.dateDay;
     char text[40];
     snprintf(text, 20, "20%02i-%02i-%02i", year, month, day);
-    Gfx_write_label_var(hgfx, 30, 150,10, &FontT42,CLUT_GasSensor1,text);
+
+    Gfx_write_label_var(hgfx, 30, 250,10, &FontT42,CLUT_GasSensor1,text);
+
 
     // Print logbook number with offset
     if(settingsGetPointer()->logbookOffset)
@@ -535,7 +551,7 @@ void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t StepBac
     winsmal.left = 30;
     winsmal.top = top -3;
     winsmal.bottom = winsmal.top + FontT42.height;
-    winsmal.right = winsmal.left + 50;
+
     if(maxdepth < 10)
     {
         winsmal.left  = 137;
@@ -548,7 +564,9 @@ void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t StepBac
     {
         winsmal.left  = 147;
     }
-    write_label_(hgfx, winsmal,&FontT24,CLUT_GasSensor4,"max");
+    winsmal.right = winsmal.left + 50;
+
+    Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,top, &FontT24,CLUT_GasSensor4,"max");
     snprintf(text,3,"%c%c"
         , unit_depth_char1()
         , unit_depth_char2()
@@ -570,10 +588,12 @@ void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t StepBac
         snprintf(text,20,"%i.%i",avrdepth,avrdepth_dcm);
     }
     Gfx_write_label_var(hgfx, 30, 250,top, &FontT42,CLUT_GasSensor1,text);
+
     winsmal.left = 30;
     winsmal.top = top -3;
     winsmal.bottom = winsmal.top + FontT42.height;
-    winsmal.right = winsmal.left + 50;
+
+/* put avg behind previous string */
     if(avrdepth < 10)
     {
         winsmal.left  = 137                               ;
@@ -586,7 +606,9 @@ void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t StepBac
     {
         winsmal.left  = 147;
     }
-    write_label_(hgfx, winsmal,&FontT24,CLUT_GasSensor4,"avg");
+    winsmal.right = winsmal.left + 50;
+
+    Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_GasSensor4,"avg");
     snprintf(text,3,"%c%c"
         , unit_depth_char1()
         , unit_depth_char2()
@@ -620,20 +642,21 @@ void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t StepBac
 
     // CNS
     snprintf(text,20,"CNS: %i %%",logbookHeader.maxCNS);
-    Gfx_write_label_var(hgfx, 30, 250,750, &FontT42,CLUT_GasSensor1,text);
+    Gfx_write_label_var(hgfx, 30, 250,440, &FontT42,CLUT_GasSensor1,text);
 
 // Surface Pressure
 //		snprintf(text,20,"\001%i\016\016 mbar",logbookHeader.surfacePressure_mbar);
 //		Gfx_write_label_var(hgfx,300,500,750, &FontT42,CLUT_GasSensor1,text);
 //		snprintf(text,40,"%i\016\016 mbar\017  (%i\016\016 m\017)",logbookHeader.surfacePressure_mbar, unit_SeaLevelRelation_integer(logbookHeader.surfacePressure_mbar));
-    snprintf(text,40,"%i\016\016 mbar\017",logbookHeader.surfacePressure_mbar);
-    Gfx_write_label_var(hgfx,320,600,750, &FontT42,CLUT_GasSensor1,text);
+    snprintf(text,40,"%i\016\016 hPa\017",logbookHeader.surfacePressure_mbar);
+    Gfx_write_label_var(hgfx,320,600,440, &FontT42,CLUT_GasSensor1,text);
 
 
     //--- print coordinate system & depth graph with gaschanges ---
     wintemp.left 	= 330;
     wintemp.top	=  160;
     wintemp.bottom -= 40;
+
     show_logbook_draw_depth_graph(hgfx, StepBackwards, &wintemp, 1, dataLength, depthdata, gasdata, NULL);
 }
 
@@ -682,8 +705,7 @@ void show_logbook_logbook_show_log_page2(GFX_DrawCfgScreen *hgfx, uint8_t StepBa
     winsmal.right =  wintemp.right + 30;
     winsmal.bottom = winsmal.top + 16;
 
-    write_label_(hgfx, winsmal,&FontT24,CLUT_LogbookTemperature,"[C]");
-
+    Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_LogbookTemperature,"[C]");
 
     int16_t minVal = 0;
     int16_t maxVal = 0;
@@ -715,7 +737,7 @@ void show_logbook_logbook_show_log_page2(GFX_DrawCfgScreen *hgfx, uint8_t StepBa
             snprintf(msg,2,"%1i",tmp);
         else
             snprintf(msg,3,"%2i",tmp);
-        write_label_(hgfx, winsmal,&FontT24,CLUT_LogbookTemperature,msg);
+        Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_LogbookTemperature,msg);
     }
 
 
@@ -1017,7 +1039,7 @@ void show_logbook_logbook_show_log_page3(GFX_DrawCfgScreen *hgfx, uint8_t StepBa
             print_gas_name(gas_name,15,logbookHeader.gasordil[i].oxygen_percentage,logbookHeader.gasordil[i].helium_percentage);
             snprintf(msg,15,"G%i: %s",i + 1, gas_name);
             //msg[10] = 0;
-            write_label_(hgfx, winsmal,&FontT24,color,msg);
+            Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,color,msg);
         }
     }
 
@@ -1089,7 +1111,7 @@ void show_logbook_logbook_show_log_page4(GFX_DrawCfgScreen *hgfx, uint8_t StepBa
         winsmal.right =  winsmal.left + 55;
          color = CLUT_GasSensor1;//LOGBOOK_GRAPH_DEPTH;
 
-        write_label_(hgfx, winsmal,&FontT24,color,"depth");
+         Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,color,"depth");
 
     }
     winsmal.left = 799 - 67;//wintemp.right -67;
@@ -1097,12 +1119,12 @@ void show_logbook_logbook_show_log_page4(GFX_DrawCfgScreen *hgfx, uint8_t StepBa
 
     color = CLUT_LogbookTemperature;//LOGBOOK_GRAPH_DEPTH;
     if(logbookHeader.diveMode != DIVEMODE_CCR)
-        write_label_(hgfx, winsmal,&FontT24,color,"\002PP O2");
+    	Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,color,"\002PP O2");
     else
     if(logbookHeader.CCRmode != CCRMODE_Sensors)
-        write_label_(hgfx, winsmal,&FontT24,color,"\002SETPOINT");
+    	Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,color,"\002SETPOINT");
     else
-        write_label_(hgfx, winsmal,&FontT24,color,"\002SENSORS");
+    	Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,color,"\002SENSORS");
 
     //*** PP O2 ****************************************************
     //calc lines and labels
@@ -1142,7 +1164,7 @@ void show_logbook_logbook_show_log_page4(GFX_DrawCfgScreen *hgfx, uint8_t StepBa
     //winsmal.font = ft_tiny + ft_SLIM;
     color = CLUT_LogbookTemperature;// = LOGBOOK_GRAPH_TEMP;
 
-    write_label_(hgfx, winsmal,&FontT24,color,"bar");
+    Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,color,"bar");
 
     int deltaline = (wintemp.bottom - wintemp.top)/5;
     char msg[4];
@@ -1155,7 +1177,7 @@ void show_logbook_logbook_show_log_page4(GFX_DrawCfgScreen *hgfx, uint8_t StepBa
         winsmal.top	= wintemp.top + deltaline * i - 8;
         winsmal.bottom = winsmal.top + 16;
         snprintf(msg,4,"%1.1f",oxy);
-        write_label_(hgfx, winsmal,&FontT24,color,msg);
+        Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,color,msg);
         //oled_write(OVERLAY, &winsmal,msg,false,true);
     }
 

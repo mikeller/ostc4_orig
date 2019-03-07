@@ -67,7 +67,6 @@ enum CUSTOMVIEWS
 		CVIEW_EADTime,
 		CVIEW_Gaslist,
 		CVIEW_sensors_mV,
-		CVIEW_Scooter,
 		CVIEW_Hello,
 		CVIEW_CompassDebug,
 		CVIEW_SummaryOfLeftCorner,
@@ -133,7 +132,6 @@ void tHome_init_compass(void);
 
 float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCfgWindow* tXl1, GFX_DrawCfgWindow* tXr1, uint8_t mode);
 void t3_basics_battery_low_customview_extra(GFX_DrawCfgWindow* tXc1);
-void t3_basics_battery_scooter_customview_extra(GFX_DrawCfgWindow* tXc1);
 void t3_basics_show_customview_warnings(GFX_DrawCfgWindow* tXc1);
 void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, GFX_DrawCfgScreen *tXscreen, GFX_DrawCfgWindow* tXc1, GFX_DrawCfgWindow* tXc2, uint8_t mode);
 void t3_basics_refresh_apnoeRight(float depth, uint8_t tX_selection_customview, GFX_DrawCfgScreen *tXscreen, GFX_DrawCfgWindow* tXc1, GFX_DrawCfgWindow* tXc2, uint8_t mode);

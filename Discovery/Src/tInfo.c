@@ -256,6 +256,7 @@ void sendActionToInfo(uint8_t sendAction)
     case ACTION_MODE_CHANGE:
     case ACTION_BUTTON_BACK:
         exitInfo();
+        break;
     default:
         break;
     case ACTION_IDLE_TICK:

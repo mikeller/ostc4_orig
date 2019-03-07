@@ -218,18 +218,6 @@ typedef struct
 	uint16_t	bottle_bar_age_MilliSeconds[2 * NUM_GASES + 1];
 	uint16_t	apnea_total_counter;
 
-	uint8_t		scooterSpeed;
-	uint8_t		scooterType;
-	uint16_t	scooterWattstunden;
-	uint16_t	scooterDrehzahl;
-	uint8_t		scooterRestkapazitaet;
-	uint8_t		scooterAmpere;
-	uint16_t	scooterTemperature;
-	uint16_t	scooterAgeInMilliSeconds;
-	float			scooterSpannung;
-	uint8_t		scooterRestkapazitaetWhBased;
-	uint8_t		scooterRestkapazitaetVoltageBased;
-
 	/* control of DataEX_copy_to_LifeData()
 	 */
 	uint8_t boolResetAverageDepth;
@@ -475,7 +463,5 @@ uint32_t	CRC_CalcBlockCRC(uint32_t *buffer, uint32_t words);
 uint32_t	CRC_CalcBlockCRC_moreThan768000(uint32_t *buffer1, uint32_t *buffer2, uint32_t words);
 
 _Bool is_ambient_pressure_close_to_surface(SLifeData *lifeData);
-
-uint8_t stateUsed_scooterRemainingBattCapacity(void);
 
 #endif // DATA_CENTRAL_H

@@ -32,10 +32,12 @@
 
 //#include "data_central.h"
 
+#include "global_constants.h"
 // From Common/Drivers/
 #include "stm32f4xx_hal.h"
 
 #include <stdint.h>
+
 
 #define NUM_GASES 5
 #define NUM_OFFSET_DILUENT 5
@@ -63,9 +65,6 @@
 #define MMDDYY 0
 #define DDMMYY 1
 #define YYMMDD 2
-
-#define LICENCEBONEX 0xFE
-
 
 /*	2015 Jan 30, hw, deco and travel added for MenuEditGas
 	* can be used for buehlmann, vpm, etc. later but be carefull
@@ -213,6 +212,9 @@ typedef struct
 	// new in 0xFFFF0017
 	uint8_t FactoryButtonBase;
 	uint8_t FactoryButtonBalance[3];
+
+	/* new in 0xFFFF0018 */
+	uint8_t FlipDisplay;
 
 //to be continued
 } SSettings;

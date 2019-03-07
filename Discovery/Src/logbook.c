@@ -419,7 +419,7 @@ void logbook_writeSample(SDiveState state)
     eventByte1.uw = 0;
     eventByte2.uw = 0;
     //uint16_t tmpU16 = 0;
-		const SDecoinfo * pDecoinfo; // new hw 160620
+	const SDecoinfo * pDecoinfo; // new hw 160620
 
     //BuildEevntyte 1
 		// sub old 0-3 only one at a time
@@ -1257,7 +1257,7 @@ void logbook_InitAndWrite(void)
 void logbook_UpdateHeader(void)
 {
 	const SDiveState * pStateReal = stateRealGetPointer();
-	SSettings *pSettings = settingsGetPointer();
+
 //	uint16_t secondsAtShallow = 0;
 	RTC_DateTypeDef Sdate;
 	RTC_TimeTypeDef Stime;

@@ -45,7 +45,6 @@ uint32_t tMSystem_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext
     RTC_DateTypeDef Sdate;
     RTC_TimeTypeDef Stime;
     const SDiveState * pStateReal = stateRealGetPointer();
-    extern SDataExchangeSlaveToMaster dataIn;
 
     data = settingsGetPointer();
     textPointer = 0;
@@ -73,8 +72,7 @@ uint32_t tMSystem_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext
     }
 
     // surface mode
-    RTEhigh = dataIn.RTE_VERSION_high;
-    RTElow = dataIn.RTE_VERSION_low;
+    getActualRTEandFONTversion(&RTEhigh,&RTElow,NULL,NULL);
 
     if((RTEhigh == 0xFF) || (RTElow == 0xFF))
     {
@@ -274,9 +272,6 @@ char customview_TXT2BYTE_helper(uint8_t customViewId)
 
     switch(customViewId)
     {
-    case CVIEW_Scooter:
-        text = TXT2BYTE_ScooterMonitor;
-        break;
     case CVIEW_sensors:
         text = TXT2BYTE_O2monitor;
         break;

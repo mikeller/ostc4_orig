@@ -230,7 +230,6 @@
 #include "timer.h"
 #include "logbook_miniLive.h"
 #include "test_vpm.h"
-//#include "bonexConnect.h"
 #include "tDebug.h"
 
 #ifdef DEMOMODE
@@ -254,7 +253,7 @@ static void TIM_DEMO_init(void);
 //#define BUFFER_SIZE         ((uint32_t)0x00177000)
 //#define WRITE_READ_ADDR     ((uint32_t)0x0000)
 #define REFRESH_COUNT       ((uint32_t)0x0569)   /**< for SDRAM refresh counter (90Mhz SD clock) */
-
+#define INVALID_BUTTON ((uint8_t) 0xFF)
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 
@@ -262,6 +261,9 @@ RTC_HandleTypeDef		RtcHandle; /* used to change time and date, no RTC is running
 TIM_HandleTypeDef   TimHandle; /* used in stm32f4xx_it.c too */
 TIM_HandleTypeDef   TimBacklightHandle; /* used in stm32f4xx_it.c too */
 TIM_HandleTypeDef   TimDemoHandle; /* used in stm32f4xx_it.c too */
+
+uint8_t LastButtonPressed;
+uint32_t LastButtonPressedTick;
 
 /*
 uint32_t time_before;
@@ -291,7 +293,6 @@ uint8_t	updateButtonsToDefault = 0;
 uint8_t	wasFirmwareUpdateCheckBattery = 0;
 
 /* Private function prototypes -----------------------------------------------*/
-
 static void SystemClock_Config(void);
 static void Error_Handler(void);
 static void SDRAM_Initialization_Sequence(SDRAM_HandleTypeDef *hsdram, FMC_SDRAM_CommandTypeDef *Command);
@@ -303,6 +304,7 @@ static uint32_t TIM_BACKLIGHT_adjust(void);
 static void gotoSleep(void);
 static void deco_loop(void);
 static void resetToFirmwareUpdate(void);
+void EvaluateButton(void);
 
 /* ITM Trace-------- ---------------------------------------------------------*/
 /*
@@ -325,7 +327,11 @@ int fputc(int ch, FILE *f) {
     return(ch);
 }
 */
-
+/* #define DEBUG_RUNTIME TRUE */
+#ifdef DEBUG_RUNTIME
+#define MEASURECNT 60	/* number of measuremets to be stored */
+static uint32_t loopcnt[MEASURECNT];
+#endif
 //  ===============================================================================
 //	main
 /// @brief	This function makes initializations and has the nonIRQ endless loop
@@ -336,8 +342,15 @@ int main(void)
 {
     uint32_t pLayerInvisible;
     uint16_t totalDiveCounterFound;
+#ifdef DEBUG_RUNTIME
+    RTC_TimeTypeDef Stime;
+    uint8_t measurementindex = 0;
+    uint8_t lastsecond = 0xFF;
+#endif
+
 
     set_globalState( StBoot0 );
+    LastButtonPressed = 0;
 
     HAL_Init();
     HAL_NVIC_SetPriorityGrouping( NVIC_PRIORITYGROUP_2 );
@@ -350,6 +363,20 @@ int main(void)
     MX_UART_Init();
     SDRAM_Config();
     HAL_Delay( 100 );
+
+    stateRealGetPointerWrite()->lastKnownBatteryPercentage = 0; // damit das nicht in settings kopiert wird.
+    set_settings_to_Standard();
+    mod_settings_for_first_start_with_empty_ext_flash();
+    ext_flash_read_settings();
+    if( newFirmwareVersionCheckViaSettings() ) // test for old firmware version in loaded settings
+    {
+        wasFirmwareUpdateCheckBattery = 1;
+        set_settings_button_to_standard_with_individual_buttonBalance(); // will adapt individual values
+    }
+    //settingsGetPointer()->bluetoothActive = 0; 	/* MX_Bluetooth_PowerOff();  unnecessary as part of MX_GPIO_Init() */
+    //settingsGetPointer()->compassBearing = 0;
+    set_new_settings_missing_in_ext_flash(); // inlcudes update of firmware version  161121
+
     GFX_init( &pLayerInvisible );
 
     TIM_init();
@@ -365,18 +392,7 @@ int main(void)
         GFX_helper_font_memory_list(&FontT144);
     */
 
-    stateRealGetPointerWrite()->lastKnownBatteryPercentage = 0; // damit das nicht in settings kopiert wird.
-    set_settings_to_Standard();
-    mod_settings_for_first_start_with_empty_ext_flash();
-    ext_flash_read_settings();
-    if( newFirmwareVersionCheckViaSettings() ) // test for old firmware version in loaded settings
-    {
-        wasFirmwareUpdateCheckBattery = 1;
-        set_settings_button_to_standard_with_individual_buttonBalance(); // will adapt individual values
-    }
-    //settingsGetPointer()->bluetoothActive = 0; 	/* MX_Bluetooth_PowerOff();  unnecessary as part of MX_GPIO_Init() */
-    //settingsGetPointer()->compassBearing = 0;
-    set_new_settings_missing_in_ext_flash(); // inlcudes update of firmware version  161121
+
 
     // new 170508: bluetooth on at start
     settingsGetPointer()->bluetoothActive = 1;
@@ -388,15 +404,6 @@ int main(void)
 
     //  settingsGetPointer()->showDebugInfo = 1;
 
-    /*
-    if(settingsGetPointer()->scooterControl)
-    {
-         settingsGetPointer()->bluetoothActive = 1;
-         MX_Bluetooth_PowerOn();
-         if(settingsGetPointer()->scooterDeviceAddress[0] != 0)
-            bC_setConnectRequest();
-    }
-    */
     /*
     if( (hardwareDataGetPointer()->primarySerial == 20+18)
      || (hardwareDataGetPointer()->primarySerial == 20+25)
@@ -488,18 +495,28 @@ int main(void)
             ext_flash_write_settings();
         }
         deco_loop();
-        /*
-        bonexControl();
-        if(bC_getStatus() == BC_DISCONNECTED)
+        EvaluateButton();
+
+#ifdef DEBUG_RUNTIME
+        translateTime(stateUsed->lifeData.timeBinaryFormat, &Stime);
+        if(lastsecond == 0xFF)
         {
-            if(tComm_control())			// will stop while loop if tComm Mode started until exit from UART
-            {
-                createDiveSettings();
-                updateMenu();
-                ext_flash_write_settings();
-            }
+        	measurementindex = 0;
+        	loopcnt[measurementindex] = 0;
+        	lastsecond = Stime.Seconds;
         }
-        */
+        loopcnt[measurementindex]++;
+
+        if(lastsecond != Stime.Seconds)
+        {
+        	measurementindex++;
+        	if (measurementindex == MEASURECNT) measurementindex = 0;
+        	loopcnt[measurementindex] = 0;
+        	lastsecond = Stime.Seconds;
+        	if(measurementindex +1 < MEASURECNT) loopcnt[measurementindex +1] = 0xffff;	/* helps to identify the latest value */
+        }
+#endif
+
     }
 }
 
@@ -555,12 +572,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     case BaseMenu:
     case BaseInfo:
         updateSetpointStateUsed();
+
         DateEx_copy_to_dataOut();
-        DataEX_call();
         DataEX_copy_to_LifeData(&modeChange);
 //foto session :-)  stateRealGetPointerWrite()->lifeData.battery_charge = 99;
 //foto session :-)  stateSimGetPointerWrite()->lifeData.battery_charge = 99;
         DataEX_copy_to_deco();
+        DataEX_call();
+
         if(stateUsed == stateSimGetPointer())
             simulation_UpdateLifeData(1);
         check_warning();
@@ -568,7 +587,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             logbook_InitAndWrite();
         updateMiniLiveLogbook(1);
         timer_UpdateSecond(1);
-base_tempLightLevel =			TIM_BACKLIGHT_adjust();
+        base_tempLightLevel = TIM_BACKLIGHT_adjust();
         tCCR_tick();
         tHome_tick();
         if(status.base == BaseHome)
@@ -774,157 +793,177 @@ base_tempLightLevel =			TIM_BACKLIGHT_adjust();
 /// see GFX_change_LTDC()
 ///
 //  ===============================================================================
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-    if(!GPIO_Pin)
-        return;
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	if (!GPIO_Pin)
+		return;
 
-    uint8_t action = 0;
-    SStateList status;
+	if (GPIO_Pin == VSYNC_IRQ_PIN) // rechts, unten
+	{
+		GFX_change_LTDC();
+		housekeepingFrame();
+		/*
+		 #ifdef DEMOMODE
+		 static uint8_t countCall = 0;
+		 if(countCall++ < 10)
+		 return;
+		 countCall = 0;
+		 uint8_t buttonAction = demoGetCommand();
+		 if(buttonAction)
+		 GPIO_Pin = buttonAction;
+		 else
+		 #endif
+		 */
+		return;
+	}
+	
+	LastButtonPressed = GPIO_Pin;
+	LastButtonPressedTick = HAL_GetTick();
 
-    if(GPIO_Pin == VSYNC_IRQ_PIN) // rechts, unten
-    {
-        GFX_change_LTDC();
-        housekeepingFrame();
-/*
 #ifdef DEMOMODE
-    static uint8_t countCall = 0;
-    if(countCall++ < 10)
-        return;
-    countCall = 0;
-    uint8_t buttonAction = demoGetCommand();
-    if(buttonAction)
-        GPIO_Pin = buttonAction;
-    else
+	uint8_t demoMachineCall = 0;
+	if(GPIO_Pin & 0x80)
+	{
+		demoMachineCall = 1;
+		GPIO_Pin &= 0x7F;
+	}
 #endif
-*/
-        return;
-    }
-
-#ifdef DEMOMODE
-    uint8_t demoMachineCall = 0;
-    if(GPIO_Pin & 0x80)
-    {
-        demoMachineCall = 1;
-        GPIO_Pin &= 0x7F;
-    }
-#endif
-
-    time_without_button_pressed_deciseconds	= 0;
-
-    if(GFX_logoStatus() != 0)
-        return;
-
-    if(GPIO_Pin == BUTTON_BACK_PIN) // links
-        action = ACTION_BUTTON_BACK;
-    else
-    if(GPIO_Pin == BUTTON_ENTER_PIN) // mitte
-        action = ACTION_BUTTON_ENTER;
-    else
-    if(GPIO_Pin == BUTTON_NEXT_PIN) // rechts
-        action = ACTION_BUTTON_NEXT;
-#ifdef BUTTON_CUSTOM_PIN
-    else
-    if(GPIO_Pin == BUTTON_CUSTOM_PIN) // extra
-        action = ACTION_BUTTON_CUSTOM;
-#endif
-
-#ifdef DEMOMODE // user pressed button ?
-    if((!demoMachineCall) && demoModeActive())
-    {
-        demoSendCommand(action);
-        return;
-    }
-#endif
-
-    get_globalStateList(&status);
-
-    if(action == ACTION_BUTTON_CUSTOM)
-    {
-        GFX_screenshot();
-    }
-
-    switch(status.base)
-    {
-    case BaseStop:
-        if(action == ACTION_BUTTON_BACK)
-            resetToFirmwareUpdate();
-        break;
-    case BaseComm:
-        if(action == ACTION_BUTTON_BACK)
-        {
-            settingsGetPointer()->bluetoothActive = 0;
-            MX_Bluetooth_PowerOff();
-            tComm_exit();
-        }
-        break;
-    case BaseHome:
-        if(action == ACTION_BUTTON_NEXT)
-        {
-            if(status.page == PageSurface)
-                openMenu(1);
-            else
-                tHomeDiveMenuControl(action);
-        }
-        else
-        if(action == ACTION_BUTTON_BACK)
-        {
-            if(get_globalState() == StS)
-                openInfo(StILOGLIST);
-            else
-            if((status.page == PageDive) && (settingsGetPointer()->design < 7))
-            {
-                settingsGetPointer()->design = 7; // auto switch to 9 if necessary
-            }
-            else
-            if((status.page == PageDive) && (status.line != 0))
-            {
-                if(settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT)
-                    settingsGetPointer()->design = 3;
-                else
-                if(settingsGetPointer()->extraDisplay == EXTRADISPLAY_DECOGAME)
-                    settingsGetPointer()->design = 4;
-
-                set_globalState(StD);
-            }
-            else
-                tHome_change_field_button_pressed();
-        }
-        else
-        if(action == ACTION_BUTTON_ENTER)
-        {
-            if((status.page == PageDive) && (status.line == 0))
-                tHome_change_customview_button_pressed();
-            else
-            if(status.page == PageSurface)
-                tHome_change_customview_button_pressed();
-            else
-                tHomeDiveMenuControl(action);
-        }
-        break;
-
-    case BaseMenu:
-        if(status.line == 0)
-            sendActionToMenu(action);
-        else
-            sendActionToMenuEdit(action);
-        break;
-
-    case BaseInfo:
-        if(status.page == InfoPageLogList)
-            sendActionToInfoLogList(action);
-        else
-        if(status.page == InfoPageLogShow)
-            sendActionToInfoLogShow(action);
-        else
-            sendActionToInfo(action);
-        break;
-
-    default:
-        break;
-    }
 }
 
+void EvaluateButton()
+{
+	uint8_t action = 0;
+	SStateList status;
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
+	if (GFX_logoStatus() != 0)
+		return;
+
+	if ((LastButtonPressed != INVALID_BUTTON) && (time_elapsed_ms(LastButtonPressedTick, HAL_GetTick())) > 50)
+	{
+		if (LastButtonPressed == BUTTON_BACK_PIN) { // links
+			if (HAL_GPIO_ReadPin(BUTTON_BACK_GPIO_PORT, BUTTON_BACK_PIN) == 1) {
+				action = ACTION_BUTTON_BACK;
+			}
+		}
+
+		else if (LastButtonPressed == BUTTON_ENTER_PIN) { // mitte
+			if (HAL_GPIO_ReadPin(BUTTON_ENTER_GPIO_PORT, BUTTON_ENTER_PIN) == 1) {
+				action = ACTION_BUTTON_ENTER;
+			}
+		}
+
+		else if (LastButtonPressed == BUTTON_NEXT_PIN) { // rechts
+			if (HAL_GPIO_ReadPin(BUTTON_NEXT_GPIO_PORT, BUTTON_NEXT_PIN) == 1) {
+				action = ACTION_BUTTON_NEXT;
+			}
+		}
+
+		if(action != 0)
+		{
+			time_without_button_pressed_deciseconds = 0;
+			if(pSettings->FlipDisplay) /* switch action resulting from pressed button */
+			{
+				if (action == ACTION_BUTTON_BACK)
+				{
+					action = ACTION_BUTTON_NEXT;
+				}
+				else
+				{
+					if (action == ACTION_BUTTON_NEXT)
+					{
+						action = ACTION_BUTTON_BACK;
+					}
+				}
+			}
+		}
+
+#ifdef BUTTON_CUSTOM_PIN
+		else
+		if(LastButtonPressed == BUTTON_CUSTOM_PIN) // extra
+				action = ACTION_BUTTON_CUSTOM;
+#endif
+
+	#ifdef DEMOMODE // user pressed button ?
+		if((!demoMachineCall) && demoModeActive())
+		{
+			demoSendCommand(action);
+			return;
+		}
+	#endif
+
+		get_globalStateList(&status);
+
+		if (action == ACTION_BUTTON_CUSTOM) {
+			GFX_screenshot();
+		}
+
+		switch (status.base) {
+		case BaseStop:
+			if (action == ACTION_BUTTON_BACK)
+				resetToFirmwareUpdate();
+			break;
+		case BaseComm:
+			if (action == ACTION_BUTTON_BACK) {
+				settingsGetPointer()->bluetoothActive = 0;
+				MX_Bluetooth_PowerOff();
+				tComm_exit();
+			}
+			break;
+		case BaseHome:
+			if (action == ACTION_BUTTON_NEXT) {
+				if (status.page == PageSurface)
+					openMenu(1);
+				else
+					tHomeDiveMenuControl(action);
+			} else if (action == ACTION_BUTTON_BACK) {
+				if (get_globalState() == StS)
+					openInfo(StILOGLIST);
+				else if ((status.page == PageDive)
+						&& (settingsGetPointer()->design < 7)) {
+					settingsGetPointer()->design = 7; // auto switch to 9 if necessary
+				} else if ((status.page == PageDive) && (status.line != 0)) {
+					if (settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT)
+						settingsGetPointer()->design = 3;
+					else if (settingsGetPointer()->extraDisplay
+							== EXTRADISPLAY_DECOGAME)
+						settingsGetPointer()->design = 4;
+
+					set_globalState(StD);
+				} else
+					tHome_change_field_button_pressed();
+			} else if (action == ACTION_BUTTON_ENTER) {
+				if ((status.page == PageDive) && (status.line == 0))
+					tHome_change_customview_button_pressed();
+				else if (status.page == PageSurface)
+					tHome_change_customview_button_pressed();
+				else
+					tHomeDiveMenuControl(action);
+			}
+			break;
+
+		case BaseMenu:
+			if (status.line == 0)
+				sendActionToMenu(action);
+			else
+				sendActionToMenuEdit(action);
+			break;
+
+		case BaseInfo:
+			if (status.page == InfoPageLogList)
+				sendActionToInfoLogList(action);
+			else if (status.page == InfoPageLogShow)
+				sendActionToInfoLogShow(action);
+			else
+				sendActionToInfo(action);
+			break;
+
+		default:
+			break;
+		}
+		LastButtonPressed = INVALID_BUTTON;
+	}
+}
 
 void gotoSleep(void)
 {
@@ -1023,7 +1062,7 @@ uint8_t font_update_required(void)
 }
 
 
-void delayMicros(uint32_t micros)
+__attribute__((optimize("O0"))) void delayMicros(uint32_t micros)
 {
     micros = micros * (168/4) - 10;
     while(micros--);
@@ -1576,9 +1615,10 @@ void deco_loop(void)
         CALC_VPM_FUTURE,
         CALC_BUEHLMANN,
         CALC_BUEHLMANN_FUTURE,
+		CALC_INVALID
     } CALC_WHAT;
 
-    static int what = -1;
+    static CALC_WHAT what = CALC_INVALID;
     int counter = 0;
     if((stateUsed->mode != MODE_DIVE) || (stateUsed->diveSettings.diveMode == DIVEMODE_Apnea) || (decoLock != DECO_CALC_ready ))
         return;
@@ -1623,27 +1663,28 @@ void deco_loop(void)
 
     switch(what)
     {
-    case CALC_VPM:
-            vpm_calc(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.vpm,&stateDeco.decolistVPM, DECOSTOPS);
-            decoLock = DECO_CALC_FINSHED_vpm;
-            return;
-     case CALC_VPM_FUTURE:
-            decom_tissues_exposure(stateDeco.diveSettings.future_TTS_minutes * 60,&stateDeco.lifeData);
-            vpm_calc(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.vpm,&stateDeco.decolistFutureVPM, FUTURESTOPS);
-            decoLock = DECO_CALC_FINSHED_Futurevpm;
-            return;
-    case CALC_BUEHLMANN:
-            buehlmann_calc_deco(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
-            buehlmann_ceiling_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
-            buehlmann_relative_gradient_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
-            decoLock = DECO_CALC_FINSHED_Buehlmann;
-            return;
-     case CALC_BUEHLMANN_FUTURE:
-            decom_tissues_exposure(stateDeco.diveSettings.future_TTS_minutes * 60,&stateDeco.lifeData);
-            buehlmann_calc_deco(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistFutureBuehlmann);
-            //buehlmann_ceiling_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
-            decoLock = DECO_CALC_FINSHED_FutureBuehlmann;
-            return;
+		case CALC_VPM:
+				vpm_calc(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.vpm,&stateDeco.decolistVPM, DECOSTOPS);
+				decoLock = DECO_CALC_FINSHED_vpm;
+				return;
+		 case CALC_VPM_FUTURE:
+				decom_tissues_exposure(stateDeco.diveSettings.future_TTS_minutes * 60,&stateDeco.lifeData);
+				vpm_calc(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.vpm,&stateDeco.decolistFutureVPM, FUTURESTOPS);
+				decoLock = DECO_CALC_FINSHED_Futurevpm;
+				return;
+		case CALC_BUEHLMANN:
+				buehlmann_calc_deco(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
+				buehlmann_ceiling_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
+				buehlmann_relative_gradient_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
+				decoLock = DECO_CALC_FINSHED_Buehlmann;
+				return;
+		 case CALC_BUEHLMANN_FUTURE:
+				decom_tissues_exposure(stateDeco.diveSettings.future_TTS_minutes * 60,&stateDeco.lifeData);
+				buehlmann_calc_deco(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistFutureBuehlmann);
+				//buehlmann_ceiling_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
+				decoLock = DECO_CALC_FINSHED_FutureBuehlmann;
+				return;
+		 default: break;
     }
     counter++;
 }

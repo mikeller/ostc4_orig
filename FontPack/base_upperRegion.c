@@ -49,12 +49,12 @@
 // From Common/Inc:
 #include "FirmwareData.h"
 
-// From Discovery/Inc
-#include "gfx_fonts.h"
 
+#ifdef DEBUG
 // From AC6 support:
 #include <stdio.h>
 #include <stdint.h>
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -85,6 +85,7 @@ const SFirmwareData font_FirmwareData   __attribute__(( section(".font_firmware_
 
 //////////////////////////////////////////////////////////////////////////////
 
+#ifdef BUILD_LIBRARY
 /* Fonts fixed in upper region */
 #include "Fonts/font_awe48.h"
 #include "Fonts/font_T24.h"
@@ -95,32 +96,35 @@ const SFirmwareData font_FirmwareData   __attribute__(( section(".font_firmware_
 #include "Fonts/font_T105.h"
 #include "Fonts/font_T144_plus.h"
 
+#include "Fonts/image_ostc.h"
+#else
+#include "gfx_fonts.h"
+#endif
 
 /* Images fixed in upper region */
 #include "Fonts/image_battery.h"
 #include "Fonts/image_heinrichs_weikamp.h"
-#include "Fonts/image_ostc.h"
 
-//////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 
-extern void initialise_monitor_handles(void);
 
-static int errors = 0;
-static uint8_t errorflag = 0;
+#ifdef DEBUG
 
 #define ASSERT(e) \
 		do { if( ! (e) )  {	++errors; printf("FAIL at %3d: %s \n", __LINE__, #e); errorflag = 1;} } while(0)
 
 #define ASSERT_RANGE(e, min, max) ASSERT(min <= e); ASSERT( e <= max)
 
+extern void initialise_monitor_handles(void);
 
+static int errors = 0;
+static uint8_t errorflag = 0;
 
 int main(void)
 {
-#ifdef DEBUG_STLINK_V2
+#if DEBUG_STLINK_V2
 	 initialise_monitor_handles();
 #endif
-
 		//---- Check the linker puts the directory at the requested address ------
 		ASSERT( & Awe48    == (tFont*)0x81DFE00 );
 		ASSERT( & FontT24  == (tFont*)0x81DFE0c );
@@ -130,8 +134,6 @@ int main(void)
 		ASSERT( & FontT84  == (tFont*)0x81DFE3c );
 		ASSERT( & FontT105 == (tFont*)0x81DFE48 );
 		ASSERT( & FontT144 == (tFont*)0x81DFE54 );
-
-
 
 		//---- Check the linker puts the font data in the requested section ------
 		extern tChar __upper_font_data;
@@ -144,9 +146,6 @@ int main(void)
 		extern const tFont __font_directory_end;
 
 		ASSERT_RANGE(&ImgOSTC,  (tImage*)&__upper_font_data, (tImage*)&__upper_font_data_end);
-
-
-
 
 		for(const tFont* font = & __font_directory; font < &__font_directory_end; ++font)
 		{
@@ -236,5 +235,28 @@ int main(void)
 		printf("Font Check: no errors.\n");
 		return 0;
 }
+/*#endif*/
+#else
+#define ASSERT(e) \
+		do { if( ! (e) )  {	++errors; errorflag = 1;} } while(0)
 
+#define ASSERT_RANGE(e, min, max) ASSERT(min <= e); ASSERT( e <= max)
+
+uint16_t errors = 1;
+static uint8_t errorflag = 0;
+uint16_t CheckFontPosition()
+{
+	uint16_t retvalue;
+	ASSERT( & Awe48    == (tFont*)0x81DFE00 );
+	ASSERT( & FontT24  == (tFont*)0x81DFE0c );
+	ASSERT( & FontT42  == (tFont*)0x81DFE18 );
+	ASSERT( & FontT48  == (tFont*)0x81DFE24 );
+	ASSERT( & FontT54  == (tFont*)0x81DFE30 );
+	ASSERT( & FontT84  == (tFont*)0x81DFE3c );
+	ASSERT( & FontT105 == (tFont*)0x81DFE48 );
+	ASSERT( & FontT144 == (tFont*)0x81DFE54 );
+	retvalue = errors;
+	return retvalue;
+}
+#endif
 /************************ (C) COPYRIGHT heinrichs weikamp *****END OF FILE****/

@@ -72,6 +72,7 @@ void openEdit_Setpoint(uint8_t line)
     {
         uint8_t setpointCbar, actualGasID;
         SDiveState *pState;
+        setpointCbar = 100;
 
         if(actual_menu_content == MENU_DIVE_REAL)
             pState = stateRealGetPointerWrite();

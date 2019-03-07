@@ -406,6 +406,24 @@ void decom_reset_with_1000mbar(SLifeData * pLifeData)
 	pLifeData->no_fly_time_minutes = 0;
 }
 
+void decom_reset_with_ambientmbar(float ambient, SLifeData * pLifeData)
+{
+
+	float saturation = 1.0;
+	saturation = ambient;
+	saturation -= WATER_VAPOUR_PRESSURE;
+	saturation *= FRACTION_N2_AIR;
+
+	for(int i=0;i<16;i++)
+	{
+		pLifeData->tissue_nitrogen_bar[i] = saturation;
+		pLifeData->tissue_helium_bar[i] = 0;
+	}
+	pLifeData->otu = 0;
+	pLifeData->cns = 0;
+	pLifeData->desaturation_time_minutes = 0;
+	pLifeData->no_fly_time_minutes = 0;
+}
 
 /* =============================================================================== */
 /*     NOTE ABOUT PRESSURE UNITS USED IN CALCULATIONS: */

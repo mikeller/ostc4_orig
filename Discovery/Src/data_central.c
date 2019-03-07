@@ -529,7 +529,6 @@ void setActualGasFirst(SLifeData *lifeData)
 
 void setActualGasAir(SLifeData *lifeData)
 {
-	SSettings* pSettings = settingsGetPointer();
 	uint8_t nitrogen;
 	nitrogen = 79;
 	lifeData->actualGas.GasIdInSettings = 0;
@@ -784,13 +783,16 @@ _Bool deco_zone_reached(void)
 
 void resetEvents(void)
 {
-  SDiveState * pStateUsed;
+    SDiveState * pStateUsed;
 	if(stateUsed == stateRealGetPointer())
+	{
 		pStateUsed = stateRealGetPointerWrite();
+	}
 	else
+	{
 		pStateUsed = stateSimGetPointerWrite();
-
-		memset(&pStateUsed->events,0, sizeof(SEvents));
+	}
+	memset(&pStateUsed->events,0, sizeof(SEvents));
 }
 
 
@@ -963,22 +965,4 @@ _Bool is_ambient_pressure_close_to_surface(SLifeData *lifeData)
 		return true;
 	else
 		return false;
-}
-
-uint8_t stateUsed_scooterRemainingBattCapacity(void)
-{
-	const uint8_t useCapacityValue = 1; // 2 is the new one, 1 = scooterRestkapazitaetWhBased is the official used
-	
-	switch(useCapacityValue)
-	{
-		case 0:
-		default:
-			return stateUsed->lifeData.scooterRestkapazitaet;
-
-		case 1:
-			return stateUsed->lifeData.scooterRestkapazitaetWhBased;
-			
-		case 2:
-			return stateUsed->lifeData.scooterRestkapazitaetVoltageBased;
-	}		
 }

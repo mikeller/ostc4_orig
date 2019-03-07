@@ -36,6 +36,7 @@ void decom_tissues_exposure(int period_in_seconds, SLifeData* pLifeData);
 void decom_tissues_exposure2(int period_in_seconds, SGas* pActualGas, float pressure_ambient_bar, float *tissue_N2_selected_stage, float *tissue_He_selected_stage);
 float decom_schreiner_equation(float *initial_inspired_gas_pressure, float *rate_change_insp_gas_pressure, float *interval_time_minutes, const float *gas_time_constant, float *initial_gas_pressure);
 void decom_reset_with_1000mbar(SLifeData * pLifeData);
+void decom_reset_with_ambientmbar(float ambient, SLifeData * pLifeData);
 
 void decom_tissues_exposure_stage_schreiner(int period_in_seconds, SGas* pGas, float  starting_ambient_pressure_bar, float ending_ambient_pressure_bar,
 																		 float* pTissue_nitrogen_bar, float* pTissue_helium_bar);

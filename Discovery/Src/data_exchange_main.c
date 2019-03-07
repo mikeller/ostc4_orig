@@ -55,6 +55,7 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
+#include <stdlib.h>
 #include <string.h> // for memcopy
 #include "stm32f4xx_hal.h"
 #include "stdio.h"
@@ -70,14 +71,12 @@
 #include "timer.h"
 #include "buehlmann.h"
 #include "externLogbookFlash.h"
-#include "bonex_mini.h" // for voltage to battery percentage
 
 
 /* Expoted variables --------------------------------------------------------*/
 uint8_t	wasPowerOn = 0;
 confirmbit8_Type requestNecessary = { .uw = 0 };
 uint8_t wasUpdateNotPowerOn = 0;
-uint8_t scooterFoundThisPowerOnCylce = 0;
 
 /* Private variables with external access ------------------------------------*/
 
@@ -88,7 +87,6 @@ uint8_t	told_reset_logik_alles_ok = 0;
 SDataReceiveFromMaster dataOut;
 SDataExchangeSlaveToMaster dataIn;
 
-uint32_t systick_last;
 uint8_t data_old__lost_connection_to_slave_counter_temp = 0;
 uint8_t data_old__lost_connection_to_slave_counter_retry = 0;
 uint32_t data_old__lost_connection_to_slave_counter_total = 0;
@@ -113,6 +111,7 @@ const uint8_t header_data[4]					= {0xAA, 0x01, 0x01, 0xAA};
 
 /* Private function prototypes -----------------------------------------------*/
 uint8_t DataEX_check_header_and_footer_ok(void);
+uint8_t DataEX_check_header_and_footer_shifted(void);
 uint8_t DataEX_check_header_and_footer_devicedata(void);
 void DataEX_check_DeviceData(void);
 
@@ -135,6 +134,14 @@ void DataEX_Error_Handler(uint8_t answer)
 {
 	count_DataEX_Error_Handler++;
 	last_error_DataEX_Error_Handler = answer;
+
+	/* A wrong footer indicates a communication interrupt. State machine is waiting for new data which is not received because no new transmission is triggered */
+	/* ==> Abort data exchange to enable a new RX / TX cycle */
+	if(answer == HAL_BUSY)
+	{
+		HAL_SPI_Abort_IT(&cpu2DmaSpi);
+	}
+
   return;
 }
 
@@ -167,7 +174,7 @@ SDataReceiveFromMaster * dataOutGetPointer(void)
 void DataEX_init(void)
 {
 	SDiveState * pStateReal = stateRealGetPointerWrite();
-	pStateReal->data_old__lost_connection_to_slave = 1;
+	pStateReal->data_old__lost_connection_to_slave = 0; //initial value
 	data_old__lost_connection_to_slave_counter_temp = 0;
 	data_old__lost_connection_to_slave_counter_total = 0;
 
@@ -184,20 +191,6 @@ void DataEX_init(void)
 	dataOut.footer.checkCode[1] = 0xF3;
 	dataOut.footer.checkCode[2] = 0xF2;
 	dataOut.footer.checkCode[3] = 0xF1;
-
-
-	pStateReal->lifeData.scooterType							= 0xFF;
-	pStateReal->lifeData.scooterWattstunden 			= 0;
-	pStateReal->lifeData.scooterRestkapazitaet 		= 0;
-	pStateReal->lifeData.scooterDrehzahl 					= 0;
-	pStateReal->lifeData.scooterSpannung					= 0;
-	pStateReal->lifeData.scooterTemperature 			= 0;
-	pStateReal->lifeData.scooterAmpere				 		= 0;
-	pStateReal->lifeData.scooterRestkapazitaetWhBased	= 0;
-	pStateReal->lifeData.scooterRestkapazitaetVoltageBased	= 0;
-	pStateReal->lifeData.scooterAgeInMilliSeconds = 0;
-	
-	systick_last = HAL_GetTick() - 100;
 }
 
 
@@ -304,36 +297,71 @@ void DataEx_call_helper_requests(void)
 uint8_t DataEX_call(void)
 {
 	uint8_t SPI_DMA_answer = 0;
-	
-	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_SET);
-	delayMicros(10);
 
-	/* one cycle with NotChipSelect true to clear slave spi buffer */
+	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
 
 	if(data_old__lost_connection_to_slave_counter_temp >= 3)
 	{
 		data_old__lost_connection_to_slave_counter_temp = 0;
+		if((DataEX_check_header_and_footer_shifted()) && (data_old__lost_connection_to_slave_counter_retry == 0))
+		{
+			HAL_SPI_Abort_IT(&cpu2DmaSpi);
+		}
+		/* reset of own DMA does not work ==> request reset of slave dma */
+		if((DataEX_check_header_and_footer_shifted()) && (data_old__lost_connection_to_slave_counter_retry == 2))
+		{
+			dataOut.header.checkCode[SPI_HEADER_INDEX_SLAVE] = 0xA5;
+		}
 		data_old__lost_connection_to_slave_counter_retry++;
 	}
+#if USE_OLD_SYNC_METHOD
+	/* one cycle with NotChipSelect true to clear slave spi buffer */
 	else
 	{
 		HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
 	}
+#endif
 
 	DataEx_call_helper_requests();
 
-	systick_last = HAL_GetTick();
-
 //HAL_GPIO_WritePin(OSCILLOSCOPE2_GPIO_PORT,OSCILLOSCOPE2_PIN,GPIO_PIN_RESET); /* only for testing with Oscilloscope */
 
-	SPI_DMA_answer = HAL_SPI_TransmitReceive_DMA(&cpu2DmaSpi, (uint8_t *)&dataOut, (uint8_t *)&dataIn, EXCHANGE_BUFFERSIZE+1);
+
+	SPI_DMA_answer = HAL_SPI_TransmitReceive_DMA(&cpu2DmaSpi, (uint8_t *)&dataOut, (uint8_t *)&dataIn, EXCHANGE_BUFFERSIZE);
 	if(SPI_DMA_answer != HAL_OK)
-    DataEX_Error_Handler(SPI_DMA_answer);
+	{
+		DataEX_Error_Handler(SPI_DMA_answer);
+	}		
+//	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_SET);
 //HAL_Delay(3);
 //HAL_GPIO_WritePin(OSCILLOSCOPE2_GPIO_PORT,OSCILLOSCOPE2_PIN,GPIO_PIN_SET); /* only for testing with Oscilloscope */
 
 	return 1;
 }
+
+
+uint32_t SPI_CALLBACKS;
+uint32_t get_num_SPI_CALLBACKS(void){
+	return SPI_CALLBACKS;
+}
+
+SDataExchangeSlaveToMaster* get_dataInPointer(void){
+	return &dataIn;
+}
+
+
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+	if(hspi == &cpu2DmaSpi)
+	{
+		HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_SET);
+		SPI_CALLBACKS+=1;
+	}
+}
+
+
+
+
 
 void DateEx_copy_to_dataOut(void)
 {
@@ -431,9 +459,9 @@ void DataEX_copy_to_deco(void)
         return;
 	if(stateUsed == stateRealGetPointer())
 		pStateUsed = stateRealGetPointerWrite();
-	else
+	else{
 		pStateUsed = stateSimGetPointerWrite();
-
+	}
 
 		if(decoLock == DECO_CALC_init_as_is_start_of_dive)
 		{
@@ -777,14 +805,24 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		}
 		return;
 	}
+	else /* RX data OK */
+	{
+		data_old__lost_connection_to_slave_counter_temp = 0;
+		data_old__lost_connection_to_slave_counter_retry = 0;
+		pStateReal->data_old__lost_connection_to_slave = 0;
+	}
 	
+	/* update SPI communication tokens */
+	dataOut.header.checkCode[SPI_HEADER_INDEX_SLAVE] = dataIn.header.checkCode[SPI_HEADER_INDEX_SLAVE];
+	dataOut.header.checkCode[SPI_HEADER_INDEX_MASTER] = (dataOut.header.checkCode[SPI_HEADER_INDEX_MASTER] + 1) & 0x7F;
+
 	if(getDeviceDataAfterStartOfMainCPU)
 	{
 		getDeviceDataAfterStartOfMainCPU--;
 		if(getDeviceDataAfterStartOfMainCPU == 0)
 		{
 			dataOut.getDeviceDataNow = 1;
-			getDeviceDataAfterStartOfMainCPU = 10*60*10;// * 100ms
+			getDeviceDataAfterStartOfMainCPU = 10*60*10; /* * 100ms = 60 second => update device data every 10 minutes */
 		}
 	}
 
@@ -813,6 +851,10 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 	float ambient, surface, density, meter;
 	SSettings *pSettings;
 	
+	ambient = 0;
+	surface = 0;
+	meter = 0;
+
 	/*	uint8_t IAmStolenPleaseKillMe;
 	 */
 	pSettings = settingsGetPointer();
@@ -825,131 +867,148 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		dataIn.mode = MODE_DIVE;
 	}
 
+	if(pStateReal->data_old__lost_connection_to_slave == 0)
+	{
+		ambient = dataIn.data[dataIn.boolPressureData].pressure_mbar / 1000.0f;
+		surface = dataIn.data[dataIn.boolPressureData].surface_mbar / 1000.0f;
 
-	ambient = dataIn.data[dataIn.boolPressureData].pressure_mbar / 1000.0f;
-	surface = dataIn.data[dataIn.boolPressureData].surface_mbar / 1000.0f;
-
-	density = ((float)( 100 + pSettings->salinity)) / 100.0f;
-	meter = (ambient - surface);
-	meter /= (0.09807f * density);
+		density = ((float)( 100 + pSettings->salinity)) / 100.0f;
+		meter = (ambient - surface);
+		meter /= (0.09807f * density);
 
 
-	pStateReal->pressure_uTick_old = pStateReal->pressure_uTick_new;
-	pStateReal->pressure_uTick_new = dataIn.data[dataIn.boolPressureData].pressure_uTick;
-	pStateReal->pressure_uTick_local_new = HAL_GetTick();
+		pStateReal->pressure_uTick_old = pStateReal->pressure_uTick_new;
+		pStateReal->pressure_uTick_new = dataIn.data[dataIn.boolPressureData].pressure_uTick;
+		pStateReal->pressure_uTick_local_new = HAL_GetTick();
+
+		/* what was the code behind this if statement ? */
+		/* if(ambient < (surface + 0.04f)) */
 	
-	if(ambient < (surface + 0.04f))
-
-	pStateReal->lifeData.dateBinaryFormat = dataIn.data[dataIn.boolTimeData].localtime_rtc_dr;
-	pStateReal->lifeData.timeBinaryFormat = dataIn.data[dataIn.boolTimeData].localtime_rtc_tr;
-
+		pStateReal->lifeData.dateBinaryFormat = dataIn.data[dataIn.boolTimeData].localtime_rtc_dr;
+		pStateReal->lifeData.timeBinaryFormat = dataIn.data[dataIn.boolTimeData].localtime_rtc_tr;
+	}
 	dataOut.setAccidentFlag = 0;
 
-	//Start of diveMode?
-	if(pStateReal->mode != MODE_DIVE && dataIn.mode == MODE_DIVE)
+	if(pStateReal->data_old__lost_connection_to_slave == 0)
 	{
-		if(modeChangeFlag)
-			*modeChangeFlag = 1;
-	  if(stateUsed == stateSimGetPointer())
+		//Start of diveMode?
+		if(pStateReal->mode != MODE_DIVE && dataIn.mode == MODE_DIVE)
+		{
+			if(modeChangeFlag)
+			{
+				*modeChangeFlag = 1;
+			}
+			if(stateUsed == stateSimGetPointer())
 			{
 				simulation_exit();
 			}
-			// new 170508
+				// new 170508
 			settingsGetPointer()->bluetoothActive = 0;
 			MX_Bluetooth_PowerOff();
 			//Init dive Mode
-		decoLock = DECO_CALC_init_as_is_start_of_dive;
-		pStateReal->lifeData.boolResetAverageDepth = 1;
-		pStateReal->lifeData.boolResetStopwatch = 1;
-	}
-	
-	//End of diveMode?
-	if(pStateReal->mode == MODE_DIVE && dataIn.mode != MODE_DIVE)
-	{
-		if(modeChangeFlag)
-			*modeChangeFlag = 1;
-		createDiveSettings();
-
-		if(pStateReal->warnings.cnsHigh)
-		{
-			if(pStateReal->lifeData.cns >= 130)
-				dataOut.setAccidentFlag += ACCIDENT_CNSLVL2;
-			else if(pStateReal->lifeData.cns >= 100)
-				dataOut.setAccidentFlag += ACCIDENT_CNS;
+			decoLock = DECO_CALC_init_as_is_start_of_dive;
+			pStateReal->lifeData.boolResetAverageDepth = 1;
+			pStateReal->lifeData.boolResetStopwatch = 1;
 		}
-		if(pStateReal->warnings.decoMissed)
-			dataOut.setAccidentFlag += ACCIDENT_DECOSTOP;
-	}
-	pStateReal->mode = dataIn.mode;
-	pStateReal->chargeStatus = dataIn.chargeStatus;
 
-	pStateReal->lifeData.pressure_ambient_bar = ambient;
-	pStateReal->lifeData.pressure_surface_bar = surface;
-	if(is_ambient_pressure_close_to_surface(&pStateReal->lifeData))
-	{
-		pStateReal->lifeData.depth_meter = 0;
-	}
-	else
-	{
-		pStateReal->lifeData.depth_meter = meter;
-	}
-	pStateReal->lifeData.temperature_celsius = dataIn.data[dataIn.boolPressureData].temperature;
-	pStateReal->lifeData.ascent_rate_meter_per_min = dataIn.data[dataIn.boolPressureData].ascent_rate_meter_per_min;
-	if(pStateReal->mode != MODE_DIVE)
-		pStateReal->lifeData.max_depth_meter = 0;
-	else
-  {
-    if(meter > pStateReal->lifeData.max_depth_meter)
-      pStateReal->lifeData.max_depth_meter = meter;
-  }
-
-	if(dataIn.accidentFlags & ACCIDENT_DECOSTOP)
-		pStateReal->decoMissed_at_the_end_of_dive = 1;
-	if(dataIn.accidentFlags & ACCIDENT_CNS)
-		pStateReal->cnsHigh_at_the_end_of_dive = 1;
-	
-	pStateReal->lifeData.dive_time_seconds = (int32_t)dataIn.data[dataIn.boolTimeData].divetime_seconds;
-	pStateReal->lifeData.dive_time_seconds_without_surface_time = (int32_t)dataIn.data[dataIn.boolTimeData].dive_time_seconds_without_surface_time;
-	pStateReal->lifeData.counterSecondsShallowDepth = dataIn.data[dataIn.boolTimeData].counterSecondsShallowDepth;
-	pStateReal->lifeData.surface_time_seconds = (int32_t)dataIn.data[dataIn.boolTimeData].surfacetime_seconds;
-
-	pStateReal->lifeData.compass_heading = dataIn.data[dataIn.boolCompassData].compass_heading;
-	pStateReal->lifeData.compass_roll = dataIn.data[dataIn.boolCompassData].compass_roll;
-	pStateReal->lifeData.compass_pitch = dataIn.data[dataIn.boolCompassData].compass_pitch;
-
-	pStateReal->lifeData.compass_DX_f = dataIn.data[dataIn.boolCompassData].compass_DX_f;
-	pStateReal->lifeData.compass_DY_f = dataIn.data[dataIn.boolCompassData].compass_DY_f;
-	pStateReal->lifeData.compass_DZ_f = dataIn.data[dataIn.boolCompassData].compass_DZ_f;
-
-	pStateReal->compass_uTick_old = pStateReal->compass_uTick_new;
-	pStateReal->compass_uTick_new = dataIn.data[dataIn.boolCompassData].compass_uTick;
-	pStateReal->compass_uTick_local_new = HAL_GetTick();
-	
-  pStateReal->lifeData.cns = dataIn.data[dataIn.boolToxicData].cns;
-	pStateReal->lifeData.otu = dataIn.data[dataIn.boolToxicData].otu;
-  pStateReal->lifeData.no_fly_time_minutes = dataIn.data[dataIn.boolToxicData].no_fly_time_minutes;
-	pStateReal->lifeData.desaturation_time_minutes = dataIn.data[dataIn.boolToxicData].desaturation_time_minutes;
-
-	memcpy(pStateReal->lifeData.tissue_nitrogen_bar, dataIn.data[dataIn.boolTisssueData].tissue_nitrogen_bar,sizeof(pStateReal->lifeData.tissue_nitrogen_bar));
-	memcpy(pStateReal->lifeData.tissue_helium_bar, dataIn.data[dataIn.boolTisssueData].tissue_helium_bar,sizeof(pStateReal->lifeData.tissue_helium_bar));
-
-	if(pStateReal->mode == MODE_DIVE)
-	{
-		for(int i= 0; i <16; i++)
+		//End of diveMode?
+		if(pStateReal->mode == MODE_DIVE && dataIn.mode != MODE_DIVE)
 		{
-			pStateReal->vpm.max_crushing_pressure_he[i] =  dataIn.data[dataIn.boolCrushingData].max_crushing_pressure_he[i];
-			pStateReal->vpm.max_crushing_pressure_n2[i] = dataIn.data[dataIn.boolCrushingData].max_crushing_pressure_n2[i];
-			pStateReal->vpm.adjusted_critical_radius_he[i] =  dataIn.data[dataIn.boolCrushingData].adjusted_critical_radius_he[i];
-			pStateReal->vpm.adjusted_critical_radius_n2[i] = dataIn.data[dataIn.boolCrushingData].adjusted_critical_radius_n2[i];
+			if(modeChangeFlag)
+			{
+				*modeChangeFlag = 1;
+			}
+			createDiveSettings();
+
+			if(pStateReal->warnings.cnsHigh)
+			{
+				if(pStateReal->lifeData.cns >= 130)
+					dataOut.setAccidentFlag += ACCIDENT_CNSLVL2;
+				else if(pStateReal->lifeData.cns >= 100)
+					dataOut.setAccidentFlag += ACCIDENT_CNS;
+			}
+			if(pStateReal->warnings.decoMissed)
+				dataOut.setAccidentFlag += ACCIDENT_DECOSTOP;
 		}
+		pStateReal->mode = dataIn.mode;
+		pStateReal->chargeStatus = dataIn.chargeStatus;
+	
+		pStateReal->lifeData.pressure_ambient_bar = ambient;
+		pStateReal->lifeData.pressure_surface_bar = surface;
+		if(is_ambient_pressure_close_to_surface(&pStateReal->lifeData))
+		{
+			pStateReal->lifeData.depth_meter = 0;
+		}
+		else
+		{
+			pStateReal->lifeData.depth_meter = meter;
+		}
+
+		pStateReal->lifeData.temperature_celsius = dataIn.data[dataIn.boolPressureData].temperature;
+		pStateReal->lifeData.ascent_rate_meter_per_min = dataIn.data[dataIn.boolPressureData].ascent_rate_meter_per_min;
+		if(pStateReal->mode != MODE_DIVE)
+			pStateReal->lifeData.max_depth_meter = 0;
+		else
+		{
+			if(meter > pStateReal->lifeData.max_depth_meter)
+			  pStateReal->lifeData.max_depth_meter = meter;
+		}
+
+		if(dataIn.accidentFlags & ACCIDENT_DECOSTOP)
+			pStateReal->decoMissed_at_the_end_of_dive = 1;
+		if(dataIn.accidentFlags & ACCIDENT_CNS)
+			pStateReal->cnsHigh_at_the_end_of_dive = 1;
+
+		pStateReal->lifeData.dive_time_seconds = (int32_t)dataIn.data[dataIn.boolTimeData].divetime_seconds;
+		pStateReal->lifeData.dive_time_seconds_without_surface_time = (int32_t)dataIn.data[dataIn.boolTimeData].dive_time_seconds_without_surface_time;
+		pStateReal->lifeData.counterSecondsShallowDepth = dataIn.data[dataIn.boolTimeData].counterSecondsShallowDepth;
+		pStateReal->lifeData.surface_time_seconds = (int32_t)dataIn.data[dataIn.boolTimeData].surfacetime_seconds;
+
+
+		pStateReal->lifeData.compass_heading = dataIn.data[dataIn.boolCompassData].compass_heading;
+		if(settingsGetPointer()->FlipDisplay) /* consider that diver is targeting into the opposite direction */
+		{
+			pStateReal->lifeData.compass_heading -= 180.0;
+			if (pStateReal->lifeData.compass_heading < 0) pStateReal->lifeData.compass_heading +=360.0;
+		}
+
+
+		pStateReal->lifeData.compass_roll = dataIn.data[dataIn.boolCompassData].compass_roll;
+		pStateReal->lifeData.compass_pitch = dataIn.data[dataIn.boolCompassData].compass_pitch;
+
+		pStateReal->lifeData.compass_DX_f = dataIn.data[dataIn.boolCompassData].compass_DX_f;
+		pStateReal->lifeData.compass_DY_f = dataIn.data[dataIn.boolCompassData].compass_DY_f;
+		pStateReal->lifeData.compass_DZ_f = dataIn.data[dataIn.boolCompassData].compass_DZ_f;
+
+		pStateReal->compass_uTick_old = pStateReal->compass_uTick_new;
+		pStateReal->compass_uTick_new = dataIn.data[dataIn.boolCompassData].compass_uTick;
+		pStateReal->compass_uTick_local_new = HAL_GetTick();
+
+	    pStateReal->lifeData.cns = dataIn.data[dataIn.boolToxicData].cns;
+		pStateReal->lifeData.otu = dataIn.data[dataIn.boolToxicData].otu;
+	    pStateReal->lifeData.no_fly_time_minutes = dataIn.data[dataIn.boolToxicData].no_fly_time_minutes;
+		pStateReal->lifeData.desaturation_time_minutes = dataIn.data[dataIn.boolToxicData].desaturation_time_minutes;
+
+		memcpy(pStateReal->lifeData.tissue_nitrogen_bar, dataIn.data[dataIn.boolTisssueData].tissue_nitrogen_bar,sizeof(pStateReal->lifeData.tissue_nitrogen_bar));
+		memcpy(pStateReal->lifeData.tissue_helium_bar, dataIn.data[dataIn.boolTisssueData].tissue_helium_bar,sizeof(pStateReal->lifeData.tissue_helium_bar));
+	
+		if(pStateReal->mode == MODE_DIVE)
+		{
+			for(int i= 0; i <16; i++)
+			{
+				pStateReal->vpm.max_crushing_pressure_he[i] =  dataIn.data[dataIn.boolCrushingData].max_crushing_pressure_he[i];
+				pStateReal->vpm.max_crushing_pressure_n2[i] = dataIn.data[dataIn.boolCrushingData].max_crushing_pressure_n2[i];
+				pStateReal->vpm.adjusted_critical_radius_he[i] =  dataIn.data[dataIn.boolCrushingData].adjusted_critical_radius_he[i];
+				pStateReal->vpm.adjusted_critical_radius_n2[i] = dataIn.data[dataIn.boolCrushingData].adjusted_critical_radius_n2[i];
+			}
+		}
+
+		/* battery and ambient light sensors
+		 */
+		pStateReal->lifeData.ambient_light_level = dataIn.data[dataIn.boolAmbientLightData].ambient_light_level;
+		pStateReal->lifeData.battery_charge = dataIn.data[dataIn.boolBatteryData].battery_charge;
+		pStateReal->lifeData.battery_voltage = dataIn.data[dataIn.boolBatteryData].battery_voltage;
 	}
-
-	/* battery and ambient light sensors
-	 */
-	pStateReal->lifeData.ambient_light_level = dataIn.data[dataIn.boolAmbientLightData].ambient_light_level;
-	pStateReal->lifeData.battery_charge = dataIn.data[dataIn.boolBatteryData].battery_charge;
-	pStateReal->lifeData.battery_voltage = dataIn.data[dataIn.boolBatteryData].battery_voltage;
-
 /* now in ext_flash_write_settings() // hw 161027
  *	if((pStateReal->lifeData.battery_charge > 1) && !DataEX_was_power_on() && ((uint8_t)(pStateReal->lifeData.battery_charge) !=  0x10)) // get rid of 16% (0x10)
  *		pSettings->lastKnownBatteryPercentage = (uint8_t)(pStateReal->lifeData.battery_charge);
@@ -1191,86 +1250,7 @@ wirelessData[i][2] = pStateReal->lifeData.wireless_data[i].ageInMilliSeconds;
 		}
 	}
 */
-	// new: Bonex
-	float scooterSpeedFloat;
-	int32_t scooterRemainingBattCapacity;
 	
-	for(int i=0;i<4;i++)
-	{
-		if((wirelessData[i][0]))// && (wirelessData[i][2]) && (wirelessData[i][2] < 60000))
-		{
-			pStateReal->lifeData.scooterType							= (pStateReal->lifeData.wireless_data[i].data[0] >> 4) & 0x07;
-			pStateReal->lifeData.scooterWattstunden 				= ((uint16_t)((((uint16_t)(pStateReal->lifeData.wireless_data[i].data[0] & 0x0F) << 8) | (pStateReal->lifeData.wireless_data[i].data[1]))));
-//			pStateReal->lifeData.scooterWattstunden 		=  pStateReal->lifeData.wireless_data[i].data[0] & 0x0F;
-//			pStateReal->lifeData.scooterWattstunden			*= 256;
-//			pStateReal->lifeData.scooterWattstunden 		+=  pStateReal->lifeData.wireless_data[i].data[1];
-			pStateReal->lifeData.scooterRestkapazitaet 		= pStateReal->lifeData.wireless_data[i].data[2];
-			pStateReal->lifeData.scooterDrehzahl 					= ((uint16_t)( (int16_t)((pStateReal->lifeData.wireless_data[i].data[4] << 8) | (pStateReal->lifeData.wireless_data[i].data[3]))));
-			pStateReal->lifeData.scooterSpannung					= ((float)(pStateReal->lifeData.wireless_data[i].data[5])) / 5.0f;
-			pStateReal->lifeData.scooterTemperature 			= ((uint16_t)( (int16_t)((pStateReal->lifeData.wireless_data[i].data[7] << 8) | (pStateReal->lifeData.wireless_data[i].data[6]))));
-			pStateReal->lifeData.scooterAmpere				 		= pStateReal->lifeData.wireless_data[i].data[9] >> 1;
-			pStateReal->lifeData.scooterAgeInMilliSeconds = pStateReal->lifeData.wireless_data[i].ageInMilliSeconds;
-
-			if(pStateReal->lifeData.scooterWattstunden > 0)
-				scooterRemainingBattCapacity = settingsGetPointer()->scooterBattSize / pStateReal->lifeData.scooterWattstunden;
-			else
-			scooterRemainingBattCapacity = 100;
-			
-			
-			if(scooterRemainingBattCapacity < 0)
-				scooterRemainingBattCapacity = 0;
-			if(scooterRemainingBattCapacity > 100)
-				scooterRemainingBattCapacity = 100;
-			pStateReal->lifeData.scooterRestkapazitaetWhBased = scooterRemainingBattCapacity;
-
-//			BONEX_calc_new_ResidualCapacity(&pStateReal->lifeData.scooterRestkapazitaetVoltageBased, (uint32_t)(1000 * pStateReal->lifeData.scooterSpannung),1000,1);
-			pStateReal->lifeData.scooterRestkapazitaetVoltageBased = BONEX_mini_ResidualCapacityVoltageBased(pStateReal->lifeData.scooterSpannung, pStateReal->lifeData.scooterAgeInMilliSeconds);	
-
-			scooterSpeedFloat = (float)pStateReal->lifeData.scooterDrehzahl;
-			scooterSpeedFloat /= (37.0f / 1.1f); // 3700 rpm = 110 m/min
-			switch(settingsGetPointer()->scooterDrag)
-			{
-				case 1:
-					scooterSpeedFloat *= 0.95f;
-					break;
-				case 2:
-					scooterSpeedFloat *= 0.85f;
-					break;
-				case 3:
-					scooterSpeedFloat *= 0.75f;
-					break;
-				default:
-					break;
-			}
-			switch(settingsGetPointer()->scooterLoad)
-			{
-				case 1:
-					scooterSpeedFloat *= 0.90f;
-					break;
-				case 2:
-					scooterSpeedFloat *= 0.80f;
-					break;
-				case 3:
-					scooterSpeedFloat *= 0.70f;
-					break;
-				case 4:
-					scooterSpeedFloat *= 0.60f;
-					break;
-				default:
-					break;
-			}
-			if(scooterSpeedFloat < 0)
-				pStateReal->lifeData.scooterSpeed = 0;
-			else
-			if(scooterSpeedFloat > 255)
-				pStateReal->lifeData.scooterSpeed = 255;
-			else
-				pStateReal->lifeData.scooterSpeed = (uint16_t)scooterSpeedFloat;
-			
-			if(!scooterFoundThisPowerOnCylce && (pStateReal->lifeData.scooterAgeInMilliSeconds > 0))
-				scooterFoundThisPowerOnCylce = 1;
-		}
-	}
  
 	/* PIC data
  	 */
@@ -1282,12 +1262,6 @@ wirelessData[i][2] = pStateReal->lifeData.wireless_data[i].ageInMilliSeconds;
 	/* sensorErrors
 	 */
 	pStateReal->sensorErrorsRTE = dataIn.sensorErrors;
-	
-	/* end
-	 */
-	data_old__lost_connection_to_slave_counter_temp = 0;
-	data_old__lost_connection_to_slave_counter_retry = 0;
-	pStateReal->data_old__lost_connection_to_slave = 0;
 }
 
 
@@ -1315,32 +1289,37 @@ uint8_t DataEX_check_RTE_version__needs_update(void)
 }
 
 
-uint8_t DataEX_scooterDataFound(void)
-{
-	return scooterFoundThisPowerOnCylce;
-}
-
-
-uint8_t DataEX_scooterFoundAndValidLicence(void)
-{
-	if(getLicence() != LICENCEBONEX)
-		return 0;
-	else
-		return scooterFoundThisPowerOnCylce;
-//return 0xFF;
-//return LICENCEBONEX;
-}
-
 	/* Private functions ---------------------------------------------------------*/
+
+/* Check if there is an empty frame providec by RTE (all 0) or even no data provided by RTE (all 0xFF)
+ * If that is not the case the DMA is somehow not in sync
+ */
+uint8_t DataEX_check_header_and_footer_shifted()
+{
+	uint8_t ret = 1;
+	if((dataIn.footer.checkCode[0] == 0x00)
+	&& (dataIn.footer.checkCode[1] == 0x00)
+	&& (dataIn.footer.checkCode[2] == 0x00)
+	&& (dataIn.footer.checkCode[3] == 0x00)) { ret = 0; }
+
+	if((dataIn.footer.checkCode[0] == 0xff)
+	&& (dataIn.footer.checkCode[1] == 0xff)
+	&& (dataIn.footer.checkCode[2] == 0xff)
+	&& (dataIn.footer.checkCode[3] == 0xff)) { ret = 0; }
+
+	return ret;
+}
 
 uint8_t DataEX_check_header_and_footer_ok(void)
 {
 	if(dataIn.header.checkCode[0] != 0xA1)
 		return 0;
+#if USE_OLD_HEADER_FORMAT
 	if(dataIn.header.checkCode[1] != 0xA2)
 		return 0;
 	if(dataIn.header.checkCode[2] != 0xA3)
 		return 0;
+#endif
 	if(dataIn.header.checkCode[3] != 0xA4)
 		return 0;
 	if(dataIn.footer.checkCode[0] != 0xE1)

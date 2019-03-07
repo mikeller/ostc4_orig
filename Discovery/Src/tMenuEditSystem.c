@@ -29,7 +29,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "tMenuEditSystem.h"
 
-#include "data_exchange_main.h" // for DataEX_scooterDataFound()
+#include "data_exchange_main.h"
 #include "externLogbookFlash.h"
 #include "gfx_fonts.h"
 #include "ostc.h"
@@ -506,14 +506,14 @@ void openEdit_Language(void)
         active = 0;
     write_field_on_off(StMSYS2_Italian,			 30, 800, ME_Y_LINE4,  &FontT48, text, active);
 
-/*
+
     pSettings->selected_language = LANGUAGE_Espanol;
     if(	actualLanguage == pSettings->selected_language)
         active = 1;
     else
         active = 0;
     write_field_on_off(StMSYS2_Espanol,			 30, 800, ME_Y_LINE5,  &FontT48, text, active);
-*/
+
     pSettings->selected_language = actualLanguage;
 
     write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
@@ -522,7 +522,7 @@ void openEdit_Language(void)
     setEvent(StMSYS2_German, 	(uint32_t)OnAction_German);
     setEvent(StMSYS2_French,	(uint32_t)OnAction_French);
     setEvent(StMSYS2_Italian,	(uint32_t)OnAction_Italian);
-    //setEvent(StMSYS2_Espanol,	(uint32_t)OnAction_Espanol);
+    setEvent(StMSYS2_Espanol,	(uint32_t)OnAction_Espanol);
 }
 
 
@@ -610,7 +610,7 @@ void refresh_Design(void)
     text[0] = TXT_2BYTE;
     text[1] = TXT2BYTE_Farbschema;
     text[2] = 0;
-    write_label_var(  30, 200, ME_Y_LINE2, &FontT48, text);
+    write_label_var(  30, 300, ME_Y_LINE2, &FontT48, text);
 
     text[0] = '0' + settingsGetPointer()->tX_colorscheme;
     text[1] = 0;
@@ -768,10 +768,6 @@ void refresh_Customviews(void)
     text[3] = ' ';
     switch(settingsGetPointer()->tX_customViewPrimary)
     {
-    case CVIEW_Scooter:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_ScooterMonitor;
-        break;
     case CVIEW_sensors:
         text[4] = TXT_2BYTE;
         text[5] = TXT2BYTE_O2monitor;
@@ -937,9 +933,6 @@ uint8_t OnAction_CViewStandard(uint32_t editId, uint8_t blockNumber, uint8_t dig
     uint8_t newValue;
     switch(settingsGetPointer()->tX_customViewPrimary)
     {
-    case CVIEW_Scooter:
-        newValue = CVIEW_sensors;
-        break;
     case CVIEW_sensors:
         newValue = CVIEW_sensors_mV;
         break;
@@ -969,10 +962,7 @@ uint8_t OnAction_CViewStandard(uint32_t editId, uint8_t blockNumber, uint8_t dig
         break;
     case CVIEW_noneOrDebug:
     default:
-        if(getLicence() == LICENCEBONEX)
-            newValue = CVIEW_Scooter;
-        else
-            newValue = CVIEW_sensors;
+         newValue = CVIEW_sensors;
         break;
     }
     settingsGetPointer()->tX_customViewPrimary = newValue;
@@ -1237,7 +1227,7 @@ void refresh_InformationPage(void)
         write_label_var(  20, 800, ME_Y_LINE4, &FontT42, text_content);
 
         offsetTemperature = ((float)settingsGetPointer()->offsetTemperature_centigrad) / 10;
-        snprintf(text_content,80,"%i mbar  /  %0.2f\140C",settingsGetPointer()->offsetPressure_mbar, offsetTemperature);
+        snprintf(text_content,80,"%i %s  /  %0.2f\140C",settingsGetPointer()->offsetPressure_mbar, TEXT_PRESSURE_UNIT, offsetTemperature);
         write_label_var(  20, 800, ME_Y_LINE5, &FontT42, text_content);
 
         text_button[0] = TXT_2BYTE;
@@ -1410,13 +1400,6 @@ void openEdit_ResetConfirmation(uint32_t editIdOfCaller)
         text[2] = 0;
         snprintf(&text[2],10,": %01.2fV",stateRealGetPointer()->lifeData.battery_voltage);
         write_label_var(  30, 800, ME_Y_LINE4, &FontT42, text);
-
-
-        if(DataEX_scooterDataFound())
-        {
-            snprintf(&text[0],30,"Ext: %01.1fV @ %01.1f \140C",stateUsed->lifeData.scooterSpannung, stateUsed->lifeData.scooterTemperature / 10.0f);
-            write_label_var(  30, 800, ME_Y_LINE5, &FontT42, text);
-        }
 
         snprintf(&text[0],30,"Code: %X",getLicence());
         write_label_var(  30, 800, ME_Y_LINE6, &FontT42, text);

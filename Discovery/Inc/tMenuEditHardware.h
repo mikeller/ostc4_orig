@@ -31,6 +31,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
 #include "gfx_engine.h"
+#include "global_constants.h"
 #include "settings.h"
 #include "data_central.h"
 
@@ -38,6 +39,5 @@ void openEdit_Hardware(uint8_t line);
 void refresh_O2Sensors(void);
 void refresh_CompassEdit(void);
 void refresh_ButtonValuesFromPIC(void);
-//void refresh_ScooterControl(void);
 
 #endif /* TMENU_EDIT_HARDWARE_H */

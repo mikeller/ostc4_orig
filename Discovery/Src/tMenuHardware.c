@@ -29,7 +29,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "tMenu.h"
 #include "tMenuHardware.h"
-//#include "bonex4.h"
 
 //#define NEXTLINE(text, textPointer) 	{text[(textPointer)++] = '\n'; text[textPointer++] = '\r'; text[textPointer] = 0;}
 //	NEXTLINE(text,textPointer);
@@ -162,16 +161,18 @@ uint32_t tMHardware_refresh(uint8_t line, char *text, uint16_t *tab, char *subte
     }
     nextline(text,&textPointer);
 
-    if((getLicence() == LICENCEBONEX) &&((line == 0) || (line == 6)))
+    if((line == 0) || (line == 6))
     {
-        text[textPointer++] = TXT_2BYTE;
-        text[textPointer++] = TXT2BYTE_ScooterSetup;
-        text[textPointer++] = '\t';
-
-//		textPointer += snprintf(&text[textPointer],25,"D%i  L%i  ",settingsGetPointer()->scooterDrag, settingsGetPointer()->scooterLoad);
-        textPointer += snprintf(&text[textPointer],25,"D%i  L%i  %i\016\016 Wh\017",settingsGetPointer()->scooterDrag, settingsGetPointer()->scooterLoad, settingsGetPointer()->scooterBattSize);
-//		textPointer += bo4GetBatteryName(&text[textPointer], settingsGetPointer()->scooterBattType);
-        nextline(text,&textPointer);
+            text[textPointer++] = TXT_2BYTE;
+            text[textPointer++] = TXT2BYTE_FLIPDISPLAY;
+            text[textPointer++] = '\t';
+            if(settingsGetPointer()->FlipDisplay)
+                text[textPointer++] = '\005';
+            else
+                text[textPointer++] = '\006';
+            text[textPointer] = 0;
+            nextline(text,&textPointer);
     }
+
     return StMHARD;
 }

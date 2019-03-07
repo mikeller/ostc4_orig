@@ -76,19 +76,6 @@ const uint8_t t3_customviewsStandard[] =
     CVIEW_T3_END
 };
 
-const uint8_t t3_customviewsScooter[] =
-{
-    CVIEW_Scooter,
-    CVIEW_Compass,
-
-    CVIEW_T3_Decostop,
-    CVIEW_T3_MaxDepth,
-    CVIEW_T3_StopWatch,
-    CVIEW_T3_TTS,
-    CVIEW_T3_ppO2andGas,
-
-    CVIEW_T3_END
-};
 
 const uint8_t *t3_customviews = t3_customviewsStandard;
 
@@ -103,10 +90,8 @@ void t3_basics_compass(GFX_DrawCfgScreen *tXscreen, uint16_t ActualHeading, uint
 
 void t3_init(void)
 {
-    if(getLicence() == LICENCEBONEX)
-    {
-        t3_customviews = t3_customviewsScooter;
-    }
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
 
     t3_selection_customview = t3_customviews[0];
 
@@ -119,17 +104,37 @@ void t3_init(void)
     t3l1.WindowNumberOfTextLines = 2;
     t3l1.WindowLineSpacing = 19; // Abstand von Y0
     t3l1.WindowTab = 100;
-    t3l1.WindowX0 = 0;
-    t3l1.WindowX1 = BigFontSeperationLeftRight - 5;
-    t3l1.WindowY0 = BigFontSeperationTopBottom + 5;
-    t3l1.WindowY1 = 479;
+
+    if(!pSettings->FlipDisplay)
+    {
+		t3l1.WindowX0 = 0;
+		t3l1.WindowX1 = BigFontSeperationLeftRight - 5;
+		t3l1.WindowY0 = BigFontSeperationTopBottom + 5;
+		t3l1.WindowY1 = 479;
+    }
+    else
+    {
+		t3l1.WindowX0 = 800 - BigFontSeperationLeftRight + 5;
+		t3l1.WindowX1 = 799;
+		t3l1.WindowY0 = 0;
+		t3l1.WindowY1 = 479 - BigFontSeperationTopBottom + 5 ;
+    }
 
     t3r1.Image = &t3screen;
     t3r1.WindowNumberOfTextLines = t3l1.WindowNumberOfTextLines;
     t3r1.WindowLineSpacing = t3l1.WindowLineSpacing;
     t3r1.WindowTab = t3l1.WindowTab;
-    t3r1.WindowX0 = BigFontSeperationLeftRight + 5;
-    t3r1.WindowX1 = 799;
+    if(!pSettings->FlipDisplay)
+    {
+		t3r1.WindowX0 = BigFontSeperationLeftRight + 5;
+		t3r1.WindowX1 = 799;
+    }
+    else
+    {
+		t3r1.WindowX0 = 0;
+		t3r1.WindowX1 = BigFontSeperationLeftRight - 5;
+    }
+
     t3r1.WindowY0 = t3l1.WindowY0;
     t3r1.WindowY1 = t3l1.WindowY1;
 
@@ -138,16 +143,24 @@ void t3_init(void)
     t3c1.WindowLineSpacing = t3l1.WindowLineSpacing;
     t3c1.WindowX0 = 0;
     t3c1.WindowX1 = 799;
-    t3c1.WindowY0 = 0;
-    t3c1.WindowY1 = BigFontSeperationTopBottom - 5;
+    if(!pSettings->FlipDisplay)
+    {
+    	t3c1.WindowY0 = 0;
+    	t3c1.WindowY1 = BigFontSeperationTopBottom - 5;
+    }
+	else
+	{
+		t3c1.WindowY0 = 480 - BigFontSeperationTopBottom + 5;
+		t3c1.WindowY1 = 479;
+	}
 
     t3c2.Image = &t3screen;
     t3c2.WindowNumberOfTextLines = 3;
     t3c2.WindowLineSpacing = 58;
     t3c2.WindowX0 = 370;
     t3c2.WindowX1 = 799;
-    t3c2.WindowY0 = 0;
-    t3c2.WindowY1 = BigFontSeperationTopBottom - 5;
+    t3c2.WindowY0 = t3c1.WindowY0;
+    t3c2.WindowY1 = t3c1.WindowY1;
     t3c2.WindowTab = 600;
 }
 
@@ -183,6 +196,9 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
     uint8_t depthChangeAscent;
     point_t start, stop, startZeroLine;
 
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
     start.x = 0;
     stop.x = 799;
     stop.y = start.y = BigFontSeperationTopBottom;
@@ -190,6 +206,7 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
 
     start.y = BigFontSeperationTopBottom;
     stop.y = 479;
+
     stop.x = start.x = BigFontSeperationLeftRight;
     GFX_draw_line(tXscreen, start, stop, CLUT_Font020);
 
@@ -322,19 +339,50 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
         /* ascentrate graph -standard mode */
         if(stateUsed->lifeData.ascent_rate_meter_per_min > 0)
         {
-            start.y = tXl1->WindowY0 - 1;
+        	 if(!pSettings->FlipDisplay)
+        	 {
+        		 start.y = tXl1->WindowY0 - 1;
+        	 }
+        	 else
+        	 {
+        		 start.y = tXl1->WindowY1 + 1;
+        	 }
+
             for(int i = 0; i<4;i++)
             {
                 start.y += 5*8;
                 stop.y = start.y;
-                start.x = tXl1->WindowX1 - 1;
+                if(!pSettings->FlipDisplay)
+                {
+                	start.x = tXl1->WindowX1 - 1;
+                }
+                else
+                {
+                	start.x = tXr1->WindowX1 - 1;
+                }
                 stop.x = start.x - 17;
                 GFX_draw_line(tXscreen, start, stop, 0);
             }
             // new thick bar design Sept. 2015
-            start.x = tXl1->WindowX1 - 3 - 5;
+            if(!pSettings->FlipDisplay)
+            {
+            	start.x = tXl1->WindowX1 - 3 - 5;
+            }
+            else
+            {
+            	start.x = tXr1->WindowX1 - 3 - 5;
+            }
+
             stop.x = start.x;
-            start.y = tXl1->WindowY0 - 1;
+            if(!pSettings->FlipDisplay)
+            {
+            	start.y = tXl1->WindowY0 - 1;
+            }
+            else
+            {
+            	start.y = tXl1->WindowY1 + 1;
+            }
+
             stop.y = start.y + (uint16_t)(stateUsed->lifeData.ascent_rate_meter_per_min * 8);
             stop.y -= 3; // wegen der Liniendicke von 12 anstelle von 9
             if(stop.y >= 470)
@@ -458,45 +506,6 @@ void t3_basics_battery_low_customview_extra(GFX_DrawCfgWindow* tXc1)
 }
 
 
-void t3_basics_battery_scooter_customview_extra(GFX_DrawCfgWindow* tXc1)
-{
-    char TextC1[256];
-
-    TextC1[0] = '\001';
-    TextC1[1] = '\f';
-    TextC1[2] = '\032';
-    TextC1[3] = '3';
-    TextC1[4] = '1';
-    TextC1[5] = '1';
-    TextC1[6] = '1';
-    TextC1[7] = '1';
-    TextC1[8] = '1';
-    TextC1[9] = '1';
-    TextC1[10] = '1';
-    TextC1[11] = '1';
-    TextC1[12] = '1';
-    TextC1[13] = '1';
-    TextC1[14] = '0';
-    TextC1[15] = 0;
-
-    for(int i=1;i<=10;i++)
-    {
-        if(	stateUsed_scooterRemainingBattCapacity()  > (9 * i))
-            TextC1[i+3] += 1;
-    }
-
-    if(stateUsed_scooterRemainingBattCapacity() < 10)
-        TextC1[2] = '\025';
-
-    if(!warning_count_high_time)
-        TextC1[4] = '2';
-
-    if(stateUsed->lifeData.scooterAgeInMilliSeconds > 1500)
-        TextC1[2] = '\031';
-
-    GFX_write_string(&Batt24,tXc1,TextC1,0);
-}
-
 
 void t3_refresh_customview(float depth)
 {
@@ -600,6 +609,9 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
     char text[512];
     uint16_t textpointer = 0;
 
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
     // CVIEW_T3_Decostop and CVIEW_T3_TTS
     const SDecoinfo * pDecoinfo;
     if(stateUsed->diveSettings.deco_type.ub.standard == GF_MODE)
@@ -614,7 +626,6 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
 
     // CVIEW_T3_ppO2andGas
     uint8_t oxygen_percentage = 0;
-    float scooterSpeed;
 
     // CVIEW_T3_Temperature
     float temperatureThisCall;
@@ -632,7 +643,9 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
 
 
     uint16_t tempWinX0;
+    uint16_t tempWinX1;
     uint16_t tempWinY0;
+    uint16_t tempWinY1;
     uint16_t tempWinC2X0;
     uint16_t tempWinC2Tab;
 
@@ -643,21 +656,6 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
 
     switch(tX_selection_customview)
     {
-    case CVIEW_Scooter:
-        snprintf(text,TEXTSIZE,"\032\fScooter");
-        GFX_write_string(&FontT42,tXc1,text,0);
-
-        t3_basics_battery_scooter_customview_extra(tXc1);
-
-        scooterSpeed = stateUsed->lifeData.scooterDrehzahl * 80 / 3300;
-
-        snprintf(text,100,"\030\003%.1f",scooterSpeed);
-        if(stateUsed->lifeData.scooterAgeInMilliSeconds > 1500)
-            text[0] = '\031';
-        GFX_write_string(&FontT105,tXc1,text,0);
-        break;
-
-
     case CVIEW_T3_ApnoeSurfaceInfo:
         snprintf(text,TEXTSIZE,"\032\f%c",TXT_MaxDepth);
         GFX_write_string(&FontT42,tXc1,text,0);
@@ -676,6 +674,12 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         break;
 
     case CVIEW_T3_StopWatch:
+
+        tempWinX0 = tXc1->WindowX0;
+        tempWinY0 = tXc1->WindowY0;
+        tempWinX1 = tXc1->WindowX1;
+        tempWinY1 = tXc1->WindowY1;
+
         Stopwatch.Total = timer_Stopwatch_GetTime();
         Stopwatch.Minutes = Stopwatch.Total / 60;
         Stopwatch.Seconds = Stopwatch.Total - ( Stopwatch.Minutes * 60 );
@@ -687,19 +691,39 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         snprintf(text,TEXTSIZE,"\030\003\016%01.1f",unit_depth_float(fAverageDepthAbsolute));
         GFX_write_string(&FontT105,tXc1,text,0);
 
-        tempWinX0 = tXc1->WindowX0;
-        tempWinY0 = tXc1->WindowY0;
-        tXc1->WindowX0 = 480;
+
+
+        if(!pSettings->FlipDisplay)
+        {
+        	tXc1->WindowX0 = 480;
+        }
+        else
+        {
+        	tXc1->WindowX1 = 320;
+        	tXc1->WindowY0 = t3c1.WindowY0; /* select customer window */
+        }
 //			snprintf(text,TEXTSIZE,"\032\f%c%c - %c",TXT_2BYTE, TXT2BYTE_Clock, TXT_AvgDepth);
+
         snprintf(text,TEXTSIZE,"\032\f%c", TXT_Stopwatch);
         GFX_write_string(&FontT42,tXc1,text,0);
         snprintf(text,TEXTSIZE,"\030\016%01.1f",unit_depth_float(fAverageDepth));
         GFX_write_string(&FontT105,tXc1,text,0);
-        tXc1->WindowY0 = 100;
+        if(!pSettings->FlipDisplay)
+        {
+        	tXc1->WindowY0 = 100;
+        }
+        else
+        {
+        	tXc1->WindowY1 -= 100; /* jump to upper of two lines */
+        }
+
         snprintf(text,TEXTSIZE,"\030%u:\016\016%02u",Stopwatch.Minutes, Stopwatch.Seconds);
         GFX_write_string(&FontT105,tXc1,text,0);
+
         tXc1->WindowX0 = tempWinX0;
         tXc1->WindowY0 = tempWinY0;
+        tXc1->WindowX1 = tempWinX1;
+        tXc1->WindowY1 = tempWinY1;
         break;
 
     case CVIEW_T3_GasList:

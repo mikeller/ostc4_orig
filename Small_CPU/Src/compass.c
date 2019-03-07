@@ -1853,7 +1853,6 @@ int compass_calib_common(void)
     while((ticks) < 60 * 1000)
     {
 				compass_read();
-
 				acceleration_read();
 				compass_calc_roll_pitch_only();
 			
@@ -1873,15 +1872,17 @@ int compass_calib_common(void)
 				}
 
 				copyCompassDataDuringCalibration(compass_DX_f,compass_DY_f,compass_DZ_f);
-        compass_add_calibration(&g);
+				compass_add_calibration(&g);
 				HAL_Delay(1);
 				lasttick = HAL_GetTick();
 				if(lasttick == 0)
 				{
 					 tickstart = -ticks;
 				}	
+				HAL_Delay(1);
 				ticks = lasttick - tickstart;
-		}
+				SPI_Evaluate_RX_Data();
+    }
         
     compass_solve_calibration(&g);
 		

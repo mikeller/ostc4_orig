@@ -92,14 +92,12 @@ void tHome_init(void)
     t4_init(); // game
     t5_init(); // gauge
     t6_init(); // apnea
-    t9_init(); // bonex
 }
 
 
 void tHome_init_compass(void)
 {
     init_t7_compass();
-    init_t9_compass();
 }
 
 
@@ -141,9 +139,6 @@ void tHome_refresh(void)
     else
     if(pSettings->design == 7)
         t7_refresh();
-    else
-    if(pSettings->design == 9)
-        t9_refresh();
     else
     {
         pSettings->design = 7;
@@ -349,8 +344,6 @@ void tHome_change_field_button_pressed(void)
     tHome_tick_count_field = 0;
     if(settingsGetPointer()->design == 7)
         t7_change_field();
-    if(settingsGetPointer()->design == 9)
-        t9_change_field();
 }
 
 
@@ -359,9 +352,6 @@ void tHome_change_customview_button_pressed(void)
     tHome_tick_count_cview = 0;
     if(settingsGetPointer()->design == 7)
         t7_change_customview();
-    else
-    if(settingsGetPointer()->design == 9)
-        t9_change_customview();
     else
     if(settingsGetPointer()->design == 3)
         t3_change_customview();
@@ -436,15 +426,30 @@ uint8_t tHome_gas_writer(uint8_t oxygen_percentage, uint8_t helium_percentage, c
 
 uint8_t tHome_show_lost_connection_count(GFX_DrawCfgScreen *ScreenToWriteOn)
 {
-    return 0;
+	if(!SPI_MIN_ERROR_SHOW) return 0;
+	if(DataEX_lost_connection_count()>=SPI_MIN_ERROR_SHOW){
 
-    if(!DataEX_lost_connection_count())
-        return 0;
+    char text[64];
 
-    char text[10];
+    SDataExchangeSlaveToMaster* dataIn=get_dataInPointer();
 
-    snprintf(text,10,"\002   %i",DataEX_lost_connection_count());
-    Gfx_write_label_var(ScreenToWriteOn,  600,800, 0,&FontT48,CLUT_ButtonSymbols,text);
+    snprintf(text,32,"spi err:\002 %i/%i",DataEX_lost_connection_count(),get_num_SPI_CALLBACKS());
+    Gfx_write_label_var(ScreenToWriteOn,  100,300, 0,&FontT24,CLUT_ButtonSymbols,text);
+
+//    snprintf(text,32,"header:\002%X%X%X%X",dataIn->header.checkCode[0],dataIn->header.checkCode[1],dataIn->header.checkCode[2],dataIn->header.checkCode[3]);
+//    Gfx_write_label_var(ScreenToWriteOn,  350,550, 0,&FontT24,CLUT_ButtonSymbols,text);
+
+    snprintf(text,32,"footer:\002%X%X%X%X",dataIn->footer.checkCode[0],dataIn->footer.checkCode[1],dataIn->footer.checkCode[2],dataIn->footer.checkCode[3]);
+    Gfx_write_label_var(ScreenToWriteOn,  600,800, 0,&FontT24,CLUT_ButtonSymbols,text);
+    }
+
+
+
+//    snprintf(text,32,"cpt:\002%i",get_num_SPI_CALLBACKS());
+//    Gfx_write_label_var(ScreenToWriteOn,  600,800, 90,&FontT24,CLUT_ButtonSymbols,text);
+
+//    snprintf(text,10,"i2c:\002%i",get_DataEX_Error_place());
+//    Gfx_write_label_var(ScreenToWriteOn,  600,800, 90,&FontT24,CLUT_ButtonSymbols,text);
 
     return DataEX_lost_connection_count();
 }

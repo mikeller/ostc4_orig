@@ -256,10 +256,6 @@
 #define StMHARD5_ButtonBalance2	_MB(2,7,5,3,0)
 #define StMHARD5_ButtonBalance3	_MB(2,7,5,4,0)
 
-#define StMHARD6_ScooterDrag		_MB(2,7,6,1,0)
-#define StMHARD6_ScooterLoad		_MB(2,7,6,2,0)
-#define StMHARD6_ScooterBatt		_MB(2,7,6,3,0)
-
 //#define StMHARD6_UpdateCPU2_No	_MB(2,7,6,1,0)
 //#define StMHARD6_UpdateCPU2_Yes	_MB(2,7,6,2,0)
 //#define StMHARD6_UpdateCPU2_Now	_MB(2,7,6,3,0)

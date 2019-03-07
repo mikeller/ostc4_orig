@@ -81,7 +81,7 @@ void MX_SPI_Init(void)
     cpu2DmaSpi.Init.CLKPolarity         = SPI_POLARITY_LOW;
     cpu2DmaSpi.Init.CLKPhase            = SPI_PHASE_1EDGE;
     cpu2DmaSpi.Init.NSS                 = SPI_NSS_SOFT;//SPI_NSS_HARD_OUTPUT;//SPI_NSS_SOFT;
-    cpu2DmaSpi.Init.BaudRatePrescaler   = SPI_BAUDRATEPRESCALER_128;
+    cpu2DmaSpi.Init.BaudRatePrescaler   = SPI_BAUDRATEPRESCALER_128; 
     cpu2DmaSpi.Init.FirstBit            = SPI_FIRSTBIT_MSB;
     cpu2DmaSpi.Init.TIMode              = SPI_TIMODE_DISABLED;
     cpu2DmaSpi.Init.CRCCalculation 		= SPI_CRCCALCULATION_DISABLED;

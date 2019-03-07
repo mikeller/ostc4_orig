@@ -36,7 +36,7 @@
 SSettings Settings;
 
 const uint8_t RTErequiredHigh = 1;
-const uint8_t RTErequiredLow = 4;
+const uint8_t RTErequiredLow = 7;
 
 const uint8_t FONTrequiredHigh = 1;
 const uint8_t FONTrequiredLow =	0;
@@ -55,8 +55,8 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
 {
     .versionFirst   = 1,
     .versionSecond 	= 4,
-    .versionThird   = 0,
-    .versionBeta    = 0,
+    .versionThird   = 7,
+    .versionBeta    = 1,
 
     /* 4 bytes with trailing 0 */
     .signature = "mh",
@@ -82,7 +82,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
  * There might even be entries with fixed values that have no range
  */
 const SSettings SettingsStandard = {
-    .header = 0xFFFF0017,
+    .header = 0xFFFF0018,
     .warning_blink_dsec = 8 * 2,
     .lastDiveLogId = 0,
     .logFlashNextSampleStartAddress = 0,
@@ -256,10 +256,10 @@ const SSettings SettingsStandard = {
     .totalDiveCounter = 0,
     .personalDiveCount = 0,
     .showDebugInfo = 0,
-    .ButtonResponsiveness[0] = 90, // new hw 170306
-    .ButtonResponsiveness[1] = 90, // new hw 170306
-    .ButtonResponsiveness[2] = 90, // new hw 170306
-    .ButtonResponsiveness[3] = 90, // new hw 170306
+    .ButtonResponsiveness[0] = DEFAULT_BUTTONRESPONSIVENESS_GUI, // new hw 170306
+    .ButtonResponsiveness[1] = DEFAULT_BUTTONRESPONSIVENESS_GUI, // new hw 170306
+    .ButtonResponsiveness[2] = DEFAULT_BUTTONRESPONSIVENESS_GUI, // new hw 170306
+    .ButtonResponsiveness[3] = DEFAULT_BUTTONRESPONSIVENESS_GUI, // new hw 170306
     .nonMetricalSystem = 0,
     .fallbackToFixedSetpoint = 1,
     .bluetoothActive = 0,
@@ -301,10 +301,11 @@ const SSettings SettingsStandard = {
     .timeoutSurfacemodeWithSensors = 600,
     .VPM_model = 0,
     .GF_model = 0,
-    .FactoryButtonBase = 90,
+    .FactoryButtonBase = DEFAULT_BUTTONRESPONSIVENESS_GUI,
     .FactoryButtonBalance[0] = 3,
     .FactoryButtonBalance[1] = 3,
     .FactoryButtonBalance[2] = 3,
+	.FlipDisplay = 0,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -442,6 +443,9 @@ void set_new_settings_missing_in_ext_flash(void)
         pSettings->FactoryButtonBalance[1]          = pStandard->FactoryButtonBalance[1];
         pSettings->FactoryButtonBalance[2]          = pStandard->FactoryButtonBalance[2];
         // no break
+    case 0xFFFF0017:
+    	pSettings->FlipDisplay = 0;
+    	// no break
     default:
         pSettings->header 																= pStandard->header;
         break; // no break before!!
@@ -1045,29 +1049,29 @@ uint8_t check_and_correct_settings(void)
 /*	uint8_t ButtonResponsiveness[4];
  */
     // Base value, index 3
-    if(Settings.ButtonResponsiveness[3] < 70)
+    if(Settings.ButtonResponsiveness[3] < MIN_BUTTONRESPONSIVENESS_GUI)
     {
-        Settings.ButtonResponsiveness[3] = 70;
+        Settings.ButtonResponsiveness[3] = MIN_BUTTONRESPONSIVENESS_GUI;
         corrections++;
     }
     else
-    if(Settings.ButtonResponsiveness[3] > 110)
+    if(Settings.ButtonResponsiveness[3] > MAX_BUTTONRESPONSIVENESS_GUI)
     {
-        Settings.ButtonResponsiveness[3] = 130;
+        Settings.ButtonResponsiveness[3] = MAX_BUTTONRESPONSIVENESS_GUI;
         corrections++;
     }
     // flex values 0, 1, 2
     for(int i=0; i<3;i++)
     {
-        if(Settings.ButtonResponsiveness[i] < 60) // 70-10
+        if(Settings.ButtonResponsiveness[i] < MIN_BUTTONRESPONSIVENESS) // 50-10  //Fix for broken buttons. :)
         {
-            Settings.ButtonResponsiveness[i] = 70;
+            Settings.ButtonResponsiveness[i] = MIN_BUTTONRESPONSIVENESS;
             corrections++;
         }
         else
-        if(Settings.ButtonResponsiveness[i] > 130) // 110+20
+        if(Settings.ButtonResponsiveness[i] > MAX_BUTTONRESPONSIVENESS) // 110+20
         {
-            Settings.ButtonResponsiveness[i] = 130;
+            Settings.ButtonResponsiveness[i] = MAX_BUTTONRESPONSIVENESS;
             corrections++;
         }
     }
@@ -1128,20 +1132,6 @@ uint8_t check_and_correct_settings(void)
 
 /*	uint32_t updateSettingsAllowedFromHeader;
  */
-
-/*	uint8_t scooterControl;
- */
-    if(Settings.scooterControl > 1)
-    {
-        Settings.scooterControl = 1;
-        corrections++;
-    }
-
-/*	char scooterDeviceAddress[12];
- */
-
-/*	char scooterDeviceName[19];
-*/
 
 /*	uint8_t ppo2sensors_deactivated;
  */
@@ -1323,39 +1313,6 @@ uint8_t check_and_correct_settings(void)
         corrections++;
     }
 
-/*	uint8_t scooterDrag;
- */
-    if(Settings.scooterDrag > 3)
-    {
-        Settings.scooterDrag = 3;
-        corrections++;
-    }
-
-/*	uint8_t scooterLoad;
- */
-    if(Settings.scooterLoad > 4)
-    {
-        Settings.scooterLoad = 4;
-        corrections++;
-    }
-
-/*	uint8_t scooterNumberOfBatteries;
- */
-    if(Settings.scooterNumberOfBatteries > 3)
-    {
-        Settings.scooterNumberOfBatteries = 3;
-        corrections++;
-    }
-
-/*	uint16_t scooterBattSize;
- */
-    if((Settings.scooterBattSize < 300) ||
-         (Settings.scooterBattSize > 5000))
-    {
-        Settings.scooterBattSize = 700;
-        corrections++;
-    }
-
 
 /*	uint8_t lastKnownBatteryPercentage;
  */
@@ -1381,6 +1338,11 @@ uint8_t check_and_correct_settings(void)
         corrections++;
     }
 
+    if(Settings.FlipDisplay > 1) /* only boolean values allowed */
+   	{
+    	Settings.FlipDisplay = 0;
+	    corrections++;
+   	}
 
     if(corrections > 255)
         return 255;
@@ -2559,8 +2521,6 @@ void getActualRTEandFONTversion(uint8_t *RTEhigh, uint8_t *RTElow, uint8_t *FONT
 
 uint8_t getLicence(void)
 {
-    //return 0xFF;
-    //return LICENCEBONEX;
     return hardwareDataGetPointer()->primaryLicence;
 }
 
@@ -2655,14 +2615,14 @@ void settingsHelperButtonSens_keepPercentageValues(uint32_t inputValueRaw, uint8
 {
     uint32_t newSensitivity;
 
-    if(inputValueRaw > 110)
+    if(inputValueRaw > MAX_BUTTONRESPONSIVENESS)
     {
-            inputValueRaw = 110;
+            inputValueRaw = MAX_BUTTONRESPONSIVENESS;
     }
     else
-    if(inputValueRaw < 70)
+    if(inputValueRaw < MIN_BUTTONRESPONSIVENESS)
     {
-            inputValueRaw = 70;
+            inputValueRaw = MIN_BUTTONRESPONSIVENESS;
     }
 
     // the unbalanced value
@@ -2690,9 +2650,9 @@ void settingsHelperButtonSens_keepPercentageValues(uint32_t inputValueRaw, uint8
             break;
         }
 
-        if(newSensitivity > 110)
+        if(newSensitivity > MAX_BUTTONRESPONSIVENESS)
         {
-                newSensitivity = 110;
+                newSensitivity = MAX_BUTTONRESPONSIVENESS;
         }
         outArray4Values[i] = newSensitivity;
     }

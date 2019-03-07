@@ -813,17 +813,13 @@ return HAL_OK;
 void GFX_clear_frame_immediately(uint32_t pDestination)
 {
 	uint32_t i;
+	uint32_t* pfill = (uint32_t*) pDestination;
+
 
 	for(i = 200*480; i > 0; i--)
 	{
-		*(__IO uint16_t*)pDestination = 0;
-		pDestination += 2;
-		*(__IO uint16_t*)pDestination = 0;
-		pDestination += 2;
-		*(__IO uint16_t*)pDestination = 0;
-		pDestination += 2;
-		*(__IO uint16_t*)pDestination = 0;
-		pDestination += 2;
+		*pfill++ = 0;
+		*pfill++ = 0;
 	}
 }
 
@@ -872,22 +868,23 @@ void  GFX_clear_frame_dma2d(uint8_t frameId)
 void GFX_fill_buffer(uint32_t pDestination, uint8_t alpha, uint8_t color)
 {
 
-		union al88_u
+	union al88_u
 	{
 		uint8_t al8[2];
 		uint16_t al88;
 	};
-
 	union al88_u colorcombination;
 	uint32_t i;
+	uint32_t* pfill = (uint32_t*) pDestination;
+	uint32_t fillpattern;
 
 	colorcombination.al8[0] = color;
 	colorcombination.al8[1] = alpha;
 
-	for(i = 800*480; i > 0; i--)
+	fillpattern = (colorcombination.al88 << 16) | colorcombination.al88;
+	for(i = 800*480/2; i > 0; i--)
 	{
-		*(__IO uint16_t*)pDestination = colorcombination.al88;
-		pDestination += 2;
+		*pfill++ = fillpattern;
 	}
 }
 
@@ -904,18 +901,33 @@ void gfx_flip(point_t *p1, point_t *p2)
 
 static inline void gfx_brush(uint8_t thickness, GFX_DrawCfgScreen *hgfx, uint16_t x0, uint16_t y0, uint8_t color)
 {
-	uint32_t pDestination;
+	uint16_t* pDestination;
 	uint8_t offset = thickness/2;
+	int16_t stepdir;
 
-	pDestination = hgfx->FBStartAdress + 2*(x0 - offset)*hgfx->ImageHeight + 2*(y0-offset);
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
+	if(pSettings->FlipDisplay)
+	{
+		pDestination = (uint16_t*)hgfx->FBStartAdress;
+		pDestination += (hgfx->ImageHeight * (hgfx->ImageWidth - x0 + offset)) + (480 - y0+offset);
+		stepdir = -1;
+	}
+	else
+	{
+		pDestination = (uint16_t*)hgfx->FBStartAdress;
+		pDestination += (x0 - offset)*hgfx->ImageHeight + (y0-offset);
+		stepdir = 1;
+	}
 	for(int x=thickness;x>0;x--)
 	{
 		for(int y=thickness;y>0;y--)
 		{
 			*(__IO uint16_t*)pDestination = 0xFF00 + color;
-			pDestination +=2;
+			pDestination += stepdir;
 		}
-		pDestination += 2*(hgfx->ImageHeight - thickness);
+		pDestination += stepdir * (hgfx->ImageHeight - thickness);
 	}
 }
 
@@ -968,35 +980,63 @@ void GFX_draw_thick_line(uint8_t thickness, GFX_DrawCfgScreen *hgfx, point_t sta
 
 void GFX_draw_line(GFX_DrawCfgScreen *hgfx, point_t start, point_t stop, uint8_t color)
 {
-	uint32_t pDestination;
+	uint16_t* pDestination;
 	uint32_t j;
+	int16_t stepdir;
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
 
+
+	/* horizontal line */
 	if(start.x == stop.x)
 	{
 		if(start.y > stop.y) gfx_flip(&start,&stop);
-		pDestination = (uint32_t)hgfx->FBStartAdress;
-		pDestination += start.x * hgfx->ImageHeight * 2;
-		pDestination += start.y * 2;
+
+		pDestination = (uint16_t*)hgfx->FBStartAdress;
+		if(pSettings->FlipDisplay)
+		{
+			pDestination += (800 - start.x) * hgfx->ImageHeight;
+			pDestination += (480 - start.y);
+			stepdir = -1;
+		}
+		else
+		{
+			pDestination += start.x * hgfx->ImageHeight;
+			pDestination += start.y;
+			stepdir = 1;
+		}
 		for (j = stop.y - start.y; j > 0; j--)
 		{
-			*(__IO uint16_t*)pDestination = 0xFF00 + color;
-			pDestination += 2;
+				*(__IO uint16_t*)pDestination = 0xFF00 + color;
+				pDestination += stepdir;
 		}
 	}
-	else
+	else /* vertical line ? */
 	if(start.y == stop.y)
 	{
 		if(start.x > stop.x) gfx_flip(&start,&stop);
-		pDestination = (uint32_t)hgfx->FBStartAdress;
-		pDestination += start.x * hgfx->ImageHeight * 2;
-		pDestination += start.y * 2;
+		pDestination = (uint16_t*)hgfx->FBStartAdress;
+
+		if(pSettings->FlipDisplay)
+		{
+			pDestination += (800 - start.x) * hgfx->ImageHeight;
+			pDestination += (480 - start.y);
+			stepdir = -1;
+		}
+		else
+		{
+			pDestination += start.x * hgfx->ImageHeight;
+			pDestination += start.y;
+			stepdir = 1;
+		}
+
 		for (j = stop.x - start.x; j > 0; j--)
 		{
 			*(__IO uint16_t*)pDestination = 0xFF00 + color;
-			pDestination += hgfx->ImageHeight * 2;
+			pDestination += stepdir * hgfx->ImageHeight;
 		}
 	}
-	else // diagonal
+	else /* diagonal */
 	{
 		int x0 = start.x;
 		int y0 = start.y;
@@ -1008,8 +1048,17 @@ void GFX_draw_line(GFX_DrawCfgScreen *hgfx, point_t start, point_t stop, uint8_t
 	 
 		for(;;)
 		{
-			pDestination = (uint32_t)hgfx->FBStartAdress;
-			pDestination += ((x0 * hgfx->ImageHeight) + y0) * 2;
+			pDestination = (uint16_t*)hgfx->FBStartAdress;
+
+			if(pSettings->FlipDisplay)
+			{
+				pDestination += (((800 - x0) * hgfx->ImageHeight) + (480 - y0));
+			}
+			else
+			{
+				pDestination += ((x0 * hgfx->ImageHeight) + y0);
+			}
+
 			*(__IO uint16_t*)pDestination = 0xFF00 + color;
 			if (x0==x1 && y0==y1) break;
 			e2 = err;
@@ -1022,35 +1071,53 @@ void GFX_draw_line(GFX_DrawCfgScreen *hgfx, point_t start, point_t stop, uint8_t
 
 void GFX_draw_image_monochrome(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window, const tImage *image, uint8_t color)
 {
-	uint32_t pDestination;
+	uint16_t* pDestination;
 	uint32_t j;
 	point_t start, stop;
+
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
 
 	start.x = window.left;
 	start.y = (hgfx->ImageHeight - image->height - window.top);
 	stop.y = start.y + image->height;
 	stop.x = start.x + image->width;
 	j = 0;
-	
-	for(int xx = start.x; xx < stop.x; xx++)
+
+	if(pSettings->FlipDisplay)
 	{
-		pDestination = (uint32_t)hgfx->FBStartAdress;
-		pDestination += xx * hgfx->ImageHeight * 2;
-		pDestination += start.y * 2;
-		for(int yy = start.y; yy < stop.y; yy++)
+		for(int xx = start.x; xx < stop.x; xx++)
 		{
-			*(__IO uint8_t*)pDestination = color;
-			pDestination += 1;
-			*(__IO uint8_t*)pDestination = image->data[j++];
-			pDestination += 1;
+			pDestination = (uint16_t*)hgfx->FBStartAdress;
+			pDestination += (hgfx->ImageHeight - start.y) + (stop.x * hgfx->ImageHeight) ;
+			pDestination -= (xx - start.x) * hgfx->ImageHeight;
+
+			for(int yy = start.y; yy < stop.y; yy++)
+			{
+				*(__IO uint16_t*)pDestination-- = (image->data[j++] << 8) + color;
+			}
 		}
-	}	
+	}
+	else
+	{
+		for(int xx = start.x; xx < stop.x; xx++)
+		{
+			pDestination = (uint16_t*)hgfx->FBStartAdress;
+			pDestination += xx * hgfx->ImageHeight;
+			pDestination += start.y;
+			for(int yy = start.y; yy < stop.y; yy++)
+			{
+				*(__IO uint16_t*)pDestination++ = (image->data[j++] << 8) + color;
+			}
+		}
+	}
 }
 	
 
 void GFX_draw_image_color(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window, const tImage *image)
 {
-	uint32_t pDestination;
+	uint16_t* pDestination;
+
 	uint32_t j;
 	point_t start, stop;
 
@@ -1060,19 +1127,36 @@ void GFX_draw_image_color(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window, cons
 	stop.x = start.x + image->width;
 	j = 0;
 	
-	for(int xx = start.x; xx < stop.x; xx++)
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
+	if(pSettings->FlipDisplay)
 	{
-		pDestination = (uint32_t)hgfx->FBStartAdress;
-		pDestination += xx * hgfx->ImageHeight * 2;
-		pDestination += start.y * 2;
-		for(int yy = start.y; yy < stop.y; yy++)
+		for(int xx = start.x; xx < stop.x; xx++)
 		{
-			*(__IO uint8_t*)pDestination = image->data[j++];
-			pDestination += 1;
-			*(__IO uint8_t*)pDestination = 0xFF;
-			pDestination += 1;
+			pDestination = (uint16_t*)hgfx->FBStartAdress;
+			pDestination += (hgfx->ImageHeight - start.y) + (stop.x * hgfx->ImageHeight);
+			pDestination -= (xx - start.x) * hgfx->ImageHeight;
+
+			for(int yy = start.y; yy < stop.y; yy++)
+			{
+				*(__IO uint16_t*)pDestination-- = 0xFF << 8 | image->data[j++];
+			}
 		}
-	}	
+	}
+	else
+	{
+		for(int xx = start.x; xx < stop.x; xx++)
+		{
+			pDestination = (uint16_t*)hgfx->FBStartAdress;
+			pDestination += xx * hgfx->ImageHeight;
+			pDestination += start.y;
+			for(int yy = start.y; yy < stop.y; yy++)
+			{
+				*(__IO uint16_t*)pDestination++ = 0xFF << 8 | image->data[j++];
+			}
+		}
+	}
 }
 
 
@@ -1120,15 +1204,23 @@ int16_Point_t switchToOctantZeroFrom(uint8_t octant, int16_t x, int16_t y)
 /* this is NOT fast nor optimized */
 void GFX_draw_pixel(GFX_DrawCfgScreen *hgfx, int16_t x, int16_t y, uint8_t color)
 {
-	uint32_t pDestination;
-	
-	pDestination = (uint32_t)hgfx->FBStartAdress;
-	pDestination += x * hgfx->ImageHeight * 2;
-	pDestination += y * 2;
-	
-	*(__IO uint8_t*)pDestination = color;
-	pDestination += 1;
-	*(__IO uint8_t*)pDestination = 0xFF;
+	uint16_t* pDestination;
+
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
+	pDestination = (uint16_t*)hgfx->FBStartAdress;
+	if(pSettings->FlipDisplay)
+	{
+		pDestination += (800 - x) * hgfx->ImageHeight;
+		pDestination += (480 - y);
+	}
+	else
+	{
+		pDestination += x * hgfx->ImageHeight;
+		pDestination += y;
+	}
+	*(__IO uint16_t*)pDestination = 0xFF << 8 | color;
 }
 
 
@@ -1271,7 +1363,8 @@ void GFX_draw_Grid(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window, int vlines,
 		{
             p1.x = window.left + (int)(i * deltaline + 0.5f);
             p2.x = p1.x ;
-            GFX_draw_colorline(hgfx, p1,p2, color );
+            //GFX_draw_colorline(hgfx, p1,p2, color );
+            GFX_draw_line(hgfx, p1,p2, color );
 		}
     }
     if(vdeltaline > 0)
@@ -1282,7 +1375,8 @@ void GFX_draw_Grid(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window, int vlines,
 		{
             p1.x = window.left + (int)(i * vdeltaline + 0.5f);
             p2.x = p1.x ;
-            GFX_draw_colorline(hgfx, p1,p2, color );
+          //  GFX_draw_colorline(hgfx, p1,p2, color );
+            GFX_draw_line(hgfx, p1,p2, color );
 		}
     }
     if(hlines > 0)
@@ -1294,7 +1388,8 @@ void GFX_draw_Grid(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window, int vlines,
 		{
             p1.y = 479 - window.top - (int)(i * deltaline + 0.5f);
             p2.y = p1.y;
-            GFX_draw_colorline(hgfx, p1,p2, color );
+           // GFX_draw_colorline(hgfx, p1,p2, color );
+            GFX_draw_line(hgfx, p1,p2, color );
 		}
     }
 }
@@ -1406,10 +1501,14 @@ void  GFX_graph_print(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, 
 //  ===============================================================================
 
 
-void GFX_graph_print(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, int16_t drawVeilUntil, uint8_t Xdivide, uint16_t dataMin, uint16_t dataMax,  uint16_t *data, uint16_t datalength, uint8_t color, uint8_t *colour_data)
+void GFX_graph_print(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, const int16_t drawVeilUntil, uint8_t Xdivide, uint16_t dataMin, uint16_t dataMax,  uint16_t *data, uint16_t datalength, uint8_t color, uint8_t *colour_data)
 {
-  //uint32_t pDestination,pDestination_old,
-	uint32_t pDestination_tmp,pDestination_end, pDestination_start, pDestination_zero_veil;
+	uint16_t* pDestination_tmp;
+	uint16_t* pDestination_start;
+	uint16_t* pDestination_end;
+	uint16_t* pDestination_zero_veil;
+
+	SSettings* pSettings;
 
 	uint32_t max = 0;
 	int windowheight = -1;
@@ -1429,6 +1528,9 @@ void GFX_graph_print(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, i
 	uint8_t colorDataTemp;
 	uint8_t	colormask = 0;
 
+	pSettings = settingsGetPointer();
+	pDestination_zero_veil = 0;
+
 	if(dataMin > dataMax)
 	{
 		uint16_t dataFlip;
@@ -1441,7 +1543,8 @@ void GFX_graph_print(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, i
 		invert = 0;
 
 	colormask = color;
-	
+
+	pSettings = settingsGetPointer();
 		
 	if(window->bottom > 479)
 		return;
@@ -1522,15 +1625,32 @@ void GFX_graph_print(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, i
 		if(h_ulong > (window->bottom - window->top))
 			h_ulong = (window->bottom - window->top);
 
-		if(drawVeilUntil > 0)
+		if(!pSettings->FlipDisplay)
 		{
-				pDestination_zero_veil = hgfx->FBStartAdress + 2 * (  (479 - (drawVeilUntil - 2) ) + ( (w1 + window->left) * hgfx->ImageHeight) );
+			if(drawVeilUntil > 0)
+			{
+					pDestination_zero_veil = (uint16_t*)hgfx->FBStartAdress;
+					pDestination_zero_veil += ((479 - (drawVeilUntil - 2) ) + ((w1 + window->left) * hgfx->ImageHeight) );
+			}
+			else if(drawVeilUntil < 0 )
+			{
+					pDestination_zero_veil = (uint16_t*)hgfx->FBStartAdress;
+					pDestination_zero_veil += ((479 + (drawVeilUntil)) + ((w1 + window->left) * hgfx->ImageHeight) );
+			}
 		}
-		else if(drawVeilUntil < 0 )
+		else
 		{
-				pDestination_zero_veil = hgfx->FBStartAdress + 2 * (  (479 + (drawVeilUntil) ) + ( (w1 + window->left) * hgfx->ImageHeight) );
+			if(drawVeilUntil > 0)
+			{
+				pDestination_zero_veil = (uint16_t*)hgfx->FBStartAdress;
+				pDestination_zero_veil += (((drawVeilUntil) ) + ( (window->right - w1) * hgfx->ImageHeight) );
+							}
+			else if(drawVeilUntil < 0 )
+			{
+				pDestination_zero_veil = (uint16_t*)hgfx->FBStartAdress;
+				pDestination_zero_veil += 479 -  drawVeilUntil + ( (window->right - w1 -1) * hgfx->ImageHeight);
+			}
 		}
-
 		if(h_ulong + window->top > max)
 		{
 			max = h_ulong + window->top;
@@ -1543,29 +1663,65 @@ void GFX_graph_print(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, i
 			//output_mask[pointer] = true;
 			if(w1 > 0)
 			{
-				pDestination_start = hgfx->FBStartAdress +  (2 * ((479 - (window->top)) + ((w1 + window->left) * hgfx->ImageHeight)));
-				pDestination_end = pDestination_start;
-				if(h_ulong >= h_ulong_old)
+				pDestination_start = (uint16_t*)hgfx->FBStartAdress;
+				if(!pSettings->FlipDisplay)
 				{
-					pDestination_start -= 2 * h_ulong_old;
-					pDestination_end -= 2 * h_ulong;
+					pDestination_start += (((479 - (window->top)) + ((w1 + window->left) * hgfx->ImageHeight)));
 				}
 				else
 				{
-					pDestination_start -= 2 * h_ulong;
-					pDestination_end -= 2 * h_ulong_old;
+					pDestination_start += (((window->top) + ((window->right - w1) * hgfx->ImageHeight)));
 				}
+				pDestination_end = pDestination_start;
+
+				if(!pSettings->FlipDisplay)
+				{
+					if(h_ulong >= h_ulong_old)
+					{
+						pDestination_start -= h_ulong_old;
+						pDestination_end -= h_ulong;
+					}
+					else
+					{
+						pDestination_start -= h_ulong;
+						pDestination_end -= h_ulong_old;
+					}
+				}
+				else
+				{
+					if(h_ulong < h_ulong_old)
+					{
+						pDestination_start += h_ulong_old;
+						pDestination_end += h_ulong;
+					}
+					else
+					{
+						pDestination_start += h_ulong;
+						pDestination_end += h_ulong_old;
+					}
+				}
+
 				
 				// deco stops
 				if(drawVeilUntil < 0)
 				{
-					pDestination_tmp = pDestination_end;
-					while(pDestination_tmp <= pDestination_zero_veil)
+					if(!pSettings->FlipDisplay)
 					{
-							*(__IO uint8_t*)pDestination_tmp = colormask;
-											pDestination_tmp -= 1;
-											*(__IO uint8_t*)pDestination_tmp = 0x80;
-											pDestination_tmp += 3;
+						pDestination_tmp = pDestination_end;
+						while(pDestination_tmp <= pDestination_zero_veil)
+						{
+							*(__IO uint16_t*)pDestination_tmp = (0x80 << 8) | colormask;
+							pDestination_tmp++;
+						}
+					}
+					else
+					{
+						pDestination_tmp = pDestination_zero_veil;
+						while(pDestination_tmp <=  pDestination_end)
+						{
+							*(__IO uint16_t*)pDestination_tmp = (0x80 << 8) | colormask;
+							pDestination_tmp++;
+						}
 					}
 				}
 				else
@@ -1573,20 +1729,31 @@ void GFX_graph_print(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, i
 					// regular graph with veil underneath if requested
 					// von oben nach unten
 					// von grossen pDestination Werten zu kleinen pDestination Werten
-					pDestination_tmp = pDestination_start;
-					while(pDestination_tmp >= pDestination_end)
 					{
-							*(__IO uint8_t*)pDestination_tmp = colormask;
-											pDestination_tmp += 1;
-											*(__IO uint8_t*)pDestination_tmp = 0xFF;
-											pDestination_tmp -= 3;
+						pDestination_tmp = pDestination_start;
+						while(pDestination_tmp >= pDestination_end)
+						{
+							*(__IO uint16_t*)pDestination_tmp = (0xFF << 8) | colormask ;
+							pDestination_tmp--;
+						}
 					}
-					while((drawVeilUntil > 0) && (pDestination_tmp >= pDestination_zero_veil))
+
+					if(!pSettings->FlipDisplay)
 					{
-							*(__IO uint8_t*)pDestination_tmp = colormask;
-											pDestination_tmp += 1;
-											*(__IO uint8_t*)pDestination_tmp = 0x20;
-											pDestination_tmp -= 3;
+						while((drawVeilUntil > 0) && (pDestination_tmp >= pDestination_zero_veil))
+						{
+							*(__IO uint16_t*)pDestination_tmp = (0x20 << 8) | colormask ;
+							pDestination_tmp--;
+						}
+					}
+					else
+					{
+						pDestination_tmp = pDestination_start;
+						while((drawVeilUntil > 0) && (pDestination_tmp <=  pDestination_zero_veil))
+						{
+							*(__IO uint16_t*)pDestination_tmp = (0x20 << 8) | colormask ;
+							pDestination_tmp++;
+						}
 					}
 				}
 			}
@@ -1671,11 +1838,13 @@ void GFX_draw_box2(GFX_DrawCfgScreen *hgfx, point_t start, point_t stop, uint8_t
 
 void GFX_draw_box(GFX_DrawCfgScreen *hgfx, point_t LeftLow, point_t WidthHeight, uint8_t Style, uint8_t color)
 {
-	uint32_t pDestination, pStart;
+	uint16_t* pDestination;
+	uint16_t* pStart;
 	uint32_t j;
 	uint32_t lineWidth, lineHeight;
 	int x, y;
 	uint8_t intensity;
+	int stepdir;
 
 	typedef struct {
 			int x;
@@ -1701,65 +1870,84 @@ void GFX_draw_box(GFX_DrawCfgScreen *hgfx, point_t LeftLow, point_t WidthHeight,
 		{4,3,110}
 	};
 
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
 	lineWidth = WidthHeight.x;
 	lineHeight = WidthHeight.y;
+	pStart = (uint16_t*)hgfx->FBStartAdress;
 
-	pStart = (uint32_t)hgfx->FBStartAdress;
-	pStart += LeftLow.x * hgfx->ImageHeight * 2;
-	pStart += LeftLow.y * 2;
+	if(!pSettings->FlipDisplay)
+	{
+		pStart += LeftLow.x * hgfx->ImageHeight;
+		pStart += LeftLow.y;
+		stepdir = 1;
+	}
+	else
+	{
+		pStart += (800 - LeftLow.x - 1) * hgfx->ImageHeight;
+		pStart += (480 - LeftLow.y);
+		stepdir = -1;
+	}
 
 	// Untere Linie
 	pDestination = pStart;
 	if(Style)
 	{
-		pDestination += 2 * 10 * hgfx->ImageHeight;
+		pDestination += stepdir * 10 * hgfx->ImageHeight;
 		lineWidth -= 18;
 	}
 	for (j = lineWidth; j > 0; j--)
 	{
+
 		*(__IO uint16_t*)pDestination = 0xFF00 + color;
-		pDestination += hgfx->ImageHeight * 2;
+		pDestination += stepdir * hgfx->ImageHeight;
 	}
 
 	// Obere Linie
-	pDestination = pStart + 2 * WidthHeight.y;
+
+	pDestination = pStart + stepdir * WidthHeight.y;
 	if(Style)
 	{
-		pDestination += 2 * 10 * hgfx->ImageHeight;
+		pDestination += stepdir * 10 * hgfx->ImageHeight;
 	}
 
 	for (j = lineWidth; j > 0; j--)
 	{
 		*(__IO uint16_t*)pDestination = 0xFF00 + color;
-		pDestination += hgfx->ImageHeight * 2;
+		pDestination += stepdir * hgfx->ImageHeight;
 	}
 
 	// Linke Linie
 	pDestination = pStart;
+
 	if(Style)
 	{
-		pDestination += 2 * 10;
+		pDestination += stepdir * 10;
 		lineHeight -= 18;
 	}
 
 	for (j = lineHeight; j > 0; j--)
 	{
 		*(__IO uint16_t*)pDestination = 0xFF00 + color;
-		pDestination += 2;
+		pDestination += stepdir;
 	}
 
+
 	// Rechte Linie
-	pDestination = pStart + 2 * WidthHeight.x * hgfx->ImageHeight;
+
+	pDestination = pStart + stepdir * WidthHeight.x * hgfx->ImageHeight;
 	if(Style)
 	{
-		pDestination += 2 * 10;
+		pDestination += stepdir * 10;
 	}
 
 	for (j = lineHeight; j > 0; j--)
 	{
 		*(__IO uint16_t*)pDestination = 0xFF00 + color;
-		pDestination += 2;
+		pDestination += stepdir;
 	}
+
 
 	// Ecken wenn notwendig == Style
 	if(Style)
@@ -1769,60 +1957,61 @@ void GFX_draw_box(GFX_DrawCfgScreen *hgfx, point_t LeftLow, point_t WidthHeight,
 		x = corner[0].x;
 		y = corner[0].y;
 		intensity = corner[0].intensity;
-    *(__IO uint16_t*)(pDestination  + 2 * (y + (x * hgfx->ImageHeight))) = (intensity << 8) + color;
+
+    *(__IO uint16_t*)(pDestination  + stepdir * (y + (x * hgfx->ImageHeight))) = (intensity << 8) + color;
 
 		for(j = 15; j > 0; j--)
 		{
 			x = corner[j].x;
 			y = corner[j].y;
 			intensity = corner[j].intensity;
-			*(__IO uint16_t*)(pDestination + 2 * (y + (x * hgfx->ImageHeight))) = (intensity << 8) + color;
-			*(__IO uint16_t*)(pDestination + 2	* (x + (y * hgfx->ImageHeight))) = (intensity << 8) + color;
+			*(__IO uint16_t*)(pDestination + stepdir * (y + (x * hgfx->ImageHeight))) = (intensity << 8) + color;
+			*(__IO uint16_t*)(pDestination + stepdir	* (x + (y * hgfx->ImageHeight))) = (intensity << 8) + color;
 		}
 		// links oben
-		pDestination = pStart + 2 * WidthHeight.y;
+		pDestination = pStart + stepdir * WidthHeight.y;
 		x = corner[0].x;
 		y = corner[0].y;
 		intensity = corner[0].intensity;
-    *(__IO uint16_t*)(pDestination + 2 * (-y + (x * hgfx->ImageHeight))) = (intensity << 8) + color;
+    *(__IO uint16_t*)(pDestination + stepdir * (-y + (x * hgfx->ImageHeight))) = (intensity << 8) + color;
 
 		for(j = 15; j > 0; j--)
 		{
 			x = corner[j].x;
 			y = corner[j].y;
 			intensity = corner[j].intensity;
-			*(__IO uint16_t*)(pDestination + 2 * (-y + (x * hgfx->ImageHeight))) = (intensity << 8) + color;
-			*(__IO uint16_t*)(pDestination + 2 * (-x + (y * hgfx->ImageHeight))) = (intensity << 8) + color;
+			*(__IO uint16_t*)(pDestination + stepdir * (-y + (x * hgfx->ImageHeight))) = (intensity << 8) + color;
+			*(__IO uint16_t*)(pDestination + stepdir * (-x + (y * hgfx->ImageHeight))) = (intensity << 8) + color;
 		}
 		// rechts unten
-		pDestination = pStart + 2 * WidthHeight.x * hgfx->ImageHeight;
+		pDestination = pStart + stepdir * WidthHeight.x * hgfx->ImageHeight;
 		x = corner[0].x;
 		y = corner[0].y;
 		intensity = corner[0].intensity;
-    *(__IO uint16_t*)(pDestination + 2 * (y - (x * hgfx->ImageHeight))) = (intensity << 8) + color;
+    *(__IO uint16_t*)(pDestination + stepdir * (y - (x * hgfx->ImageHeight))) = (intensity << 8) + color;
 
 		for(j = 15; j > 0; j--)
 		{
 			x = corner[j].x;
 			y = corner[j].y;
 			intensity = corner[j].intensity;
-			*(__IO uint16_t*)(pDestination + 2 * (y - (x * hgfx->ImageHeight))) = (intensity << 8) + color;
-			*(__IO uint16_t*)(pDestination + 2 * (x - (y * hgfx->ImageHeight))) = (intensity << 8) + color;
+			*(__IO uint16_t*)(pDestination + stepdir * (y - (x * hgfx->ImageHeight))) = (intensity << 8) + color;
+			*(__IO uint16_t*)(pDestination + stepdir * (x - (y * hgfx->ImageHeight))) = (intensity << 8) + color;
 		}
 		// rechts oben
-		pDestination = pStart + 2 * WidthHeight.y + 2 * WidthHeight.x * hgfx->ImageHeight;
+		pDestination = pStart + stepdir * WidthHeight.y + stepdir * WidthHeight.x * hgfx->ImageHeight;
 		x = corner[0].x;
 		y = corner[0].y;
 		intensity = corner[0].intensity;
-    *(__IO uint16_t*)(pDestination - 2 * (y + (x * hgfx->ImageHeight))) = (intensity << 8) + color;
+    *(__IO uint16_t*)(pDestination + stepdir * -1 * (y + (x * hgfx->ImageHeight))) = (intensity << 8) + color;
 
 		for(j = 15; j > 0; j--)
 		{
 			x = corner[j].x;
 			y = corner[j].y;
 			intensity = corner[j].intensity;
-			*(__IO uint16_t*)(pDestination - 2 * (y + (x * hgfx->ImageHeight))) = (intensity << 8) + color;
-			*(__IO uint16_t*)(pDestination - 2 * (x + (y * hgfx->ImageHeight))) = (intensity << 8) + color;
+			*(__IO uint16_t*)(pDestination + stepdir * -1 * (y + (x * hgfx->ImageHeight))) = (intensity << 8) + color;
+			*(__IO uint16_t*)(pDestination + stepdir * -1 * (x + (y * hgfx->ImageHeight))) = (intensity << 8) + color;
 		}
 	}
 }
@@ -1871,6 +2060,11 @@ void Gfx_write_label_var(GFX_DrawCfgScreen *screenInput, uint16_t XleftGimpStyle
 
     GFX_DrawCfgWindow	hgfx;
 
+
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
+
 	if(XrightGimpStyle > 799)
 		XrightGimpStyle = 799;
 	if(XleftGimpStyle >= XrightGimpStyle)
@@ -1881,14 +2075,27 @@ void Gfx_write_label_var(GFX_DrawCfgScreen *screenInput, uint16_t XleftGimpStyle
 	hgfx.WindowNumberOfTextLines = 1;
 	hgfx.WindowLineSpacing = 0;
 	hgfx.WindowTab = 0;
-	hgfx.WindowX0 = XleftGimpStyle;
-	hgfx.WindowX1 = XrightGimpStyle;
-	hgfx.WindowY1 = 479 - YtopGimpStyle;
-	if(hgfx.WindowY1 < Font->height)
-		hgfx.WindowY0 = 0;
-	else
-		hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
 
+	if(!pSettings->FlipDisplay)
+	{
+		hgfx.WindowX0 = XleftGimpStyle;
+		hgfx.WindowX1 = XrightGimpStyle;
+		hgfx.WindowY1 = 479 - YtopGimpStyle;
+		if(hgfx.WindowY1 < Font->height)
+			hgfx.WindowY0 = 0;
+		else
+			hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
+	}
+	else
+	{
+		hgfx.WindowX0 = 800 - XrightGimpStyle;
+		hgfx.WindowX1 = 800 - XleftGimpStyle;
+		hgfx.WindowY0 = YtopGimpStyle;
+		if(hgfx.WindowY0 + Font->height > 480)
+			hgfx.WindowY1 = 480;
+		else
+			hgfx.WindowY1 = hgfx.WindowY0 + Font->height;
+	}
 	GFX_write_label(Font, &hgfx, text, color);
 }
 
@@ -2374,8 +2581,7 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 	uint32_t i, j;
 	uint32_t width, height;
 	uint32_t found;
-	uint32_t pDestination;
-	uint32_t pDestinationColor;
+	uint16_t* pDestination;
 	uint32_t pSource;
 	uint32_t OffsetDestination;
 	uint32_t width_left;
@@ -2385,7 +2591,20 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 	uint8_t fill;
 	uint32_t widthFont, heightFont;
 	uint32_t nextLine;
-	
+	int32_t stepdir;
+
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
+	if(pSettings->FlipDisplay)
+	{
+		stepdir = -1;	/* decrement address while putting pixels */
+	}
+	else
+	{
+		stepdir = 1;
+	}
+
 
 	if(hgfx->Image->ImageWidth <= (hgfx->WindowX0 + cfg->Xdelta))
 		return 0x0000FFFF;
@@ -2404,23 +2623,32 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 		return cfg->Xdelta;
 
 	pSource = ((uint32_t)Font->chars[i].image->data);
-	pDestination = 1 + (uint32_t)hgfx->Image->FBStartAdress;
+	pDestination = (uint16_t*)(hgfx->Image->FBStartAdress);
 
 	heightFont = Font->chars[i].image->height;
 	widthFont = Font->chars[i].image->width;
 
 	height = heightFont*2;
 	width = widthFont*2;
-	
-	OffsetDestination = 2 * (hgfx->Image->ImageHeight - height);
 
-	pDestination += (hgfx->WindowX0 + cfg->Xdelta) * hgfx->Image->ImageHeight * 2;
-	pDestination += (hgfx->WindowY0 + cfg->Ydelta) * 2;
-	nextLine = hgfx->Image->ImageHeight * 2;
+
+	if(pSettings->FlipDisplay)
+	{
+		pDestination += (uint32_t)(hgfx->WindowX1 - cfg->Xdelta) * hgfx->Image->ImageHeight; /* set pointer to delta row */
+		pDestination += (hgfx->WindowY1 - cfg->Ydelta);							   /* set pointer to delta colum */
+	}
+	else
+	{
+		pDestination += (uint32_t)(hgfx->WindowX0 + cfg->Xdelta) * hgfx->Image->ImageHeight;  /* set pointer to delta row */
+		pDestination += (hgfx->WindowY0 + cfg->Ydelta);							   /* set pointer to delta colum */
+	}
+	OffsetDestination = (hgfx->Image->ImageHeight - height);
+	nextLine = hgfx->Image->ImageHeight;
 
 // -----------------------------
 	char_truncated_WidthFlag = 0;
 	width_left = hgfx->Image->ImageWidth - (hgfx->WindowX0 + cfg->Xdelta);
+
 	if(width_left < width)
 	{
 		char_truncated_WidthFlag = 1;
@@ -2428,6 +2656,7 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 		widthFont = width/2;
 	}
 // -----------------------------
+
 	char_truncated_Height = 0;
 	height_left = hgfx->Image->ImageHeight - (hgfx->WindowY0 + cfg->Ydelta);
 	if(height_left < height)
@@ -2441,26 +2670,12 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 		height = height_left;
 		heightFont = height/2;
 	}
-	OffsetDestination += 2 * char_truncated_Height;
+
+	OffsetDestination += char_truncated_Height;
 // -----------------------------
 	if(height == 0)
 		return 0x0000FFFF;
 // -----------------------------
-	
-	if((cfg->color > 0) )
-	{
-		pDestinationColor = pDestination - 1;
-
-		for(i = width; i > 0; i--)
-		{
-			for (j = height; j > 0; j--)
-			{
-				*(__IO uint32_t*)pDestinationColor =  cfg->color;
-				pDestinationColor += 2;
-			}
-			pDestinationColor += OffsetDestination;
-		}
-	}
 
 	if(cfg->singleSpaceWithSizeOfNextChar)
 	{
@@ -2476,12 +2691,12 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 		{
 			for (j = height; j > 0; j--)
 			{
-				*(__IO uint8_t*)pDestination = fill;
-				pDestination += 2;
-				*(__IO uint8_t*)pDestination = fill;
-				pDestination += 2;
+				*(__IO uint16_t*)pDestination =  fill << 8 | cfg->color;
+				pDestination += stepdir;
+				*(__IO uint16_t*)pDestination =  fill << 8 | cfg->color;
+				pDestination += stepdir;
 			}
-			pDestination += OffsetDestination;
+			pDestination += stepdir * OffsetDestination;
 		}
 	}
 	else
@@ -2496,37 +2711,37 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 				{
 					for (j = heightFont; j > 0; j--)
 					{
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF - *(uint8_t*)pSource;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF - *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						pDestination += stepdir;
 						pSource++;
-						pDestination += 2;
 
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF - *(uint8_t*)pSource;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF - *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						pDestination += stepdir;
 						pSource++;
-						pDestination += 2;
 
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF - *(uint8_t*)pSource;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF - *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						pDestination += stepdir;
 						pSource++;
-						pDestination += 2;
 
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF - *(uint8_t*)pSource;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF - *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						pDestination += stepdir;
 						pSource++;
-						pDestination += 2;
 					}
 					pSource += char_truncated_Height;
 				}
@@ -2535,33 +2750,33 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 					pSource++;
 					for (j = height; j > 0; j--)
 					{
-						*(__IO uint8_t*)pDestination = 0xFF;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF;
-						pDestination += 2;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 |0xFF;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  cfg->color << 8 |0xFF;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
+						pDestination += stepdir;
 					}
 				}
-				pDestination += OffsetDestination + nextLine;
+				pDestination += (OffsetDestination + nextLine) * stepdir;
 			}
 		}
 		else
@@ -2573,21 +2788,21 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 				{
 					for (j = heightFont; j > 0; j--)
 					{
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF - *(uint8_t*)pSource;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF - *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						pDestination += stepdir;
 						pSource++;
-						pDestination += 2;
 
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF - *(uint8_t*)pSource;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF - *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  (0xFF - *(uint8_t*)pSource) << 8 | cfg->color;
+						pDestination += stepdir;
 						pSource++;
-						pDestination += 2;
 					}
 					pSource += char_truncated_Height;
 				}
@@ -2596,24 +2811,24 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 					pSource++;
 					for (j = heightFont; j > 0; j--)
 					{
-						*(__IO uint8_t*)pDestination = 0xFF;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF;
-						*(__IO uint8_t*)(pDestination + nextLine) = 0xFF;
-						pDestination += 2;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
+						pDestination += stepdir;
 					}
 				}
-				pDestination += OffsetDestination + nextLine;
+				pDestination += (OffsetDestination + nextLine) * stepdir;
 			}
 		}
-	}
+	} /* inverted */
 	else
 	{
 		if((heightFont & 3) == 0) /* unroll for perfomance, by 4 if possible, by 2 (16bit) otherwise */
@@ -2625,46 +2840,46 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 				{
 					for (j = heightFont; j > 0; j--)
 					{
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = *(uint8_t*)pSource;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
+						pDestination += stepdir;
 						pSource++;
-						pDestination += 2;
 
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = *(uint8_t*)pSource;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
+						pDestination += stepdir;
 						pSource++;
-						pDestination += 2;
 
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = *(uint8_t*)pSource;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
+						pDestination += stepdir;
 						pSource++;
-						pDestination += 2;
 
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = *(uint8_t*)pSource;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
+						pDestination += stepdir;
 						pSource++;
-						pDestination += 2;
 					}
 					pSource += char_truncated_Height;
 				}
 				else
 				{
 					pSource++;
-					pDestination +=  2 * height;
+					pDestination +=  stepdir * height;
 				}
-				pDestination += OffsetDestination + nextLine;
+				pDestination += stepdir * (OffsetDestination + nextLine);
 			}
 		}
 		else
@@ -2676,30 +2891,30 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 				{
 					for (j = heightFont; j > 0; j--)
 					{
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = *(uint8_t*)pSource;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
+						pDestination += stepdir;
 						pSource++;
-						pDestination += 2;
 
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = *(uint8_t*)pSource;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						*(__IO uint8_t*)(pDestination + nextLine) = *(uint8_t*)pSource;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =   *(uint8_t*)pSource << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + (stepdir * nextLine)) =   *(uint8_t*)pSource << 8 | cfg->color;
+						pDestination += stepdir;
 						pSource++;
-						pDestination += 2;
 					}
 					pSource += char_truncated_Height;
 				}
 				else
 				{
 					pSource++;
-					pDestination +=  2 * height;
+					pDestination +=  stepdir * height;
 				}
-				pDestination += OffsetDestination + nextLine;
+				pDestination += stepdir * (OffsetDestination + nextLine);
 			}
 		}
 	}
@@ -2747,8 +2962,7 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 	uint32_t i, j;
 	uint32_t width, height;
 	uint32_t found;
-	uint32_t pDestination;
-	uint32_t pDestinationColor;
+	uint16_t* pDestination;
 	uint32_t pSource;
 	uint32_t OffsetDestination;
 	uint32_t width_left;
@@ -2756,6 +2970,20 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 	uint32_t char_truncated_WidthFlag;
 	uint32_t char_truncated_Height;
 	uint8_t fill;
+	uint32_t fillpattern;
+	int16_t stepdir;
+
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
+	if(pSettings->FlipDisplay)
+	{
+		stepdir = -1;	/* decrement address while putting pixels */
+	}
+	else
+	{
+		stepdir = 1;
+	}
 
 	if(hgfx->Image->ImageWidth <= (hgfx->WindowX0 + cfg->Xdelta))
 		return 0x0000FFFF;
@@ -2784,16 +3012,29 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 
 
 	pSource = ((uint32_t)Font->chars[i].image->data);
-	pDestination = 1 + (uint32_t)hgfx->Image->FBStartAdress;
+	pDestination = (uint16_t*)(hgfx->Image->FBStartAdress);
+
 
 	height = Font->chars[i].image->height;
 	width = Font->chars[i].image->width;
 
-	OffsetDestination = 2 * (hgfx->Image->ImageHeight - height);
+	OffsetDestination = hgfx->Image->ImageHeight - height;
 
-	pDestination += (hgfx->WindowX0 + cfg->Xdelta) * hgfx->Image->ImageHeight * 2;
-	pDestination += (hgfx->WindowY0 + cfg->Ydelta) * 2;
 
+	/* Xyyyyy   y= height */
+	/* Xyyyyy   x= width  */
+	/* Xyyyyy             */
+
+	if(pSettings->FlipDisplay)
+	{
+		pDestination += (hgfx->WindowX1 - cfg->Xdelta) * hgfx->Image->ImageHeight; /* set pointer to delta row */
+		pDestination += (hgfx->WindowY1 - cfg->Ydelta);							   /* set pointer to delta colum */
+	}
+	else
+	{
+		pDestination += (hgfx->WindowX0 + cfg->Xdelta) * hgfx->Image->ImageHeight; /* set pointer to delta row */
+		pDestination += (hgfx->WindowY0 + cfg->Ydelta);							   /* set pointer to delta colum */
+	}
 
 
 // -----------------------------
@@ -2817,27 +3058,12 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 		}
 		height = height_left;
 	}
-	OffsetDestination += 2 * char_truncated_Height;
+	OffsetDestination += char_truncated_Height;
 // -----------------------------
 	if(height == 0)
 		return 0x0000FFFF;
 // -----------------------------
 	
-	if((cfg->color > 0) )//&& (cfg->color < 6))
-	{
-		pDestinationColor = pDestination - 1;
-
-		for(i = width; i > 0; i--)
-		{
-			for (j = height; j > 0; j--)
-			{
-				*(__IO uint32_t*)pDestinationColor =  cfg->color;//ColorLUT[cfg->color - 1];
-				pDestinationColor += 2;
-			}
-			pDestinationColor += OffsetDestination;
-		}
-	}
-
 	if(cfg->singleSpaceWithSizeOfNextChar)
 	{
 		cfg->singleSpaceWithSizeOfNextChar = 0;
@@ -2852,12 +3078,12 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 		{
 			for (j = height; j > 0; j--)
 			{
-				*(__IO uint8_t*)pDestination = fill;
-				pDestination += 2;
-				*(__IO uint8_t*)pDestination = fill;
-				pDestination += 2;
+				*(__IO uint16_t*)pDestination =  fill << 8 | cfg->color;
+				pDestination += stepdir;
+				*(__IO uint16_t*)pDestination =  fill << 8 | cfg->color;
+				pDestination += stepdir;
 			}
-			pDestination += OffsetDestination;
+			pDestination += stepdir * OffsetDestination;
 		}
 	}
 	else
@@ -2870,39 +3096,37 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 			{
 				if(*(uint8_t*)pSource != 0x01)
 				{
+
 					for (j = height; j > 0; j--)
 					{
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						pSource++;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						pSource++;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						pSource++;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						pSource++;
-						pDestination += 2;
+						*(__IO uint16_t*)pDestination =   (0xFF - *(uint8_t*)pSource++) << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =   (0xFF - *(uint8_t*)pSource++) << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =   (0xFF - *(uint8_t*)pSource++) << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =   (0xFF - *(uint8_t*)pSource++) << 8 | cfg->color;
+						pDestination += stepdir;
 					}
 					pSource += char_truncated_Height;
 				}
-				else
+				else /* empty line => fast fill */
 				{
 					pSource++;
+					fillpattern = (( 0xFF << 8 | cfg->color) << 16) | ( 0xFF << 8 | cfg->color);
+					if(pSettings->FlipDisplay) pDestination--; /* address fill from high to low */
 					for (j = height; j > 0; j--)
 					{
-						*(__IO uint8_t*)pDestination = 0xFF;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF;
-						pDestination += 2;
+						*(__IO uint32_t*)pDestination =  fillpattern;
+						pDestination += stepdir;
+						pDestination += stepdir;
+						*(__IO uint32_t*)pDestination =  fillpattern;
+						pDestination += stepdir;
+						pDestination += stepdir;
 					}
+					if(pSettings->FlipDisplay) pDestination++;
 				}
-				pDestination += OffsetDestination;
+				pDestination += stepdir * OffsetDestination;
 			}
 		}
 		else
@@ -2914,12 +3138,10 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 				{
 					for (j = height; j > 0; j--)
 					{
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						pSource++;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF - *(uint8_t*)pSource;
-						pSource++;
-						pDestination += 2;
+						*(__IO uint16_t*)pDestination =   (0xFF - *(uint8_t*)pSource++) << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =   (0xFF - *(uint8_t*)pSource++) << 8 | cfg->color;
+						pDestination += stepdir;
 					}
 					pSource += char_truncated_Height;
 				}
@@ -2928,48 +3150,59 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 					pSource++;
 					for (j = height; j > 0; j--)
 					{
-						*(__IO uint8_t*)pDestination = 0xFF;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = 0xFF;
-						pDestination += 2;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						pDestination += stepdir;
 					}
 				}
-				pDestination += OffsetDestination;
+				pDestination += stepdir * OffsetDestination;
 			}
 		}
 	}
-	else
+	else  /* not inverted */
 	{
 		if((height & 3) == 0) /* unroll for perfomance, by 4 if possible, by 2 (16bit) otherwise */
 		{
+
 			height /= 4;
+
 			for(i = width; i > 0; i--)
 			{
 				if(*(uint8_t*)pSource != 0x01)
 				{
 					for (j = height; j > 0; j--)
 					{
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						pSource++;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						pSource++;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						pSource++;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						pSource++;
-						pDestination += 2;
+							*(__IO uint16_t*)pDestination =  ( *(uint8_t*)pSource++ << 8) | (cfg->color);
+							pDestination += stepdir;
+							*(__IO uint16_t*)pDestination =  ( *(uint8_t*)pSource++ << 8) | (cfg->color);
+							pDestination += stepdir;
+							*(__IO uint16_t*)pDestination =  ( *(uint8_t*)pSource++ << 8) | (cfg->color);
+							pDestination += stepdir;
+							*(__IO uint16_t*)pDestination =  ( *(uint8_t*)pSource++ << 8) | (cfg->color);
+							pDestination += stepdir;
 					}
+
 					pSource += char_truncated_Height;
 				}
-				else
+				else  /* clear line */
 				{
 					pSource++;
-					pDestination +=  2 * height * 4;
+					fillpattern = (cfg->color << 16) | cfg->color;
+					if(pSettings->FlipDisplay) pDestination--; /* address fill from high to low */
+
+					for (j = height; j > 0; j--)
+					{
+						*(__IO uint32_t*)pDestination =  fillpattern;
+						pDestination += stepdir;
+						pDestination += stepdir;
+						*(__IO uint32_t*)pDestination =  fillpattern;
+						pDestination += stepdir;
+						pDestination += stepdir;
+					}
+					if(pSettings->FlipDisplay) pDestination++;
 				}
-				pDestination += OffsetDestination;
+				pDestination += stepdir * OffsetDestination;
 			}
 		}
 		else
@@ -2981,21 +3214,25 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 				{
 					for (j = height; j > 0; j--)
 					{
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						pSource++;
-						pDestination += 2;
-						*(__IO uint8_t*)pDestination = *(uint8_t*)pSource;
-						pSource++;
-						pDestination += 2;
+						*(__IO uint16_t*)pDestination =  ( *(uint8_t*)pSource++ << 8) | (cfg->color);
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  ( *(uint8_t*)pSource++ << 8) | (cfg->color);
+						pDestination += stepdir;
 					}
 					pSource += char_truncated_Height;
 				}
-				else
+				else /* clear line */
 				{
 					pSource++;
-					pDestination +=  2 * height * 2;
+					for (j = height; j > 0; j--)
+					{
+						*(__IO uint16_t*)pDestination =  cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  cfg->color;
+						pDestination += stepdir;
+					}
 				}
-				pDestination += OffsetDestination;
+				pDestination += stepdir * OffsetDestination;
 			}
 		}
 	}
@@ -3831,24 +4068,43 @@ void write_content_simple(GFX_DrawCfgScreen *tMscreen, uint16_t XleftGimpStyle, 
 {
 	GFX_DrawCfgWindow	hgfx;
 
-	if(XrightGimpStyle > 799)
-		XrightGimpStyle = 799;
-	if(XleftGimpStyle >= XrightGimpStyle)
-		XleftGimpStyle = 0;
-	if(YtopGimpStyle > 479)
-		YtopGimpStyle = 479;
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
+	if(!pSettings->FlipDisplay)
+	{
+		if(XrightGimpStyle > 799)
+			XrightGimpStyle = 799;
+		if(XleftGimpStyle >= XrightGimpStyle)
+			XleftGimpStyle = 0;
+		if(YtopGimpStyle > 479)
+			YtopGimpStyle = 479;
+	}
 	hgfx.Image = tMscreen;
 	hgfx.WindowNumberOfTextLines = 1;
 	hgfx.WindowLineSpacing = 0;
 	hgfx.WindowTab = 0;
-	hgfx.WindowX0 = XleftGimpStyle;
-	hgfx.WindowX1 = XrightGimpStyle;
-	hgfx.WindowY1 = 479 - YtopGimpStyle;
-	if(hgfx.WindowY1 < Font->height)
-		hgfx.WindowY0 = 0;
-	else
-		hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
 
+	if(!pSettings->FlipDisplay)
+	{
+		hgfx.WindowX0 = XleftGimpStyle;
+		hgfx.WindowX1 = XrightGimpStyle;
+		hgfx.WindowY1 = 479 - YtopGimpStyle;
+		if(hgfx.WindowY1 < Font->height)
+			hgfx.WindowY0 = 0;
+		else
+			hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
+	}
+	else
+	{
+		hgfx.WindowX0 = 800 - XrightGimpStyle;
+		hgfx.WindowX1 = 800 - XleftGimpStyle;
+		hgfx.WindowY0 = YtopGimpStyle;
+		if(hgfx.WindowY0 + Font->height >= 479)
+			hgfx.WindowY1 = 479;
+		else
+			hgfx.WindowY1 = hgfx.WindowY0 + Font->height;
+	}
 	GFX_write_string_color(Font, &hgfx, text, 0, color);
 }
 
@@ -3861,14 +4117,25 @@ void gfx_write_topline_simple(GFX_DrawCfgScreen *tMscreen, const char *text, uin
 	hgfx.Image = tMscreen;
 	hgfx.WindowNumberOfTextLines = 1;
 	hgfx.WindowLineSpacing = 0;
+
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
 	hgfx.WindowTab = 0;
 	hgfx.WindowX0 = 20;
 	hgfx.WindowX1 = 779;
-	hgfx.WindowY1 = 479;
-	hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
-	
+
+	if(!pSettings->FlipDisplay)
+	{
+		hgfx.WindowY1 = 479;
+		hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
+	}
+	else
+	{
+		hgfx.WindowY0 = 0;
+		hgfx.WindowY1 = Font->height;
+	}
 	GFX_write_label(Font, &hgfx, text, color);
-	
 }
 
 
@@ -3878,16 +4145,29 @@ void gfx_write_page_number(GFX_DrawCfgScreen *tMscreen, uint8_t page, uint8_t to
 	const tFont *Font = &FontT48;
 	char text[7];
 	uint8_t i, secondDigitPage, secondDigitTotal;
-	
+
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
 	hgfx.Image = tMscreen;
 	hgfx.WindowNumberOfTextLines = 1;
 	hgfx.WindowLineSpacing = 0;
 	hgfx.WindowTab = 0;
-	hgfx.WindowX1 = 779;
-	hgfx.WindowX0 = hgfx.WindowX1 - (25*5);
-	hgfx.WindowY1 = 479;
-	hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
-	
+
+	if(!pSettings->FlipDisplay)
+	{
+		hgfx.WindowX1 = 779;
+		hgfx.WindowX0 = hgfx.WindowX1 - (25*5);
+		hgfx.WindowY1 = 479;
+		hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
+	}
+	else
+	{
+		hgfx.WindowX1 = 25*5;
+		hgfx.WindowX0 = 0;
+		hgfx.WindowY1 = Font->height;;
+		hgfx.WindowY0 = 0;
+	}
 	if(page > 99)
 		page = 99;
 	if(total > 99)

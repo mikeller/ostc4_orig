@@ -1097,9 +1097,6 @@ int vpm_calc_final_deco(_Bool begin)
     static int dp_max;
     static float surfacetime;
     _Bool first_stop = false;
-// hw 1601209 float tissue_He_saturation[16];
-// hw 1601209	float tissue_N2_saturation[16];
-    float vpm_buehlmann_safety_gradient = 1.0f - (((float)pDiveSettings->vpm_conservatism) / 40);
     max_first_stop_depth = fmaxf(first_stop_depth,max_first_stop_depth);
     if(begin)
     {
@@ -2110,10 +2107,13 @@ void decompression_stop(float *deco_stop_depth,
 
     //deco_ceiling_depth = next_stop +1;	//deco_ceiling_depth = next_stop + 1;
     if(!vpm_violates_buehlmann)
+    {
         calc_deco_ceiling(&deco_ceiling_depth, false); //weg, weil auf jeden Fall schleife fÃ¼r safety und so konservativer
+    }
     else
+    {
         deco_ceiling_depth = next_stop + 1;
-
+    }
         if(deco_ceiling_depth > next_stop)
         {
             while (deco_ceiling_depth > next_stop)
@@ -2222,9 +2222,10 @@ void decompression_stop(float *deco_stop_depth,
                 }
             }
             if(buehlmann_wait)
+            {
                 vpm_violates_buehlmann = true;
-
-                if(!buehlmann_wait)
+            }
+            if(!buehlmann_wait)
             {
                 if(deco_ceiling_depth < next_stop)
                 {

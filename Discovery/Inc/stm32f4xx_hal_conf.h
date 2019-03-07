@@ -55,7 +55,7 @@
 /* Exported constants --------------------------------------------------------*/
 
  /* ######################### Hardware Selection ############################## */
- #define STM32F429xx
+ /* #define STM32F429xx definition is now done in preprocessor*/
 
 /* ########################## Module Selection ############################## */
 /**
@@ -107,11 +107,11 @@
     *        (when HSE is used as system clock source, directly or through the PLL).
     */
 #if !defined  (HSE_VALUE)
-    #define HSE_VALUE    ((uint32_t)8000000) /*!< Value of the External oscillator in Hz */
+    #define HSE_VALUE    ((uint32_t)8000000U) /*!< Value of the External oscillator in Hz */
 #endif /* HSE_VALUE */
 
 #if !defined  (HSE_STARTUP_TIMEOUT)
-    #define HSE_STARTUP_TIMEOUT    ((uint32_t)5000)   /*!< Time out for HSE start up, in ms */
+    #define HSE_STARTUP_TIMEOUT    ((uint32_t)5000U)   /*!< Time out for HSE start up, in ms */
 #endif /* HSE_STARTUP_TIMEOUT */
 
 /**
@@ -120,14 +120,14 @@
     *        (when HSI is used as system clock source, directly or through the PLL).
     */
 #if !defined  (HSI_VALUE)
-    #define HSI_VALUE    ((uint32_t)16000000) /*!< Value of the Internal oscillator in Hz*/
+    #define HSI_VALUE    ((uint32_t)16000000U) /*!< Value of the Internal oscillator in Hz*/
 #endif /* HSI_VALUE */
 
 /**
     * @brief Internal Low Speed oscillator (LSI) value.
     */
 #if !defined  (LSI_VALUE)
- #define LSI_VALUE  ((uint32_t)40000)
+ #define LSI_VALUE  ((uint32_t)40000U)
 #endif /* LSI_VALUE */                      /*!< Value of the Internal Low Speed oscillator in Hz
                                                                                          The real value may vary depending on the variations
                                                                                          in voltage and temperature.  */
@@ -138,13 +138,17 @@
  #define LSE_VALUE  ((uint32_t)32768)    /*!< Value of the External Low Speed oscillator in Hz */
 #endif /* LSE_VALUE */
 
+#if !defined  (LSE_STARTUP_TIMEOUT)
+  #define LSE_STARTUP_TIMEOUT    5000U     /*!< Time out for LSE start up, in ms */
+#endif /* LSE_STARTUP_TIMEOUT */
+
 /**
     * @brief External clock source for I2S peripheral
     *        This value is used by the I2S HAL module to compute the I2S clock source
     *        frequency, this source is inserted directly through I2S_CKIN pad.
     */
 #if !defined  (EXTERNAL_CLOCK_VALUE)
-    #define EXTERNAL_CLOCK_VALUE    ((uint32_t)12288000) /*!< Value of the External audio frequency in Hz*/
+    #define EXTERNAL_CLOCK_VALUE    ((uint32_t)12288000U) /*!< Value of the External audio frequency in Hz*/
 #endif /* EXTERNAL_CLOCK_VALUE */
 
 /* Tip: To avoid modifying this file each time you need to use different HSE,
@@ -155,7 +159,7 @@
     * @brief This is the HAL system configuration section
     */
 
-#define  VDD_VALUE					  ((uint32_t)3300) /*!< Value of VDD in mv */
+#define  VDD_VALUE					  ((uint32_t)3300U) /*!< Value of VDD in mv */
 #define  TICK_INT_PRIORITY            ((uint32_t)0)    /*!< tick interrupt priority */
 #define  USE_RTOS                     0
 #define  PREFETCH_ENABLE              1
@@ -174,12 +178,12 @@
 /* Section 1 : Ethernet peripheral configuration */
 
 /* MAC ADDRESS: MAC_ADDR0:MAC_ADDR1:MAC_ADDR2:MAC_ADDR3:MAC_ADDR4:MAC_ADDR5 */
-#define MAC_ADDR0   2
-#define MAC_ADDR1   0
-#define MAC_ADDR2   0
-#define MAC_ADDR3   0
-#define MAC_ADDR4   0
-#define MAC_ADDR5   0
+#define MAC_ADDR0   2U
+#define MAC_ADDR1   0U
+#define MAC_ADDR2   0U
+#define MAC_ADDR3   0U
+#define MAC_ADDR4   0U
+#define MAC_ADDR5   0U
 
 /* Definition of the Ethernet driver buffers size and count */
 #define ETH_RX_BUF_SIZE                ETH_MAX_PACKET_SIZE /* buffer size for receive               */
@@ -190,19 +194,19 @@
 /* Section 2: PHY configuration section */
 
 /* DP83848 PHY Address*/
-#define DP83848_PHY_ADDRESS             0x01
+#define DP83848_PHY_ADDRESS             0x01U
 /* PHY Reset delay these values are based on a 1 ms Systick interrupt*/
-#define PHY_RESET_DELAY                 ((uint32_t)0x000000FF)
+#define PHY_RESET_DELAY                 ((uint32_t)0x000000FFU)
 /* PHY Configuration delay */
-#define PHY_CONFIG_DELAY                ((uint32_t)0x00000FFF)
+#define PHY_CONFIG_DELAY                ((uint32_t)0x00000FFFU)
 
-#define PHY_READ_TO                     ((uint32_t)0x0000FFFF)
-#define PHY_WRITE_TO                    ((uint32_t)0x0000FFFF)
+#define PHY_READ_TO                     ((uint32_t)0x0000FFFFU)
+#define PHY_WRITE_TO                    ((uint32_t)0x0000FFFFU)
 
 /* Section 3: Common PHY Registers */
 
-#define PHY_BCR                         ((uint16_t)0x00)    /*!< Transceiver Basic Control Register   */
-#define PHY_BSR                         ((uint16_t)0x01)    /*!< Transceiver Basic Status Register    */
+#define PHY_BCR                         ((uint16_t)0x0000)    /*!< Transceiver Basic Control Register   */
+#define PHY_BSR                         ((uint16_t)0x0001)    /*!< Transceiver Basic Status Register    */
 
 #define PHY_RESET                       ((uint16_t)0x8000)  /*!< PHY Reset */
 #define PHY_LOOPBACK                    ((uint16_t)0x4000)  /*!< Select loop-back mode */
@@ -221,9 +225,9 @@
 
 /* Section 4: Extended PHY Registers */
 
-#define PHY_SR                          ((uint16_t)0x10)    /*!< PHY status register Offset                      */
-#define PHY_MICR                        ((uint16_t)0x11)    /*!< MII Interrupt Control Register                  */
-#define PHY_MISR                        ((uint16_t)0x12)    /*!< MII Interrupt Status and Misc. Control Register */
+#define PHY_SR                          ((uint16_t)0x0010)    /*!< PHY status register Offset                      */
+#define PHY_MICR                        ((uint16_t)0x0011)    /*!< MII Interrupt Control Register                  */
+#define PHY_MISR                        ((uint16_t)0x0012)    /*!< MII Interrupt Status and Misc. Control Register */
 
 #define PHY_LINK_STATUS                 ((uint16_t)0x0001)  /*!< PHY Link mask                                   */
 #define PHY_SPEED_STATUS                ((uint16_t)0x0002)  /*!< PHY Speed mask                                  */

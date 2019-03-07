@@ -260,10 +260,6 @@ extern const tText text_array2[];
 		TXT2BYTE_Friday,
 		TXT2BYTE_Saturday,
 		/* */
-		TXT2BYTE_ScooterRestkapazitaet,
-		TXT2BYTE_ScooterTemperature,
-		TXT2BYTE_ScooterSpeed,
-		/* */
 		TXT2BYTE_Layout,
 		TXT2BYTE_Units,
 		TXT2BYTE_Units_metric,
@@ -291,23 +287,8 @@ extern const tText text_array2[];
 		TXT2BYTE_DecoDataLost,
 		TXT2BYTE_Info,
 		TXT2BYTE_Korrekturwerte,
-		TXT2BYTE_ScooterMonitor,
 		TXT2BYTE_SetBearing,
 		TXT2BYTE_ResetBearing,
-		TXT2BYTE_ScooterSetup,
-		TXT2BYTE_ScooterDrag,
-		TXT2BYTE_ScooterLoad,
-		TXT2BYTE_ScooterD0Apnoe,
-		TXT2BYTE_ScooterD1Scuba,
-		TXT2BYTE_ScooterD2Tech,
-		TXT2BYTE_ScooterD3Heavy,
-		TXT2BYTE_ScooterL0None,
-		TXT2BYTE_ScooterL1Small,
-		TXT2BYTE_ScooterL2Stages,
-		TXT2BYTE_ScooterL3Full,
-		TXT2BYTE_ScooterL4Towing,
-		TXT2BYTE_ScooterBattTyp,
-		TXT2BYTE_ScooterVolt,
 		TXT2BYTE_Sensor,
 		TXT2BYTE_Maintenance,
 		TXT2BYTE_SetBatteryCharge,
@@ -322,6 +303,7 @@ extern const tText text_array2[];
 		TXT2BYTE_ApneaTotal,
 		TXT2BYTE_ApneaSurface,
 		/* */
+		TXT2BYTE_FLIPDISPLAY,
 		TXT2BYTE_END
 
 		// unused TXT2BYTE_Button1,

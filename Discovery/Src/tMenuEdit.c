@@ -186,7 +186,14 @@ void resetMenuEdit(uint8_t color)
     uint8_t line = 1;
 //	GFX_SetFramesTopBottom(tMEscreen.FBStartAdress, (tMEcursorNew.FBStartAdress) + 65*2*(line - 1),390);
     GFX_SetFrameTop(tMEscreen.FBStartAdress);
-    GFX_SetFrameBottom((tMEcursorNew.FBStartAdress) + 65*2*(line - 1), 0, 25, 800, 390);
+    if(!settingsGetPointer()->FlipDisplay)
+    {
+    	GFX_SetFrameBottom((tMEcursorNew.FBStartAdress) + 65*2*(line - 1), 0, 25, 800, 390);
+    }
+    else
+    {
+    	GFX_SetFrameBottom((tMEcursorNew.FBStartAdress)+ (390 - 65 *(line)) *2, 0, 480-390-25, 800, 390);
+    }
 }
 
 
@@ -243,16 +250,6 @@ void tMenuEdit_refresh_live_content(void)
         GFX_SetFrameTop(tMEscreen.FBStartAdress);
         releaseFrame(9,rememberPage);
     }
-/*
-    else if(get_globalState() == (StMHARD6_ScooterDrag & MaskFieldDigit))
-    {
-        uint32_t rememberPage = tMEscreen.FBStartAdress;
-        tMEscreen.FBStartAdress = getFrame(9);
-        refresh_ScooterControl();
-        GFX_SetFrameTop(tMEscreen.FBStartAdress);
-        releaseFrame(9,rememberPage);
-    }
-*/
     else if(get_globalState() == (StMSYS3_Units & MaskFieldDigit))
     {
         uint32_t rememberPage = tMEscreen.FBStartAdress;
@@ -1592,15 +1589,30 @@ void set_cursorNew(uint8_t forThisIdentID)
     int16_t y0;
     uint8_t lineMinusOne;
 
-    y0 = (int16_t)ident[forThisIdentID].coord[2];
+   if(!settingsGetPointer()->FlipDisplay)
+   {
+	   y0 = (int16_t)ident[forThisIdentID].coord[2];
+	   y0 -= ME_Y_LINE1;
+	}
+	else
+	{
+    	y0 = 390 + 25 - (int16_t)ident[forThisIdentID].coord[2];
+	}
 
-    y0 -= ME_Y_LINE1;
     y0 /= ME_Y_LINE_STEP;
-    if((y0 >= 0) && (y0 <=5))
+    if((y0 >= 0) && (y0 <=6)) 
         lineMinusOne = y0;
     else
         lineMinusOne = 0;
-    GFX_SetFrameBottom((tMEcursorNew.FBStartAdress) + 65*2*(lineMinusOne), 0, 25, 800, 390);
+
+    if(!settingsGetPointer()->FlipDisplay)
+    {
+    	GFX_SetFrameBottom((tMEcursorNew.FBStartAdress) + 65*2*(lineMinusOne), 0, 25, 800, 390);
+    }
+    else
+    {
+    	GFX_SetFrameBottom((tMEcursorNew.FBStartAdress)+ (390 - 65 *(6-lineMinusOne)) *2, 0, 480-390-25, 800, 390);
+    }
 }
 
 
@@ -1615,16 +1627,34 @@ void write_topline( char *text)
     hgfx.WindowTab = 0;
     hgfx.WindowX0 = 20;
     hgfx.WindowX1 = 779;
-    hgfx.WindowY1 = 479;
-    hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
-
+    if(!settingsGetPointer()->FlipDisplay)
+    {
+		hgfx.WindowY1 = 479;
+		hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
+    }
+	else
+	{
+		hgfx.WindowY0 = 0;
+		hgfx.WindowY1 = hgfx.WindowY0 + Font->height;
+	}
     GFX_write_label(Font, &hgfx, text, menuColor);
 }
 
 
 void write_buttonTextline( uint8_t left2ByteCode, char middle2ByteCode, char right2ByteCode)
 {
-    GFX_clean_area(&tMEscreen, 0, 800, 480-24,480);
+
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
+	if(!pSettings->FlipDisplay)
+	{
+		GFX_clean_area(&tMEscreen, 0, 800, 479-24,480);
+	}
+	else
+	{
+		GFX_clean_area(&tMEscreen, 0, 800, 0, 24);
+	}
 
     char localtext[32];
 
@@ -1633,7 +1663,8 @@ void write_buttonTextline( uint8_t left2ByteCode, char middle2ByteCode, char rig
         localtext[0] = TXT_2BYTE;
         localtext[1] = left2ByteCode;
         localtext[2] = 0;
-        write_content_simple(&tMEscreen, 0, 800, 480-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
+
+        write_content_simple(&tMEscreen, 0, 800, 479-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
     }
 
     if(middle2ByteCode)
@@ -1642,7 +1673,8 @@ void write_buttonTextline( uint8_t left2ByteCode, char middle2ByteCode, char rig
         localtext[1] = TXT_2BYTE;
         localtext[2] = middle2ByteCode;
         localtext[3] = 0;
-        write_content_simple(&tMEscreen, 0, 800, 480-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
+
+       	write_content_simple(&tMEscreen, 0, 800, 479-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
     }
 
     if(right2ByteCode)
@@ -1651,7 +1683,8 @@ void write_buttonTextline( uint8_t left2ByteCode, char middle2ByteCode, char rig
         localtext[1] = TXT_2BYTE;
         localtext[2] = right2ByteCode;
         localtext[3] = 0;
-        write_content_simple(&tMEscreen, 0, 800, 480-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
+
+        write_content_simple(&tMEscreen, 0, 800, 479-24, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
     }
 }
 
@@ -1671,14 +1704,26 @@ void write_label_var(uint16_t XleftGimpStyle, uint16_t XrightGimpStyle, uint16_t
     hgfx.WindowNumberOfTextLines = 1;
     hgfx.WindowLineSpacing = 0;
     hgfx.WindowTab = 0;
-    hgfx.WindowX0 = XleftGimpStyle;
-    hgfx.WindowX1 = XrightGimpStyle;
-    hgfx.WindowY1 = 479 - YtopGimpStyle;
-    if(hgfx.WindowY1 < Font->height)
-        hgfx.WindowY0 = 0;
+    if(!settingsGetPointer()->FlipDisplay)
+    {
+		hgfx.WindowX0 = XleftGimpStyle;
+		hgfx.WindowX1 = XrightGimpStyle;
+		hgfx.WindowY1 = 479 - YtopGimpStyle;
+		if(hgfx.WindowY1 < Font->height)
+			hgfx.WindowY0 = 0;
+		else
+			hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
+    }
     else
-        hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
-
+    {
+		hgfx.WindowX0 = 800 - XrightGimpStyle;
+		hgfx.WindowX1 = 800 - XleftGimpStyle;
+		hgfx.WindowY0 = YtopGimpStyle;
+		if(hgfx.WindowY0 < Font->height)
+			hgfx.WindowY1 = 0;
+		else
+			hgfx.WindowY1 = hgfx.WindowY0 + Font->height;
+    }
     GFX_write_label(Font, &hgfx, text, 0);/*menuColor);*/
 }
 
@@ -1697,14 +1742,27 @@ void write_content(uint16_t XleftGimpStyle, uint16_t XrightGimpStyle, uint16_t Y
     hgfx.WindowNumberOfTextLines = 1;
     hgfx.WindowLineSpacing = 0;
     hgfx.WindowTab = 0;
-    hgfx.WindowX0 = XleftGimpStyle;
-    hgfx.WindowX1 = XrightGimpStyle;
-    hgfx.WindowY1 = 479 - YtopGimpStyle;
-    if(hgfx.WindowY1 < Font->height)
-        hgfx.WindowY0 = 0;
-    else
-        hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
 
+    if(!settingsGetPointer()->FlipDisplay)
+    {
+		hgfx.WindowX0 = XleftGimpStyle;
+		hgfx.WindowX1 = XrightGimpStyle;
+		hgfx.WindowY1 = 479 - YtopGimpStyle;
+		if(hgfx.WindowY1 < Font->height)
+			hgfx.WindowY0 = 0;
+		else
+			hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
+    }
+    else
+    {
+		hgfx.WindowX0 = 800 - XrightGimpStyle;
+		hgfx.WindowX1 = 800 - XleftGimpStyle;
+		hgfx.WindowY0 = YtopGimpStyle;
+		if(hgfx.WindowY0 < Font->height)
+			hgfx.WindowY1 = 0;
+		else
+			hgfx.WindowY1 = hgfx.WindowY0 + Font->height;
+    }
     GFX_write_label(Font, &hgfx, text, color);
 }
 
@@ -1731,6 +1789,8 @@ void clean_content(uint16_t XleftGimpStyle, uint16_t XrightGimpStyle, uint16_t Y
     if(YtopGimpStyle > 479)
         YtopGimpStyle = 479;
     hgfx.Image = &tMEscreen;
+    if(!settingsGetPointer()->FlipDisplay)
+    {
     hgfx.WindowX0 = XleftGimpStyle;
     hgfx.WindowX1 = XrightGimpStyle;
     hgfx.WindowY1 = 479 - YtopGimpStyle;
@@ -1738,7 +1798,17 @@ void clean_content(uint16_t XleftGimpStyle, uint16_t XrightGimpStyle, uint16_t Y
         hgfx.WindowY0 = 0;
     else
         hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
-
+    }
+    else
+    {
+		hgfx.WindowX0 = 800 - XrightGimpStyle;
+		hgfx.WindowX1 = 800 - XleftGimpStyle;
+		hgfx.WindowY0 = YtopGimpStyle;
+		if(hgfx.WindowY0 < Font->height)
+			hgfx.WindowY1 = 0;
+		else
+			hgfx.WindowY1 = hgfx.WindowY0 + Font->height;
+    }
     GFX_clear_window_immediately(&hgfx);
 }
 

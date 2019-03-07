@@ -78,14 +78,6 @@ const uint8_t t5_customviewsStandard[] =
     CVIEW_T3_END
 };
 
-const uint8_t t5_customviewsScooter[] =
-{
-    CVIEW_Scooter,
-    CVIEW_Compass,
-    CVIEW_T3_MaxDepth,
-    CVIEW_T3_StopWatch,
-    CVIEW_T3_END
-};
 
 const uint8_t *t5_customviews = t5_customviewsStandard;
 
