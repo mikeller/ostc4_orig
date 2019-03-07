@@ -232,7 +232,7 @@ void show_logbook_draw_depth_graph(GFX_DrawCfgScreen *hgfx, uint8_t StepBackward
                     colortemp[i] = CLUT_NiceGreen;
                 }
             }
-            GFX_graph_print(hgfx,&wintemp,saveTop,1,0,datamax, decostopdata,dataLength, NULL, colortemp);
+            GFX_graph_print(hgfx,&wintemp,saveTop,1,0,datamax, decostopdata,dataLength, 0, colortemp);
         }
         else
             GFX_graph_print(hgfx,&wintemp,saveTop,1,0,datamax, decostopdata,dataLength, CLUT_NiceGreen, NULL);

@@ -109,7 +109,7 @@ uint32_t height;
 
 SBackground background =
 {
-    .pointer = NULL,
+    .pointer = 0,
 };
 
 
@@ -544,7 +544,7 @@ void t7_refresh_sleepmode_fun(void)
 
     if(get_globalState() == StStop)
     {
-        GFX_SetFramesTopBottom(t7screen.FBStartAdress, NULL,480);
+        GFX_SetFramesTopBottom(t7screen.FBStartAdress, 0,480);
     }
     releaseFrame(22,oldScreen);
 }
@@ -624,7 +624,7 @@ void t7_refresh(void)
             GFX_SetFrameBottom(background.pointer,background.x0 , background.y0, background.width, background.height);
         }
         else
-            GFX_SetFramesTopBottom(t7screen.FBStartAdress, NULL,480);
+            GFX_SetFramesTopBottom(t7screen.FBStartAdress, 0,480);
     }
 
     releaseAllFramesExcept(22,t7screen.FBStartAdress);
@@ -2444,7 +2444,7 @@ void t7_refresh_divemode(void)
     if(stateUsed->warnings.numWarnings)
         customview_warnings = t7_test_customview_warnings();
 
-    background.pointer = NULL;
+    background.pointer = 0;
     if(customview_warnings && warning_count_high_time)
         t7_show_customview_warnings();
     else

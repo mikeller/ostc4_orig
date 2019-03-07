@@ -517,7 +517,8 @@ void refresh_PlanResult_helper(char *text, int start)
 
 void refresh_PlanResult(void)
 {
-    char text[256], textpointer;
+    char text[256];
+    uint8_t textpointer;
     uint16_t y_line;
     uint8_t oxygen_percentage;
     int now;
