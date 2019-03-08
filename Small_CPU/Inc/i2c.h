@@ -2,19 +2,19 @@
 #ifndef I2C_H
 #define I2C_H
 
-/* Drucksensor */
-#define DEVICE_PRESSURE        0xEE
+/* Pressure Sensor */
+#define DEVICE_PRESSURE        			0xEE 	// 2019 hardware (gen 3) will use 0xEC (MS5837), all other use 0xEE (MS5803)
 
-/* Kompass */
-#define DEVICE_ACCELARATOR_MMA8452Q 0x38 // 0x1C  // chip 3
-#define DEVICE_COMPASS_HMC5883L			0x3C  //0x1E  // chip 4
+/* Compass/Accelerometer */
+#define DEVICE_ACCELARATOR_MMA8452Q 	0x38	// Hardware gen 1 (Two chip solution with MMA8452Q and HMC5883L)
+#define DEVICE_COMPASS_HMC5883L			0x3C	// Hardware gen 1
 
-//#define DEVICE_ACCELARATOR_303D 		0x1E // x0011110 // SA0 to GND
-#define DEVICE_COMPASS_303D						0x3C // 0x1E // x0011110_ // SA0 to GND
-#define DEVICE_ACCELARATOR_303DLHC 		0x32 // 0x19 // x0011001_ // SA0 to GND
+#define DEVICE_COMPASS_303D				0x3C 	// Hardware gen 2 (Single chip solution LSM303D)
+#define DEVICE_ACCELARATOR_303DLHC 		0x32 	// Hardware gen 2 (Single chip solution LSM303DLHC)
+#define	DEVICE_COMPASS_303AGR			0x3C	// Hardware gen 3 (Single chip solution LSM303AGR)
 
 /* Battery Gas Gauge */
-#define DEVICE_BATTERYGAUGE 0xC8 // 0x64
+#define DEVICE_BATTERYGAUGE 			0xC8 	// LTC2941 battery gauge
 
 
 /* Includes ------------------------------------------------------------------*/

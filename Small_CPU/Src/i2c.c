@@ -9,17 +9,8 @@
 
 //  ===============================================================================
 //	I2C addresses - see i2c.h
-///
-///		#define DEVICE_PRESSURE        			0xEE (0x77)	Write 0xEE	Read 0xEF
-///		#define DEVICE_COMPASS_HMC5883L			0x3C (0x1E) Write 0x3C	Read 0x3D
-///		#define DEVICE_ACCELARATOR_MMA8452Q 0x38 (0x1C) Write 0x38	Read 0x39
-///		#define DEVICE_BATTERYGAUGE 				0xC8 (0x64)	Write 0xC8
-
-///		#define DEVICE_COMPASS_303D					0x3C // 0x1E // x0011110 // SA0 to GND
-///		
-/// 0x6E 0x48 -> 0x6F 3d d1 86 3f    0x66 58
-///
 //  ===============================================================================
+
 I2C_HandleTypeDef I2cHandle;
 
 
