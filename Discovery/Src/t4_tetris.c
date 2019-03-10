@@ -120,7 +120,7 @@ void t4_refresh(void)
 
     t4screen.FBStartAdress = getFrame(25);
     t4_refresh_divemode();
-    GFX_SetFramesTopBottom(t4screen.FBStartAdress, NULL,480);
+    GFX_SetFramesTopBottom(t4screen.FBStartAdress, 0,480);
     releaseAllFramesExcept(25,t4screen.FBStartAdress);
 }
 

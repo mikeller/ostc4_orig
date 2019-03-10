@@ -123,7 +123,6 @@ uint8_t receive_update_data_mainCPU_variable_firmware(void);
 uint8_t receive_update_data_mainCPU_firmware_subrotuine(uint8_t region, uint8_t* pBuffer1, uint8_t* pBuffer2);
 HAL_StatusTypeDef receive_uart_large_size(UART_HandleTypeDef *huart, uint8_t *pData, uint32_t Size);
 static uint8_t openComm(uint8_t aRxByte);
-uint8_t tComm_Set_Bluetooth_Name_sub(uint16_t serial);
 uint8_t HW_Set_Bluetooth_Name(uint16_t serial, uint8_t withEscapeSequence);
 uint8_t prompt4D4C(uint8_t mode);
 
@@ -219,7 +218,7 @@ void tComm_refresh(void)
             GFX_write_string(&FontT48, &tCwindow, "Service mode enabled",2);
         else
             GFX_write_string(&FontT48, &tCwindow, "Download mode enabled",2);
-        GFX_SetFramesTopBottom(tCscreen.FBStartAdress, NULL,480);
+        GFX_SetFramesTopBottom(tCscreen.FBStartAdress, 0,480);
         display_text[0] = 0;
         display_text[255] = 0;
     }

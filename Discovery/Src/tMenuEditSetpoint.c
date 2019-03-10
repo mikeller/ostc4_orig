@@ -180,7 +180,8 @@ void openEdit_Setpoint(uint8_t line)
         /* surface mode */
         uint8_t spId, setpoint_cbar, sp_high, depthDeco, first;
         // uint8_t active,
-        char text[70], textPointer;
+        char text[70];
+        uint8_t textPointer;
         uint16_t y_line;
 
         set_globalState_Menu_Line(line);

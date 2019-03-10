@@ -71,36 +71,30 @@ typedef struct
 /* Exported variables --------------------------------------------------------*/
 
 /* Announced Private variables -----------------------------------------------*/
-GFX_DrawCfgScreen	tMdesignSolo;
-GFX_DrawCfgScreen	tMdesignCursor;
+static GFX_DrawCfgScreen	tMdesignSolo;
+static GFX_DrawCfgScreen	tMdesignCursor;
 
 /* Private variables ---------------------------------------------------------*/
-GFX_DrawCfgWindow	tMwindow;
-GFX_DrawCfgScreen	tMscreen;
+static GFX_DrawCfgWindow	tMwindow;
+static GFX_DrawCfgScreen	tMscreen;
 
-uint32_t FramebufferStartAddressForPage[10];
-
-SMenuMemory	menu;
-
-uint32_t callerID;
+static SMenuMemory	menu;
 
 uint8_t actual_menu_content  = MENU_UNDEFINED;
 
-/* TEM HAS TO MOVE TO GLOBAL--------------------------------------------------*/
-
 /* Private function prototypes -----------------------------------------------*/
-void draw_tMheader(uint8_t page);
-void draw_tMcursorDesign(void);
+static void draw_tMheader(uint8_t page);
+static void draw_tMcursorDesign(void);
 
-void draw_tMdesignSubUnselected(uint32_t *ppDestination);
-void draw_tMdesignSubSelected(uint32_t *ppDestination);
-void draw_tMdesignSubSelectedBorder(uint32_t *ppDestination);
-void tMenu_write(uint8_t page, char *text, char *subtext);
+static void draw_tMdesignSubUnselected(uint32_t *ppDestination);
+static void draw_tMdesignSubSelected(uint32_t *ppDestination);
+static void draw_tMdesignSubSelectedBorder(uint32_t *ppDestination);
+static void tMenu_write(uint8_t page, char *text, char *subtext);
 
-void clean_line_actual_page(void);
+static void clean_line_actual_page(void);
 void tM_build_pages(void);
 
-void gotoMenuEdit(void);
+static void gotoMenuEdit(void);
 
 /* Exported functions --------------------------------------------------------*/
 
@@ -234,7 +228,7 @@ void tM_check_content(void)
 }
 
 
-void clean_line_actual_page(void)
+static void clean_line_actual_page(void)
 {
     uint8_t line, page;
 
@@ -249,7 +243,7 @@ void clean_line_actual_page(void)
 }
 
 
-void update_content_actual_page(char *text, uint16_t tab, char *subtext)
+static void update_content_actual_page(char *text, uint16_t tab, char *subtext)
 {
     uint8_t page;
 
@@ -265,13 +259,7 @@ void update_content_actual_page(char *text, uint16_t tab, char *subtext)
 }
 
 
-void clean_line(uint8_t page, uint8_t line)
-{
-    tMscreen.FBStartAdress = menu.StartAddressForPage[page];
-    GFX_clean_line(&tMwindow, line);
-}
-
-void update_content_with_new_frame(uint8_t page, char *text, uint16_t tab, char *subtext)
+static void update_content_with_new_frame(uint8_t page, char *text, uint16_t tab, char *subtext)
 {
     char localtext[32];
 
@@ -311,19 +299,8 @@ void update_content_with_new_frame(uint8_t page, char *text, uint16_t tab, char 
     releaseFrame(5,rememberPage);
 }
 
-void update_content(uint8_t page, char *text, uint16_t tab, char *subtext)
-{
-    tMscreen.FBStartAdress = menu.StartAddressForPage[page];
-    if(tab == 0)
-        tMwindow.WindowTab = 400;
-    else
-        tMwindow.WindowTab = tab;
 
-    tMenu_write(page, text, subtext);
-}
-
-
-void tM_create_pagenumbering(void)
+static void tM_create_pagenumbering(void)
 {
     menu.pageCountTotal = 0;
 
@@ -338,7 +315,7 @@ void tM_create_pagenumbering(void)
 }
 
 
-void tM_build_page(uint32_t id, char *text, uint16_t tab, char *subtext)
+static void tM_build_page(uint32_t id, char *text, uint16_t tab, char *subtext)
 {
     uint8_t linesFound;
     uint16_t i;
@@ -437,7 +414,7 @@ _Bool skipCCRpage(uint8_t page)
 }
 */
 
-void findValidPosition(uint8_t *pageOuput, uint8_t *lineOutput)
+static void findValidPosition(uint8_t *pageOuput, uint8_t *lineOutput)
 {
     uint8_t page = 0;
     uint8_t line = 0;
@@ -488,48 +465,8 @@ void findValidPosition(uint8_t *pageOuput, uint8_t *lineOutput)
     *lineOutput = line;
 }
 
-/*
-void tM_insert_page_numbers(void)
-{
-    uint8_t page, line, pageMemoryBackup, pageFirst, total;
-    GFX_DrawCfgScreen	tTscreen;
 
-    tTscreen.FBStartAdress = 0;
-    tTscreen.ImageHeight = 480;
-    tTscreen.ImageWidth = 800;
-    tTscreen.LayerIndex = 1;
-
-    pageMemoryBackup = menu.pageMemoryForNavigation;
-
-    menu.pageMemoryForNavigation = 1;
-    findValidPosition(&page, &line);
-    pageFirst = page;
-    total = 0;
-
-    do
-    {
-        total++;
-        menu.pageMemoryForNavigation += 1;
-        findValidPosition(&page, &line);
-    }
-    while((pageFirst != page) &&  (total < MAXPAGES));
-
-    menu.pageCountTotal = total;
-    menu.pageMemoryForNavigation = 0;
-    for(int i = 1; i<= total; i++)
-    {
-        menu.pageMemoryForNavigation += 1;
-        findValidPosition(&page, &line);
-        tTscreen.FBStartAdress = menu.StartAddressForPage[page];
-        menu.pageCountNumber[page] = i;
-        gfx_write_page_number(&tTscreen ,i,total,0);
-    }
-
-    menu.pageMemoryForNavigation = pageMemoryBackup;
-}
-*/
-
-void tM_add(uint32_t id)
+static void tM_add(uint32_t id)
 {
     SStateList idList;
     uint8_t page;
@@ -803,8 +740,6 @@ void openMenu(uint8_t freshWithFlipPages)
 	SSettings* pSettings;
 	pSettings = settingsGetPointer();
 
-    callerID = get_globalState();
-
     findValidPosition(&page, &line);
     if((page == 0) || (line == 0))
         return;
@@ -858,7 +793,7 @@ void openMenu(uint8_t freshWithFlipPages)
 
 }
 
-void block_diluent_handler(_Bool Unblock)
+static void block_diluent_handler(_Bool Unblock)
 {
     SStateList list;
     static uint8_t	linesAvailableForPageDiluent = 0;
@@ -887,7 +822,7 @@ void unblock_diluent_page(void)
 }
 
 
-void nextPage(void)
+static void nextPage(void)
 {
     uint8_t page, line;
 
@@ -922,7 +857,7 @@ void nextPage(void)
 }
 
 
-void nextLine(void)
+static void nextLine(void)
 {
     uint8_t page, line;
 	SSettings* pSettings;
@@ -947,7 +882,7 @@ void nextLine(void)
 }
 
 
-void stepBackMenu(void)
+static void stepBackMenu(void)
 {
     if(menu.modeFlipPages == 0)
     {
@@ -975,7 +910,7 @@ void exitMenu(void)
 }
 
 
-void stepForwardMenu(void)
+static void stepForwardMenu(void)
 {
     if(menu.modeFlipPages == 1)
     {
@@ -985,7 +920,7 @@ void stepForwardMenu(void)
         gotoMenuEdit();
 }
 
-void gotoMenuEdit(void)
+static void gotoMenuEdit(void)
 {
     uint8_t line;
 
@@ -1054,11 +989,7 @@ void sendActionToMenu(uint8_t sendAction)
 /* 	tMC_OC_Gas(StMOG1, pSettings); */
 }
 
-void timeoutTestMenu(uint32_t seconds_since_last_button_press)
-{
-}
-
-void tMenu_write(uint8_t page, char *text, char *subtext)
+static void tMenu_write(uint8_t page, char *text, char *subtext)
 {
     if(page > MAXPAGES)
         return;
@@ -1076,7 +1007,7 @@ void tMenu_write(uint8_t page, char *text, char *subtext)
 
 /* Private functions ---------------------------------------------------------*/
 
-void draw_tMdesignSubUnselected(uint32_t *ppDestination)
+static void draw_tMdesignSubUnselected(uint32_t *ppDestination)
 {
     union al88_u
     {
@@ -1111,7 +1042,7 @@ void draw_tMdesignSubUnselected(uint32_t *ppDestination)
 }
 
 
-void draw_tMdesignSubSelected(uint32_t *ppDestination)
+static void draw_tMdesignSubSelected(uint32_t *ppDestination)
 {
     union al88_u
     {
@@ -1147,7 +1078,7 @@ void draw_tMdesignSubSelected(uint32_t *ppDestination)
 }
 
 
-void draw_tMdesignSubSelectedBorder(uint32_t *ppDestination)
+static void draw_tMdesignSubSelectedBorder(uint32_t *ppDestination)
 {
     union al88_u
     {
@@ -1170,7 +1101,7 @@ void draw_tMdesignSubSelectedBorder(uint32_t *ppDestination)
 }
 
 
-void draw_tMcursorDesign(void)
+static void draw_tMcursorDesign(void)
 {
     int i,j;
     uint32_t pDestination;
@@ -1202,7 +1133,7 @@ void draw_tMcursorDesign(void)
 }
 
 
-void draw_tMheader(uint8_t page)
+static void draw_tMheader(uint8_t page)
 {
     union al88_u
     {
@@ -1267,7 +1198,7 @@ void draw_tMheader(uint8_t page)
                 k4text = k-1;
 
             color_top.al8[0] = CLUT_MenuPageGasOC + k - 1;
-            if(k4text == page)
+            if (k == page)
             {
                 color_top.al8[1] = 0xFF;
             }

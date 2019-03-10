@@ -148,7 +148,7 @@ void openInfo(uint32_t modeToStart)
     tIscreen.FBStartAdress = getFrame(14);
 
 //	GFX_SetFramesTopBottom(tIscreen.FBStartAdress, tIcursor.FBStartAdress,480);
-    GFX_SetFramesTopBottom(tIscreen.FBStartAdress, NULL,480);
+    GFX_SetFramesTopBottom(tIscreen.FBStartAdress, 0,480);
     infoColor = CLUT_InfoSurface;
 
     if(modeToStart == StIDEBUG)
@@ -218,7 +218,7 @@ void tInfo_refresh(void)
         refreshInfo_Compass();
 
     if(inDebugMode() || (get_globalState() == StICOMPASS)) /* could be timeout and exitInfo */
-        GFX_SetFramesTopBottom(tIscreen.FBStartAdress, NULL,480);
+        GFX_SetFramesTopBottom(tIscreen.FBStartAdress, 0,480);
 
     if(oldIscreen)
         releaseFrame(14,oldIscreen);
@@ -534,7 +534,7 @@ void tInfo_write_field_button(uint32_t editID, uint16_t XleftGimpStyle, uint16_t
 
     change_CLUT_entry((CLUT_InfoField0 + TIid), CLUT_InfoButtonColor1);
 
-    if(editID == NULL)
+    if(editID == 0)
         tInfo_write_content_without_Id();
     else
     {
@@ -571,7 +571,7 @@ void tInfo_write_field_symbol(uint32_t editID, uint16_t XleftGimpStyle, uint16_t
 
     change_CLUT_entry((CLUT_InfoField0 + TIid), CLUT_InfoButtonColor1);
 
-    if(editID == NULL)
+    if(editID == 0)
         tInfo_write_content_without_Id();
     else
     {
@@ -607,7 +607,7 @@ void tInfo_write_field_on_off(uint32_t editID, uint16_t XleftGimpStyle, uint16_t
     else
         change_CLUT_entry((CLUT_InfoField0 + TIid), CLUT_InfoInActive);
 
-    if(editID == NULL)
+    if(editID == 0)
         tInfo_write_content_without_Id();
     else
     {

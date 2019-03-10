@@ -181,7 +181,7 @@ void t3_refresh(void)
 
     t3screen.FBStartAdress = getFrame(24);
     t3_refresh_divemode();
-    GFX_SetFramesTopBottom(t3screen.FBStartAdress, NULL,480);
+    GFX_SetFramesTopBottom(t3screen.FBStartAdress, 0,480);
     releaseAllFramesExcept(24,t3screen.FBStartAdress);
 }
 

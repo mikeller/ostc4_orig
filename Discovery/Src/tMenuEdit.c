@@ -1252,7 +1252,7 @@ void write_field_udigit_and_2digit(uint8_t subtype, uint32_t editID, uint16_t Xl
 
     create_newText_for_actual_Id();
 
-    if(editID == NULL)
+    if(editID == 0)
         write_content_without_Id();
     else
     {
@@ -1334,7 +1334,7 @@ void write_field_select(uint32_t editID, uint16_t XleftGimpStyle, uint16_t Xrigh
 
     create_newText_for_actual_Id();
 
-    if(editID == NULL)
+    if(editID == 0)
         write_content_without_Id();
     else
     {
@@ -1366,7 +1366,7 @@ void write_field_button(uint32_t editID, uint16_t XleftGimpStyle, uint16_t Xrigh
 
     change_CLUT_entry((CLUT_MenuEditField0 + id), CLUT_MenuEditButtonColor1);
 
-    if(editID == NULL)
+    if(editID == 0)
         write_content_without_Id();
     else
     {
@@ -1404,7 +1404,7 @@ void write_field_symbol(uint32_t editID, uint16_t XleftGimpStyle, uint16_t Xrigh
 
     change_CLUT_entry((CLUT_MenuEditField0 + id), CLUT_MenuEditButtonColor1);
 
-    if(editID == NULL)
+    if(editID == 0)
         write_content_without_Id();
     else
     {
@@ -1463,7 +1463,7 @@ void write_field_on_off(uint32_t editID, uint16_t XleftGimpStyle, uint16_t Xrigh
     else
         change_CLUT_entry((CLUT_MenuEditField0 + id), CLUT_MenuEditInfo);
 
-    if(editID == NULL)
+    if(editID == 0)
         write_content_without_Id();
     else
     {
@@ -1496,7 +1496,7 @@ void write_field_fpoint(uint32_t editID, uint16_t XleftGimpStyle, uint16_t Xrigh
 
     change_CLUT_entry((CLUT_MenuEditField0 + id), CLUT_MenuEditFieldRegular);
 
-    if(editID == NULL)
+    if(editID == 0)
         write_content_without_Id();
     else
     {

@@ -183,7 +183,7 @@ void t6_refresh(void)
         set_globalState(StD);
 
     t6_refresh_divemode();
-    GFX_SetFramesTopBottom(t6screen.FBStartAdress, NULL,480);
+    GFX_SetFramesTopBottom(t6screen.FBStartAdress, 0,480);
     releaseAllFramesExcept(24,t6screen.FBStartAdress);
 }
 

@@ -71,7 +71,6 @@ void openMenu_first_page_with_OC_gas_update(void);
 void updateMenu(void);
 void updateSpecificMenu(uint32_t id);
 void sendActionToMenu(uint8_t sendAction);
-void timeoutTestMenu(uint32_t seconds_since_last_button_press);
 void exitMenu(void);
 
 void tM_check_content(void);

@@ -187,7 +187,7 @@ void t5_refresh(void)
         set_globalState(StD);
 
     t5_refresh_divemode();
-    GFX_SetFramesTopBottom(t5screen.FBStartAdress, NULL,480);
+    GFX_SetFramesTopBottom(t5screen.FBStartAdress, 0,480);
     releaseAllFramesExcept(24,t5screen.FBStartAdress);
 }
 
