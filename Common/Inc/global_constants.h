@@ -28,7 +28,7 @@
 #define GLOBAL_CONSTANTS_H
 //Rename it ahead.
 //Buttons section
-#define DEFAULT_BUTTONRESPONSIVENESS_GUI 30
+#define DEFAULT_BUTTONRESPONSIVENESS_GUI 85
 #define MIN_BUTTONRESPONSIVENESS_GUI 30 //50 (-10correction)
 #define MAX_BUTTONRESPONSIVENESS_GUI 110//100 (+10correction)
 #define MIN_BUTTONRESPONSIVENESS MIN_BUTTONRESPONSIVENESS_GUI-20 //MIN_BUTTONRESPONSIVENESS_GUI-20 correction
@@ -37,7 +37,7 @@
 
 
 // Spi sync data debug
-#define SPI_SHOW_SYNC_STATS 1
+#define SPI_SHOW_SYNC_STATS 0
 #define SPI_MIN_ERROR_SHOW 10
 
 // SPI header by index used for synchronization check (package sequence counter)

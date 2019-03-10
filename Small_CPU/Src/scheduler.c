@@ -116,7 +116,7 @@ void initGlobals(void)
 	global.aktualGas[0] = Air;
 	global.lifeData.actualGas = global.aktualGas[0];
 
-	const uint8_t button_standard_sensitivity = ((2400-(  40  *24))/10)+15;
+	const uint8_t button_standard_sensitivity = 85;
 	global.ButtonResponsiveness[0] = button_standard_sensitivity;
 	global.ButtonResponsiveness[1] = button_standard_sensitivity;
 	global.ButtonResponsiveness[2] = button_standard_sensitivity;

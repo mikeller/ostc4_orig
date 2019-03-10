@@ -427,7 +427,7 @@ uint8_t tHome_gas_writer(uint8_t oxygen_percentage, uint8_t helium_percentage, c
 uint8_t tHome_show_lost_connection_count(GFX_DrawCfgScreen *ScreenToWriteOn)
 {
 	if(!SPI_MIN_ERROR_SHOW) return 0;
-	if(DataEX_lost_connection_count()>=SPI_MIN_ERROR_SHOW){
+	if(DataEX_lost_connection_count()>=SPI_MIN_ERROR_SHOW && SPI_SHOW_SYNC_STATS){
 
     char text[64];
 
