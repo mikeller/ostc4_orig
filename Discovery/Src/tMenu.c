@@ -300,7 +300,7 @@ static void update_content_with_new_frame(uint8_t page, char *text, uint16_t tab
 }
 
 
-void tM_create_pagenumbering(void)
+static void tM_create_pagenumbering(void)
 {
     menu.pageCountTotal = 0;
 
@@ -1198,7 +1198,7 @@ static void draw_tMheader(uint8_t page)
                 k4text = k-1;
 
             color_top.al8[0] = CLUT_MenuPageGasOC + k - 1;
-            if(k4text == page)
+            if (k == page)
             {
                 color_top.al8[1] = 0xFF;
             }

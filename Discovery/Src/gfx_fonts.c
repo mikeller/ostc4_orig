@@ -18,9 +18,9 @@
 
 #include "gfx_fonts.h"
 
-#ifdef DEBUG
+//#ifdef DEBUG
 # 	define INCLUDE_FONTS_BINARY
-#endif
+//#endif
 
 #ifdef INCLUDE_FONTS_BINARY
 
