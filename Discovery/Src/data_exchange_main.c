@@ -73,7 +73,7 @@
 #include "externLogbookFlash.h"
 
 
-/* Expoted variables --------------------------------------------------------*/
+/* Exported variables --------------------------------------------------------*/
 uint8_t	wasPowerOn = 0;
 confirmbit8_Type requestNecessary = { .uw = 0 };
 uint8_t wasUpdateNotPowerOn = 0;
@@ -749,10 +749,31 @@ void DataEX_control_connection_while_asking_for_sleep(void)
 	}
 }
 
+#define AVERAGE_COUNT	4
+static float getSampleDepth(SDataExchangeSlaveToMaster *d, SDiveState *ds)
+{
+	static uint8_t c = 0;
+	static float ambient[AVERAGE_COUNT] = {0};
+	static float surface[AVERAGE_COUNT]= {0};
+	static float depth[AVERAGE_COUNT]= {0};
+
+	ambient[c] = d->data[d->boolPressureData].pressure_mbar / 1000.0f;
+	surface[c] = d->data[d->boolPressureData].surface_mbar / 1000.0f;
+	float density = ((float)( 100 + settingsGetPointer()->salinity)) / 100.0f;
+
+	ds->lifeData.pressure_ambient_bar = (ambient[0] + ambient[1] + ambient[2] + ambient[3])/4.0f;
+	ds->lifeData.pressure_surface_bar = (surface[0] + surface[1] + surface[2] + surface[3])/4.0f;
+	depth[c] = (ambient[c] - surface[c]) / (0.09807f * density);
+
+	c++;
+	if (c == AVERAGE_COUNT) c = 0;
+
+	return (depth[0] + depth[1] + depth[2] + depth[3])/4.0f;
+}
 
 void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 {
-	SDiveState * pStateReal = stateRealGetPointerWrite();
+	SDiveState *pStateReal = stateRealGetPointerWrite();
 	static uint16_t getDeviceDataAfterStartOfMainCPU = 20;
 	
 	/* internal sensor: HUD data
@@ -780,12 +801,6 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		}
 	}
 	
-/* Why? hw 8.6.2015
-	if(DataEX_check_header_and_footer_ok() && dataIn.power_on_reset)
-	{
-		return;
-	}
-*/
 	if(!DataEX_check_header_and_footer_ok())
 	{
 		if(DataEX_check_header_and_footer_devicedata())
@@ -838,22 +853,11 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		{
 			setButtonResponsiveness(settingsGetPointer()->ButtonResponsiveness);
 		}
-/*
-	}
-		if((dataIn.confirmRequest.ub.clearDeco != 1) && (requestNecessary.ub.clearDeco == 1))
-		{
-			clearDeco(); // is dataOut.clearDecoNow = 1;
-		}
-*/		
 	}
 	requestNecessary.uw = 0; // clear all 
 	
-	float ambient, surface, density, meter;
+	float meter = 0;
 	SSettings *pSettings;
-	
-	ambient = 0;
-	surface = 0;
-	meter = 0;
 
 	/*	uint8_t IAmStolenPleaseKillMe;
 	 */
@@ -869,20 +873,11 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 
 	if(pStateReal->data_old__lost_connection_to_slave == 0)
 	{
-		ambient = dataIn.data[dataIn.boolPressureData].pressure_mbar / 1000.0f;
-		surface = dataIn.data[dataIn.boolPressureData].surface_mbar / 1000.0f;
-
-		density = ((float)( 100 + pSettings->salinity)) / 100.0f;
-		meter = (ambient - surface);
-		meter /= (0.09807f * density);
-
+		meter = getSampleDepth(&dataIn, pStateReal);
 
 		pStateReal->pressure_uTick_old = pStateReal->pressure_uTick_new;
 		pStateReal->pressure_uTick_new = dataIn.data[dataIn.boolPressureData].pressure_uTick;
 		pStateReal->pressure_uTick_local_new = HAL_GetTick();
-
-		/* what was the code behind this if statement ? */
-		/* if(ambient < (surface + 0.04f)) */
 	
 		pStateReal->lifeData.dateBinaryFormat = dataIn.data[dataIn.boolTimeData].localtime_rtc_dr;
 		pStateReal->lifeData.timeBinaryFormat = dataIn.data[dataIn.boolTimeData].localtime_rtc_tr;
@@ -933,8 +928,6 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		pStateReal->mode = dataIn.mode;
 		pStateReal->chargeStatus = dataIn.chargeStatus;
 	
-		pStateReal->lifeData.pressure_ambient_bar = ambient;
-		pStateReal->lifeData.pressure_surface_bar = surface;
 		if(is_ambient_pressure_close_to_surface(&pStateReal->lifeData))
 		{
 			pStateReal->lifeData.depth_meter = 0;
@@ -971,7 +964,6 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 			pStateReal->lifeData.compass_heading -= 180.0;
 			if (pStateReal->lifeData.compass_heading < 0) pStateReal->lifeData.compass_heading +=360.0;
 		}
-
 
 		pStateReal->lifeData.compass_roll = dataIn.data[dataIn.boolCompassData].compass_roll;
 		pStateReal->lifeData.compass_pitch = dataIn.data[dataIn.boolCompassData].compass_pitch;
@@ -1056,7 +1048,7 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 			{
 				pStateReal->lifeData.apnea_last_max_depth_meter = pStateReal->lifeData.max_depth_meter;
 			}
-		// eset max_depth_meter, average_depth_meter and internal values
+		// reset max_depth_meter, average_depth_meter and internal values
 			pStateReal->lifeData.max_depth_meter = 0;
 			pStateReal->lifeData.boolResetAverageDepth = 1;
 			pStateReal->lifeData.boolResetStopwatch = 1;
