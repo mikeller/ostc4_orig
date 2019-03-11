@@ -2012,26 +2012,7 @@ void t7_refresh_divemode(void)
     }
 
     /* depth */
-    float depth = 0;
-    float depthThisCall = unit_depth_float(stateUsed->lifeData.depth_meter);
-    if(is_stateUsedSetToSim())
-    {
-        depth = (depthThisCall + depthLastCall[0] + depthLastCall[1] + depthLastCall[2] + depthLastCall[3] + depthLastCall[4] + depthLastCall[5] + depthLastCall[6] + depthLastCall[7] + depthLastCall[8]) / 10.0f;
-
-        idDepthLastCall++;
-        if(idDepthLastCall >= 9)
-            idDepthLastCall = 0;
-        depthLastCall[idDepthLastCall] = depthThisCall;
-    }
-    else
-    {
-        depth = (depthThisCall + depthLastCall[0] + depthLastCall[1] + depthLastCall[2]) / 4.0f;
-
-        idDepthLastCall++;
-        if(idDepthLastCall >= 3)
-            idDepthLastCall = 0;
-        depthLastCall[idDepthLastCall] = depthThisCall;
-    }
+    float depth = unit_depth_float(stateUsed->lifeData.depth_meter);
 
     if(depth <= 0.3f)
         depth = 0;

@@ -52,8 +52,6 @@ GFX_DrawCfgWindow	t3r1;
 GFX_DrawCfgWindow	t3c1;
 GFX_DrawCfgWindow	t3c2;
 
-extern float depthLastCall[9];
-extern uint8_t idDepthLastCall;
 extern float temperatureLastCall[3];
 extern uint8_t idTemperatureLastCall;
 
@@ -210,28 +208,8 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
     stop.x = start.x = BigFontSeperationLeftRight;
     GFX_draw_line(tXscreen, start, stop, CLUT_Font020);
 
-
     /* depth */
-    float depth = 0;
-    float depthThisCall = unit_depth_float(stateUsed->lifeData.depth_meter);
-    if(is_stateUsedSetToSim())
-    {
-        depth = (depthThisCall + depthLastCall[0] + depthLastCall[1] + depthLastCall[2] + depthLastCall[3] + depthLastCall[4] + depthLastCall[5] + depthLastCall[6] + depthLastCall[7] + depthLastCall[8]) / 10.0f;
-
-        idDepthLastCall++;
-        if(idDepthLastCall >= 9)
-            idDepthLastCall = 0;
-        depthLastCall[idDepthLastCall] = depthThisCall;
-    }
-    else
-    {
-        depth = (depthThisCall + depthLastCall[0] + depthLastCall[1] + depthLastCall[2]) / 4.0f;
-
-        idDepthLastCall++;
-        if(idDepthLastCall >= 3)
-            idDepthLastCall = 0;
-        depthLastCall[idDepthLastCall] = depthThisCall;
-    }
+    float depth = unit_depth_float(stateUsed->lifeData.depth_meter);
 
     if(depth <= 0.3f)
         depth = 0;
