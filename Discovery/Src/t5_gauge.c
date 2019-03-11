@@ -47,11 +47,6 @@ GFX_DrawCfgWindow	t5c1;
 GFX_DrawCfgWindow	t5c2;
 GFX_DrawCfgWindow	t5c3; // for menu text
 
-extern float depthLastCall[9];
-extern uint8_t idDepthLastCall;
-extern float temperatureLastCall[3];
-extern uint8_t idTemperatureLastCall;
-
 uint8_t t5_selection_customview = 0;
 
 /* Importend function prototypes ---------------------------------------------*/
