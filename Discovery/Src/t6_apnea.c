@@ -46,15 +46,9 @@ GFX_DrawCfgWindow	t6c1;
 GFX_DrawCfgWindow	t6c2;
 GFX_DrawCfgWindow	t6c3; // for menu text
 
-extern float depthLastCall[9];
-extern uint8_t idDepthLastCall;
-extern float temperatureLastCall[3];
-extern uint8_t idTemperatureLastCall;
-
 uint8_t t6_selection_customview = 0;
 
 /* Importend function prototypes ---------------------------------------------*/
-extern uint8_t write_gas(char *text, uint8_t oxygen, uint8_t helium);
 
 /* Private types -------------------------------------------------------------*/
 

@@ -616,7 +616,6 @@ void simulation_helper_change_points(SSimDataSummary *outputSummary, uint16_t de
     {
         // ascent time
         timeThis = ((float)(actualDepthPoint - nextDepthPoint)) / sim_ascent_rate_meter_per_min_local;
-        actualDepthPoint = actualDepthPoint; // that is where we are
 
         // deco stop time
         for(ptrDecoInfo=0;ptrDecoInfo < DECOINFO_STRUCT_MAX_STOPS; ptrDecoInfo++)
