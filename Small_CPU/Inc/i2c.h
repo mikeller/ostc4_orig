@@ -10,7 +10,6 @@
 #define DEVICE_COMPASS_HMC5883L			0x3C	// Hardware gen 1
 
 #define DEVICE_COMPASS_303D				0x3C 	// Hardware gen 2 (Single chip solution LSM303D)
-#define DEVICE_ACCELARATOR_303DLHC 		0x32 	// Hardware gen 2 (Single chip solution LSM303DLHC)
 #define	DEVICE_COMPASS_303AGR			0x3C	// Hardware gen 3 (Single chip solution LSM303AGR)
 
 /* Battery Gas Gauge */
