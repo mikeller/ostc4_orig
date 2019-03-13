@@ -663,7 +663,7 @@ void t7_refresh_sleep_design_fun(void)
         ytop = 800 - state;
     else
         ytop = 0 + state;
-    Gfx_write_label_var(&t7screen,  300,800, ytop,&FontT48,CLUT_Font020,"SLEEP SLEEP SLEEP");
+    Gfx_write_label_var(&t7screen,  300,800, ytop,&FontT48,CLUT_Font020,"Shutting down...");
 }
 
 void t7_refresh_surface(void)
