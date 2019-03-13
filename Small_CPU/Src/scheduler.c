@@ -40,7 +40,6 @@
 #include "calc_crush.h"
 #include "stm32f4xx_hal_rtc_ex.h"
 #include "decom.h"
-#include "wireless.h"
 #include "tm_stm32f4_otp.h"
 
 
@@ -87,8 +86,6 @@ void copyAmbientLightData(void);
 void copyTissueData(void);
 void copyVpmCrushingData(void);
 void copyDeviceData(void);
-void changeAgeWirelessData(void);
-void copyWirelessData(void);
 void copyPICdata(void);
 uint16_t schedule_update_timer_helper(int8_t thisSeconds);
 
@@ -478,7 +475,6 @@ void scheduleDiveMode(void)
 	Scheduler.counterCompass100msec = 0;
 	Scheduler.counterPressure100msec = 0;
 	Scheduler.counterAmbientLight100msec = 0;
-	Scheduler.counterWireless1msec = 0;
 	
 	global.deviceData.diveCycles.value_int32++;
 	scheduleSetDate(&global.deviceData.diveCycles);
@@ -489,19 +485,6 @@ void scheduleDiveMode(void)
 		schedule_check_resync();
 		lasttick = HAL_GetTick();
 		ticksdiff = time_elapsed_ms(Scheduler.tickstart,lasttick);
-
-
-		//Evaluate wireless data every ms, if present
-		if(ticksdiff > Scheduler.counterWireless1msec)
-		{
-			Scheduler.counterWireless1msec++;
-			changeAgeWirelessData();
-			global.wirelessReceived = wireless_evaluate(global.wirelessdata,MAX_WIRELESS_BYTES, &global.wirelessConfidenceStatus);
-			if((global.wirelessReceived  > 0) && !wireless_evaluate_crc_error(global.wirelessdata,global.wirelessReceived))
-			{
-				copyWirelessData();
-			}
-		}
 
 		if(ticksdiff >= Scheduler.counterSPIdata100msec * 100 + 10)
 		{
@@ -666,7 +649,6 @@ void scheduleDiveMode(void)
 			Scheduler.counterCompass100msec = 0;
 			Scheduler.counterPressure100msec = 0;
 			Scheduler.counterAmbientLight100msec = 0;
-			Scheduler.counterWireless1msec = 0;
 		}
 	}
 }
@@ -767,7 +749,6 @@ void scheduleSurfaceMode(void)
 	Scheduler.counterCompass100msec = 0;
 	Scheduler.counterPressure100msec = 0;
 	Scheduler.counterAmbientLight100msec = 0;
-	Scheduler.counterWireless1msec = 0;
 
 	global.dataSendToMaster.mode = MODE_SURFACE;
 	global.deviceDataSendToMaster.mode = MODE_SURFACE;
@@ -780,16 +761,6 @@ void scheduleSurfaceMode(void)
 		lasttick = HAL_GetTick();
 		ticksdiff = time_elapsed_ms(Scheduler.tickstart,lasttick);
 
-		if(ticksdiff > Scheduler.counterWireless1msec)
-		{
-			Scheduler.counterWireless1msec++;
-			changeAgeWirelessData();
-			global.wirelessReceived = wireless_evaluate(global.wirelessdata,MAX_WIRELESS_BYTES, &global.wirelessConfidenceStatus);
-			if((global.wirelessReceived  > 0) && !wireless_evaluate_crc_error(global.wirelessdata,global.wirelessReceived))
-			{
-				copyWirelessData();
-			}
-		}
 		if(setButtonsNow == 1)
 		{
 			if(scheduleSetButtonResponsiveness())
@@ -907,7 +878,6 @@ void scheduleSurfaceMode(void)
 			Scheduler.counterCompass100msec = 0;
 			Scheduler.counterPressure100msec = 0;
 			Scheduler.counterAmbientLight100msec = 0;
-			Scheduler.counterWireless1msec = 0;
 		}
 	}
 }
@@ -922,7 +892,6 @@ void HardSyncToSPI()
 		Scheduler.counterCompass100msec = 0;
 		Scheduler.counterPressure100msec = 0;
 		Scheduler.counterAmbientLight100msec = 0;
-		Scheduler.counterWireless1msec = 0;
 		dohardspisync = 0;
 	}
 }
@@ -1519,40 +1488,6 @@ void copyDeviceData(void)
 	global.deviceDataSendToMaster.boolVpmRepetitiveDataValid = 1;
 }
 
-void changeAgeWirelessData(void)
-{
-	for(int i=0;i<4;i++)
-	{
-		if(global.dataSendToMaster.data[global.dataSendToMaster.boolWirelessData].wireless_data[i].ageInMilliSeconds)
-			global.dataSendToMaster.data[global.dataSendToMaster.boolWirelessData].wireless_data[i].ageInMilliSeconds++;
-	}
-}
-
-void copyWirelessData(void)
-{
-	uint8_t boolWirelessData = !global.dataSendToMaster.boolWirelessData;
-	SDataWireless *dataOld, *dataNew;
-	for(int i=0;i<3;i++)
-	{
-		dataNew = &global.dataSendToMaster.data[boolWirelessData].wireless_data[i+1];
-		dataOld = &global.dataSendToMaster.data[!boolWirelessData].wireless_data[i];
-		dataNew->ageInMilliSeconds = dataOld->ageInMilliSeconds;
-		dataNew->numberOfBytes = dataOld->numberOfBytes;
-		dataNew->status = dataOld->status;
-		memcpy(dataNew->data, dataOld->data,8);
-	}
-	
-	global.dataSendToMaster.data[boolWirelessData].wireless_data[0].ageInMilliSeconds = 1;
-	global.dataSendToMaster.data[boolWirelessData].wireless_data[0].numberOfBytes = global.wirelessReceived;
-	global.dataSendToMaster.data[boolWirelessData].wireless_data[0].status = global.wirelessConfidenceStatus;
-	for(int i=0;i<MAX_WIRELESS_BYTES;i++)
-		global.dataSendToMaster.data[boolWirelessData].wireless_data[0].data[i] = global.wirelessdata[i];
-	for(int i=MAX_WIRELESS_BYTES;i<12;i++)
-		global.dataSendToMaster.data[boolWirelessData].wireless_data[0].data[i] = 0xFF;
-	
-	global.dataSendToMaster.boolWirelessData = boolWirelessData;
-}
-
 /* 			copyPICdata(); is used in spi.c */
 void copyPICdata(void)
 {
@@ -1563,8 +1498,6 @@ void copyPICdata(void)
 	}
 	global.dataSendToMaster.boolPICdata = boolPICdata;
 }
-
-
 
 
 typedef enum 

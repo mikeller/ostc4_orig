@@ -29,10 +29,9 @@
 #include "settings.h"
 
 /* Types -------------------------------------------------------------*/
-#define MAX_WIRELESS_BYTES 10
 #define SENSOR_PRESSURE_ID 0
 #define MAX_SENSORS 1
-	 
+ 
 typedef struct
 {
 	uint8_t mode;
@@ -59,9 +58,6 @@ typedef struct
 	uint8_t ButtonResponsiveness[4];
 	uint8_t chargerStatus;
 	uint8_t	dataSendToSlaveIsNotValidCount;
-	uint8_t wirelessdata[MAX_WIRELESS_BYTES];
-	uint8_t wirelessReceived;
-	uint8_t wirelessConfidenceStatus;
 	uint8_t ButtonPICdata[4];
 	uint8_t accidentFlag;
 	uint32_t accidentRemainingSeconds;
@@ -81,7 +77,6 @@ typedef struct
 	uint8_t counterPressure100msec;
 	uint8_t counterCompass100msec;
 	uint8_t counterAmbientLight100msec;
-	uint16_t counterWireless1msec;
 	uint32_t tickstart;
 } SScheduleCtrl;
 
