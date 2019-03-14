@@ -30,6 +30,8 @@ void MX_SPI1_Init(void);
 //void SPI_Start_single_TxRx_with_Master_and_Stop_ChipSelectControl(void);
 void SPI_Start_single_TxRx_with_Master(void);
 void SPI_synchronize_with_Master(void);
+void SPI_Evaluate_RX_Data(void); /*process the data received during last 100ms cycle */
+
 void MX_SPI_DeInit(void);
 
 	 /* button adjust */
