@@ -223,12 +223,6 @@ void compass_sleep_LSM303D(void);
 void compass_read_LSM303D(void);
 void acceleration_read_LSM303D(void);
 
-void compass_init_LSM303DLHC(uint8_t fast, uint8_t gain);
-void compass_sleep_LSM303DLHC(void);
-void compass_read_LSM303DLHC(void);
-void acceleration_read_LSM303DLHC(void);
-
-
 int LSM303D_accel_set_onchip_lowpass_filter_bandwidth(unsigned bandwidth);
 int compass_calib_common(void);
 

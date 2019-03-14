@@ -239,15 +239,15 @@ static void EXTI_Wakeup_Button_DeInit(void);
 static void EXTI_Test_Button_Init(void);
 static void EXTI_Test_Button_DeInit(void);
 
-//static void EXTILine01_Button_DeInit(void);
 static void GPIO_LED_Init(void);
 static void GPIO_Power_MainCPU_Init(void);
 static void GPIO_Power_MainCPU_ON(void);
 static void GPIO_Power_MainCPU_OFF(void);
 
+#ifdef DEBUG_I2C_LINES
 void GPIO_test_I2C_lines(void);
+#endif
 
-//void sleep_test(void);
 void sleep_prepare(void);
 
 void SystemClock_Config(void);
