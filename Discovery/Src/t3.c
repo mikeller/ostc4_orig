@@ -52,9 +52,6 @@ GFX_DrawCfgWindow	t3r1;
 GFX_DrawCfgWindow	t3c1;
 GFX_DrawCfgWindow	t3c2;
 
-extern float temperatureLastCall[3];
-extern uint8_t idTemperatureLastCall;
-
 uint8_t t3_selection_customview = 0;
 
 /* TEM HAS TO MOVE TO GLOBAL--------------------------------------------------*/
@@ -507,7 +504,6 @@ void t3_basics_refresh_apnoeRight(float depth, uint8_t tX_selection_customview, 
     uint16_t textpointer = 0;
 
     // CVIEW_T3_Temperature
-    float temperatureThisCall;
     float temperature;
 
     SDivetime TotalDivetime = {0,0,0,0};
@@ -527,13 +523,7 @@ void t3_basics_refresh_apnoeRight(float depth, uint8_t tX_selection_customview, 
         snprintf(text,TEXTSIZE,"\032\f%c",TXT_Temperature);
         GFX_write_string(&FontT42,tXc1,text,0);
 
-        // mean value
-        temperatureThisCall = unit_temperature_float(stateUsed->lifeData.temperature_celsius);
-        temperature = (temperatureThisCall + temperatureLastCall[0] + temperatureLastCall[1] + temperatureLastCall[2]) / 4.0f;
-        idTemperatureLastCall++;
-        if(idTemperatureLastCall >= 3)
-            idTemperatureLastCall = 0;
-        temperatureLastCall[idTemperatureLastCall] = temperatureThisCall;
+        temperature = unit_temperature_float(stateUsed->lifeData.temperature_celsius);
         textpointer = snprintf(text,TEXTSIZE,"\020\003\016%01.0f\016\016\140",temperature); // "\016\016%01.1f `" + C or F
         if(settingsGetPointer()->nonMetricalSystem == 0)
             text[textpointer++] = 'C';
@@ -606,7 +596,6 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
     uint8_t oxygen_percentage = 0;
 
     // CVIEW_T3_Temperature
-    float temperatureThisCall;
     float temperature;
 
     // CVIEW_T3_GasList
@@ -618,7 +607,6 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
     // CVIEW_T3_StopWatch
     SDivetime Stopwatch = {0,0,0,0};
     float fAverageDepth, fAverageDepthAbsolute;
-
 
     uint16_t tempWinX0;
     uint16_t tempWinX1;
@@ -749,13 +737,8 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
     case CVIEW_T3_Temperature:
         snprintf(text,TEXTSIZE,"\032\f%c",TXT_Temperature);
         GFX_write_string(&FontT42,tXc1,text,0);
-        // mean value
-        temperatureThisCall = unit_temperature_float(stateUsed->lifeData.temperature_celsius);
-        temperature = (temperatureThisCall + temperatureLastCall[0] + temperatureLastCall[1] + temperatureLastCall[2]) / 4.0f;
-        idTemperatureLastCall++;
-        if(idTemperatureLastCall >= 3)
-            idTemperatureLastCall = 0;
-        temperatureLastCall[idTemperatureLastCall] = temperatureThisCall;
+
+        temperature = unit_temperature_float(stateUsed->lifeData.temperature_celsius);
         textpointer = snprintf(text,TEXTSIZE,"\030\003\016%01.1f \140",temperature); // "\016\016%01.1f `" + C or F
         if(settingsGetPointer()->nonMetricalSystem == 0)
             text[textpointer++] = 'C';
