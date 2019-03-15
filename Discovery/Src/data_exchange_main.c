@@ -771,6 +771,20 @@ static float getSampleDepth(SDataExchangeSlaveToMaster *d, SDiveState *ds)
 	return (depth[0] + depth[1] + depth[2] + depth[3])/4.0f;
 }
 
+#define TEMP_AVERAGE_COUNT	3
+static float getTemperature(SDataExchangeSlaveToMaster *d)
+{
+	static uint8_t c = 0;
+	static float temp[TEMP_AVERAGE_COUNT] = {0};
+
+	temp[c] = d->data[d->boolPressureData].temperature;
+
+	c++;
+	if (c == TEMP_AVERAGE_COUNT) c = 0;
+
+	return (temp[0] + temp[1] + temp[2])/3.0f;
+}
+
 void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 {
 	SDiveState *pStateReal = stateRealGetPointerWrite();
@@ -937,7 +951,7 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 			pStateReal->lifeData.depth_meter = meter;
 		}
 
-		pStateReal->lifeData.temperature_celsius = dataIn.data[dataIn.boolPressureData].temperature;
+		pStateReal->lifeData.temperature_celsius = getTemperature(&dataIn);
 		pStateReal->lifeData.ascent_rate_meter_per_min = dataIn.data[dataIn.boolPressureData].ascent_rate_meter_per_min;
 		if(pStateReal->mode != MODE_DIVE)
 			pStateReal->lifeData.max_depth_meter = 0;

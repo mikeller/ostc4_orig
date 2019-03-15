@@ -74,8 +74,6 @@ extern uint8_t write_gas(char *text, uint8_t oxygen, uint8_t helium);
 /* Exported variables --------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-float temperatureLastCall[3] = { 0,0,0};
-uint8_t idTemperatureLastCall = 0;
 
 GFX_DrawCfgScreen	t7screen;
 GFX_DrawCfgScreen	t7screenCompass;
@@ -2472,8 +2470,6 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
     const SDecoinfo * pDecoinfoStandard;
     const SDecoinfo * pDecoinfoFuture;
     float fCNS;
-
-    float temperatureThisCall;
     float temperature;
 
     if(stateUsed->diveSettings.deco_type.ub.standard == GF_MODE)
@@ -2501,14 +2497,7 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
     /* Temperature */
     case 1:
     default:
-        // mean value
-        temperatureThisCall = unit_temperature_float(stateUsed->lifeData.temperature_celsius);
-        temperature = (temperatureThisCall + temperatureLastCall[0] + temperatureLastCall[1] + temperatureLastCall[2]) / 4.0f;
-        idTemperatureLastCall++;
-        if(idTemperatureLastCall >= 3)
-            idTemperatureLastCall = 0;
-        temperatureLastCall[idTemperatureLastCall] = temperatureThisCall;
-        // output
+    	temperature = unit_temperature_float(stateUsed->lifeData.temperature_celsius);
         headerText[2] = TXT_Temperature;
         textpointer = snprintf(text,TEXTSIZE,"\020\016%01.1f \140",temperature); // "\016\016%01.1f `" + C or F
         if(settingsGetPointer()->nonMetricalSystem == 0)
