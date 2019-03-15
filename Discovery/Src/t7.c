@@ -74,8 +74,6 @@ extern uint8_t write_gas(char *text, uint8_t oxygen, uint8_t helium);
 /* Exported variables --------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-float depthLastCall[9] = { 0,0,0,0,0,0,0,0,0};
-uint8_t idDepthLastCall = 0;
 float temperatureLastCall[3] = { 0,0,0};
 uint8_t idTemperatureLastCall = 0;
 
@@ -2053,7 +2051,7 @@ void t7_refresh_divemode(void)
     t7_colorscheme_mod(TextL2);
     GFX_write_string(&FontT105,&t7l2,TextL2,1);
 
-    /* ascentrate graph */
+    /* ascent rate graph */
     if(stateUsed->lifeData.ascent_rate_meter_per_min > 0)
     {
     	if(!pSettings->FlipDisplay)
