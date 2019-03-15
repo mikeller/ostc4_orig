@@ -141,7 +141,6 @@
 #include "batteryGasGauge.h"
 #include "batteryCharger.h"
 #include "scheduler.h"
-#include "wireless.h"
 #include "tm_stm32f4_otp.h"
 
 // From Common/Inc:
@@ -240,18 +239,15 @@ static void EXTI_Wakeup_Button_DeInit(void);
 static void EXTI_Test_Button_Init(void);
 static void EXTI_Test_Button_DeInit(void);
 
-static void MX_EXTI_wireless_Init(void);
-static void MX_EXTI_wireless_DeInit(void);
-
-//static void EXTILine01_Button_DeInit(void);
 static void GPIO_LED_Init(void);
 static void GPIO_Power_MainCPU_Init(void);
 static void GPIO_Power_MainCPU_ON(void);
 static void GPIO_Power_MainCPU_OFF(void);
 
+#ifdef DEBUG_I2C_LINES
 void GPIO_test_I2C_lines(void);
+#endif
 
-//void sleep_test(void);
 void sleep_prepare(void);
 
 void SystemClock_Config(void);
@@ -373,7 +369,7 @@ int main(void) {
 			//				ReInit_battery_charger_status_pins();
 			compass_init(0, 7);
 			accelerator_init();
-			wireless_init();
+
 			if (global.mode == MODE_BOOT) {
 				GPIO_Power_MainCPU_OFF();
 				HAL_Delay(100); // for GPIO_Power_MainCPU_ON();
@@ -382,18 +378,9 @@ int main(void) {
 			SPI_synchronize_with_Master();
 			MX_DMA_Init();
 			MX_SPI1_Init();
-			MX_EXTI_wireless_Init();
 			SPI_Start_single_TxRx_with_Master(); /* be prepared for the first data exchange */
 			dohardspisync = 1;
 			EXTI_Test_Button_Init();
-
-			/*
-			 uint8_t dataWireless[64];
-			 while(1)
-			 {
-			 wireless_evaluate_and_debug(dataWireless,64);
-			 }
-			 */
 			global.mode = MODE_SURFACE;
 			break;
 
@@ -462,7 +449,6 @@ int main(void) {
 			 NOT_USED_AT_THE_MOMENT_scheduleSleepMode();
 			 */
 			EXTI_Test_Button_DeInit();
-			MX_EXTI_wireless_DeInit();
 			if (hasExternalClock())
 				SystemClock_Config_HSI();
 			sleep_prepare();
@@ -479,11 +465,9 @@ int main(void) {
 			GPIO_Power_MainCPU_ON();
 			compass_init(0, 7);
 			accelerator_init();
-			wireless_init();
 			SPI_synchronize_with_Master();
 			MX_DMA_Init();
 			MX_SPI1_Init();
-			MX_EXTI_wireless_Init();
 			SPI_Start_single_TxRx_with_Master();
 
 			// EXTILine0_Button_DeInit(); not now, later after testing
@@ -519,26 +503,12 @@ int main(void) {
  */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
-	if (GPIO_Pin == WIRELSS_RISING_GPIO_PIN) {
-		wireless_trigger_RisingEdgeSilence();
-	}
-
-	else
-
-	if (GPIO_Pin == WIRELSS_FALLING_GPIO_PIN) {
-		wireless_trigger_FallingEdgeSignalHigh();
-	}
-
-	else
-
 	if (GPIO_Pin == BUTTON_OSTC_GPIO_PIN) {
 		if (global.mode == MODE_SLEEP) {
 			global.mode = MODE_BOOT;
 		}
 	}
-
 	else
-
 	if (GPIO_Pin == BUTTON_TEST_GPIO_PIN) {
 		if (!global.demo_mode && (global.mode == MODE_SURFACE)) {
 			global.demo_mode = 1;
@@ -898,57 +868,6 @@ static void EXTI_Test_Button_DeInit(void) {
 	GPIO_InitStructure.Pin = BUTTON_TEST_GPIO_PIN;
 	HAL_GPIO_Init( BUTTON_TEST_GPIO_PORT, &GPIO_InitStructure);
 	HAL_NVIC_DisableIRQ( BUTTON_TEST_IRQn);
-}
-
-static void MX_EXTI_wireless_Init(void) {
-	GPIO_InitTypeDef GPIO_InitStructure;
-
-	WIRELSS_POWER_HAL_RCC_GPIO_CLK_ENABLE();
-	GPIO_InitStructure.Pin = WIRELSS_POWER_GPIO_PIN;
-	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStructure.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init( WIRELSS_POWER_GPIO_PORT, &GPIO_InitStructure);
-	HAL_GPIO_WritePin( WIRELSS_POWER_GPIO_PORT, WIRELSS_POWER_GPIO_PIN,
-			GPIO_PIN_SET);
-
-	WIRELSS_RISING_HAL_RCC_GPIO_CLK_ENABLE();
-	GPIO_InitStructure.Pin = WIRELSS_RISING_GPIO_PIN;
-	GPIO_InitStructure.Mode = GPIO_MODE_IT_RISING;
-	GPIO_InitStructure.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init( WIRELSS_RISING_GPIO_PORT, &GPIO_InitStructure);
-
-	HAL_NVIC_SetPriority( WIRELSS_RISING_IRQn, 0x02, 0);
-	HAL_NVIC_EnableIRQ( WIRELSS_RISING_IRQn);
-
-	WIRELSS_FALLING_HAL_RCC_GPIO_CLK_ENABLE();
-	GPIO_InitStructure.Pin = WIRELSS_FALLING_GPIO_PIN;
-	GPIO_InitStructure.Mode = GPIO_MODE_IT_FALLING;
-	GPIO_InitStructure.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init( WIRELSS_FALLING_GPIO_PORT, &GPIO_InitStructure);
-
-	HAL_NVIC_SetPriority( WIRELSS_FALLING_IRQn, 0x02, 0);
-	HAL_NVIC_EnableIRQ( WIRELSS_FALLING_IRQn);
-
-}
-
-static void MX_EXTI_wireless_DeInit(void) {
-	GPIO_InitTypeDef GPIO_InitStructure;
-
-	GPIO_InitStructure.Mode = GPIO_MODE_ANALOG;
-	GPIO_InitStructure.Speed = GPIO_SPEED_LOW;
-	GPIO_InitStructure.Pull = GPIO_NOPULL;
-
-	GPIO_InitStructure.Pin = WIRELSS_RISING_GPIO_PIN;
-	HAL_GPIO_Init( WIRELSS_RISING_GPIO_PORT, &GPIO_InitStructure);
-
-	GPIO_InitStructure.Pin = WIRELSS_FALLING_GPIO_PIN;
-	HAL_GPIO_Init( WIRELSS_FALLING_GPIO_PORT, &GPIO_InitStructure);
-
-	GPIO_InitStructure.Pin = WIRELSS_POWER_GPIO_PIN;
-	HAL_GPIO_Init( WIRELSS_POWER_GPIO_PORT, &GPIO_InitStructure);
-
-	HAL_NVIC_DisableIRQ( WIRELSS_RISING_IRQn);
-	HAL_NVIC_DisableIRQ( WIRELSS_FALLING_IRQn);
 }
 
 /* NUCLEO C 13

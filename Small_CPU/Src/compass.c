@@ -39,7 +39,6 @@
 
 #include "stm32f4xx_hal.h"
 
-#define MODE_LSM303DLHC
 #define	TEST_IF_HMC5883L
 //#define COMPASS_DEACTIVATE
 
@@ -112,7 +111,6 @@ float Suuv, Suuw, Svvu, Svvw, Swwu, Swwv;
 
 #define HMC5883L (1)	///< id used with hardwareCompass 
 #define LSM303D  (2)	///< id used with hardwareCompass
-#define LSM303DLHC  (3)	///< id used with hardwareCompass
 #define COMPASS_NOT_RECOGNIZED  (4)	///< id used with hardwareCompass
 
 
@@ -225,12 +223,6 @@ void compass_sleep_LSM303D(void);
 void compass_read_LSM303D(void);
 void acceleration_read_LSM303D(void);
 
-void compass_init_LSM303DLHC(uint8_t fast, uint8_t gain);
-void compass_sleep_LSM303DLHC(void);
-void compass_read_LSM303DLHC(void);
-void acceleration_read_LSM303DLHC(void);
-
-
 int LSM303D_accel_set_onchip_lowpass_filter_bandwidth(unsigned bandwidth);
 int compass_calib_common(void);
 
@@ -279,34 +271,7 @@ void compass_init(uint8_t fast, uint8_t gain)
 			hardwareCompass = HMC5883L;
 	}
 
-	
-// k�nnte Probleme mit altem Chip machen
-// beim 303D f�hrt dieser Code dazu, dass WHOIAM_VALUE nicht geschickt wird!!!
-	
-#ifdef MODE_LSM303DLHC
-	HAL_StatusTypeDef resultOfOperation = HAL_TIMEOUT;
-
-	if(hardwareCompass == 0)
-	{
-		uint8_t data = DLHC_CTRL_REG1_A;
-		resultOfOperation = I2C_Master_Transmit( DEVICE_ACCELARATOR_303DLHC, &data, 1);
-		if(resultOfOperation == HAL_OK)
-		{
-			I2C_Master_Receive(  DEVICE_ACCELARATOR_303DLHC, &data, 1);
-			testCompassTypeDebug = data;
-			if((data & 0x0f) == 0x07)
-			{
-				hardwareCompass = LSM303DLHC;
-			}
-		}
-		else
-		{
-			testCompassTypeDebug = 0xEE;
-		}
-	}
-
-#endif
-
+/* No compass identified => Retry */
 	if(hardwareCompass == 0)
 	{
 		uint8_t data = WHO_AM_I;
@@ -318,7 +283,7 @@ void compass_init(uint8_t fast, uint8_t gain)
 			hardwareCompass = HMC5883L;
 	}
 
-// was in else before !	
+/* Assume that a HMC5883L is equipped by default if detection still failed */
 	if(hardwareCompass == 0)
 		hardwareCompass = HMC5883L;	
 	
@@ -341,12 +306,6 @@ void compass_init(uint8_t fast, uint8_t gain)
 	}
 #endif
 	
-	
-	if(hardwareCompass == LSM303DLHC)
-	{
-		compass_init_LSM303DLHC(fast, gain);
-	}
-	else
 	if(hardwareCompass == LSM303D)
 	{
 		compass_init_LSM303D(fast, gain);
@@ -374,11 +333,6 @@ void compass_init(uint8_t fast, uint8_t gain)
 //  ===============================================================================
 int compass_calib(void)
 {
-	if(hardwareCompass == LSM303DLHC)
-	{
-		return compass_calib_common(); // 170821 zur Zeit kein lowpass filtering gefunden, nur high pass auf dem Register ohne Erkl�rung
-	}
-	else
 	if(hardwareCompass == LSM303D)
 	{
 		LSM303D_accel_set_onchip_lowpass_filter_bandwidth(773);
@@ -406,11 +360,6 @@ int compass_calib(void)
 //  ===============================================================================
 void compass_sleep(void)
 {
-	if(hardwareCompass == LSM303DLHC)
-	{
-		compass_sleep_LSM303DLHC();
-	}
-	else
 	if(hardwareCompass == LSM303D)
 	{
 		compass_sleep_LSM303D();
@@ -430,11 +379,6 @@ void compass_sleep(void)
 //  ===============================================================================
 void compass_read(void)
 {
-	if(hardwareCompass == LSM303DLHC)
-	{
-		compass_read_LSM303DLHC();
-	}
-	else
 	if(hardwareCompass == LSM303D)
 	{
 		compass_read_LSM303D();
@@ -453,7 +397,6 @@ void compass_read(void)
 //  ===============================================================================
 void accelerator_init(void)
 {
-//	if((hardwareCompass != LSM303D) && (hardwareCompass != LSM303DLHC))
 	if(hardwareCompass == HMC5883L)
 		accelerator_init_MMA8452Q();
 }
@@ -465,7 +408,6 @@ void accelerator_init(void)
 //  ===============================================================================
 void accelerator_sleep(void)
 {
-//	if((hardwareCompass != LSM303D) && (hardwareCompass != LSM303DLHC))
 	if(hardwareCompass == HMC5883L)
 		accelerator_sleep_MMA8452Q();
 }
@@ -477,11 +419,6 @@ void accelerator_sleep(void)
 //  ===============================================================================
 void  acceleration_read(void)
 {
-	if(hardwareCompass == LSM303DLHC)
-	{
-		acceleration_read_LSM303DLHC();
-	}
-	else
 	if(hardwareCompass == LSM303D)
 	{
 		acceleration_read_LSM303D();
@@ -547,36 +484,6 @@ void LSM303D_modify_reg(unsigned reg, uint8_t clearbits, uint8_t setbits)
 	val &= ~clearbits;
 	val |= setbits;
 	LSM303D_write_checked_reg(reg, val);
-}
-
-
-
-//  ===============================================================================
-//	LSM303DLHC_accelerator_read_req
-/// @brief	
-//  ===============================================================================
-uint8_t LSM303DLHC_accelerator_read_req(uint8_t addr)
-{
-  uint8_t data;
-
-	I2C_Master_Transmit( DEVICE_ACCELARATOR_303DLHC, &addr, 1);
-	I2C_Master_Receive(  DEVICE_ACCELARATOR_303DLHC, &data, 1);
-	return data;
-}
-
-
-//  ===============================================================================
-//	LSM303DLHC_accelerator_write_req
-/// @brief	
-//  ===============================================================================
-void LSM303DLHC_accelerator_write_req(uint8_t addr, uint8_t value)
-{
-  uint8_t data[2];
-	
-	/* enable accel*/
-	data[0] = addr;
-	data[1] = value;
-	I2C_Master_Transmit( DEVICE_ACCELARATOR_303DLHC, data, 2);
 }
 
 /*
@@ -1128,204 +1035,6 @@ void compass_read_LSM303D(void)
 	compass_DY_f = (int16_t)(mag_report_y * 1000.0f);
 	compass_DZ_f = (int16_t)(mag_report_z * 1000.0f);
 */	
-}
-
-
-//  ===============================================================================
-//	compass_init_LSM303DLHC
-/// @brief	The new ST 303DLHC 2017/2018
-///					This might be called several times with different gain values during calibration
-///					but gain change is not supported at the moment.
-///					parts from KOMPASS LSM303DLH-compass-app-note.pdf
-///
-/// @param 	gain:
-/// @param 	fast:
-//  ===============================================================================
-
-
-
-void compass_init_LSM303DLHC(uint8_t fast, uint8_t gain)
-{
-// acceleration
-	// todo : BDU an (wie 303D) und high res, beides in REG4
-		//LSM303D_write_checked_reg(DLHC_CTRL_REG2_A,0x00); // 0x00 default, hier k�nnte filter sein 0x8?80, cutoff freq. not beschrieben
-	
-	if(fast == 0)
-	{
-		LSM303DLHC_accelerator_write_req(DLHC_CTRL_REG1_A, 0x27); // 10 hz
-	}
-	else
-	{
-		LSM303DLHC_accelerator_write_req(DLHC_CTRL_REG1_A, 0x57); // 100 hz
-	}
-//	LSM303D_write_checked_reg(DLHC_CTRL_REG4_A, 0x88); // 0x88: BDU + HighRes, BDU ist doof!
-	LSM303D_write_checked_reg(DLHC_CTRL_REG4_A, 0x00); // 0x00 little-endian, ist's immer
-//	LSM303D_write_checked_reg(DLHC_CTRL_REG4_A, 0x08); // 0x08: HighRes
-	//LSM303D_write_checked_reg(DLHC_CTRL_REG4_A, 0x80); // 
-	
-	
-// compass
-		LSM303D_write_checked_reg(DLHC_CRA_REG_M,0x10);	// 15 Hz
-
-	if(fast == 0)
-	{
-		LSM303D_write_checked_reg(DLHC_CRA_REG_M,0x10);	// 15 Hz
-	}
-	else
-	{
-		LSM303D_write_checked_reg(DLHC_CRA_REG_M,0x18);	// 75 Hz
-	}
-	LSM303D_write_checked_reg(DLHC_CRB_REG_M,0x20);	// 0x60: 2.5 Gauss ,0x40: +/-1.9 Gauss,0x20: +/-1.3 Gauss
-	LSM303D_write_checked_reg(DLHC_MR_REG_M,0x00); //continuous conversation
-	
-
-	
-	return;
-	
-	
-//		LSM303D_write_checked_reg(,);
-//		LSM303D_write_checked_reg(DLHC_CTRL_REG1_A, 0x27); // 0x27 = acc. normal mode with ODR 50Hz - passt nicht mit datenblatt!!
-//		LSM303D_write_checked_reg(DLHC_CTRL_REG4_A, 0x40); // 0x40 = full scale range �2 gauss in continuous data update mode and change the little-endian to a big-endian structure.
-
-	if(fast == 0)
-	{
-		LSM303DLHC_accelerator_write_req(DLHC_CTRL_REG1_A, 0x27); // 0x27 = acc. normal mode, all axes, with ODR 10HZ laut LSM303DLHC, page 25/42
-		//
-		//LSM303D_write_checked_reg(DLHC_CTRL_REG2_A,0x00); // 0x00 default, hier k�nnte filter sein 0x8?80, cutoff freq. not beschrieben
-		//LSM303D_write_checked_reg(DLHC_CTRL_REG3_A,0x00); // 0x00 default
-		//
-		LSM303DLHC_accelerator_write_req(DLHC_CTRL_REG4_A, 0x00); // 0x00 = ich glaube little-endian ist gut
-//		LSM303D_write_checked_reg(DLHC_CTRL_REG4_A, 0x40); // 0x00 = ich glaube little-endian ist gut
-		//
-		//LSM303D_write_checked_reg(DLHC_CTRL_REG5_A,0x00); // 0x00 default
-		//LSM303D_write_checked_reg(DLHC_CTRL_REG6_A,0x00); // 0x00 default
-		// magnetic sensor
-		LSM303D_write_checked_reg(DLHC_CRA_REG_M,0x10);	// 15 Hz
-	}
-	else
-	{
-		LSM303DLHC_accelerator_write_req(DLHC_CTRL_REG1_A, 0x57); // 0x57 = acc. normal mode, all axes, with ODR 100HZ, LSM303DLHC, page 25/42
-		//
-		//LSM303D_write_checked_reg(DLHC_CTRL_REG2_A,0x00); // 0x00 default, hier k�nnte filter sein 0x8?80, cutoff freq. not beschrieben
-		//LSM303D_write_checked_reg(DLHC_CTRL_REG3_A,0x00); // 0x00 default
-		//
-		LSM303DLHC_accelerator_write_req(DLHC_CTRL_REG4_A, 0x00); // 0x00 = ich glaube little-endian ist gut
-//		LSM303D_write_checked_reg(DLHC_CTRL_REG4_A, 0x40); // 0x00 = ich glaube little-endian ist gut
-		//
-		//LSM303D_write_checked_reg(DLHC_CTRL_REG5_A,0x00); // 0x00 default
-		//LSM303D_write_checked_reg(DLHC_CTRL_REG6_A,0x00); // 0x00 default
-		// magnetic sensor
-		LSM303D_write_checked_reg(DLHC_CRA_REG_M,0x18); // 75 Hz
-	}
-	LSM303D_write_checked_reg(DLHC_CRB_REG_M,0x02);	// +/-1.9 Gauss
-	LSM303D_write_checked_reg(DLHC_MR_REG_M,0x00); //continuous conversation
-	
-	
-/*	
-// matthias version 160620
-	if(fast == 0)
-	{
-		LSM303D_write_checked_reg(ADDR_CTRL_REG0, 0x00);
-		LSM303D_write_checked_reg(ADDR_CTRL_REG1, 0x3F); // mod 12,5 Hz 3 instead of 6,25 Hz 2
-		LSM303D_write_checked_reg(ADDR_CTRL_REG2, 0xC0); // anti alias 50 Hz (minimum)
-		LSM303D_write_checked_reg(ADDR_CTRL_REG3, 0x00);
-		LSM303D_write_checked_reg(ADDR_CTRL_REG4, 0x00);
-		LSM303D_write_checked_reg(ADDR_CTRL_REG5, 0x68); // mod 12,5 Hz 8 instead of 6,25 Hz 4
-	}
-	else
-	{
-		LSM303D_write_checked_reg(ADDR_CTRL_REG0, 0x00);
-		LSM303D_write_checked_reg(ADDR_CTRL_REG1, 0x6F); // 100 Hz
-		LSM303D_write_checked_reg(ADDR_CTRL_REG2, 0xC0);
-		LSM303D_write_checked_reg(ADDR_CTRL_REG3, 0x00);
-		LSM303D_write_checked_reg(ADDR_CTRL_REG4, 0x00);
-		LSM303D_write_checked_reg(ADDR_CTRL_REG5, 0x74); // 100 Hz
-	}
-	LSM303D_write_checked_reg(ADDR_CTRL_REG6, 0x00);
-	LSM303D_write_checked_reg(ADDR_CTRL_REG7, 0x00);
-*/
-	return;
-}
-
-//  ===============================================================================
-//	compass_sleep_LSM303DLHC
-/// @brief	The new 2017/2018 compass chip.
-//  ===============================================================================
-void compass_sleep_LSM303DLHC(void)
-{
-	LSM303DLHC_accelerator_write_req(DLHC_CTRL_REG1_A, 0x07);	// CTRL_REG1_A: linear acceleration Power-down mode
-	LSM303D_write_checked_reg(DLHC_MR_REG_M, 0x02); 		// MR_REG_M: magnetic sensor Power-down mode
-}
-
-
-//  ===============================================================================
-//	compass_read_LSM303DLHC
-/// @brief	The new 2017/2018 compass chip.
-//  ===============================================================================
-void compass_read_LSM303DLHC(void)
-{
-  uint8_t data;
-	
-  memset(magDataBuffer,0,6);
-
-	compass_DX_f = 0;
-	compass_DY_f = 0;
-	compass_DZ_f = 0;
-	
-	for(int i=0;i<6;i++)
-	{
-		data = DLHC_OUT_X_L_M + i;
-		I2C_Master_Transmit( DEVICE_COMPASS_303D, &data, 1);
-		I2C_Master_Receive(  DEVICE_COMPASS_303D, &magDataBuffer[i], 1);
-	}
-
-	// 303DLHC new order
-	compass_DX_f = (((int16_t)((magDataBuffer[0] << 8) | (magDataBuffer[1]))));
-	compass_DZ_f = (((int16_t)((magDataBuffer[2] << 8) | (magDataBuffer[3]))));
-	compass_DY_f = (((int16_t)((magDataBuffer[4] << 8) | (magDataBuffer[5]))));
-
-	// no rotation, otherwise see compass_read_LSM303D()
-	return;
-}
-
-
-//  ===============================================================================
-//	acceleration_read_LSM303DLHC
-/// @brief	The new 2017/2018 compass chip.
-//  ===============================================================================
-void acceleration_read_LSM303DLHC(void)
-{
-  uint8_t data;
-	float xraw_f, yraw_f, zraw_f;
-	float accel_report_x, accel_report_y, accel_report_z;
-	
-  memset(accDataBuffer,0,6);
-
-	accel_DX_f = 0;
-	accel_DY_f = 0;
-	accel_DZ_f = 0;
-	
-	for(int i=0;i<6;i++)
-	{
-		data = DLHC_OUT_X_L_A + i;
-		I2C_Master_Transmit( DEVICE_ACCELARATOR_303DLHC, &data, 1);
-		I2C_Master_Receive(  DEVICE_ACCELARATOR_303DLHC, &accDataBuffer[i], 1);
-	}
-	
-	xraw_f = ((float)( (int16_t)((accDataBuffer[1] << 8) | (accDataBuffer[0]))));
-	yraw_f = ((float)( (int16_t)((accDataBuffer[3] << 8) | (accDataBuffer[2]))));
-	zraw_f = ((float)( (int16_t)((accDataBuffer[5] << 8) | (accDataBuffer[4]))));	
-
-	rotate_accel_3f(&xraw_f, &yraw_f, &zraw_f); 
-	
-	// mh f�r 303D
-	accel_report_x = xraw_f;
-	accel_report_y = yraw_f;
-	accel_report_z = zraw_f;
-
-	accel_DX_f = ((int16_t)(accel_report_x));
-	accel_DY_f = ((int16_t)(accel_report_y));
-	accel_DZ_f = ((int16_t)(accel_report_z));
 }
 
 

@@ -105,7 +105,7 @@ HAL_StatusTypeDef I2C_Master_TransmitNoStop(  uint16_t DevAddress, uint8_t *pDat
 	
 	global.dataSendToSlaveStopEval = 1;
 	
-  global.I2C_SystemStatus = HAL_I2C_Master_Transmit(&I2cHandle, DevAddress,  pData, Size, 100 /*FIXME , 0*/);
+  global.I2C_SystemStatus = HAL_I2C_Master_Transmit(&I2cHandle, DevAddress,  pData, Size, 0);
 	if(global.I2C_SystemStatus != HAL_OK)
 	{
 		I2C_Error_count();
@@ -128,7 +128,7 @@ HAL_StatusTypeDef I2C_Master_Transmit(  uint16_t DevAddress, uint8_t *pData, uin
 	
 	global.dataSendToSlaveStopEval = 1;
 
-	global.I2C_SystemStatus = HAL_I2C_Master_Transmit(&I2cHandle, DevAddress,  pData, Size,100 /*FIXME , 1*/);
+	global.I2C_SystemStatus = HAL_I2C_Master_Transmit(&I2cHandle, DevAddress,  pData, Size, 2);
 	if(global.I2C_SystemStatus != HAL_OK)
 	{
 		I2C_Error_count();
