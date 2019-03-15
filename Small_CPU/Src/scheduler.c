@@ -458,11 +458,9 @@ void schedule_check_resync(void)
   */
 void scheduleDiveMode(void)
 {
-//	uint32_t tickstart = 0;
 	uint32_t ticksdiff = 0; 
 	uint32_t lasttick = 0;
 
-	uint32_t turbo_seconds = 0;
 	uint8_t counterAscentRate = 0;
 	float lastPressure_bar = 0.0f;
 	global.dataSendToMaster.mode = MODE_DIVE;
@@ -498,9 +496,10 @@ void scheduleDiveMode(void)
 				global.check_sync_not_running++;
 				pressure_update();
 				scheduleUpdateDeviceData();
+#ifdef DEMOMODE
 				if(global.demo_mode)
 				{
-					turbo_seconds = demo_modify_temperature_and_pressure(global.lifeData.dive_time_seconds, Scheduler.counterPressure100msec, global.ceiling_from_main_CPU_mbar);
+					int turbo_seconds = demo_modify_temperature_and_pressure(global.lifeData.dive_time_seconds, Scheduler.counterPressure100msec, global.ceiling_from_main_CPU_mbar);
 					if(turbo_seconds)
 					{
 						global.lifeData.dive_time_seconds += turbo_seconds;
@@ -510,7 +509,7 @@ void scheduleDiveMode(void)
 					if((global.lifeData.counterSecondsShallowDepth > 1) && (global.lifeData.counterSecondsShallowDepth < (global.settings.timeoutDiveReachedZeroDepth - 10)))
 						global.lifeData.counterSecondsShallowDepth = (global.settings.timeoutDiveReachedZeroDepth - 10);
 				}
-				
+#endif
 				
 				//Calc ascentrate every two second (20 * 100 ms)
 				counterAscentRate++;
@@ -1543,7 +1542,7 @@ uint8_t scheduleSetButtonResponsiveness(void)
 }
 
 
-//save time diffenrence
+//save time difference
 uint32_t time_elapsed_ms(uint32_t ticksstart,uint32_t ticksnow)
 {
 	if(ticksstart <= ticksnow)

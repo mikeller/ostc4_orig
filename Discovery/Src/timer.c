@@ -28,11 +28,10 @@
 
 #include "data_central.h"
 
-long stopWatchTime_Second = 0;
-_Bool bStopWatch = false;
-float stopWatchAverageDepth_Meter = 0.0f;
-long safetyStopCountDown_Second = 0;
-_Bool bSafetyStop = false;
+static long stopWatchTime_Second = 0;
+static _Bool bStopWatch = false;
+static float stopWatchAverageDepth_Meter = 0.0f;
+static long safetyStopCountDown_Second = 0;
 
 void timer_init(void)
 {
@@ -48,7 +47,7 @@ void timer_UpdateSecond(_Bool checkOncePerSecond)
     static int last_second = -1;
     static _Bool bSafetyStop = false;
     static float last_depth_meter = 0;
-    //static _Bool CountDownStarted = false;
+
     if(checkOncePerSecond)
     {
         int now =  current_second();

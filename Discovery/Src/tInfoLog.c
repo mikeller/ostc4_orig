@@ -57,7 +57,6 @@ GFX_DrawCfgWindow	INFOLOGwindow;
 SInfoLogMemory infolog;
 
 /* Private function prototypes -----------------------------------------------*/
-void nextLineInfoLog(void);
 void tInfoLog_BuildAndShowNextPage(void);
 void tInfoLog_nextLine(void);
 void showLog(void);
@@ -162,6 +161,7 @@ void sendActionToInfoLogList(uint8_t sendAction)
     case ACTION_MODE_CHANGE:
     case ACTION_BUTTON_BACK:
         stepBackInfo();
+        break;
     default:
         break;
     case ACTION_IDLE_TICK:
@@ -192,6 +192,7 @@ void sendActionToInfoLogShow(uint8_t sendAction)
             showLogExit();
         }
         show_logbook_exit();
+        break;
     default:
         break;
     case ACTION_IDLE_TICK:

@@ -40,57 +40,26 @@
 
 /* Private variables ---------------------------------------------------------*/
 
-GFX_DrawCfgScreen	tLOGscreen;
-GFX_DrawCfgScreen	tLOGbackground;
+static GFX_DrawCfgScreen	tLOGscreen;
+static GFX_DrawCfgScreen	tLOGbackground;
 
 
-void print_gas_name(char* output,uint8_t lengh,uint8_t oxygen,uint8_t helium);
-int16_t get_colour(int16_t color);
+static void print_gas_name(char* output,uint8_t lengh,uint8_t oxygen,uint8_t helium);
+static int16_t get_colour(int16_t color);
 
 /* Overview */
-void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards);
+static void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards);
 /* Temperature */
-void show_logbook_logbook_show_log_page2(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards);
+static void show_logbook_logbook_show_log_page2(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards);
 /* Gas List */
-void show_logbook_logbook_show_log_page3(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards);
+static void show_logbook_logbook_show_log_page3(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards);
 /* ppO2 */
-void show_logbook_logbook_show_log_page4(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards);
+static void show_logbook_logbook_show_log_page4(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards);
 
-
-inline uint32_t MinU32LOG(uint32_t a, uint32_t b)
-{
-    return ((a<b)?a:b);
-}
-
-uint32_t MaxU32LOG(uint32_t a, uint32_t b)
+static inline uint32_t MaxU32LOG(uint32_t a, uint32_t b)
 {
     return((a>b)?a:b);
 }
-
-void write_label_(GFX_DrawCfgScreen *screenInput, SWindowGimpStyle win, const tFont *Font, uint8_t color, const char *text)
-{
-    GFX_DrawCfgWindow	hgfx;
-
-    if( win.right > 799)
-         win.right = 799;
-
-    if(win.top > 479)
-        win.top = 479;
-    hgfx.Image = screenInput;
-    hgfx.WindowNumberOfTextLines = 1;
-    hgfx.WindowLineSpacing = 0;
-    hgfx.WindowTab = 0;
-    hgfx.WindowX0 = win.left;
-    hgfx.WindowX1 = win.right;
-    hgfx.WindowY1 = 479 - win.top;
-    if(hgfx.WindowY1 < Font->height)
-        hgfx.WindowY0 = 0;
-    else
-        hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
-
-    GFX_write_label(Font, &hgfx, text, color);
-}
-
 
 /**
   ******************************************************************************
@@ -108,7 +77,7 @@ void write_label_(GFX_DrawCfgScreen *screenInput, SWindowGimpStyle win, const tF
   * @param  colordata: 			1
   * @retval None
   */
-void show_logbook_draw_depth_graph(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards, SWindowGimpStyle* window, short mode, uint16_t dataLength, uint16_t* depthdata, uint8_t * colordata, uint16_t * decostopdata)
+static void show_logbook_draw_depth_graph(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards, SWindowGimpStyle* window, short mode, uint16_t dataLength, uint16_t* depthdata, uint8_t * colordata, uint16_t * decostopdata)
 {
     SLogbookHeader logbookHeader;
     SWindowGimpStyle wintemp = *window;
@@ -285,7 +254,7 @@ void show_logbook_draw_depth_graph(GFX_DrawCfgScreen *hgfx, uint8_t StepBackward
     * fit to multiples of 1ï¿½C (data format is 1/10ï¿½C)
     */
 
-void scaleAdapt(	int InputTop, int InputBottom,
+static void scaleAdapt(	int InputTop, int InputBottom,
                                     int16_t *OutputMinValue, int16_t *OutputMaxValue, int *OutputTop, int *OutputBottom,
                                     uint16_t *OutputStepOfScale, int16_t *OutputMaxValueOnScale)
 {
@@ -387,7 +356,7 @@ void scaleAdapt(	int InputTop, int InputBottom,
     * for temperature, input is ï¿½C * 10
     */
 
-void scaleHelper(	uint16_t InputDataLength, int16_t *InputDataArray, int InputTop, int InputBottom,
+static void scaleHelper(	uint16_t InputDataLength, int16_t *InputDataArray, int InputTop, int InputBottom,
                                     int16_t *OutputMinValue, int16_t *OutputMaxValue, int *OutputTop, int *OutputBottom,
                                     uint16_t *OutputStepOfScale, int16_t *OutputMaxValueOnScale)
 {
@@ -441,7 +410,7 @@ void scaleHelper(	uint16_t InputDataLength, int16_t *InputDataArray, int InputTo
   * @param  hgfx:
   * @retval None
   */
-void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t StepBackwards)
+static void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t StepBackwards)
 {
     SWindowGimpStyle wintemp;
     SWindowGimpStyle winsmal;
@@ -661,7 +630,7 @@ void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t StepBac
 }
 
 
-void show_logbook_logbook_show_log_page2(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards)
+static void show_logbook_logbook_show_log_page2(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards)
 {
     //*** Page2: Depth and Temperature ****
 
@@ -751,189 +720,7 @@ void show_logbook_logbook_show_log_page2(GFX_DrawCfgScreen *hgfx, uint8_t StepBa
 }
 
 
-void show_logbook_logbook_show_log_page2_original(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards)
-{
-    //*** Page2: Depth and Temperature ****
-
-    SWindowGimpStyle wintemp;
-    SWindowGimpStyle winsmal;
-    wintemp.left = 50;
-    wintemp.right = 799 - wintemp.left;
-    wintemp.top = 50;
-    wintemp.bottom = 479 - 40;
-
-    SLogbookHeader logbookHeader;
-
-    logbook_getHeader(StepBackwards,&logbookHeader);
-    uint16_t dataLength = 0;
-    uint16_t depthdata[1000];
-    uint8_t  gasdata[1000];
-    int16_t  tempdata[1000];
-    uint16_t decoDepthdata[1000];
-    uint16_t *pDecoDepthData = 0;
-
-    dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, tempdata, NULL, NULL, NULL, NULL, NULL, NULL, NULL, decoDepthdata);
-
-/* test
-    for(int i = 0; i<dataLength/2; i++)
-        decoDepthdata[i] = 300;
-
-    for(int i = dataLength/2; i<dataLength; i++)
-        decoDepthdata[i] = 1200;
-*/
-    for(int i = 0; i<dataLength; i++)
-    {
-        if(decoDepthdata[i] >= 300)
-        {
-            pDecoDepthData = decoDepthdata;
-            break;
-        }
-    }
-    //--- print coordinate system & depth graph ---
-    show_logbook_draw_depth_graph(hgfx, StepBackwards, &wintemp, 0, dataLength, depthdata, gasdata, pDecoDepthData);
-
-    //*** Temperature *************************************************
-
-
-    int16_t datamax = -1000; // ï¿½C * 10
-    int16_t datamin = +1000;
-    for(int i = 0; i < dataLength;i++)
-    {
-        if(tempdata[i]>datamax)
-            datamax = tempdata[i];
-        if(tempdata[i]< datamin)
-            datamin = tempdata[i];
-    }
-    float maxTmp = ((float)datamax) /10.f;
-    float minTmp = ((float)datamin) /10.f;
-    int deltaTmp = maxTmp - minTmp;
-    int tmpstep = 2;
-
-    // 5 different scales: 1ï¿½C, 2ï¿½C, 4ï¿½C, 5ï¿½C, 10ï¿½C
-    // with 6 lines == 5 steps
-    if((deltaTmp) <=5)
-    {
-        tmpstep = 1;
-    }
-    else
-    if(deltaTmp <= (5*2))
-    {
-        tmpstep = 2;
-    }
-    else
-    if(deltaTmp <= (5 * 4))
-    {
-        tmpstep = 4;
-    }
-    else
-    if(deltaTmp <= (5 * 5))
-    {
-        tmpstep = 5;
-    }
-    else
-    {
-        tmpstep = 10;
-    }
-//	int steps = deltaTmp/tmpstep;
-
-
-//	int steps = deltaTmp/5;
-//	int tmpstep = 5;
-//	if(steps > 4)
-//		tmpstep = 10;
-
-    int maxtmpline = 0;
-    int mintmpline = 0;
-    if(minTmp < 0)
-    {
-        if(minTmp >= -5)
-        {
-            mintmpline = -5;
-
-        }
-        else if(minTmp >= -10)
-        {
-            mintmpline = -10;
-        }
-        else
-            mintmpline = -15;
-    }
-
-    if(maxTmp > 0)
-    {
-        while(maxtmpline < maxTmp)
-            maxtmpline += tmpstep;
-    }
-
-    if(tmpstep < 5)
-        maxtmpline = MaxU32LOG(maxtmpline, 10);
-    else if(tmpstep == 5)
-        maxtmpline = MaxU32LOG(maxtmpline, 25);
-    else
-        maxtmpline = 50;
-
-    maxtmpline += mintmpline;
-
-    //--- print temperature labels ---
-    // input maxtmpline, tmpstep, deltaline
-
-    winsmal.left = wintemp.right +6;
-    winsmal.top	= wintemp.top - 3;
-    winsmal.right =  wintemp.right + 30;
-    winsmal.bottom = winsmal.top + 16;
-
-    write_label_(hgfx, winsmal,&FontT24,CLUT_LogbookTemperature,"[C]");
-
-    int deltaline = (wintemp.bottom - wintemp.top)/5;
-    char msg[3];
-    int tmp = maxtmpline;
-    for(int i = 1; i<=5; i++)
-    {
-        tmp -= 	tmpstep;
-        //if(tmp < 0)
-            //break;
-        winsmal.top	= wintemp.top + deltaline * i - 14;
-        winsmal.bottom = winsmal.top + 16;
-        snprintf(msg,3,"%2i",tmp);
-        write_label_(hgfx, winsmal,&FontT24,CLUT_LogbookTemperature,msg);
-    }
-
-
-    //--- print temperature graph ---
-    // input tempdata[i], maxtmpline, mintmpline, maxTmp, minTmp, deltaline, wintemp.top, dataLength, datamax,
-
-    //adapt window
-    float ftmp =((maxtmpline - minTmp) * deltaline) /tmpstep +  wintemp.top;
-    wintemp.bottom = ftmp;
-    if((ftmp - (int)ftmp) >= 0.5f)
-        wintemp.bottom++;
-
-    ftmp = ((maxtmpline - maxTmp) * deltaline) /tmpstep + wintemp.top;
-    wintemp.top = ftmp;
-    if((ftmp - (int)ftmp) >= 0.5f)
-        wintemp.top++;
-
-    if(wintemp.top <= wintemp.bottom)
-    {
-        for(int i = 0; i < dataLength;i++)
-        {
-            tempdata[i] -= mintmpline;
-        }
-        datamax -= mintmpline;
-        // hw 160518
-        // es wird nur das Fenster (wintemp.top, wintemp.bottom) verwendet in dem Daten sind
-        // daher muss datamin angegeben werden
-        // der Gesamtbereich ist uninteressant
-        // Bsp Temperatur von 8ï¿½C bis 5ï¿½C
-        // Y-Achse ist 10ï¿½C (oben) bis 0ï¿½C (unten)
-        // aber wintemp.top ist 127
-        // und wintemp.bottom ist 243
-        GFX_graph_print(hgfx,&wintemp,0,1,datamax,datamin, (uint16_t *)tempdata,dataLength,CLUT_LogbookTemperature, NULL);
-    }
-}
-
-
-void build_logbook_test(uint8_t page, uint8_t StepBackwards)
+static void build_logbook_test(uint8_t page, uint8_t StepBackwards)
 {
     uint32_t lastScreen,lastBackground;
 
@@ -1000,7 +787,7 @@ void show_logbook_exit(void)
 }
 
 
-void show_logbook_logbook_show_log_page3(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards)
+static void show_logbook_logbook_show_log_page3(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards)
 {
     SWindowGimpStyle wintemp;
     SWindowGimpStyle winsmal;
@@ -1051,7 +838,7 @@ void show_logbook_logbook_show_log_page3(GFX_DrawCfgScreen *hgfx, uint8_t StepBa
         */
 }
 
-void show_logbook_logbook_show_log_page4(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards)
+static void show_logbook_logbook_show_log_page4(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards)
 { SWindowGimpStyle wintemp;
     SWindowGimpStyle winsmal;
     wintemp.left = 50;
@@ -1217,7 +1004,7 @@ void show_logbook_logbook_show_log_page4(GFX_DrawCfgScreen *hgfx, uint8_t StepBa
     //button_start_single_action(surf1_menu_logbook_current_page, surf1_menu_logbook_show_log_page1, surf1_menu_logbook_show_log_next);
 }
 
-void print_gas_name(char* output,uint8_t length,uint8_t oxygen,uint8_t helium)
+static void print_gas_name(char* output,uint8_t length,uint8_t oxygen,uint8_t helium)
 {
     if(helium == 0)
     {
@@ -1238,7 +1025,7 @@ void print_gas_name(char* output,uint8_t length,uint8_t oxygen,uint8_t helium)
 
 }
 
-int16_t get_colour(int16_t color)
+static int16_t get_colour(int16_t color)
 {
      return CLUT_GasSensor1 + color;
 }

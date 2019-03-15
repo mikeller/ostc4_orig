@@ -46,30 +46,24 @@
 #define CMD_ADC_4096 0x08 // ADC OSR=4096
 #define CMD_PROM_RD 0xA0 // Prom read command
 
+static uint16_t get_ci_by_coef_num(uint8_t coef_num);
+//void pressure_calculation_new(void);
+//void pressure_calculation_old(void);
+static void pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015(void);
+static uint8_t crc4(uint16_t n_prom[]);
 
-//uint16_t  get_ci(uint8_t cmd);
-//uint8_t  get_ci_crc(void);
-uint16_t  get_ci_by_coef_num(uint8_t coef_num);
-void pressure_calculation_new(void);
-void pressure_calculation_old(void);
-void pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015(void);
-
-uint8_t crc4(uint16_t n_prom[]);
-
-HAL_StatusTypeDef pressure_sensor_get_data(void);
-uint32_t get_adc(void);
+static HAL_StatusTypeDef pressure_sensor_get_data(void);
+static uint32_t get_adc(void);
 uint8_t pressureSensorInitSuccess = 0;
 
-//void test_calculation(void);
+static uint16_t C[8] = { 1 };
+static uint32_t D1 = 1;
+static uint32_t D2 = 1;
+static uint8_t n_crc;
 
-uint16_t C[8] = { 1 };
-uint32_t D1 = 1;
-uint32_t D2 = 1;
-uint8_t n_crc;
-
-int64_t C5_x_2p8 = 1;
-int64_t C2_x_2p16 = 1;
-int64_t C1_x_2p15 = 1;
+static int64_t C5_x_2p8 = 1;
+static int64_t C2_x_2p16 = 1;
+static int64_t C1_x_2p15 = 1;
 
 /*
 short C2plus10000 = -1;
@@ -79,10 +73,10 @@ short UT1 = -1;
 short C6plus100 = -1;
 */
 
-float ambient_temperature = 0;
-float ambient_pressure_mbar = 0;
-float surface_pressure_mbar = 1000;
-float surface_ring_mbar[31] = { 0 };
+static float ambient_temperature = 0;
+static float ambient_pressure_mbar = 0;
+static float surface_pressure_mbar = 1000;
+static float surface_ring_mbar[31] = { 0 };
 
 uint8_t secondCounterSurfaceRing = 0;
 
@@ -91,14 +85,10 @@ float get_temperature(void)
 	return ambient_temperature;
 }
 
-//float test = 1000;
-
 float get_pressure_mbar(void)
 {
-//	return test;
 	return ambient_pressure_mbar;
 }
-
 
 float get_surface_mbar(void)
 {
@@ -142,7 +132,7 @@ void update_surface_pressure(uint8_t call_rhythm_seconds)
 	surface_ring_mbar[hole] = 0;
 }
 
-
+#ifdef DEMOMODE
 float demo_modify_temperature_helper(float bottom_mbar_diff_to_surface)
 {
 	const float temperature_surface = 31.0;
@@ -217,9 +207,11 @@ uint32_t demo_modify_temperature_and_pressure(int32_t divetime_in_seconds, uint8
 		return 0;
 	}
 }
+#endif
 
 
 /* called just once on power on */
+/* TBD old DR5 code? */
 void init_pressure_DRx(void)
 {
 	uint8_t resetCommand[1] = {0x1E};
@@ -277,12 +269,12 @@ uint8_t init_pressure(void)
 }
 
 
-uint32_t get_adc(void)
+static uint32_t get_adc(void)
 {
 	uint8_t buffer[1];
 	uint8_t resivebuf[4];
 	uint32_t answer = 0;
-	//
+
 	buffer[0] = 0x00; // Get ADC
 	I2C_Master_Transmit( DEVICE_PRESSURE, buffer, 1);
 	I2C_Master_Receive(  DEVICE_PRESSURE, resivebuf, 4);
@@ -293,7 +285,7 @@ uint32_t get_adc(void)
 }
 
 
-uint16_t  get_ci_by_coef_num(uint8_t coef_num)
+static uint16_t get_ci_by_coef_num(uint8_t coef_num)
 {
 	uint8_t resivebuf[2];
 
@@ -315,7 +307,7 @@ uint8_t pressure_update(void)
 }
 
 
-uint32_t pressure_sensor_get_one_value(uint8_t cmd, HAL_StatusTypeDef *statusReturn)
+static uint32_t pressure_sensor_get_one_value(uint8_t cmd, HAL_StatusTypeDef *statusReturn)
 {
 	uint8_t command = CMD_ADC_CONV + cmd;
 	HAL_StatusTypeDef statusReturnTemp = HAL_TIMEOUT;
@@ -339,7 +331,7 @@ uint32_t pressure_sensor_get_one_value(uint8_t cmd, HAL_StatusTypeDef *statusRet
 }
 
 
-HAL_StatusTypeDef pressure_sensor_get_data(void)
+static HAL_StatusTypeDef pressure_sensor_get_data(void)
 {
 	HAL_StatusTypeDef statusReturn1 = HAL_TIMEOUT;
 	HAL_StatusTypeDef statusReturn2 = HAL_TIMEOUT;
@@ -372,14 +364,9 @@ void pressure_calculation(void)
 		return;
 	
 	pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015();
-	return;
-
-	// before October 2016:	pressure_calculation_old();
-	
-//	pressure_calculation_new();
 }
 
-void pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015(void)
+static void pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015(void)
 {
 	uint32_t local_D1; // ADC value of the pressure conversion
 	uint32_t local_D2; // ADC value of the temperature conversion
@@ -446,6 +433,7 @@ void pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015(void)
 }
 
 
+/*
 void pressure_calculation_new(void)
 {
 #define POW2_8	(256)
@@ -511,8 +499,9 @@ if(T < 2000) // low temperature
 	ambient_temperature 	= ((float)T) / 100;
 	ambient_pressure_mbar	= ((float)P) / 10;
 }
+*/
 
-
+/*
 void pressure_calculation_old(void) {
 	//
 	double ambient_temperature_centigrad = 0;
@@ -528,12 +517,6 @@ void pressure_calculation_old(void) {
 	static int64_t sens2 = 0;
 	static int64_t t2 = 0;
 
-/* info
-uint16_t C[8] = { 1 };
-uint32_t D1 = 1;
-uint32_t D2 = 1;
-uint8_t n_crc;
-*/
 	if((D2 == 0) || (D1 == 0))
 		return;
 	//
@@ -597,12 +580,13 @@ uint8_t n_crc;
 	ambient_pressure_decimbar = temp; // to float/double
 	ambient_pressure_mbar = ambient_pressure_decimbar / 10;
 }
+*/
 
 
 /* taken from AN520 by meas-spec.com dated 9. Aug. 2011
  * short and int are both 16bit according to AVR/GCC google results
  */
-uint8_t crc4(uint16_t n_prom[])
+static uint8_t crc4(uint16_t n_prom[])
 {
 uint16_t cnt; // simple counter
 uint16_t n_rem; // crc reminder
