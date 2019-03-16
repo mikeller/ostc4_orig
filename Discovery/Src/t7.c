@@ -68,7 +68,7 @@ void t7_show_customview_warnings_surface_mode(void);
 
 uint8_t t7_customtextPrepare(char * text);
 
-/* Importend function prototypes ---------------------------------------------*/
+/* Imported function prototypes ---------------------------------------------*/
 extern uint8_t write_gas(char *text, uint8_t oxygen, uint8_t helium);
 
 /* Exported variables --------------------------------------------------------*/
@@ -1016,11 +1016,22 @@ void t7_refresh_surface(void)
     }
 
     /* dive mode */
-    if(stateUsed->diveSettings.diveMode == DIVEMODE_CCR)
-        GFX_write_string(&FontT24,&t7c1,"\f\002" "CCR",0);
-    else
-        GFX_write_string(&FontT24,&t7c1,"\f\002" "OC",0);
-//		GFX_write_string(&FontT24,&t7c1,"\f\177\177\x80" "CCR",0);
+	switch (stateUsed->diveSettings.diveMode) {
+	case DIVEMODE_CCR:
+		GFX_write_string(&FontT24, &t7c1, "\f\002" "CCR", 0);
+		break;
+	case DIVEMODE_OC:
+		GFX_write_string(&FontT24, &t7c1, "\f\002" "OC", 0);
+		break;
+	case DIVEMODE_Gauge:
+		GFX_write_string(&FontT24, &t7c1, "\f\002" "Gauge", 0);
+		break;
+	case DIVEMODE_Apnea:
+		GFX_write_string(&FontT24, &t7c1, "\f\002" "Apnea", 0);
+		break;
+	default:
+		GFX_write_string(&FontT24, &t7c1, "\f\002" "OC", 0);
+	}
 
     /*battery */
 
