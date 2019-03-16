@@ -34,6 +34,7 @@
 #include "compass_LSM303D.h"
 #include "compass_LSM303DLHC.h"
 
+#include "spi.h"
 #include "i2c.h"
 #include "RTE_FlashAccess.h" // to store compass_calib_data
 
