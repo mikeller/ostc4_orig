@@ -78,27 +78,25 @@ typedef struct /* don't forget to adjust void clear_divisor(void) */
 /* Exported variables --------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-uint8_t data_store[10000];
-SLogbookHeader  header;
-SLogbookHeaderOSTC3	headerOSTC3;
-SLogbookHeaderOSTC3compact headerOSTC3compact;
-SSmallHeader smallHeader;
-SDivisor divisor;
-SDivisor divisorBackup;
+static  SLogbookHeader  header;
+static SLogbookHeaderOSTC3	headerOSTC3;
+static SLogbookHeaderOSTC3compact headerOSTC3compact;
+static SSmallHeader smallHeader;
+static SDivisor divisor;
+static SDivisor divisorBackup;
 
 /* Private function prototypes -----------------------------------------------*/
-void clear_divisor(void);
-void logbook_SetAverageDepth(float average_depth_meter);
-void logbook_SetMinTemperature(float min_temperature_celsius);
-void logbook_SetMaxCNS(float max_cns_percentage);
-void logbook_SetCompartmentDesaturation(void);
-void logbook_SetLastStop(float last_stop_depth_bar);
-void logbook_writedata(void * data, int length_byte);
-void logbook_UpdateHeader(void);
+static void clear_divisor(void);
+static void logbook_SetAverageDepth(float average_depth_meter);
+static void logbook_SetMinTemperature(float min_temperature_celsius);
+static void logbook_SetMaxCNS(float max_cns_percentage);
+static void logbook_SetCompartmentDesaturation(void);
+static void logbook_SetLastStop(float last_stop_depth_bar);
+static void logbook_writedata(void * data, int length_byte);
+static void logbook_UpdateHeader(void);
 
 /* Exported functions --------------------------------------------------------*/
 
-/** used by test_vpm.c at the moment */
 void logbook_EndDive(void)
 {
 	ext_flash_close_new_dive_log((uint8_t*) &header);
@@ -140,31 +138,6 @@ SLogbookHeader* logbook_getCurrentHeader(void)
 {
     return &header;
 }
-
-/**
-  ******************************************************************************
-  * @brief   logbook_getHeaderOSTC3. /
-  * @author  heinrichs weikamp gmbh
-  * @version V0.0.1
-  * @date    26-Nov-2014
-  ******************************************************************************
-	*
-    * @param  StepBackwards : 0 Last lokbook entry, 1 second to last entry, etc.
-     * @param  SSLogbookHeader* pLogbookHeader:  Output found LogbookHeader
-    * @return  uint8_t : 1 = success
-*/
-/*
-SLogbookHeaderOSTC3 * logbook_getHeaderOSTC3(uint8_t StepBackwards)
-{
-    if(!logbook_getHeader(StepBackwards, &header))
-        return 0;
-    else
-		{
-			logbook_build_ostc3header();
-			return &headerOSTC3;
-		}
-}
-*/
 
 /**
   ******************************************************************************
@@ -350,7 +323,7 @@ void logbook_initNewdiveProfile(const SDiveState* pInfo, SSettings* pSettings)
   ******************************************************************************
 	*
 */
-void clear_divisor(void)
+static void clear_divisor(void)
 {
 	divisor.cns = smallHeader.cnsDivisor - 1;
 	divisor.decoplan = smallHeader.decoplanDivisor - 1;
@@ -373,12 +346,12 @@ void clear_divisor(void)
     * @param  uint8_t *pos: Output 8 bit array
     * @param  uint16_t var:  16 bit variable
 */
-void addU16(uint8_t *pos, uint16_t var)
+static void addU16(uint8_t *pos, uint16_t var)
 {
        *((uint16_t*)pos) = var;
 }
 
-void addS16(uint8_t *pos, int16_t var)
+static void addS16(uint8_t *pos, int16_t var)
 {
        *((int16_t*)pos) = var;
 }
@@ -655,14 +628,6 @@ void logbook_writeSample(SDiveState state)
 
 }
 
-
-
-uint16_t actual_depth1;
-uint16_t actual_depth2;
-uint16_t actual_length1;
-uint16_t actual_length2;
-uint16_t actual_inum;
-
 /**
   ******************************************************************************
   * @brief   readSample. /  Reads data of one logbook sample
@@ -678,7 +643,7 @@ uint16_t actual_inum;
   * @param  int32_t* cns: output Value
   * @return bytes read / 0 = reading Error
   */
-uint16_t readSample(int32_t* depth, int16_t * gasid, int16_t* setpoint_cbar, int32_t* temperature, int32_t* sensor1, int32_t* sensor2, int32_t* sensor3, int32_t* cns, SManualGas* manualGas, int16_t* bailout, int16_t* decostopDepth)
+static uint16_t readSample(int32_t* depth, int16_t * gasid, int16_t* setpoint_cbar, int32_t* temperature, int32_t* sensor1, int32_t* sensor2, int32_t* sensor3, int32_t* cns, SManualGas* manualGas, int16_t* bailout, int16_t* decostopDepth)
 {
 	int length = 0;
 	_Bool bEvent = 0;
@@ -1254,7 +1219,7 @@ void logbook_InitAndWrite(void)
   * @version V0.0.1
   * @date    27-Nov-2014
 *********************************************************************************/
-void logbook_UpdateHeader(void)
+static void logbook_UpdateHeader(void)
 {
 	const SDiveState * pStateReal = stateRealGetPointer();
 
@@ -1354,19 +1319,19 @@ void logbook_UpdateHeader(void)
 }
 
 
-void logbook_SetAverageDepth(float average_depth_meter)
+static void logbook_SetAverageDepth(float average_depth_meter)
 {
 		header.averageDepth_mbar = (uint16_t)(average_depth_meter * 100);
 }
 
 
-void logbook_SetMinTemperature(float min_temperature_celsius)
+static void logbook_SetMinTemperature(float min_temperature_celsius)
 {
 		header.minTemp = (int16_t)((min_temperature_celsius * 10.0f) + 0.5f);
 }
 
 
-void logbook_SetMaxCNS(float max_cns_percentage)
+static void logbook_SetMaxCNS(float max_cns_percentage)
 {
 	if(max_cns_percentage < 9999)
 		header.maxCNS = (uint16_t)(max_cns_percentage);
@@ -1375,13 +1340,7 @@ void logbook_SetMaxCNS(float max_cns_percentage)
 }
 
 
-void logbook_SetDesaturationTime(void)
-{
-		header.desaturationTime = 48 * 60;
-}
-
-
-void logbook_SetCompartmentDesaturation(void)
+static void logbook_SetCompartmentDesaturation(void)
 {
 	const SDiveState * pStateReal = stateRealGetPointer();
 
@@ -1399,12 +1358,12 @@ void logbook_SetCompartmentDesaturation(void)
 	}
 }
 
-void logbook_SetLastStop(float last_stop_depth_bar)
+static void logbook_SetLastStop(float last_stop_depth_bar)
 {
 	header.lastDecostop_m = (uint8_t)(last_stop_depth_bar / 10.0f);
 }
 
-void logbook_writedata(void * data, int length_byte)
+static void logbook_writedata(void * data, int length_byte)
 {
     ext_flash_write_sample(data, length_byte);
 }
