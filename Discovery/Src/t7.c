@@ -58,7 +58,7 @@ void t7_debug(void);
 void t7_miniLiveLogProfile(void);
 //void t7_clock(void);
 void t7_logo_OSTC(void);
-void t7_colorscheme_mod(char *text);
+static void t7_colorscheme_mod(char *text);
 
 uint8_t t7_test_customview_warnings(void);
 void t7_show_customview_warnings(void);
@@ -2639,14 +2639,13 @@ uint8_t t7_customtextPrepare(char * text)
     return lineCount;
 }
 
-/* could be extended to search for \020 inside
- */
-void t7_colorscheme_mod(char *text)
-{
-    if((text[0] == '\020') && !GFX_is_colorschemeDiveStandard())
-    {
-        text[0] = '\027';
-    }
+static void t7_colorscheme_mod(char *text) {
+	char *p = text;
+	while (*p) {
+		if ((*p == '\020') && !GFX_is_colorschemeDiveStandard())
+			*p = '\027';
+		p++;
+	}
 }
 
 
@@ -3106,6 +3105,7 @@ void t7_SummaryOfLeftCorner(void)
     text[textpointer++] = '\t';
     textpointer += snprintf(&text[textpointer],10,"\020%i'",		pDecoinfoFuture->output_time_to_surface_seconds / 60);
     text[textpointer++] = 0;
+    t7_colorscheme_mod(text);
     GFX_write_string(&FontT42, &t7cY0free, text, 1);
 }
 
