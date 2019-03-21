@@ -1207,7 +1207,7 @@ void t7_refresh_surface_debugmode(void)
     uint32_t color;
 //	uint8_t gasIdFirst;
     SSettings* pSettings = settingsGetPointer();
-    extern SDataExchangeSlaveToMaster dataIn;
+    SDataExchangeSlaveToMaster *dataIn = get_dataInPointer();
 
     SWindowGimpStyle windowGimp;
 
@@ -1221,7 +1221,7 @@ void t7_refresh_surface_debugmode(void)
     if(stateUsed->data_old__lost_connection_to_slave)
     {
         Gfx_write_label_var(&t7screen,  500,800,  0,&FontT42,CLUT_DiveMainLabel,"old");
-        snprintf(TextL1,TEXTSIZE,"%X %X %X %X",dataIn.header.checkCode[0],dataIn.header.checkCode[1],dataIn.header.checkCode[2],dataIn.header.checkCode[3]);
+        snprintf(TextL1,TEXTSIZE,"%X %X %X %X",dataIn->header.checkCode[0],dataIn->header.checkCode[1],dataIn->header.checkCode[2],dataIn->header.checkCode[3]);
         Gfx_write_label_var(&t7screen,  500,800, 45,&FontT48,CLUT_Font020,TextL1);
     }
     else
@@ -1261,7 +1261,7 @@ void t7_refresh_surface_debugmode(void)
     Gfx_write_label_var(&t7screen,  0,400,355,&FontT48,CLUT_Font020,TextL1);
 
 //	gasIdFirst = stateUsed->lifeData.actualGas.GasIdInSettings;
-    snprintf(TextL1,TEXTSIZE,"%u.%u",dataIn.RTE_VERSION_high,dataIn.RTE_VERSION_low);
+    snprintf(TextL1,TEXTSIZE,"%u.%u",dataIn->RTE_VERSION_high,dataIn->RTE_VERSION_low);
     Gfx_write_label_var(&t7screen,  320,500,100,&FontT42,CLUT_DiveMainLabel,"RTE");
     Gfx_write_label_var(&t7screen,  320,500,145,&FontT48,CLUT_Font020,TextL1);
 
