@@ -238,7 +238,7 @@ void logbook_initNewdiveProfile(const SDiveState* pInfo, SSettings* pSettings)
 	header.dateDay = Sdate.Date;
 	header.timeHour = Stime.Hours;
 	header.timeMinute = Stime.Minutes;
-	header.cnsAtBeginning = (uint16_t)((pInfo->lifeData.cns * 100) + 0.5f);
+	header.cnsAtBeginning = (uint16_t)pInfo->lifeData.cns;
 	header.surfacePressure_mbar = (uint16_t)(pInfo->lifeData.pressure_surface_bar * 1000);
 	header.firmwareVersionHigh = firmwareVersion_16bit_high();
 	header.firmwareVersionLow = firmwareVersion_16bit_low();
@@ -609,8 +609,7 @@ void logbook_writeSample(SDiveState state)
     if(divisor.cns == 0)
     {
         divisor.cns = smallHeader.cnsDivisor - 1;
-        //addU16(&sample[length], (uint16_t)(state.lifeData.cns * 100.0f + 0.5f));
-        addU16(&sample[length], (uint16_t)(state.lifeData.cns)); // hw 151110 cns is 0 to 100 % and more (not 0 to 1.00 and more)
+        addU16(&sample[length], (uint16_t)state.lifeData.cns);
         length += 2;
     }
     else
