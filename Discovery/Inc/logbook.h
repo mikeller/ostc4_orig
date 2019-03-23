@@ -200,7 +200,6 @@ typedef struct
 } SManualGas;
 
 void logbook_writeSample(SDiveState state);
-//void logbook_writeSampleFinalBytes(void);
 void logbook_initNewdiveProfile(const SDiveState* pInfo, SSettings* pSettings);
 void logbook_EndDive(void);
 

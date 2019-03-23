@@ -58,7 +58,7 @@ void t7_debug(void);
 void t7_miniLiveLogProfile(void);
 //void t7_clock(void);
 void t7_logo_OSTC(void);
-void t7_colorscheme_mod(char *text);
+static void t7_colorscheme_mod(char *text);
 
 uint8_t t7_test_customview_warnings(void);
 void t7_show_customview_warnings(void);
@@ -68,7 +68,7 @@ void t7_show_customview_warnings_surface_mode(void);
 
 uint8_t t7_customtextPrepare(char * text);
 
-/* Importend function prototypes ---------------------------------------------*/
+/* Imported function prototypes ---------------------------------------------*/
 extern uint8_t write_gas(char *text, uint8_t oxygen, uint8_t helium);
 
 /* Exported variables --------------------------------------------------------*/
@@ -1016,11 +1016,22 @@ void t7_refresh_surface(void)
     }
 
     /* dive mode */
-    if(stateUsed->diveSettings.diveMode == DIVEMODE_CCR)
-        GFX_write_string(&FontT24,&t7c1,"\f\002" "CCR",0);
-    else
-        GFX_write_string(&FontT24,&t7c1,"\f\002" "OC",0);
-//		GFX_write_string(&FontT24,&t7c1,"\f\177\177\x80" "CCR",0);
+	switch (stateUsed->diveSettings.diveMode) {
+	case DIVEMODE_CCR:
+		GFX_write_string(&FontT24, &t7c1, "\f\002" "CCR", 0);
+		break;
+	case DIVEMODE_OC:
+		GFX_write_string(&FontT24, &t7c1, "\f\002" "OC", 0);
+		break;
+	case DIVEMODE_Gauge:
+		GFX_write_string(&FontT24, &t7c1, "\f\002" "Gauge", 0);
+		break;
+	case DIVEMODE_Apnea:
+		GFX_write_string(&FontT24, &t7c1, "\f\002" "Apnea", 0);
+		break;
+	default:
+		GFX_write_string(&FontT24, &t7c1, "\f\002" "OC", 0);
+	}
 
     /*battery */
 
@@ -1196,7 +1207,7 @@ void t7_refresh_surface_debugmode(void)
     uint32_t color;
 //	uint8_t gasIdFirst;
     SSettings* pSettings = settingsGetPointer();
-    extern SDataExchangeSlaveToMaster dataIn;
+    SDataExchangeSlaveToMaster *dataIn = get_dataInPointer();
 
     SWindowGimpStyle windowGimp;
 
@@ -1210,7 +1221,7 @@ void t7_refresh_surface_debugmode(void)
     if(stateUsed->data_old__lost_connection_to_slave)
     {
         Gfx_write_label_var(&t7screen,  500,800,  0,&FontT42,CLUT_DiveMainLabel,"old");
-        snprintf(TextL1,TEXTSIZE,"%X %X %X %X",dataIn.header.checkCode[0],dataIn.header.checkCode[1],dataIn.header.checkCode[2],dataIn.header.checkCode[3]);
+        snprintf(TextL1,TEXTSIZE,"%X %X %X %X",dataIn->header.checkCode[0],dataIn->header.checkCode[1],dataIn->header.checkCode[2],dataIn->header.checkCode[3]);
         Gfx_write_label_var(&t7screen,  500,800, 45,&FontT48,CLUT_Font020,TextL1);
     }
     else
@@ -1250,7 +1261,7 @@ void t7_refresh_surface_debugmode(void)
     Gfx_write_label_var(&t7screen,  0,400,355,&FontT48,CLUT_Font020,TextL1);
 
 //	gasIdFirst = stateUsed->lifeData.actualGas.GasIdInSettings;
-    snprintf(TextL1,TEXTSIZE,"%u.%u",dataIn.RTE_VERSION_high,dataIn.RTE_VERSION_low);
+    snprintf(TextL1,TEXTSIZE,"%u.%u",dataIn->RTE_VERSION_high,dataIn->RTE_VERSION_low);
     Gfx_write_label_var(&t7screen,  320,500,100,&FontT42,CLUT_DiveMainLabel,"RTE");
     Gfx_write_label_var(&t7screen,  320,500,145,&FontT48,CLUT_Font020,TextL1);
 
@@ -2628,14 +2639,13 @@ uint8_t t7_customtextPrepare(char * text)
     return lineCount;
 }
 
-/* could be extended to search for \020 inside
- */
-void t7_colorscheme_mod(char *text)
-{
-    if((text[0] == '\020') && !GFX_is_colorschemeDiveStandard())
-    {
-        text[0] = '\027';
-    }
+static void t7_colorscheme_mod(char *text) {
+	char *p = text;
+	while (*p) {
+		if ((*p == '\020') && !GFX_is_colorschemeDiveStandard())
+			*p = '\027';
+		p++;
+	}
 }
 
 
@@ -3095,6 +3105,7 @@ void t7_SummaryOfLeftCorner(void)
     text[textpointer++] = '\t';
     textpointer += snprintf(&text[textpointer],10,"\020%i'",		pDecoinfoFuture->output_time_to_surface_seconds / 60);
     text[textpointer++] = 0;
+    t7_colorscheme_mod(text);
     GFX_write_string(&FontT42, &t7cY0free, text, 1);
 }
 

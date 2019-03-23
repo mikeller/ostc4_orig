@@ -38,7 +38,7 @@
 	
 	second small CPU gets request to send its device data
 		
-		on receiption the data is merged with the data in externLogbookFlash,
+		on reception the data is merged with the data in externLogbookFlash,
 		stored on the externLogbookFlash and from now on send to small CPU
 
   ==============================================================================
@@ -56,7 +56,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdlib.h>
-#include <string.h> // for memcopy
+#include <string.h> // for memcpy
 #include "stm32f4xx_hal.h"
 #include "stdio.h"
 #include "ostc.h"
@@ -74,63 +74,41 @@
 
 
 /* Exported variables --------------------------------------------------------*/
-uint8_t	wasPowerOn = 0;
-confirmbit8_Type requestNecessary = { .uw = 0 };
-uint8_t wasUpdateNotPowerOn = 0;
+static uint8_t	wasPowerOn = 0;
+static confirmbit8_Type requestNecessary = { .uw = 0 };
+static uint8_t wasUpdateNotPowerOn = 0;
 
 /* Private variables with external access ------------------------------------*/
 
-
 /* Private variables ---------------------------------------------------------*/
-uint8_t	told_reset_logik_alles_ok = 0;
+static uint8_t	told_reset_logik_alles_ok = 0;
 
-SDataReceiveFromMaster dataOut;
-SDataExchangeSlaveToMaster dataIn;
+static SDataReceiveFromMaster dataOut;
+static SDataExchangeSlaveToMaster dataIn;
 
-uint8_t data_old__lost_connection_to_slave_counter_temp = 0;
-uint8_t data_old__lost_connection_to_slave_counter_retry = 0;
-uint32_t data_old__lost_connection_to_slave_counter_total = 0;
+static uint8_t data_old__lost_connection_to_slave_counter_temp = 0;
+static uint8_t data_old__lost_connection_to_slave_counter_retry = 0;
+static uint32_t data_old__lost_connection_to_slave_counter_total = 0;
 
 /* Private types -------------------------------------------------------------*/
 
-typedef enum
-{
-  CPU2_TRANSFER_STOP	       = 0x00,    /*!<     */
-  CPU2_TRANSFER_TEST_REQUEST = 0x01,    /*!<     */
-  CPU2_TRANSFER_TEST_RECEIVE = 0x02,    /*!<     */
-  CPU2_TRANSFER_SEND_OK      = 0x03,    /*!<     */
-  CPU2_TRANSFER_SEND_FALSE   = 0x04,    /*!<     */
-  CPU2_TRANSFER_DATA			   = 0x05,    /*!<     */
-}CPU2_TRANSFER_StatusTypeDef;
-
-const uint8_t header_test_request[4]	= {0xBB, 0x00, 0x00, 0xBB};
-const uint8_t header_test_receive[4]	= {0xBB, 0x01, 0x01, 0xBB};
-const uint8_t header_false[4]					= {0xBB, 0xFF, 0xFF, 0xBB};
-const uint8_t header_correct[4]				= {0xBB, 0xCC, 0xCC, 0xBB};
-const uint8_t header_data[4]					= {0xAA, 0x01, 0x01, 0xAA};
-
 /* Private function prototypes -----------------------------------------------*/
-uint8_t DataEX_check_header_and_footer_ok(void);
-uint8_t DataEX_check_header_and_footer_shifted(void);
-uint8_t DataEX_check_header_and_footer_devicedata(void);
-void DataEX_check_DeviceData(void);
+static uint8_t DataEX_check_header_and_footer_ok(void);
+static uint8_t DataEX_check_header_and_footer_shifted(void);
+static uint8_t DataEX_check_header_and_footer_devicedata(void);
+static void DataEX_check_DeviceData(void);
 
 /* Exported functions --------------------------------------------------------*/
-void DataEX_set_update_RTE_not_power_on(void)
-{
-	wasUpdateNotPowerOn = 1;
-}
-
 
 uint8_t DataEX_was_power_on(void)
 {
 	return wasPowerOn;
 }
 
-uint8_t count_DataEX_Error_Handler = 0;
-uint8_t last_error_DataEX_Error_Handler = 0;
+static uint8_t count_DataEX_Error_Handler = 0;
+static uint8_t last_error_DataEX_Error_Handler = 0;
 
-void DataEX_Error_Handler(uint8_t answer)
+static void DataEX_Error_Handler(uint8_t answer)
 {
 	count_DataEX_Error_Handler++;
 	last_error_DataEX_Error_Handler = answer;
@@ -152,21 +130,7 @@ uint32_t DataEX_lost_connection_count(void)
 }
 
 
-uint32_t DataEX_time_elapsed_ms(uint32_t ticksstart,uint32_t ticksnow)
-{
-
-	if(ticksstart <= ticksnow)
-	{
-			return ticksnow - ticksstart;
-	}
-	else
-	{
-		return 0xFFFFFFFF - ticksstart + ticksnow;
-	}
-
-}
-
-SDataReceiveFromMaster * dataOutGetPointer(void)
+SDataReceiveFromMaster *dataOutGetPointer(void)
 {
 	return &dataOut;
 }
@@ -179,8 +143,6 @@ void DataEX_init(void)
 	data_old__lost_connection_to_slave_counter_total = 0;
 
 	memset((void *)&dataOut, 0, sizeof(SDataReceiveFromMaster));
-	// old 160307:	for(int i=0;i<EXCHANGE_BUFFERSIZE;i++)
-//		*(uint8_t *)(((uint32_t)&dataOut) + i)  = 0;
 
 	dataOut.header.checkCode[0] = 0xBB;
 	dataOut.header.checkCode[1] = 0x01;
@@ -194,7 +156,7 @@ void DataEX_init(void)
 }
 
 
-void DataEx_call_helper_requests(void)
+static void DataEx_call_helper_requests(void)
 {
 	static uint8_t setDateWasSend = 0;
 	static uint8_t setTimeWasSend = 0;
@@ -340,7 +302,7 @@ uint8_t DataEX_call(void)
 }
 
 
-uint32_t SPI_CALLBACKS;
+static uint32_t SPI_CALLBACKS;
 uint32_t get_num_SPI_CALLBACKS(void){
 	return SPI_CALLBACKS;
 }
@@ -358,9 +320,6 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 		SPI_CALLBACKS+=1;
 	}
 }
-
-
-
 
 
 void DateEx_copy_to_dataOut(void)
@@ -402,19 +361,6 @@ void DateEx_copy_to_dataOut(void)
 		dataOut.revisionHardware = 0xFF;
 		dataOut.revisionCRCx0x7A = 0xFF;
 	}
-		
-	/*
-	for(int i = 0; i< 16; i++)
-	{
-    dataOut.data.VPM_adjusted_critical_radius_he[i] = pStateReal->vpm.adjusted_critical_radius_he[i];
-    dataOut.data.VPM_adjusted_critical_radius_n2[i] = pStateReal->vpm.adjusted_critical_radius_n2[i];
-    dataOut.data.VPM_adjusted_crushing_pressure_he[i] = pStateReal->vpm.adjusted_crushing_pressure_he[i];
-    dataOut.data.VPM_adjusted_crushing_pressure_n2[i] = pStateReal->vpm.adjusted_crushing_pressure_n2[i];
-    dataOut.data.VPM_initial_allowable_gradient_he[i] = pStateReal->vpm.initial_allowable_gradient_he[i];
-    dataOut.data.VPM_initial_allowable_gradient_n2[i] = pStateReal->vpm.initial_allowable_gradient_n2[i];
-    dataOut.data.VPM_max_actual_gradient[i] = pStateReal->vpm.max_actual_gradient[i];
-	}
-*/
 	
 	if(DataEX_check_header_and_footer_ok() && !told_reset_logik_alles_ok)
 	{
@@ -477,8 +423,6 @@ void DataEX_copy_to_deco(void)
 			 */
 		}
 
-
-
 		if(decoLock == DECO_CALC_FINSHED_Buehlmann)
     {
 
@@ -535,16 +479,14 @@ void DataEX_copy_to_deco(void)
 }
 
 
-void DataEX_helper_copy_deviceData(SDeviceLine *lineWrite, const SDeviceLine *lineRead)
+static void DataEX_helper_copy_deviceData(SDeviceLine *lineWrite, const SDeviceLine *lineRead)
 {	
 	lineWrite->date_rtc_dr = lineRead->date_rtc_dr; 
 	lineWrite->time_rtc_tr = lineRead->time_rtc_tr;
 	lineWrite->value_int32 = lineRead->value_int32;
 }
 
-
-
-void DataEX_helper_SetTime(RTC_TimeTypeDef inStimestructure, uint32_t *outTimetmpreg)
+static void DataEX_helper_SetTime(RTC_TimeTypeDef inStimestructure, uint32_t *outTimetmpreg)
 {
   inStimestructure.TimeFormat = RTC_HOURFORMAT_24;
 
@@ -555,7 +497,7 @@ void DataEX_helper_SetTime(RTC_TimeTypeDef inStimestructure, uint32_t *outTimetm
 }
 
 
-void DataEX_helper_SetDate(RTC_DateTypeDef inSdatestructure, uint32_t *outDatetmpreg)
+static void DataEX_helper_SetDate(RTC_DateTypeDef inSdatestructure, uint32_t *outDatetmpreg)
 {
    *outDatetmpreg = (((uint32_t)RTC_ByteToBcd2(inSdatestructure.Year) << 16U) | \
 										((uint32_t)RTC_ByteToBcd2(inSdatestructure.Month) << 8U) | \
@@ -565,7 +507,7 @@ void DataEX_helper_SetDate(RTC_DateTypeDef inSdatestructure, uint32_t *outDatetm
 
 
 
-void DataEX_helper_set_Unknown_Date_deviceData(SDeviceLine *lineWrite)
+static void DataEX_helper_set_Unknown_Date_deviceData(SDeviceLine *lineWrite)
 {	
 	RTC_DateTypeDef sdatestructure;
 	RTC_TimeTypeDef stimestructure;
@@ -584,7 +526,7 @@ void DataEX_helper_set_Unknown_Date_deviceData(SDeviceLine *lineWrite)
 }
 
 
-uint8_t DataEX_helper_Check_And_Correct_Date_deviceData(SDeviceLine *lineWrite)
+static uint8_t DataEX_helper_Check_And_Correct_Date_deviceData(SDeviceLine *lineWrite)
 {
 	RTC_DateTypeDef sdatestructure;
 	RTC_TimeTypeDef stimestructure;
@@ -604,7 +546,7 @@ uint8_t DataEX_helper_Check_And_Correct_Date_deviceData(SDeviceLine *lineWrite)
 }
 
 
-uint8_t DataEX_helper_Check_And_Correct_Value_deviceData(SDeviceLine *lineWrite, int32_t from, int32_t to)
+static uint8_t DataEX_helper_Check_And_Correct_Value_deviceData(SDeviceLine *lineWrite, int32_t from, int32_t to)
 {
 	if(lineWrite->value_int32 >= from && lineWrite->value_int32 <= to)
 		return 0;
@@ -619,7 +561,7 @@ uint8_t DataEX_helper_Check_And_Correct_Value_deviceData(SDeviceLine *lineWrite,
 }
 
 
-void DataEX_check_DeviceData(void)
+static void DataEX_check_DeviceData(void)
 {
 	SDevice *DeviceData = stateDeviceGetPointerWrite();
 
@@ -643,7 +585,7 @@ void DataEX_check_DeviceData(void)
 }
 
 
-void DataEX_merge_DeviceData_and_store(void)
+static void DataEX_merge_DeviceData_and_store(void)
 {
 	uint16_t dataLengthRead;
 	SDevice DeviceDataFlash;
@@ -656,16 +598,6 @@ void DataEX_merge_DeviceData_and_store(void)
 		ext_flash_write_devicedata();
 		return;
 	}
-
-/*
-	SDeviceLine batteryChargeCycles;
-	SDeviceLine batteryChargeCompleteCycles;
-	SDeviceLine temperatureMinimum;
-	SDeviceLine temperatureMaximum;
-	SDeviceLine depthMaximum;
-	SDeviceLine diveCycles;
-	SDeviceLine voltageMinimum;
-*/
 
 	/* max values */
 	if(DeviceData->batteryChargeCompleteCycles.value_int32 < DeviceDataFlash.batteryChargeCompleteCycles.value_int32)
@@ -708,7 +640,7 @@ void DataEX_merge_DeviceData_and_store(void)
 }
 
 
-void DataEX_copy_to_DeviceData(void)
+static void DataEX_copy_to_DeviceData(void)
 {
 	SDataExchangeSlaveToMasterDeviceData * dataInDevice = (SDataExchangeSlaveToMasterDeviceData *)&dataIn;
 	SDevice * pDeviceState = stateDeviceGetPointerWrite();
@@ -717,7 +649,7 @@ void DataEX_copy_to_DeviceData(void)
 }
 
 
-void DataEX_copy_to_VpmRepetitiveData(void)
+static void DataEX_copy_to_VpmRepetitiveData(void)
 {
 	SDataExchangeSlaveToMasterDeviceData * dataInDevice = (SDataExchangeSlaveToMasterDeviceData *)&dataIn;
 	SVpmRepetitiveData * pVpmState = stateVpmRepetitiveDataGetPointerWrite();
@@ -920,6 +852,11 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 			pStateReal->lifeData.boolResetStopwatch = 1;
 		}
 
+		pStateReal->lifeData.cns = dataIn.data[dataIn.boolToxicData].cns;
+		pStateReal->lifeData.otu = dataIn.data[dataIn.boolToxicData].otu;
+		pStateReal->lifeData.no_fly_time_minutes = dataIn.data[dataIn.boolToxicData].no_fly_time_minutes;
+		pStateReal->lifeData.desaturation_time_minutes = dataIn.data[dataIn.boolToxicData].desaturation_time_minutes;
+
 		//End of diveMode?
 		if(pStateReal->mode == MODE_DIVE && dataIn.mode != MODE_DIVE)
 		{
@@ -971,7 +908,6 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		pStateReal->lifeData.counterSecondsShallowDepth = dataIn.data[dataIn.boolTimeData].counterSecondsShallowDepth;
 		pStateReal->lifeData.surface_time_seconds = (int32_t)dataIn.data[dataIn.boolTimeData].surfacetime_seconds;
 
-
 		pStateReal->lifeData.compass_heading = dataIn.data[dataIn.boolCompassData].compass_heading;
 		if(settingsGetPointer()->FlipDisplay) /* consider that diver is targeting into the opposite direction */
 		{
@@ -989,11 +925,6 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		pStateReal->compass_uTick_old = pStateReal->compass_uTick_new;
 		pStateReal->compass_uTick_new = dataIn.data[dataIn.boolCompassData].compass_uTick;
 		pStateReal->compass_uTick_local_new = HAL_GetTick();
-
-	    pStateReal->lifeData.cns = dataIn.data[dataIn.boolToxicData].cns;
-		pStateReal->lifeData.otu = dataIn.data[dataIn.boolToxicData].otu;
-	    pStateReal->lifeData.no_fly_time_minutes = dataIn.data[dataIn.boolToxicData].no_fly_time_minutes;
-		pStateReal->lifeData.desaturation_time_minutes = dataIn.data[dataIn.boolToxicData].desaturation_time_minutes;
 
 		memcpy(pStateReal->lifeData.tissue_nitrogen_bar, dataIn.data[dataIn.boolTisssueData].tissue_nitrogen_bar,sizeof(pStateReal->lifeData.tissue_nitrogen_bar));
 		memcpy(pStateReal->lifeData.tissue_helium_bar, dataIn.data[dataIn.boolTisssueData].tissue_helium_bar,sizeof(pStateReal->lifeData.tissue_helium_bar));
@@ -1015,25 +946,6 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		pStateReal->lifeData.battery_charge = dataIn.data[dataIn.boolBatteryData].battery_charge;
 		pStateReal->lifeData.battery_voltage = dataIn.data[dataIn.boolBatteryData].battery_voltage;
 	}
-/* now in ext_flash_write_settings() // hw 161027
- *	if((pStateReal->lifeData.battery_charge > 1) && !DataEX_was_power_on() && ((uint8_t)(pStateReal->lifeData.battery_charge) !=  0x10)) // get rid of 16% (0x10)
- *		pSettings->lastKnownBatteryPercentage = (uint8_t)(pStateReal->lifeData.battery_charge);
- */
-	
-	/* OC and CCR but no sensors -> moved to updateSetpointStateUsed();
-	float oxygen = 0;
-	if(pStateReal->diveSettings.diveMode == 0)
-	{
-		oxygen = 1.00f;
-		oxygen -= ((float)pStateReal->lifeData.actualGas.nitrogen_percentage)/100.0f;
-		oxygen -= ((float)pStateReal->lifeData.actualGas.helium_percentage)/100.0f;
-		pStateReal->lifeData.ppO2 = pStateReal->lifeData.pressure_ambient_bar * oxygen;
-	}
-  else if(pStateReal->diveSettings.diveMode == 1)
-	{
-	  pStateReal->lifeData.ppO2 = ((float)pStateReal->lifeData.actualGas.setPoint_cbar) /100;
-	}
-	 */
 
 	/* apnea specials
 	 */
@@ -1120,44 +1032,6 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 			pStateReal->lifeData.wireless_data[i].data[j] = dataIn.data[dataIn.boolWirelessData].wireless_data[i].data[j];
 	}
 
-	/* old stuff
-	// crc - is done in RTE 160325
-	// size at the moment 4 bytes + one empty + crc -> minimum 5 bytes (+ crc)
-	// kopieren: Id, Wert, Alter
-	for(int i=0;i<4;i++)
-	{
-		uint8_t numberOfBytes = pStateReal->lifeData.wireless_data[i].numberOfBytes - 1;
-		
-		if((numberOfBytes < 5) || (numberOfBytes > 7))
-		{
-			wirelessData[i][0] = 0;
-			wirelessData[i][1] = 0;
-			wirelessData[i][2] = 0;
-		}
-		else
-		{
-			if((crc32c_checksum(pStateReal->lifeData.wireless_data[i].data, numberOfBytes, 0, 0) & 0xFF)!= pStateReal->lifeData.wireless_data[i].data[numberOfBytes])
-			{
-// no crc is send at the moment
-wirelessData[i][0] = (pStateReal->lifeData.wireless_data[i].data[0] * 256) + pStateReal->lifeData.wireless_data[i].data[1];
-wirelessData[i][1] = (pStateReal->lifeData.wireless_data[i].data[3] * 256) + pStateReal->lifeData.wireless_data[i].data[4];
-wirelessData[i][2] = pStateReal->lifeData.wireless_data[i].ageInMilliSeconds;
-
-//				wirelessData[i][0] = 0;
-//				wirelessData[i][1] = 0;
-//				wirelessData[i][2] = 0;
-				
-			}
-
-			else
-			{
-				wirelessData[i][0] = (pStateReal->lifeData.wireless_data[i].data[0] * 256) + pStateReal->lifeData.wireless_data[i].data[1];
-				wirelessData[i][1] = (pStateReal->lifeData.wireless_data[i].data[3] * 256) + pStateReal->lifeData.wireless_data[i].data[4];
-				wirelessData[i][2] = pStateReal->lifeData.wireless_data[i].ageInMilliSeconds;
-			}
-		}
-	}	
-*/
 	// neu 160412
 	for(int i=0;i<4;i++)
 	{
@@ -1197,67 +1071,7 @@ wirelessData[i][2] = pStateReal->lifeData.wireless_data[i].ageInMilliSeconds;
 			}
 		}
 	}
-/*
-	// neu 160325
-	for(int i=0;i<4;i++)
-	{
-		if(pStateReal->lifeData.wireless_data[i].numberOfBytes == 10)
-		{
-			wirelessData[i][0] = (pStateReal->lifeData.wireless_data[i].data[0] * 256) + pStateReal->lifeData.wireless_data[i].data[1];
-			wirelessData[i][1] = (pStateReal->lifeData.wireless_data[i].data[3] * 256) + pStateReal->lifeData.wireless_data[i].data[4];
-			wirelessData[i][2] = pStateReal->lifeData.wireless_data[i].ageInMilliSeconds;
-		}
-		else
-		{
-			wirelessData[i][0] = 0;
-			wirelessData[i][1] = 0;
-			wirelessData[i][2] = 0;
-		}
-	}
 
-	// aussortieren doppelte ids, j�ngster datensatz ist relevant
-	for(int i=0;i<3;i++)
-	{
-		if(wirelessData[i][0])
-		{
-			for(int j=i+1; j<4; j++)
-			{
-				if(wirelessData[i][0] == wirelessData[j][0])
-				{
-					if(wirelessData[i][2] > wirelessData[j][2])
-					{
-						wirelessData[i][0] = wirelessData[j][0];
-						wirelessData[i][1] = wirelessData[j][1];
-						wirelessData[i][2] = wirelessData[j][2];
-					}
-					wirelessData[j][0] = 0;
-					wirelessData[j][1] = 0;
-					wirelessData[j][2] = 0;
-				}
-			}
-		}
-	}
-*/
-/* old 
-	// copy to lifeData
-	for(int i=0;i<4;i++)
-	{
-		if((wirelessData[i][0]) && (wirelessData[i][2]) && (wirelessData[i][2] < 60000))
-		{
-			for(int j=1;j<=(2*NUM_GASES+1);j++)
-			{
-				if(pStateReal->diveSettings.gas[j].bottle_wireless_id == wirelessData[i][0])
-				{
-					pStateReal->lifeData.bottle_bar[j] = wirelessData[i][1];
-					pStateReal->lifeData.bottle_bar_age_MilliSeconds[j] = wirelessData[i][2];
-					break;
-				}
-			}
-		}
-	}
-*/
-	
- 
 	/* PIC data
  	 */
 	for(int i=0;i<4;i++)
@@ -1297,10 +1111,10 @@ uint8_t DataEX_check_RTE_version__needs_update(void)
 
 	/* Private functions ---------------------------------------------------------*/
 
-/* Check if there is an empty frame providec by RTE (all 0) or even no data provided by RTE (all 0xFF)
+/* Check if there is an empty frame provided by RTE (all 0) or even no data provided by RTE (all 0xFF)
  * If that is not the case the DMA is somehow not in sync
  */
-uint8_t DataEX_check_header_and_footer_shifted()
+static uint8_t DataEX_check_header_and_footer_shifted()
 {
 	uint8_t ret = 1;
 	if((dataIn.footer.checkCode[0] == 0x00)
@@ -1316,7 +1130,7 @@ uint8_t DataEX_check_header_and_footer_shifted()
 	return ret;
 }
 
-uint8_t DataEX_check_header_and_footer_ok(void)
+static uint8_t DataEX_check_header_and_footer_ok(void)
 {
 	if(dataIn.header.checkCode[0] != 0xA1)
 		return 0;
@@ -1340,7 +1154,7 @@ uint8_t DataEX_check_header_and_footer_ok(void)
 	return 1;
 }
 
-uint8_t DataEX_check_header_and_footer_devicedata(void)
+static uint8_t DataEX_check_header_and_footer_devicedata(void)
 {
 	if(dataIn.header.checkCode[0] != 0xDF)
 		return 0;
@@ -1361,6 +1175,3 @@ uint8_t DataEX_check_header_and_footer_devicedata(void)
 
 	return 1;
 }
-
-
-
