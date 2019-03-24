@@ -495,7 +495,6 @@ int main(void)
             ext_flash_write_settings();
         }
         deco_loop();
-        EvaluateButton();
 
 #ifdef DEBUG_RUNTIME
         translateTime(stateUsed->lifeData.timeBinaryFormat, &Stime);
@@ -557,6 +556,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         InDiveMode = 1;
     else
         InDiveMode = 0;
+
+    EvaluateButton();
 
     if(returnFromCommCleanUpRequest)
     {
