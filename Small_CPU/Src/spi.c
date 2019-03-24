@@ -35,15 +35,10 @@ extern void GPIO_new_DEBUG_LOW(void);
 extern void GPIO_new_DEBUG_HIGH(void);
 #endif
 
-// SPI header by index used for synchronization check (package sequence counter)
-#define SPI_HEADER_INDEX_MASTER 1
-#define SPI_HEADER_INDEX_SLAVE 2
-
 uint8_t data_error = 0;
 uint32_t data_error_time = 0;
 uint8_t SPIDataRX = 0; /* Flag to signal that SPI RX callback has been triggered */
 
-extern void HardSyncToSPI(void);
 static void SPI_Error_Handler(void);
 
 /* USER CODE END 0 */
@@ -322,10 +317,9 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
 	/* restart SPI */
 	if (hspi == &hspi1)
 	{
-		HardSyncToSPI();
+		Scheduler_SyncToSPI();
 		SPIDataRX = 1;
 
-		global.check_sync_not_running = 0;
 		/* stop data exchange? */
 		if (global.mode == MODE_SHUTDOWN) {
 			global.mode = MODE_SLEEP;
@@ -338,37 +332,52 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
 
 void SPI_Evaluate_RX_Data()
 {
+	uint8_t resettimeout = 1;
+
 	if ((global.mode != MODE_SHUTDOWN) && ( global.mode != MODE_SLEEP) && (SPIDataRX))
 	{
 		SPIDataRX = 0;
 		/* data consistent? */
 		if (SPI_check_header_and_footer_ok()) {
+			global.dataSendToMaster.header.checkCode[SPI_HEADER_INDEX_RX_STATE] = SPI_RX_STATE_OK;
 	//		GPIO_new_DEBUG_HIGH(); //For debug.
 			global.dataSendToSlaveIsValid = 1;
 			global.dataSendToSlaveIsNotValidCount = 0;
-			/* use sequence index from master to indicate correct reception */
-			if(global.dataSendToSlave.header.checkCode[SPI_HEADER_INDEX_SLAVE] > 0x7F)
+			/* Master signal a data shift outside of his control => reset own DMA and resync */
+			if(global.dataSendToSlave.header.checkCode[SPI_HEADER_INDEX_RX_STATE] == SPI_RX_STATE_SHIFTED)
 			{
 				HAL_SPI_Abort_IT(&hspi1);
-				global.dataSendToMaster.header.checkCode[SPI_HEADER_INDEX_SLAVE] = global.dataSendToSlave.header.checkCode[SPI_HEADER_INDEX_MASTER];
-				global.dataSendToSlave.header.checkCode[SPI_HEADER_INDEX_SLAVE] = 0;
+				Scheduler_Request_sync_with_SPI(SPI_SYNC_METHOD_HARD);
 			}
 			 else
 			 {
-				 global.dataSendToMaster.header.checkCode[SPI_HEADER_INDEX_SLAVE] = global.dataSendToSlave.header.checkCode[SPI_HEADER_INDEX_MASTER];
 			 }
-		} else {
+		}
+		else
+		{
 	//		GPIO_new_DEBUG_LOW(); //For debug.
 				global.dataSendToSlaveIsValid = 0;
 				global.dataSendToSlaveIsNotValidCount++;
 				if(DataEX_check_header_and_footer_shifted())
 				{
-					if (global.dataSendToSlaveIsNotValidCount == 1) 
+
+					/* Reset own DMA */
+					if ((global.dataSendToSlaveIsNotValidCount % 10) == 1)  //% 10
 					{	
 						HAL_SPI_Abort_IT(&hspi1); /* reset DMA only once */
 					}
+					/* Signal problem to master */
+					if ((global.dataSendToSlaveIsNotValidCount ) >= 2)
+					{
+						global.dataSendToMaster.header.checkCode[SPI_HEADER_INDEX_RX_STATE] = SPI_RX_STATE_SHIFTED;
+					}
 				}
-			}
+				else /* handle received data as if no data would have been received */
+				{
+					global.dataSendToMaster.header.checkCode[SPI_HEADER_INDEX_RX_STATE] = SPI_RX_STATE_OFFLINE;
+					resettimeout = 0;
+				}
+		}
 
 		global.dataSendToMaster.power_on_reset = 0;
 		global.deviceDataSendToMaster.power_on_reset = 0;
@@ -379,7 +388,12 @@ void SPI_Evaluate_RX_Data()
 	//		}
 		scheduleSpecial_Evaluate_DataSendToSlave();
 
-		SPI_Start_single_TxRx_with_Master(); //Send data always.
+		SPI_Start_single_TxRx_with_Master();
+	}
+
+	if(resettimeout)
+	{
+			global.check_sync_not_running = 0;
 	}
 }
 

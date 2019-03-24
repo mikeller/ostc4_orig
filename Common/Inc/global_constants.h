@@ -40,10 +40,14 @@
 #define SPI_SHOW_SYNC_STATS 0
 #define SPI_MIN_ERROR_SHOW 10
 
-// SPI header by index used for synchronization check (package sequence counter)
-#define SPI_HEADER_INDEX_MASTER 1
-#define SPI_HEADER_INDEX_SLAVE 2
+/* Define INDEX for information exchanged within the header */
+#define SPI_HEADER_INDEX_RX_STATE  (1)
+#define SPI_HEADER_INDEX_FRAME_CNT (2)
 
+#define SPI_RX_STATE_OK 		(0)
+#define SPI_RX_STATE_SHIFTED	(1)
+#define SPI_RX_STATE_OFFLINE	(2)
+#define SPI_RX_STATE_INVALID	(3)
 
 //Text data
 #define TEXT_PRESSURE_UNIT "hPa"

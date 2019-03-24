@@ -145,8 +145,8 @@ void DataEX_init(void)
 	memset((void *)&dataOut, 0, sizeof(SDataReceiveFromMaster));
 
 	dataOut.header.checkCode[0] = 0xBB;
-	dataOut.header.checkCode[1] = 0x01;
-	dataOut.header.checkCode[2] = 0x01;
+	dataOut.header.checkCode[1] = SPI_RX_STATE_OK;
+	dataOut.header.checkCode[2] = SPI_RX_STATE_OK;
 	dataOut.header.checkCode[3] = 0xBB;
 
 	dataOut.footer.checkCode[0] = 0xF4;
@@ -258,42 +258,76 @@ static void DataEx_call_helper_requests(void)
 
 uint8_t DataEX_call(void)
 {
+	static uint32_t RTEOfflineCnt = 0;
+	static uint8_t SusppressCom = 0;
+
 	uint8_t SPI_DMA_answer = 0;
 
-	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
-
-	if(data_old__lost_connection_to_slave_counter_temp >= 3)
+	if(SusppressCom)
 	{
-		data_old__lost_connection_to_slave_counter_temp = 0;
-		if((DataEX_check_header_and_footer_shifted()) && (data_old__lost_connection_to_slave_counter_retry == 0))
-		{
-			HAL_SPI_Abort_IT(&cpu2DmaSpi);
-		}
-		/* reset of own DMA does not work ==> request reset of slave dma */
-		if((DataEX_check_header_and_footer_shifted()) && (data_old__lost_connection_to_slave_counter_retry == 2))
-		{
-			dataOut.header.checkCode[SPI_HEADER_INDEX_SLAVE] = 0xA5;
-		}
-		data_old__lost_connection_to_slave_counter_retry++;
+		SusppressCom--;
 	}
-#if USE_OLD_SYNC_METHOD
-	/* one cycle with NotChipSelect true to clear slave spi buffer */
 	else
 	{
-		HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
+		if(data_old__lost_connection_to_slave_counter_temp >= 2) /* error reaction is triggered whenever communication could not be reestablishen within two cycles */
+		{
+			data_old__lost_connection_to_slave_counter_temp = 0;
+			if(DataEX_check_header_and_footer_shifted())
+			{
+				if(RTEOfflineCnt > 1)		/* RTE restarted communication after a longer silent time => restart error handling to recover */
+				{
+					data_old__lost_connection_to_slave_counter_retry = 0;
+					RTEOfflineCnt = 0;
+				}
+
+				/* We received shifted data. Step one. Reset DMA to see if the problem is located at main */
+				if (data_old__lost_connection_to_slave_counter_retry == 0)
+				{
+					HAL_SPI_Abort_IT(&cpu2DmaSpi);
+				}
+				/* reset of own DMA does not work ==> request reset of slave dma by indicating shifted receiption */
+				if (data_old__lost_connection_to_slave_counter_retry == 1)
+				{
+					dataOut.header.checkCode[SPI_HEADER_INDEX_RX_STATE] = SPI_RX_STATE_SHIFTED;
+				}
+
+				/* stop communication with RTE to trigger RTE timeout reaction */
+				if (data_old__lost_connection_to_slave_counter_retry == 2)
+				{
+					SusppressCom = 3;
+				}
+
+				data_old__lost_connection_to_slave_counter_retry++;
+			}
+			else
+			{
+				RTEOfflineCnt++;	/* based on footer status the RTE does not seem to provide data in time */
+				dataOut.header.checkCode[SPI_HEADER_INDEX_RX_STATE] = SPI_RX_STATE_OFFLINE;
+			}
+		}
+	#if USE_OLD_SYNC_METHOD
+		/* one cycle with NotChipSelect true to clear slave spi buffer */
+		else
+		{
+			HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
+		}
+	#endif
+
+		DataEx_call_helper_requests();
+
+	//HAL_GPIO_WritePin(OSCILLOSCOPE2_GPIO_PORT,OSCILLOSCOPE2_PIN,GPIO_PIN_RESET); /* only for testing with Oscilloscope */
+
+		if(SusppressCom == 0)
+		{
+			HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
+
+			SPI_DMA_answer = HAL_SPI_TransmitReceive_DMA(&cpu2DmaSpi, (uint8_t *)&dataOut, (uint8_t *)&dataIn, EXCHANGE_BUFFERSIZE);
+			if(SPI_DMA_answer != HAL_OK)
+			{
+				DataEX_Error_Handler(SPI_DMA_answer);
+			}
+		}
 	}
-#endif
-
-	DataEx_call_helper_requests();
-
-//HAL_GPIO_WritePin(OSCILLOSCOPE2_GPIO_PORT,OSCILLOSCOPE2_PIN,GPIO_PIN_RESET); /* only for testing with Oscilloscope */
-
-
-	SPI_DMA_answer = HAL_SPI_TransmitReceive_DMA(&cpu2DmaSpi, (uint8_t *)&dataOut, (uint8_t *)&dataIn, EXCHANGE_BUFFERSIZE);
-	if(SPI_DMA_answer != HAL_OK)
-	{
-		DataEX_Error_Handler(SPI_DMA_answer);
-	}		
 //	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_SET);
 //HAL_Delay(3);
 //HAL_GPIO_WritePin(OSCILLOSCOPE2_GPIO_PORT,OSCILLOSCOPE2_PIN,GPIO_PIN_SET); /* only for testing with Oscilloscope */
@@ -310,7 +344,6 @@ uint32_t get_num_SPI_CALLBACKS(void){
 SDataExchangeSlaveToMaster* get_dataInPointer(void){
 	return &dataIn;
 }
-
 
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
@@ -671,6 +704,7 @@ void DataEX_control_connection_while_asking_for_sleep(void)
 			data_old__lost_connection_to_slave_counter_retry = 0;
 			data_old__lost_connection_to_slave_counter_temp = 0;
 			stateRealGetPointerWrite()->data_old__lost_connection_to_slave = 0;
+			dataOut.header.checkCode[SPI_HEADER_INDEX_RX_STATE] = SPI_RX_STATE_OK;
 		}
 		else
 		{
@@ -757,6 +791,7 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 			data_old__lost_connection_to_slave_counter_temp = 0;
 			data_old__lost_connection_to_slave_counter_retry = 0;
 			pStateReal->data_old__lost_connection_to_slave = 0;
+			dataOut.header.checkCode[SPI_HEADER_INDEX_RX_STATE] = SPI_RX_STATE_OK;
 		}
 		else
 		{
@@ -771,12 +806,9 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		data_old__lost_connection_to_slave_counter_temp = 0;
 		data_old__lost_connection_to_slave_counter_retry = 0;
 		pStateReal->data_old__lost_connection_to_slave = 0;
+		dataOut.header.checkCode[SPI_HEADER_INDEX_RX_STATE] = SPI_RX_STATE_OK;
 	}
 	
-	/* update SPI communication tokens */
-	dataOut.header.checkCode[SPI_HEADER_INDEX_SLAVE] = dataIn.header.checkCode[SPI_HEADER_INDEX_SLAVE];
-	dataOut.header.checkCode[SPI_HEADER_INDEX_MASTER] = (dataOut.header.checkCode[SPI_HEADER_INDEX_MASTER] + 1) & 0x7F;
-
 	if(getDeviceDataAfterStartOfMainCPU)
 	{
 		getDeviceDataAfterStartOfMainCPU--;
