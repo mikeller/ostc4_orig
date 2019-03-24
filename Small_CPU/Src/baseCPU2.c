@@ -379,7 +379,7 @@ int main(void) {
 			MX_DMA_Init();
 			MX_SPI1_Init();
 			SPI_Start_single_TxRx_with_Master(); /* be prepared for the first data exchange */
-			dohardspisync = 1;
+			Scheduler_Request_sync_with_SPI(SPI_SYNC_METHOD_HARD);
 			EXTI_Test_Button_Init();
 			global.mode = MODE_SURFACE;
 			break;

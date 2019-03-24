@@ -32,6 +32,11 @@
 #define SENSOR_PRESSURE_ID 0
 #define MAX_SENSORS 1
  
+#define SPI_SYNC_METHOD_NONE	(0u)
+#define SPI_SYNC_METHOD_HARD	(1u)	/* Scheduler shall reset all counters to 0 */
+#define SPI_SYNC_METHOD_SOFT	(2u)	/* Scheduler shall reset adjust counters to 100ms SPI data exchange cycle */
+#define SPI_SYNC_METHOD_INVALID	(4u)
+
 typedef struct
 {
 	uint8_t mode;
@@ -83,7 +88,6 @@ typedef struct
 
 /* Variables ---------------------------------------------------------*/
 extern SGlobal global;
-extern uint8_t dohardspisync;
 
 
 /* Function prototypes -----------------------------------------------*/
@@ -100,6 +104,9 @@ void scheduleUpdateLifeData(int32_t asynchron_milliseconds_since_last);
 void scheduleSpecial_Evaluate_DataSendToSlave(void);
 void scheduleUpdateDeviceDataChargerFull(void);
 void scheduleUpdateDeviceDataChargerCharging(void);
+
+void Scheduler_Request_sync_with_SPI(uint8_t SyncMethod);
+void Scheduler_SyncToSPI(void);
 
 uint8_t scheduleSetButtonResponsiveness(void);
 

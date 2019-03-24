@@ -57,7 +57,6 @@ SGlobal global;
 SDevice DeviceDataFlash;
 uint8_t deviceDataFlashValid = 0;
 uint8_t deviceDataSubSeconds = 0;
-uint8_t dohardspisync = 1;
 
 /* Private variables ---------------------------------------------------------*/
 /* can be lost while in sleep */
@@ -66,6 +65,8 @@ uint8_t setButtonsNow = 0;
 
 /* has to be in SRAM2 */
 uint8_t secondsCount = 0;
+
+static uint8_t dospisync = SPI_SYNC_METHOD_NONE;
 
 SScheduleCtrl Scheduler;
  
@@ -180,7 +181,7 @@ void initGlobals(void)
 	global.deviceData.temperatureMinimum.value_int32 = INT32_MAX;
 	global.deviceData.voltageMinimum.value_int32 = INT32_MAX;
 
-	dohardspisync = 1;
+	Scheduler_Request_sync_with_SPI(SPI_SYNC_METHOD_HARD);
 }
 
 
@@ -440,10 +441,7 @@ void schedule_check_resync(void)
 		 * function error handler
 		 */
 		SPI_Start_single_TxRx_with_Master();
-	}
-	if((global.check_sync_not_running == 10)) /* connection lost for about a second. Could be debugging or Firmware update */
-	{
-		dohardspisync = 1;
+		Scheduler_Request_sync_with_SPI(SPI_SYNC_METHOD_SOFT);
 	}
 }
 
@@ -754,8 +752,6 @@ void scheduleSurfaceMode(void)
 
 	while(global.mode == MODE_SURFACE)
 	{
-	/*    printf("surface...\n"); */
-//	    SPI_Start_single_TxRx_with_Master();
 		schedule_check_resync();
 		lasttick = HAL_GetTick();
 		ticksdiff = time_elapsed_ms(Scheduler.tickstart,lasttick);
@@ -766,7 +762,6 @@ void scheduleSurfaceMode(void)
 				setButtonsNow = 0;
 		}
 		
-
 		//Evaluate received data at 10 ms, 110 ms, 210 ms,...
 		if(ticksdiff >= Scheduler.counterSPIdata100msec * 100 + 10)
 		{
@@ -788,8 +783,7 @@ void scheduleSurfaceMode(void)
 					global.mode = MODE_DIVE;
 		}
 		
-		//evaluate compass data at 50 ms, 150 ms, 250 ms,...
-
+		//Evaluate compass data at 50 ms, 150 ms, 250 ms,...
 		if(ticksdiff >= Scheduler.counterCompass100msec * 100 + 50)
 		{
 			compass_read();
@@ -881,17 +875,44 @@ void scheduleSurfaceMode(void)
 	}
 }
 
-void HardSyncToSPI()
+inline void Scheduler_Request_sync_with_SPI(uint8_t SyncMethod)
 {
-	if(dohardspisync)
+	if( SyncMethod < SPI_SYNC_METHOD_INVALID)
 	{
-		//Set back tick counter
-		Scheduler.tickstart = HAL_GetTick();
-		Scheduler.counterSPIdata100msec = 0;
-		Scheduler.counterCompass100msec = 0;
-		Scheduler.counterPressure100msec = 0;
-		Scheduler.counterAmbientLight100msec = 0;
-		dohardspisync = 0;
+		dospisync = SyncMethod;
+	}
+}
+
+void Scheduler_SyncToSPI()
+{
+	uint32_t deltatick = 0;
+
+	switch(dospisync)
+	{
+		case SPI_SYNC_METHOD_HARD:
+				//Set back tick counter
+				Scheduler.tickstart = HAL_GetTick();
+				Scheduler.counterSPIdata100msec = 0;
+				Scheduler.counterCompass100msec = 0;
+				Scheduler.counterPressure100msec = 0;
+				Scheduler.counterAmbientLight100msec = 0;
+				dospisync = SPI_SYNC_METHOD_NONE;
+			break;
+		case SPI_SYNC_METHOD_SOFT:
+				deltatick = time_elapsed_ms(Scheduler.tickstart,HAL_GetTick());
+				deltatick %= 100;  						/* clip to 100ms window */
+				if(Scheduler.tickstart - deltatick >= 0) /* adjust start time to the next 100ms window */
+				{
+					Scheduler.tickstart -= deltatick;
+				}
+				else
+				{
+					Scheduler.tickstart = 0xFFFFFFFF- (deltatick - Scheduler.tickstart);
+				}
+				dospisync = SPI_SYNC_METHOD_NONE;
+			break;
+		default:
+			break;
 	}
 }
 
