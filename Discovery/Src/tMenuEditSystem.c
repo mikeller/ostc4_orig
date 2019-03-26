@@ -149,7 +149,11 @@ void openEdit_System(uint8_t line)
 
 void openEdit_CustomviewDivemode(uint8_t line)
 {
-    cv_configuration ^= 1 << (cv_changelist[line-1]);
+	SSettings *pSettings = settingsGetPointer();
+	extern _Bool WriteSettings;
+
+    pSettings->cv_configuration ^= 1 << (cv_changelist[line-1]);
+    WriteSettings = 1;
     exitMenuEdit_to_Menu_with_Menu_Update();
 }
 

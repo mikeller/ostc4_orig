@@ -59,7 +59,7 @@ uint32_t tMSystem_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext
         for(int i=0; i<6;i++)
         {
             id = cv_changelist[i];
-            text[textPointer++] = '\006' - CHECK_BIT_THOME(cv_configuration,id);
+            text[textPointer++] = '\006' - CHECK_BIT_THOME(data->cv_configuration,id);
             text[textPointer++] = ' ';
             textPointer += snprintf(&text[textPointer], 60,
                 "%c%c\n\r",

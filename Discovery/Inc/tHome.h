@@ -84,7 +84,6 @@ enum CUSTOMVIEWS
 
 // for custom view switch on/off 161122 hw
 extern const uint8_t cv_changelist[6];
-extern uint32_t cv_configuration;
 #define CHECK_BIT_THOME(var,pos) (((var)>>(pos)) & 1)
 
 typedef struct

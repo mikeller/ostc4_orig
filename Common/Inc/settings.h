@@ -212,11 +212,11 @@ typedef struct
 	// new in 0xFFFF0017
 	uint8_t FactoryButtonBase;
 	uint8_t FactoryButtonBalance[3];
-
 	/* new in 0xFFFF0018 */
 	uint8_t FlipDisplay;
+	/* new in 0xFFFF0019 */
+	uint32_t cv_configuration;
 
-//to be continued
 } SSettings;
 
 typedef struct

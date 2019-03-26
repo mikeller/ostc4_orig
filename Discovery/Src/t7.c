@@ -1517,7 +1517,7 @@ void t7_change_customview(void)
             cv_disabled = 0;
             for(int i=0;i<6;i++)
             {
-                if((*pViews == cv_changelist[i]) && !CHECK_BIT_THOME(cv_configuration, cv_changelist[i]))
+                if((*pViews == cv_changelist[i]) && !CHECK_BIT_THOME(settingsGetPointer()->cv_configuration, cv_changelist[i]))
                 {
                     cv_disabled = 1;
                     break;
