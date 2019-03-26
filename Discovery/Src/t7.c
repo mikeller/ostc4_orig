@@ -1523,6 +1523,13 @@ void t7_change_customview(void)
                     break;
                 }
             }
+
+            if ((*pViews == CVIEW_sensors || *pViews == CVIEW_sensors_mV) &&
+            	stateUsed->diveSettings.ppo2sensors_deactivated)
+            {
+            	cv_disabled = 1;
+            }
+
             if(cv_disabled)
             {
                 if(*pViews < CVIEW_END)
