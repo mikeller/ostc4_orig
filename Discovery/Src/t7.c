@@ -3099,9 +3099,9 @@ void t7_SummaryOfLeftCorner(void)
     text[textpointer++] = '\r';
     text[textpointer++] = '\t';
     if((pDecoinfoStandard->output_ceiling_meter > 99.9f) || (settingsGetPointer()->nonMetricalSystem))
-        textpointer += snprintf(&text[textpointer],10,"\020%01.1f",unit_depth_float(pDecoinfoStandard->output_ceiling_meter));
+        textpointer += snprintf(&text[textpointer],10,"\020%01.0f",unit_depth_float(pDecoinfoStandard->output_ceiling_meter));
     else
-        textpointer += snprintf(&text[textpointer],10,"\020%01.0f",pDecoinfoStandard->output_ceiling_meter);
+        textpointer += snprintf(&text[textpointer],10,"\020%01.1f",pDecoinfoStandard->output_ceiling_meter);
     text[textpointer++] = '\n';
     text[textpointer++] = '\r';
     text[textpointer++] = '\t';
