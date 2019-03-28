@@ -47,13 +47,10 @@ SEditSetpointPage editSetpointPage;
 
 /* Private function prototypes -----------------------------------------------*/
 
-void openEdit_DiveSetpointSelect(uint8_t line);
-void openEdit_DiveSetpointSelect_Subroutine(uint8_t line);
 
 /* Announced function prototypes -----------------------------------------------*/
 uint8_t OnAction_SP_Setpoint    (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_SP_Depth       (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t On                      (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 //uint8_t OnAction_SP_First     (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 //uint8_t OnAction_SP_Active    (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 //uint8_t OnAction_SP_DM_Select (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
@@ -290,7 +287,7 @@ uint8_t OnAction_SP_Setpoint(uint32_t editId, uint8_t blockNumber, uint8_t digit
     if(action == ACTION_BUTTON_BACK)
     {
         digitContentNew = digitContent - 1;
-        if((blockNumber == 0) && (digitContentNew > '1'))
+        if((blockNumber == 0) && (digitContentNew < '0'))
             digitContentNew = '1';
         if(digitContentNew < '0')
             digitContentNew = '9';
