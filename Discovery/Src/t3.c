@@ -855,9 +855,9 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         if(pDecoinfo->output_time_to_surface_seconds)
         {
             if(pDecoinfo->output_time_to_surface_seconds < 1000 * 60)
-                snprintf(text,TEXTSIZE,"\020\003\002%i'",(pDecoinfo->output_time_to_surface_seconds + 30)/ 60);
+                snprintf(text,TEXTSIZE,"\020\003\002%i'",(pDecoinfo->output_time_to_surface_seconds + 59)/ 60);
             else
-                snprintf(text,TEXTSIZE,"\020\003\002%ih",pDecoinfo->output_time_to_surface_seconds / 3600);
+                snprintf(text,TEXTSIZE,"\020\003\002%ih",(pDecoinfo->output_time_to_surface_seconds + 59)/ 3600);
             t3_basics_colorscheme_mod(text);
             GFX_write_string(&FontT105,tXc1,text,1);
         }

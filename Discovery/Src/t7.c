@@ -2172,9 +2172,9 @@ void t7_refresh_divemode(void)
         snprintf(TextR3,TEXTSIZE,"\032\f\002%c",TXT_TTS);
         GFX_write_string(&FontT42,&t7r3,TextR3,0);
         if(pDecoinfo->output_time_to_surface_seconds < 1000 * 60)
-            snprintf(TextR3,TEXTSIZE,"\020\002%i'",(pDecoinfo->output_time_to_surface_seconds + 30)/ 60);
+            snprintf(TextR3,TEXTSIZE,"\020\002%i'",(pDecoinfo->output_time_to_surface_seconds + 59)/ 60);
         else
-            snprintf(TextR3,TEXTSIZE,"\020\002%ih",pDecoinfo->output_time_to_surface_seconds / 3600);
+            snprintf(TextR3,TEXTSIZE,"\020\002%ih",(pDecoinfo->output_time_to_surface_seconds + 59)/ 3600);
         t7_colorscheme_mod(TextR3);
         if(time_elapsed_ms(pDecoinfo->tickstamp, HAL_GetTick()) > MAX_AGE_DECOINFO_MS)
             TextR2[0] = '\021';
@@ -2564,7 +2564,10 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
     /* Future TTS */
     case 6:
         headerText[2] = TXT_FutureTTS;
-        snprintf(text,TEXTSIZE,"\020\016\016@+%u'\n\r" "%i' TTS",settingsGetPointer()->future_TTS, pDecoinfoFuture->output_time_to_surface_seconds / 60);
+        if (pDecoinfoFuture->output_time_to_surface_seconds < 1000 * 60)
+        	snprintf(text,TEXTSIZE,"\020\016\016@+%u'\n\r" "%i' TTS",settingsGetPointer()->future_TTS, (pDecoinfoFuture->output_time_to_surface_seconds + 59) / 60);
+        else
+        	snprintf(text,TEXTSIZE,"\020\016\016@+%u'\n\r" "%ih TTS",settingsGetPointer()->future_TTS, (pDecoinfoFuture->output_time_to_surface_seconds + 59) / 3600);
         tinyHeaderFont = 1;
         line = 1;
         break;
@@ -3110,7 +3113,10 @@ void t7_SummaryOfLeftCorner(void)
     text[textpointer++] = '\n';
     text[textpointer++] = '\r';
     text[textpointer++] = '\t';
-    textpointer += snprintf(&text[textpointer],10,"\020%i'",		pDecoinfoFuture->output_time_to_surface_seconds / 60);
+    if (pDecoinfoFuture->output_time_to_surface_seconds < 1000 * 60)
+    	textpointer += snprintf(&text[textpointer],10,"\020%i'", (pDecoinfoFuture->output_time_to_surface_seconds + 59) / 60);
+    else
+    	textpointer += snprintf(&text[textpointer],10,"\020%ih", (pDecoinfoFuture->output_time_to_surface_seconds + 59) / 3600);
     text[textpointer++] = 0;
     t7_colorscheme_mod(text);
     GFX_write_string(&FontT42, &t7cY0free, text, 1);
