@@ -2838,7 +2838,7 @@ void t7_tissues(const SDiveState * pState)
         change.y = start.y;
 
         value = pState->lifeData.tissue_nitrogen_bar[i] - 0.7512f;
-        value *= 80;//20
+        value *= 80;
 
         if(value < 0)
             front = 0;
@@ -2935,10 +2935,10 @@ void t7_tissues(const SDiveState * pState)
     }
 
     stop.y = start.y - (3 * 15) - 1;
-    if((percent_N2 > 0) && (partial_pressure_N2 > 0.8f))//(0.8f + 0.5f)))
+    if((percent_N2 > 0) && (partial_pressure_N2 > 0.7512f))
     {
-        value = partial_pressure_N2;
-        value *= 80;//20
+        value = partial_pressure_N2 - 0.7512f;
+        value *= 80;
 
         if(value < 0)
             front = 3;
@@ -2971,7 +2971,7 @@ void t7_tissues(const SDiveState * pState)
     {
 
         value = partial_pressure_He;
-        value *= 80;//20
+        value *= 80;
 
         if(value < 0)
             front = 3;
