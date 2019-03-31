@@ -37,6 +37,9 @@
 #define SPI_SYNC_METHOD_SOFT	(2u)	/* Scheduler shall reset adjust counters to 100ms SPI data exchange cycle */
 #define SPI_SYNC_METHOD_INVALID	(4u)
 
+#define SCHEDULER_TICK_EXE1SEC	(980u) 	/* tick count based on cycle start which is used to trigger functions which */
+										/* shall be executed once in a second (20ms before cycle restarts) */
+
 typedef struct
 {
 	uint8_t mode;
@@ -82,6 +85,7 @@ typedef struct
 	uint8_t counterPressure100msec;
 	uint8_t counterCompass100msec;
 	uint8_t counterAmbientLight100msec;
+	uint32_t tick_execute1second;
 	uint32_t tickstart;
 } SScheduleCtrl;
 

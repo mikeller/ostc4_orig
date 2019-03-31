@@ -458,7 +458,6 @@ void scheduleDiveMode(void)
 {
 	uint32_t ticksdiff = 0; 
 	uint32_t lasttick = 0;
-
 	uint8_t counterAscentRate = 0;
 	float lastPressure_bar = 0.0f;
 	global.dataSendToMaster.mode = MODE_DIVE;
@@ -471,6 +470,7 @@ void scheduleDiveMode(void)
 	Scheduler.counterCompass100msec = 0;
 	Scheduler.counterPressure100msec = 0;
 	Scheduler.counterAmbientLight100msec = 0;
+	Scheduler.tick_execute1second = SCHEDULER_TICK_EXE1SEC;
 	
 	global.deviceData.diveCycles.value_int32++;
 	scheduleSetDate(&global.deviceData.diveCycles);
@@ -542,12 +542,10 @@ void scheduleDiveMode(void)
 			Scheduler.counterAmbientLight100msec++;
 		}
 
-		//Evaluate tissues, toxic data, vpm, etc. once a second 
-		if(ticksdiff >= 1000)
+		//Evaluate tissues, toxic data, vpm, etc. once a second
+		if(ticksdiff >= Scheduler.tick_execute1second)
 		{
-			/* reset counter */
-			Scheduler.tickstart = HAL_GetTick();
-
+			Scheduler.tick_execute1second = 0xFFFFFFFF;	/* execute once only in the second cycle */
 			if(global.dataSendToSlave.diveModeInfo != DIVEMODE_Apnea)
 			{
 				scheduleUpdateLifeData(0); // includes tissues
@@ -642,10 +640,16 @@ void scheduleDiveMode(void)
 					init_pressure();
 				}
 			}
+		}
+		if(ticksdiff >= 1000)
+		{
+			/* reset counter */
+			Scheduler.tickstart = HAL_GetTick();
 			Scheduler.counterSPIdata100msec = 0;
 			Scheduler.counterCompass100msec = 0;
 			Scheduler.counterPressure100msec = 0;
 			Scheduler.counterAmbientLight100msec = 0;
+			Scheduler.tick_execute1second = SCHEDULER_TICK_EXE1SEC;
 		}
 	}
 }
@@ -735,7 +739,6 @@ void scheduleTestMode(void)
 
 
 
-
 void scheduleSurfaceMode(void)
 {
 
@@ -746,6 +749,7 @@ void scheduleSurfaceMode(void)
 	Scheduler.counterCompass100msec = 0;
 	Scheduler.counterPressure100msec = 0;
 	Scheduler.counterAmbientLight100msec = 0;
+	Scheduler.tick_execute1second = SCHEDULER_TICK_EXE1SEC;
 
 	global.dataSendToMaster.mode = MODE_SURFACE;
 	global.deviceDataSendToMaster.mode = MODE_SURFACE;
@@ -762,14 +766,14 @@ void scheduleSurfaceMode(void)
 				setButtonsNow = 0;
 		}
 		
-		//Evaluate received data at 10 ms, 110 ms, 210 ms,...
+		/* Evaluate received data at 10 ms, 110 ms, 210 ms,... duration ~<1ms */
 		if(ticksdiff >= Scheduler.counterSPIdata100msec * 100 + 10)
 		{
 			SPI_Evaluate_RX_Data();
 			Scheduler.counterSPIdata100msec++;
 		}
 
-		//Evaluate pressure at 20 ms, 120 ms, 220 ms,...
+		/* Evaluate pressure at 20 ms, 120 ms, 220 ms,... duration ~22ms] */
 		if(ticksdiff >= Scheduler.counterPressure100msec * 100 + 20)
 		{
 				global.check_sync_not_running++;
@@ -783,7 +787,7 @@ void scheduleSurfaceMode(void)
 					global.mode = MODE_DIVE;
 		}
 		
-		//Evaluate compass data at 50 ms, 150 ms, 250 ms,...
+		/* Evaluate compass data at 50 ms, 150 ms, 250 ms,... duration ~5ms */
 		if(ticksdiff >= Scheduler.counterCompass100msec * 100 + 50)
 		{
 			compass_read();
@@ -793,19 +797,20 @@ void scheduleSurfaceMode(void)
 			Scheduler.counterCompass100msec++;
 		}
 
-		//evaluate compass data at 70 ms, 170 ms, 270 ms,...
+		/* evaluate compass data at 70 ms, 170 ms, 270 ms,... duration <1ms */
 		if(ticksdiff >= Scheduler.counterAmbientLight100msec * 100 + 70)
 		{
 			adc_ambient_light_sensor_get_data();
 			copyAmbientLightData();
 			Scheduler.counterAmbientLight100msec++;
 		}
-		//Evaluate tissues, toxic data, etc. once a second
-		if(ticksdiff >= 1000)
-		{
-			//Set back tick counter
-			Scheduler.tickstart = HAL_GetTick();
 
+
+
+		/*  Evaluate tissues, toxic data, etc. once a second... duration ~1ms */
+		if(ticksdiff >= Scheduler.tick_execute1second)
+		{
+			Scheduler.tick_execute1second = 0xFFFFFFFF;
 			if(clearDecoNow)
 			{
 				decom_reset_with_1000mbar(&global.lifeData); ///< this should almost reset desaturation time
@@ -867,10 +872,17 @@ void scheduleSurfaceMode(void)
 					init_pressure();
 				}
 			}
+		}
+
+		if(ticksdiff >= 1000)
+		{
+			//Set back tick counter
+			Scheduler.tickstart = HAL_GetTick();
 			Scheduler.counterSPIdata100msec = 0;
 			Scheduler.counterCompass100msec = 0;
 			Scheduler.counterPressure100msec = 0;
 			Scheduler.counterAmbientLight100msec = 0;
+			Scheduler.tick_execute1second = SCHEDULER_TICK_EXE1SEC;
 		}
 	}
 }
