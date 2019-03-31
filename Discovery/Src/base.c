@@ -292,6 +292,8 @@ uint32_t base_tempLightLevel = 0;
 uint8_t	updateButtonsToDefault = 0;
 uint8_t	wasFirmwareUpdateCheckBattery = 0;
 
+static DoDisplayRefresh = 0;	/* trigger to refresh display data */
+
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 static void Error_Handler(void);
@@ -304,7 +306,9 @@ static uint32_t TIM_BACKLIGHT_adjust(void);
 static void gotoSleep(void);
 static void deco_loop(void);
 static void resetToFirmwareUpdate(void);
-void EvaluateButton(void);
+static void TriggerButtonAction(void);
+static void EvaluateButton(void);
+static void RefreshDisplay(void);
 
 /* ITM Trace-------- ---------------------------------------------------------*/
 /*
@@ -495,6 +499,12 @@ int main(void)
             ext_flash_write_settings();
         }
         deco_loop();
+        TriggerButtonAction();
+        if(DoDisplayRefresh)
+        {
+	        DoDisplayRefresh = 0;
+        	RefreshDisplay();
+        }
 
 #ifdef DEBUG_RUNTIME
         translateTime(stateUsed->lifeData.timeBinaryFormat, &Stime);
@@ -756,26 +766,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     get_globalStateList(&status);
 
-    switch(status.base)
+    if(status.base == BaseComm) /* main loop not serviced in com mode */
     {
-    case BaseHome:
-        tHome_refresh();
-        tM_check_content();
-        break;
-    case BaseMenu:
-        tM_refresh_live_content();
-        tMenuEdit_refresh_live_content();
-        break;
-    case BaseInfo:
-        tInfo_refresh(); ///< only compass at the moment 23.Feb.2015 hw
-        break;
-    case BaseComm:
-         tComm_refresh();
-        break;
-    default:
-        if(get_globalState() == StStop)
-            tHome_sleepmode_fun();
-        break;
+    	tComm_refresh();
+    }
+    else
+    {
+    	DoDisplayRefresh = 1;
     }
 }
 
@@ -829,6 +826,114 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	}
 #endif
 }
+
+static void RefreshDisplay()
+{
+	SStateList status;
+	get_globalStateList(&status);
+	switch(status.base)
+	{
+	case BaseHome:
+		tHome_refresh();
+		tM_check_content();
+		break;
+	case BaseMenu:
+		tM_refresh_live_content();
+		tMenuEdit_refresh_live_content();
+		break;
+	case BaseInfo:
+		tInfo_refresh(); ///< only compass at the moment 23.Feb.2015 hw
+		break;
+	case BaseComm: 		/* refresh already done in tim callback */
+		break;
+	default:
+		if(get_globalState() == StStop)
+			tHome_sleepmode_fun();
+		break;
+	}
+}
+static uint8_t ButtonAction = ACTION_END;
+
+static void StoreButtonAction(uint8_t action)
+{
+	ButtonAction = action;
+}
+
+static void TriggerButtonAction()
+{
+	uint8_t action = ButtonAction;
+	SStateList status;
+
+	if(ButtonAction != ACTION_END)
+	{
+		get_globalStateList(&status);
+
+		if (action == ACTION_BUTTON_CUSTOM) {
+			GFX_screenshot();
+		}
+
+		switch (status.base) {
+		case BaseStop:
+			if (action == ACTION_BUTTON_BACK)
+				resetToFirmwareUpdate();
+			break;
+		case BaseComm:		/* already handled in tim callback */
+			break;
+		case BaseHome:
+			if (action == ACTION_BUTTON_NEXT) {
+				if (status.page == PageSurface)
+					openMenu(1);
+				else
+					tHomeDiveMenuControl(action);
+			} else if (action == ACTION_BUTTON_BACK) {
+				if (get_globalState() == StS)
+					openInfo(StILOGLIST);
+				else if ((status.page == PageDive)
+						&& (settingsGetPointer()->design < 7)) {
+					settingsGetPointer()->design = 7; // auto switch to 9 if necessary
+				} else if ((status.page == PageDive) && (status.line != 0)) {
+					if (settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT)
+						settingsGetPointer()->design = 3;
+					else if (settingsGetPointer()->extraDisplay
+							== EXTRADISPLAY_DECOGAME)
+						settingsGetPointer()->design = 4;
+
+					set_globalState(StD);
+				} else
+					tHome_change_field_button_pressed();
+			} else if (action == ACTION_BUTTON_ENTER) {
+				if ((status.page == PageDive) && (status.line == 0))
+					tHome_change_customview_button_pressed();
+				else if (status.page == PageSurface)
+					tHome_change_customview_button_pressed();
+				else
+					tHomeDiveMenuControl(action);
+			}
+			break;
+
+		case BaseMenu:
+			if (status.line == 0)
+				sendActionToMenu(action);
+			else
+				sendActionToMenuEdit(action);
+			break;
+
+		case BaseInfo:
+			if (status.page == InfoPageLogList)
+				sendActionToInfoLogList(action);
+			else if (status.page == InfoPageLogShow)
+				sendActionToInfoLogShow(action);
+			else
+				sendActionToInfo(action);
+			break;
+
+		default:
+			break;
+		}
+		ButtonAction = ACTION_END;
+	}
+}
+
 
 void EvaluateButton()
 {
@@ -894,73 +999,17 @@ void EvaluateButton()
 	#endif
 
 		get_globalStateList(&status);
-
-		if (action == ACTION_BUTTON_CUSTOM) {
-			GFX_screenshot();
-		}
-
-		switch (status.base) {
-		case BaseStop:
-			if (action == ACTION_BUTTON_BACK)
-				resetToFirmwareUpdate();
-			break;
-		case BaseComm:
+		if(status.base == BaseComm) /* main loop is not serviced in comm mode => react immediately */
+		{
 			if (action == ACTION_BUTTON_BACK) {
 				settingsGetPointer()->bluetoothActive = 0;
 				MX_Bluetooth_PowerOff();
 				tComm_exit();
 			}
-			break;
-		case BaseHome:
-			if (action == ACTION_BUTTON_NEXT) {
-				if (status.page == PageSurface)
-					openMenu(1);
-				else
-					tHomeDiveMenuControl(action);
-			} else if (action == ACTION_BUTTON_BACK) {
-				if (get_globalState() == StS)
-					openInfo(StILOGLIST);
-				else if ((status.page == PageDive)
-						&& (settingsGetPointer()->design < 7)) {
-					settingsGetPointer()->design = 7; // auto switch to 9 if necessary
-				} else if ((status.page == PageDive) && (status.line != 0)) {
-					if (settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT)
-						settingsGetPointer()->design = 3;
-					else if (settingsGetPointer()->extraDisplay
-							== EXTRADISPLAY_DECOGAME)
-						settingsGetPointer()->design = 4;
-
-					set_globalState(StD);
-				} else
-					tHome_change_field_button_pressed();
-			} else if (action == ACTION_BUTTON_ENTER) {
-				if ((status.page == PageDive) && (status.line == 0))
-					tHome_change_customview_button_pressed();
-				else if (status.page == PageSurface)
-					tHome_change_customview_button_pressed();
-				else
-					tHomeDiveMenuControl(action);
-			}
-			break;
-
-		case BaseMenu:
-			if (status.line == 0)
-				sendActionToMenu(action);
-			else
-				sendActionToMenuEdit(action);
-			break;
-
-		case BaseInfo:
-			if (status.page == InfoPageLogList)
-				sendActionToInfoLogList(action);
-			else if (status.page == InfoPageLogShow)
-				sendActionToInfoLogShow(action);
-			else
-				sendActionToInfo(action);
-			break;
-
-		default:
-			break;
+		}
+		else
+		{
+			StoreButtonAction(action);	/* Handle action in main loop */
 		}
 		LastButtonPressed = INVALID_BUTTON;
 	}
