@@ -97,15 +97,17 @@ uint8_t receiveStartByteUart = 0;
 uint8_t bluetoothActiveLastTime = 0;
 
 uint8_t StartListeningToUART = 0;
-char display_text[256] = { 0 };
+unsigned char display_text[256] = { 0 };
 
 uint8_t setForcedBluetoothName = 0;
 
 uint8_t updateSettingsAndMenuOnExit = 0;
 
 /* Private types -------------------------------------------------------------*/
-#define BYTE_DOWNLOAD_MODE	(0xBB)
+#define BYTE_DOWNLOAD_MODE		(0xBB)
 #define BYTE_SERVICE_MODE		(0xAA)
+
+#define UART_TIMEOUT_SECONDS	(120u)		/* Timeout for keeping connection open and waiting for data */
 
 const uint8_t id_Region1_firmware = 0xFF;
 const uint8_t id_RTE = 0xFE;
@@ -399,6 +401,8 @@ uint8_t HW_Set_Bluetooth_Name(uint16_t serial, uint8_t withEscapeSequence)
 
 uint8_t openComm(uint8_t aRxByte)
 {
+	SStateList status;
+	uint8_t timeoutCounter = 0;
     uint8_t answer = 0;
     uint8_t service_mode_last_three_bytes[3];
     uint8_t service_mode_response[5] =
@@ -454,10 +458,22 @@ uint8_t debug[256] = {0};
 uint8_t dbgptr = 0;
 debug[dbgptr++] = aRxByte;
 */
-    while((answer == prompt4D4C(receiveStartByteUart)) && (HAL_UART_Receive(&UartHandle, (uint8_t*)&aRxByte, 1, 120000)== HAL_OK))
+    while((answer == prompt4D4C(receiveStartByteUart)) && (timeoutCounter < UART_TIMEOUT_SECONDS * 2)) 	/* Split 120 seconds timeout into 240 iterations a 500ms */
     {
+    	if(HAL_UART_Receive(&UartHandle, (uint8_t*)&aRxByte, 1, 500)!= HAL_OK) 							/* Timeout half a second */
+    	{
+    		timeoutCounter++;
+    		get_globalStateList(&status);
+    		if (status.base != BaseComm)
+    		{
+    			timeoutCounter = UART_TIMEOUT_SECONDS * 2; /* Abort action triggered outside main loop => exit */
+    		}
+    	}
+    	else
+    	{
 //		debug[dbgptr++] = aRxByte;
-        answer = select_mode(aRxByte);
+    		answer = select_mode(aRxByte);
+    	}
     }
     set_returnFromComm();
     return 1;
