@@ -1070,11 +1070,12 @@ void sendActionToMenuEdit(uint8_t sendAction)
         case ACTION_TIMEOUT:
         case ACTION_MODE_CHANGE:
             exitMenuEdit(1);
-        default:
             break;
         case ACTION_IDLE_TICK:
         case ACTION_IDLE_SECOND:
+        default:
             break;
+
         }
     }
     else
@@ -1094,10 +1095,11 @@ void sendActionToMenuEdit(uint8_t sendAction)
         case ACTION_TIMEOUT:
         case ACTION_MODE_CHANGE:
             exitMenuEditField();
-        default:
             break;
         case ACTION_IDLE_TICK:
         case ACTION_IDLE_SECOND:
+            break;
+        default:
             break;
         }
     }
@@ -1114,10 +1116,11 @@ void sendActionToMenuEdit(uint8_t sendAction)
         case ACTION_TIMEOUT:
         case ACTION_MODE_CHANGE:
             exitMenuEdit(1);
-        default:
             break;
         case ACTION_IDLE_TICK:
         case ACTION_IDLE_SECOND:
+            break;
+        default:
             break;
         }
     }

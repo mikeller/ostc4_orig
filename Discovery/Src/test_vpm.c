@@ -345,7 +345,6 @@ uint8_t test2_unapproved(void)
             decotable_minutes[i] = ((float)input.decolistVPM.output_stop_length_seconds[i]) / 60.0f;
         }
     }
-    i = i;
     return true;
 }
 
@@ -403,7 +402,6 @@ uint8_t test3_unapproved(void)
             decotable_minutes[i] = ((float)input.decolistVPM.output_stop_length_seconds[i]) / 60.0f;
         }
     }
-    i = i;
     return true;
 }
 
@@ -462,7 +460,6 @@ uint8_t test4_unapproved(void)
             decotable_minutes[i] = ((float)input.decolistVPM.output_stop_length_seconds[i]) / 60.0f;
         }
     }
-    i = i;
     return true;
 }
 
