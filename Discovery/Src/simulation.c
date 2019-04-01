@@ -44,15 +44,16 @@
 #include "logbook_miniLive.h"
 
 //Private state variables
-float sim_aim_depth_meter;
-_Bool sim_head_decostops = 1;
+static float sim_aim_depth_meter;
+static _Bool sim_heed_decostops = 1;
 
-const float sim_descent_rate_meter_per_min = 20;
+static const float sim_descent_rate_meter_per_min = 20;
 
 
 //Private functions
-float sim_get_ambiant_pressure(SDiveState * pDiveState);
-void sim_reduce_deco_time_one_second(SDiveState* pDiveState);
+static float sim_get_ambiant_pressure(SDiveState * pDiveState);
+static void sim_reduce_deco_time_one_second(SDiveState* pDiveState);
+static void simulation_set_aim_depth(int depth_meter);
 
 /**
   ******************************************************************************
@@ -63,7 +64,7 @@ void sim_reduce_deco_time_one_second(SDiveState* pDiveState);
   */
 void simulation_set_heed_decostops(_Bool heed_decostops_while_ascending)
 {
-  sim_head_decostops = heed_decostops_while_ascending;
+  sim_heed_decostops = heed_decostops_while_ascending;
 }
 
 /**
@@ -83,7 +84,7 @@ void simulation_start(int aim_depth)
         aim_depth = 20;
   simulation_set_aim_depth(aim_depth);
   timer_init();
-  stateUsed = &stateSim;
+  set_stateUsedToSim();
     stateSim.lifeData.boolResetAverageDepth = 1;
   decoLock = DECO_CALC_init_as_is_start_of_dive;
 
@@ -262,7 +263,7 @@ void simulation_UpdateLifeData( _Bool checkOncePerSecond)
   *@param minutes
   * @return float : new pressure
   */
-void simulation_add_time(int minutes)
+static void simulation_add_time(int minutes)
 {
   for(int i = 0; i < 60 * minutes; i++)
   {
@@ -293,7 +294,7 @@ uint16_t simulation_get_aim_depth(void)
 
 _Bool simulation_get_heed_decostops(void)
 {
-    return sim_head_decostops;
+    return sim_heed_decostops;
 }
 
 /**
@@ -303,7 +304,7 @@ _Bool simulation_get_heed_decostops(void)
   *@param depth_meter
   * @return float : new pressure
   */
-void simulation_set_aim_depth(int depth_meter)
+static void simulation_set_aim_depth(int depth_meter)
 {
     sim_aim_depth_meter = depth_meter;
 }
@@ -317,7 +318,7 @@ void simulation_set_aim_depth(int depth_meter)
   * @param  SDiveState* pDiveState:
   * @return float : new ambiant pressure
   */
-float sim_get_ambiant_pressure(SDiveState * pDiveState)
+static float sim_get_ambiant_pressure(SDiveState * pDiveState)
 {
     //Calc next depth
     uint8_t actual_deco_stop = decom_get_actual_deco_stop(pDiveState);
@@ -336,7 +337,7 @@ float sim_get_ambiant_pressure(SDiveState * pDiveState)
         if(depth_meter < sim_aim_depth_meter)
             depth_meter = sim_aim_depth_meter;
 
-        if(sim_head_decostops && depth_meter < actual_deco_stop)
+        if(sim_heed_decostops && depth_meter < actual_deco_stop)
         {
             if(actual_deco_stop < (depth_meter +  pDiveState->diveSettings.ascentRate_meterperminute / 60))
                  depth_meter = actual_deco_stop;
@@ -461,7 +462,7 @@ SDecoinfo* simulation_decoplaner(uint16_t depth_meter, uint16_t intervall_time_m
     }
 }
 
-float sGChelper_bar(uint16_t depth_meter)
+static float sGChelper_bar(uint16_t depth_meter)
 {
     SDiveState * pDiveState = &stateSim;
     float ambient, surface, density, meter;

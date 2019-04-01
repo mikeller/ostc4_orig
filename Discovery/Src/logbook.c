@@ -1342,6 +1342,7 @@ static void logbook_SetMaxCNS(float max_cns_percentage)
 static void logbook_SetCompartmentDesaturation(void)
 {
 	const SDiveState * pStateReal = stateRealGetPointer();
+	SLifeData2 secondaryInformation  = { 0 };
 
 	decom_tissues_desaturation_time(&pStateReal->lifeData, &secondaryInformation);
 	for(int i=0;i<16;i++)
