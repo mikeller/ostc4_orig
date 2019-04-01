@@ -16,9 +16,6 @@ float extExample_variable_can_be_used_with_extern;
 #include "decom.h"
 
 
-extern  const float helium_time_constant[16];
-extern  const float nitrogen_time_constant[16];
-
 extern const float buehlmann_N2_a[];
 extern const float buehlmann_N2_b[];
 extern const float buehlmann_He_a[];
@@ -727,18 +724,17 @@ void buehlmann_ceiling_calculator(SLifeData* pLifeData, SDiveSettings * pDiveSet
 	float gf_low;
 	float gf_high;
 	float gf_delta;
-	int dv_gf_low_stop_meter;
+	float dv_gf_low_stop_meter;
 	_Bool test_result;
 	float next_gf_value;
 	float next_pressure_absolute;
-	int depth_in_meter;
+	float depth_in_meter;
 	
 	gf_low = pDiveSettings->gf_low;
 	gf_high = pDiveSettings->gf_high;
 
-	//
 	dv_gf_low_stop_meter = (int)((pDiveSettings->internal__pressure_first_stop_ambient_bar_as_upper_limit_for_gf_low_otherwise_zero - pLifeData->pressure_surface_bar) * 10);
-	//
+
 	if(dv_gf_low_stop_meter < 1)
 	{
 		next_gf_value = gf_high; // fix hw 161024
@@ -748,9 +744,9 @@ void buehlmann_ceiling_calculator(SLifeData* pLifeData, SDiveSettings * pDiveSet
 	{
 		next_gf_value = gf_high;
 		gf_delta = gf_high - gf_low;
-		gf_delta /= dv_gf_low_stop_meter; // gf_delta is delta for each meter now!!
+		gf_delta /= (dv_gf_low_stop_meter * 10); // gf_delta is delta for 10 cm !!
 	}
-	//
+
 	depth_in_meter = 0;
 	next_pressure_absolute = pLifeData->pressure_surface_bar;
 
@@ -762,19 +758,18 @@ void buehlmann_ceiling_calculator(SLifeData* pLifeData, SDiveSettings * pDiveSet
 	//
 	while(!test_result && depth_in_meter < 200)
 	{
-		depth_in_meter += 1;
+		depth_in_meter += 0.1;
 		next_gf_value = fmaxf(gf_low, next_gf_value - gf_delta);
 		gGF_value = next_gf_value / 100.0f;
-		next_pressure_absolute += 0.1f; // 1 meter down
+		next_pressure_absolute += 0.01f; // 0.1 meter down
 		test_result = buehlmann_tissue_test_tolerance(next_pressure_absolute);
 	}
-	//
+
 	if(test_result)
 	{
-		// old direct paste
 		pDecoInfo->output_ceiling_meter = depth_in_meter;
-		// new sub-meter hw 160331
-		if(depth_in_meter >= 1)
+
+		if(depth_in_meter >= 0)
 		{
 			for(int i = 0; i < 10; i++)
 			{

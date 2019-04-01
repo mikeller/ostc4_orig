@@ -260,7 +260,9 @@ static void TIM_DEMO_init(void);
 RTC_HandleTypeDef		RtcHandle; /* used to change time and date, no RTC is running on this MCU */
 TIM_HandleTypeDef   TimHandle; /* used in stm32f4xx_it.c too */
 TIM_HandleTypeDef   TimBacklightHandle; /* used in stm32f4xx_it.c too */
+#ifdef DEMOMODE
 TIM_HandleTypeDef   TimDemoHandle; /* used in stm32f4xx_it.c too */
+#endif
 
 uint8_t LastButtonPressed;
 uint32_t LastButtonPressedTick;
@@ -660,26 +662,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                     timeout_in_seconds = 0;
                 }
             break;
-/* why was this here? 160317 hw
-            case BaseInfo:
-                if(status.page == InfoPageLogList)
-                {
-                    exitLog();
-                }
-                else
-                if(status.page == InfoPageLogShow)
-                {
-                    show_logbook_exit();
-                    exitLog();
-                }
-                else
-                if(status.page != InfoPageCompass)
-                {
-                    exitInfo();
-                }
-                timeout_in_seconds = 0;
-            break;
-*/
             default:
                 break;
             }
@@ -1669,7 +1651,7 @@ void deco_loop(void)
     } CALC_WHAT;
 
     static CALC_WHAT what = CALC_INVALID;
-    int counter = 0;
+    static int counter = 0;
     if((stateUsed->mode != MODE_DIVE) || (stateUsed->diveSettings.diveMode == DIVEMODE_Apnea) || (decoLock != DECO_CALC_ready ))
         return;
 

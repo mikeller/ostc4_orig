@@ -137,16 +137,6 @@ extern const tText text_array2[];
 		TXT_Information,
 		/* */
 		TXT_END,
-		/* */
-		// unused TXT_Conservatism,
-		// unused TXT_enter,
-		// unused TXT_down,
-		// unused TXT_Change,
-		// unused TXT_Luftintegration,
-		// unused TXT_FirmwareUpdate,
-		// unused TXT_ppo2_setting,
-		// unused TXT_Yes,
-		// unused TXT_No,
 
 		TXT_MINIMAL = '\xFE',
 		TXT_2BYTE 	= '\xFF',
@@ -305,13 +295,6 @@ extern const tText text_array2[];
 		/* */
 		TXT2BYTE_FLIPDISPLAY,
 		TXT2BYTE_END
-
-		// unused TXT2BYTE_Button1,
-		// unused TXT2BYTE_Button2,
-		// unused TXT2BYTE_Button3,
-		// unused TXT2BYTE_Button4,
-
 };
 
 #endif /* TEXT_MULTILINGUAGE_H */
-

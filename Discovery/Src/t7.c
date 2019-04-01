@@ -56,7 +56,6 @@ void t7_SummaryOfLeftCorner(void);
 void t7_debug(void);
 
 void t7_miniLiveLogProfile(void);
-//void t7_clock(void);
 void t7_logo_OSTC(void);
 static void t7_colorscheme_mod(char *text);
 
@@ -549,8 +548,6 @@ void t7_refresh_sleepmode_fun(void)
 void t7_refresh(void)
 {
     static uint8_t last_mode = MODE_SURFACE;
-
-//	uint32_t oldScreen;//, oldPlugin;
     SStateList status;
     get_globalStateList(&status);
 
@@ -1131,7 +1128,6 @@ void t7_refresh_surface(void)
     draw_frame(0,0, CLUT_pluginboxSurface, CLUT_Font020);
 }
 
-
 void t7_refresh_surface_debugmode_wireless_info(void)
 {
     char text[400];
@@ -1483,8 +1479,6 @@ void t7_set_customview_to_primary(void)
             selection_customview = settingsGetPointer()->tX_customViewPrimary;
 }
 
-
-// for CVIEW_END is none_or_debug
 void t7_change_customview(void)
 {
     const uint8_t *pViews;
@@ -2658,7 +2652,6 @@ static void t7_colorscheme_mod(char *text) {
 	}
 }
 
-
 void draw_frame(_Bool PluginBoxHeader, _Bool LinesOnTheSides, uint8_t colorBox, uint8_t colorLinesOnTheSide)
 {
     point_t LeftLow, WidthHeight;
@@ -2838,7 +2831,7 @@ void t7_tissues(const SDiveState * pState)
         change.y = start.y;
 
         value = pState->lifeData.tissue_nitrogen_bar[i] - 0.7512f;
-        value *= 80;//20
+        value *= 80;
 
         if(value < 0)
             front = 0;
@@ -2935,10 +2928,10 @@ void t7_tissues(const SDiveState * pState)
     }
 
     stop.y = start.y - (3 * 15) - 1;
-    if((percent_N2 > 0) && (partial_pressure_N2 > 0.8f))//(0.8f + 0.5f)))
+    if((percent_N2 > 0) && (partial_pressure_N2 > 0.7512f))
     {
-        value = partial_pressure_N2;
-        value *= 80;//20
+        value = partial_pressure_N2 - 0.7512f;
+        value *= 80;
 
         if(value < 0)
             front = 3;
@@ -2971,7 +2964,7 @@ void t7_tissues(const SDiveState * pState)
     {
 
         value = partial_pressure_He;
-        value *= 80;//20
+        value *= 80;
 
         if(value < 0)
             front = 3;
@@ -3122,212 +3115,8 @@ void t7_SummaryOfLeftCorner(void)
     GFX_write_string(&FontT42, &t7cY0free, text, 1);
 }
 
-
-
-
-/*
-    point_t start, change, stop;
-    float value;
-    uint16_t front;
-    uint8_t color;
-
-
-    start.y = t7cH.WindowY0 - 5;
-    start.x = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
-    stop.x = start.x + CUSTOMBOX_SPACE_INSIDE;
-
-
-    for(int i=0;i<16;i++)
-    {
-        stop.y = start.y;
-        change.y = start.y;
-
-        value = pState->lifeData.tissue_nitrogen_bar[i] - 0.7512f;
-        value *= 20;
-
-        if(value < 0)
-            front = 0;
-        else
-        if(value > CUSTOMBOX_SPACE_INSIDE)
-            front = CUSTOMBOX_SPACE_INSIDE;
-        else
-                front = (uint16_t)value;
-
-        change.x = start.x + front;
-        if(change.x != start.x)
-            GFX_draw_thick_line(1,&t7screen, start, change, CLUT_Font020);
-        if(change.x != stop.x)
-            GFX_draw_thick_line(1,&t7screen, change, stop, CLUT_Font021);
-
-        start.y -= 3;
-    }
-
-    // He
-    start.y -= 28 + 14;
-    for(int i=0;i<16;i++)
-    {
-        stop.y = start.y;
-        change.y = start.y;
-
-        value = pState->lifeData.tissue_helium_bar[i];
-        value *= 20;
-
-        if(value < 0)
-            front = 0;
-        else
-        if(value > CUSTOMBOX_SPACE_INSIDE)
-            front = CUSTOMBOX_SPACE_INSIDE;
-        else
-                front = (uint16_t)value;
-
-        change.x = start.x + front;
-        if(change.x != start.x)
-            GFX_draw_thick_line(1,&t7screen, start, change, CLUT_Font020);
-        if(change.x != stop.x)
-            GFX_draw_thick_line(1,&t7screen, change, stop, CLUT_Font021);
-
-        start.y -= 3;
-    }
-
-    // CNS == Oxygen
-    start.y -= 28 + 14;
-
-    value = pState->lifeData.cns;
-    value *= (CUSTOMBOX_SPACE_INSIDE/2);
-    value /= 100;
-
-    if(value < 0)
-        front = 0;
-    else
-    if(value > CUSTOMBOX_SPACE_INSIDE)
-        front = CUSTOMBOX_SPACE_INSIDE;
-    else
-            front = (uint16_t)value;
-
-    if(pState->lifeData.cns < 95)
-        color = CLUT_Font020;
-    else
-    if(pState->lifeData.cns < 100)
-        color =  CLUT_WarningYellow;
-    else
-        color = CLUT_WarningRed;
-
-    for(int i=0;i<16;i++)
-    {
-        stop.y = start.y;
-        change.y = start.y;
-
-        change.x = start.x + front;
-        if(change.x != start.x)
-            GFX_draw_thick_line(1,&t7screen, start, change, color);
-        if(change.x != stop.x)
-            GFX_draw_thick_line(1,&t7screen, change, stop, CLUT_Font021);
-
-        start.y -= 3;
-    }
-
-    // where is the onload/offload limit for N2 and He
-    decom_get_inert_gases(pState->lifeData.pressure_ambient_bar, &pState->lifeData.actualGas, &percent_N2, &percent_He);
-    partial_pressure_N2 =  (pState->lifeData.pressure_ambient_bar - WATER_VAPOUR_PRESSURE) * percent_N2;
-    partial_pressure_He = (pState->lifeData.pressure_ambient_bar - WATER_VAPOUR_PRESSURE) * percent_He;
-
-        if((percent_N2 > 0) && (partial_pressure_N2 > (0.8f + 0.5f)))
-    {
-        start.y = t7cH.WindowY0 + 1 - 5;
-        stop.y = start.y - (3 * 15) - 1;
-
-        value = partial_pressure_N2;
-        value *= 20;
-
-        if(value < 0)
-            front = 3;
-        else
-        if(value + 5 > CUSTOMBOX_SPACE_INSIDE)
-            front = CUSTOMBOX_SPACE_INSIDE - 3;
-        else
-                front = (uint16_t)value;
-
-        start.x = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET + front;
-        stop.x = start.x;
-        GFX_draw_thick_line(2,&t7screen, start, stop, CLUT_EverythingOkayGreen);
-    }
-
-    if((percent_He > 0) && (partial_pressure_He > 0.5f))
-    {
-        start.y = t7cH.WindowY0 + 1 - 5 - 3*16 - 28 - 14;
-        stop.y = start.y - (3 * 15) - 1;
-
-        value = partial_pressure_He;
-        value *= 20;
-
-        if(value < 0)
-            front = 3;
-        else
-        if(value + 5 > CUSTOMBOX_SPACE_INSIDE)
-            front = CUSTOMBOX_SPACE_INSIDE - 3;
-        else
-                front = (uint16_t)value;
-
-        start.x = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET + front;
-        stop.x = start.x;
-        GFX_draw_thick_line(2,&t7screen, start, stop, CLUT_EverythingOkayGreen);
-    }
-
-    start.y = t7cH.WindowY0 + 1 - 5 - 6*16 - 2*28 - 2*14;
-    stop.y = start.y - (3 * 15) - 1;
-
-    start.x = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET + CUSTOMBOX_SPACE_INSIDE/2;
-    stop.x = start.x;
-    GFX_draw_thick_line(2, &t7screen, start, stop, CLUT_WarningRed);
-*/
-
-/*
-void t7_clock(void)
-{
-    point_t start, stop;
-
-
-    for(uint16_t i=0;i<360;i+=30)
-    {
-        start = t7_compass_circle(1,i);
-        stop = t7_compass_circle(2,i);
-        start.x += 280; // standard center is 400, 250
-        stop.x += 280;
-        GFX_draw_thick_line(5,&t7screen, start, stop, CLUT_CompassSubTick);
-
-        start.x = 400+280;
-        start.y = 250;
-        stop = t7_compass_circle(2,58);
-        stop.x += 280;
-        GFX_draw_thick_line(3,&t7screen, start, stop, CLUT_CompassNorthTick);
-        stop = t7_compass_circle(0,302);
-        stop.x += 280;
-        GFX_draw_thick_line(3,&t7screen, start, stop, CLUT_CompassNorthTick);
-    }
-}
-*/
-
-//static float testCC = 180;
 void t7_compass(uint16_t ActualHeading, uint16_t UserSetHeading)
 {
-
-/*
-    static uint16_t lastHeading = 0;
-    float differenceCompass, resultKalman;
-
-    if(testCC > lastHeading)
-        differenceCompass = testCC - lastHeading;
-    else
-        differenceCompass = lastHeading - testCC;
-
-    resultKalman = Kalman_getAngle(differenceCompass, 2, 0.1);
-    if(testCC > lastHeading)
-        ActualHeading = lastHeading + resultKalman;
-    else
-        ActualHeading = lastHeading - resultKalman;
-
-    lastHeading = ActualHeading;
-*/
 	uint16_t ActualHeadingRose;
     uint16_t LeftBorderHeading, LineHeading;
     uint32_t offsetPicture;
@@ -3375,22 +3164,7 @@ void t7_compass(uint16_t ActualHeading, uint16_t UserSetHeading)
     LastHeading = newHeading;
     ActualHeading = newHeading;
     ActualHeadingRose = ActualHeading;
-/*
-    if (ActualHeading < 90)
-        ActualHeading += 360;
 
-    if(ActualHeading > LastHeading)
-    {
-        if((ActualHeading - LastHeading) < 25)
-            ActualHeading = LastHeading + 1;
-    }
-    else
-    if(ActualHeading < LastHeading)
-    {
-        if((LastHeading - ActualHeading) < 25)
-            ActualHeading = LastHeading - 1;
-    }
-*/
     if(pSettings->FlipDisplay)
     {
     	ActualHeadingRose = 360 - ActualHeadingRose;

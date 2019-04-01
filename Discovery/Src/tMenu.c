@@ -398,22 +398,6 @@ static void tM_build_page(uint32_t id, char *text, uint16_t tab, char *subtext)
     write_content_simple(&tMscreen, 0, 800, 480-KEY_LABEL_HIGH, &FontT24,localtext,CLUT_ButtonSurfaceScreen);
 }
 
-/*
-_Bool skipCCRpage(uint8_t page)
-{
-    if(menu.ccrOnlyContentForPage[page])
-    {
-        if(actual_menu_content == MENU_SURFACE)
-        {
-                SSettings *data = settingsGetPointer();
-                if((data->dive_mode != DIVEMODE_CCR) && data->hideCCRinOCmode)
-                    return 1;
-        }
-    }
-    return 0;
-}
-*/
-
 static void findValidPosition(uint8_t *pageOuput, uint8_t *lineOutput)
 {
     uint8_t page = 0;
@@ -567,9 +551,6 @@ void tM_refresh_live_content(void)
     char text[MAX_PAGE_TEXTSIZE];
     char subtext[MAX_PAGE_TEXTSIZE];
     uint16_t tabPosition;
-
-//	if(menu.modeFlipPages == 0)
-//		return;
 
     if((get_globalState() == StMSYS) && (actual_menu_content == MENU_SURFACE))
     {

@@ -391,12 +391,10 @@ ubit8_t ub;
 uint8_t uw;
 } bit8_Type;
 
-//extern SDiveState stateReal; only via    const SDiveState stateRealGetPointer(void);
 extern SDiveState stateSim;
 extern SDiveState stateDeco;
 extern uint8_t decoLock;
 extern const SDiveState * stateUsed;
-extern SLifeData2 secondaryInformation;
 
 
 enum DECO_LOCK{

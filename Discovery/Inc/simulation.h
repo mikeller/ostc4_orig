@@ -45,10 +45,8 @@ typedef struct
 void simulation_start(int aim_depth);
 void simulation_exit(void);
 
-void simulation_set_aim_depth(int depth_meter);
 void simulation_set_heed_decostops(_Bool heed_decostops_while_ascending);
 
-void simulation_add_time(int minutes);
 void simulation_UpdateLifeData( _Bool checkOncePerSecond);
 void simulation_set_zero_time_descent(void);
 
