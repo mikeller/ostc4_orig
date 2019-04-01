@@ -71,11 +71,9 @@
 #include "tCCR.h"
 #include "crcmodel.h"
 
-SDiveState stateReal = { 0 };
+static SDiveState stateReal = { 0 };
 SDiveState stateSim = { 0 };
 SDiveState stateDeco = { 0 };
-
-SLifeData2 secondaryInformation  = { 0 };
 
 SDevice stateDevice =
 {
@@ -117,11 +115,7 @@ void set_stateUsedToSim(void)
 
 _Bool is_stateUsedSetToSim(void)
 {
-	if(stateUsed == &stateSim)
-		return 1;
-	else
-		return 0;
-
+	return stateUsed == &stateSim;
 }
 
 const SDiveState * stateRealGetPointer(void)

@@ -88,9 +88,7 @@ SInfoEventHandler TIevent[10];
 
 /* Private function prototypes -----------------------------------------------*/
 void tInfo_build_page(void);
-void tInfo_showlog(void);
 
-void tI_draw_tIdesign(void);
 void tI_set_cursor(uint8_t forThisIdentID);
 void tI_startInfoFieldSelect(void);
 void tInfo_write_content_of_actual_Id(void);
@@ -100,9 +98,6 @@ void tInfo_write_content_without_Id(void);
 void tI_clean_content(uint16_t XleftGimpStyle, uint16_t XrightGimpStyle, uint16_t YtopGimpStyle,  const tFont *Font);
 void tInfo_write_content(uint16_t XleftGimpStyle, uint16_t XrightGimpStyle, uint16_t YtopGimpStyle,  const tFont *Font, const char *text, uint8_t color);
 
-void tI_resetInfo(uint8_t color);
-
-void tI_tInfo_refresh_live_content(void);
 void tI_evaluateNewString       (uint32_t editID, uint32_t *pNewValue1, uint32_t *pNewValue2, uint32_t *pNewValue3, uint32_t *pNewValue4);
 
 //void tI_tInfo_newInput        (uint32_t editID, uint32_t int1, uint32_t int2, uint32_t int3, uint32_t int4);
