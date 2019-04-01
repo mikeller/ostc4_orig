@@ -1517,14 +1517,6 @@ static uint8_t text_FR_WirelessDisconnect[] = "";
 static uint8_t text_IT_WirelessDisconnect[] = "Disconnesso";
 static uint8_t text_ES_WirelessDisconnect[] = "Desconectado";
 
-/*
-static uint8_t text_EN_Luftintegration[] = "air integration";
-static uint8_t text_DE_Luftintegration[] = "Luftintegration";
-static uint8_t text_FR_Luftintegration[] = "";
-static uint8_t text_IT_Luftintegration[] = "ARIA";
-static uint8_t text_ES_Luftintegration[] = "aire integrado";
-*/
-
 static uint8_t text_EN_FlipDisplay[] = "Flip display";
 static uint8_t text_DE_FlipDisplay[] = "Anzeige spiegeln";
 static uint8_t text_FR_FlipDisplay[] = "";
@@ -1609,15 +1601,6 @@ const tText text_array[] =
     {(uint8_t)TXT_LogbookEmpty,		{text_EN_LogbookEmpty, text_DE_LogbookEmpty, text_FR_LogbookEmpty, text_IT_LogbookEmpty, text_ES_LogbookEmpty}},
     {(uint8_t)TXT_Start_Calculation,{text_EN_Start_Calculation, text_DE_Start_Calculation, text_FR_Start_Calculation, text_IT_Start_Calculation, text_ES_Start_Calculation}},
     {(uint8_t)TXT_Information,		{text_EN_Information, text_DE_Information, text_FR_Information, text_IT_Information, text_ES_Information}},
-    // unused{(uint8_t)TXT_Conservatism,    {text_EN_Conservatism, text_DE_Conservatism, text_FR_Conservatism, text_IT_Conservatism, text_ES_Conservatism}},
-    // unused{(uint8_t)TXT_Change, 			{text_EN_Change, text_DE_Change, text_FR_Change, text_IT_Change, text_ES_Change}},
-    // unused{(uint8_t)TXT_enter,			{text_EN_enter, text_DE_enter, text_FR_enter, text_IT_enter, text_ES_enter}},
-    // unused{(uint8_t)TXT_down,			{text_EN_down, text_DE_down, text_FR_down, text_IT_down, text_ES_down}},
-    // unused{(uint8_t)TXT_Luftintegration, {text_EN_Luftintegration, text_DE_Luftintegration, text_FR_Luftintegration, text_IT_Luftintegration, text_ES_Luftintegration}},
-    // unused{(uint8_t)TXT_FirmwareUpdate,	{text_EN_FirmwareUpdate, text_DE_FirmwareUpdate, text_FR_FirmwareUpdate, text_IT_FirmwareUpdate, text_ES_FirmwareUpdate}},
-    // unused{(uint8_t)TXT_ppo2_setting, 	{text_EN_ppo2_setting, text_DE_ppo2_setting, text_FR_ppo2_setting, text_IT_ppo2_setting, text_ES_ppo2_setting}},
-    // unused{(uint8_t)TXT_Yes,				{text_EN_Yes, text_DE_Yes, text_FR_Yes, text_IT_Yes, text_ES_Yes}},
-    // unused{(uint8_t)TXT_No,				{text_EN_No, text_DE_No, text_FR_No, text_IT_No, text_ES_No}},
 };
 
 const tText text_array2[] =
@@ -1743,7 +1726,6 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_SetBatteryCharge,{text_EN_SetBatteryCharge, text_DE_SetBatteryCharge, text_FR_SetBatteryCharge, text_IT_SetBatteryCharge, text_ES_SetBatteryCharge}},
     {(uint8_t)TXT2BYTE_SetFactoryDefaults,{text_EN_SetFactoryDefaults, text_DE_SetFactoryDefaults, text_FR_SetFactoryDefaults, text_IT_SetFactoryDefaults, text_ES_SetFactoryDefaults}},
 
-
     {(uint8_t)TXT2BYTE_Reboot,			{text_EN_Reboot, text_DE_Reboot, text_FR_Reboot, text_IT_Reboot, text_ES_Reboot}},
     {(uint8_t)TXT2BYTE_ButtonLeft,		{text_EN_ButtonLeft, text_DE_ButtonLeft, text_FR_ButtonLeft, text_IT_ButtonLeft, text_ES_ButtonLeft}},
     {(uint8_t)TXT2BYTE_ButtonMitte,		{text_EN_ButtonMitte, text_DE_ButtonMitte, text_FR_ButtonMitte, text_IT_ButtonMitte, text_ES_ButtonMitte}},
@@ -1755,11 +1737,4 @@ const tText text_array2[] =
 
 	{(uint8_t)TXT2BYTE_FLIPDISPLAY,		{text_EN_FlipDisplay, text_DE_FlipDisplay, text_FR_FlipDisplay, text_IT_FlipDisplay, text_ES_FlipDisplay}},
 
-
-//	{(uint8_t)TXT2BYTE_ApneaCount,          {text_EN_ApneaCount, text_DE_ApneaCount, text_FR_ApneaCount, text_IT_ApneaCount, text_ES_ApneaCount}},
-    // unused {(uint8_t)TXT2BYTE_Button1,	{text_EN_Button1, text_DE_Button1, text_FR_Button1, text_IT_Button1, text_ES_Button1}},
-    // unused {(uint8_t)TXT2BYTE_Button2,	{text_EN_Button2, text_DE_Button2, text_FR_Button2, text_IT_Button2, text_ES_Button2}},
-    // unused {(uint8_t)TXT2BYTE_Button3,	{text_EN_Button3, text_DE_Button3, text_FR_Button3, text_IT_Button3, text_ES_Button3}},
-    // unused {(uint8_t)TXT2BYTE_Button4,	{text_EN_Button4, text_DE_Button4, text_FR_Button4, text_IT_Button4, text_ES_Button4}},
 };
-

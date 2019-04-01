@@ -2025,7 +2025,7 @@ static void Error_Handler_extflash(void)
   {
   }
 }
-
+/*
 uint8_t ext_flash_erase_firmware_if_not_empty(void)
 {
 	const uint8_t TESTSIZE_FW = 4;
@@ -2076,4 +2076,4 @@ uint8_t ext_flash_erase_firmware2_if_not_empty(void)
 	}
 	else
 		return 0;
-}
+}*/

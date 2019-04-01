@@ -48,7 +48,7 @@ GFX_DrawCfgWindow	t6c3; // for menu text
 
 uint8_t t6_selection_customview = 0;
 
-/* Importend function prototypes ---------------------------------------------*/
+/* Imported function prototypes ---------------------------------------------*/
 
 /* Private types -------------------------------------------------------------*/
 

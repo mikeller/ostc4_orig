@@ -111,7 +111,6 @@ _Bool WriteSettings = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 void draw_tMEdesign(void);
-void set_cursor(uint8_t forThisIdentID);
 void set_cursorNew(uint8_t forThisIdentID);
 void startMenuEditFieldSelect(void);
 void create_newText_for_actual_Id(void);
