@@ -27,11 +27,11 @@
 #include "stm32f4xx_hal.h"
 #include "i2c.h"
 
-float battery_f_voltage = 0;
-float battery_f_charge_percent = 0;
+static float battery_f_voltage = 0;
+static float battery_f_charge_percent = 0;
 
 #define BGG_BATTERY_OFFSET          (26123)  //; 65536-(3,35Ah/0,085mAh)
-#define BGG_BATTERY_DEVIDER         (394)    //; 3,35Ah/0,085mAh/100 [%]
+#define BGG_BATTERY_DIVIDER         (394)    //; 3,35Ah/0,085mAh/100 [%]
 
 float get_voltage(void)
 {
@@ -61,8 +61,14 @@ void init_battery_gas_gauge(void)
 	
 	uint8_t buffer[2];
 	buffer[0] = 0x01;
-	buffer[1] = 0xF8;// true: F8 = 11111000, wrong/old comment: 11101000
-	I2C_Master_Transmit(  DEVICE_BATTERYGAUGE, buffer, 2);
+
+	// F8 = 11111000:
+	// Vbat 3.0V (11)
+	// Prescale M = 128 (111)
+	// AL/CC pin disable (0)
+	// Shutdown (0)
+	buffer[1] = 0xF8;
+	I2C_Master_Transmit(DEVICE_BATTERYGAUGE, buffer, 2);
 }
 
 
@@ -86,7 +92,7 @@ void battery_gas_gauge_get_data(void)
 	battery_f_charge_percent_local =  (float)(bufferReceive[2] * 256);
 	battery_f_charge_percent_local += (float)(bufferReceive[3]);
 	battery_f_charge_percent_local -= BGG_BATTERY_OFFSET;
-	battery_f_charge_percent_local /= BGG_BATTERY_DEVIDER;
+	battery_f_charge_percent_local /= BGG_BATTERY_DIVIDER;
 	
 	if(battery_f_charge_percent_local < 0)
 		battery_f_charge_percent_local = 0;
@@ -120,8 +126,9 @@ void battery_gas_gauge_set(float percentage)
 	
 	if(percentage >= 100)
 		mAhSend = 0xFFFF;
-	else	
-		mAhSend = (uint16_t)(percentage * 655.35f);
+	else {
+		mAhSend = (percentage * BGG_BATTERY_DIVIDER) + BGG_BATTERY_OFFSET;
+	}
 	
 	uint8_t bufferSend[3];
 	bufferSend[0] = 0x02;
