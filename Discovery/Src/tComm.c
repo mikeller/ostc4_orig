@@ -97,7 +97,7 @@ uint8_t receiveStartByteUart = 0;
 uint8_t bluetoothActiveLastTime = 0;
 
 uint8_t StartListeningToUART = 0;
-unsigned char display_text[256] = { 0 };
+char display_text[256] = { 0 };
 
 uint8_t setForcedBluetoothName = 0;
 
