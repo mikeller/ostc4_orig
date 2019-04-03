@@ -33,7 +33,7 @@ void RTC_SetTime(RTC_TimeTypeDef stimestructure)
 {
 
 	stimestructure.SubSeconds = 0;
-  stimestructure.TimeFormat = RTC_HOURFORMAT12_AM;
+  stimestructure.TimeFormat = RTC_HOURFORMAT_24;
   stimestructure.DayLightSaving = RTC_DAYLIGHTSAVING_NONE ;
   stimestructure.StoreOperation = RTC_STOREOPERATION_RESET;
 
@@ -104,13 +104,7 @@ static void RTC_CalendarConfig(void)
 
 void MX_RTC_init(void)
 {
-
-  RTC_TimeTypeDef sTime;
-  RTC_DateTypeDef sDate;
-//  RTC_AlarmTypeDef sAlarm;
-
-    /**Initialize RTC and set the Time and Date 
-    */
+  /* Initialize RTC */
   RTCHandle.Instance = RTC;
   RTCHandle.Init.HourFormat = RTC_HOURFORMAT_24;
   RTCHandle.Init.AsynchPrediv = 127;
@@ -119,34 +113,6 @@ void MX_RTC_init(void)
   RTCHandle.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
   RTCHandle.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
   HAL_RTC_Init(&RTCHandle);
-
-  sTime.Hours = 11;
-  sTime.Minutes = 0;
-  sTime.Seconds = 0;
-  sTime.SubSeconds = 0;
-  sTime.TimeFormat = RTC_HOURFORMAT12_AM;
-  sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-  sTime.StoreOperation = RTC_STOREOPERATION_RESET;
-  HAL_RTC_SetTime(&RTCHandle, &sTime, FORMAT_BCD);
-
-  sDate.WeekDay = RTC_WEEKDAY_SUNDAY;
-  sDate.Month = RTC_MONTH_FEBRUARY;
-  sDate.Date = 15;
-  sDate.Year = 17;
-  HAL_RTC_SetDate(&RTCHandle, &sDate, FORMAT_BCD);
-
-
-/*
-  RTCHandle.Instance = RTC; 
-  RTCHandle.Init.HourFormat = RTC_HOURFORMAT_24;
-  RTCHandle.Init.AsynchPrediv = RTC_ASYNCH_PREDIV;
-  RTCHandle.Init.SynchPrediv = RTC_SYNCH_PREDIV;
-  RTCHandle.Init.OutPut = RTC_OUTPUT_DISABLE;
-  RTCHandle.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
-  RTCHandle.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
-	
-	HAL_RTC_Init(&RTCHandle);
-*/	
 }
 
 
