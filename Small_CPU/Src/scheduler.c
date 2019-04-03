@@ -74,7 +74,6 @@ SScheduleCtrl Scheduler;
 
 _Bool vpm_crush2(void);
 void scheduleUpdateDeviceData(void);
-void initStructWithZeero(uint8_t* data, uint16_t length);
 long get_nofly_time_minutes(void);
 void copyActualGas(SGas gas);
 void copyPressureData(void);
@@ -98,7 +97,7 @@ extern void SPI_Evaluate_RX_Data();
 
 void initGlobals(void)
 {
-	initStructWithZeero((uint8_t*) &global, sizeof(SGlobal));
+	bzero(&global, sizeof(SGlobal));
 	
 	global.dataSendToSlavePending = 0;
 	global.dataSendToSlaveIsValid = 1;
@@ -1301,13 +1300,6 @@ _Bool vpm_crush2(void)
 
 	}
 	return 0;
-};
-
-
-void initStructWithZeero(uint8_t* data, uint16_t length)
-{
-	for(uint16_t i = 0; i < length; i++)
-		data[i] = 0;
 }
 
 
