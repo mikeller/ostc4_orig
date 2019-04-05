@@ -237,16 +237,8 @@ void simulation_UpdateLifeData( _Bool checkOncePerSecond)
     /* Exposure Tissues
      */
     decom_tissues_exposure(1, &pDiveState->lifeData);
-    /* moved to updateSetpointStateUsed()
-    pDiveState->lifeData.ppO2 = decom_calc_ppO2( pDiveState->lifeData.pressure_ambient_bar, &pDiveState->lifeData.actualGas);
-    */
     decom_oxygen_calculate_cns_exposure(1, &pDiveState->lifeData.actualGas, pDiveState->lifeData.pressure_ambient_bar, &pDiveState->lifeData.cns);
-    //if((pDiveState->lifeData.depth_meter < 0.1f) || (pDiveState->lifeData.dive_time_seconds > 1*60*60))
-//    if(pDiveState->lifeData.dive_time_seconds > 1*60*60)
-    if(pDiveState->lifeData.dive_time_seconds > 5*60*60) // test Dirk Berben
-    {
-      simulation_exit();
-    }
+
     if(stateSimGetPointer()->lifeData.counterSecondsShallowDepth)
     {
             stateSimGetPointerWrite()->lifeData.counterSecondsShallowDepth += 1;
