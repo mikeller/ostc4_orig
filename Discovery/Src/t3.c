@@ -37,7 +37,7 @@
 #include "timer.h"
 #include "unit.h"
 
-//* Importend function prototypes ---------------------------------------------*/
+//* Imported function prototypes ---------------------------------------------*/
 extern uint8_t write_gas(char *text, uint8_t oxygen, uint8_t helium);
 
 /* Exported variables --------------------------------------------------------*/
@@ -799,7 +799,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
             t3_basics_colorscheme_mod(text);
             GFX_write_string(&FontT105,tXc1,text,1);
         }
-        else // NDL
+        else if(pDecoinfo->output_ndl_seconds) // NDL
         {
             snprintf(text,TEXTSIZE,"\032\f%c",TXT_Nullzeit);
             GFX_write_string(&FontT42,tXc1,text,0);
