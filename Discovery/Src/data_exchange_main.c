@@ -405,17 +405,6 @@ void DateEx_copy_to_dataOut(void)
 	{
 		if(!wasUpdateNotPowerOn)
 			wasPowerOn = 1;
-
-		RTC_DateTypeDef Sdate;
-		RTC_TimeTypeDef Stime;
-
-		translateDate(settings->backup_localtime_rtc_dr, &Sdate);
-		translateTime(settings->backup_localtime_rtc_tr, &Stime);
-
-		dataOut.data.newTime = Stime;
-		dataOut.setTimeNow = 1;
-		dataOut.data.newDate = Sdate;
-		dataOut.setDateNow = 1;
 		
 		settingsHelperButtonSens_keepPercentageValues(settingsGetPointerStandard()->ButtonResponsiveness[3], settings->ButtonResponsiveness);
 		setButtonResponsiveness(settings->ButtonResponsiveness);

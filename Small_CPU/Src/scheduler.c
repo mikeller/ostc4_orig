@@ -74,7 +74,6 @@ SScheduleCtrl Scheduler;
 
 _Bool vpm_crush2(void);
 void scheduleUpdateDeviceData(void);
-void initStructWithZeero(uint8_t* data, uint16_t length);
 long get_nofly_time_minutes(void);
 void copyActualGas(SGas gas);
 void copyPressureData(void);
@@ -82,15 +81,12 @@ void copyCnsAndOtuData(void);
 void copyTimeData(void);
 void copyCompassData(void);
 void copyCompassDataDuringCalibration(int16_t dx, int16_t dy, int16_t dz);
-//void copyBatteryData(void); now in header
 void copyAmbientLightData(void);
 void copyTissueData(void);
 void copyVpmCrushingData(void);
 void copyDeviceData(void);
 void copyPICdata(void);
-uint16_t schedule_update_timer_helper(int8_t thisSeconds);
-
-
+static void schedule_update_timer_helper(int8_t thisSeconds);
 uint32_t time_elapsed_ms(uint32_t ticksstart,uint32_t ticksnow);
 
 _Bool scheduleCheck_pressure_reached_dive_mode_level(void);
@@ -101,7 +97,7 @@ extern void SPI_Evaluate_RX_Data();
 
 void initGlobals(void)
 {
-	initStructWithZeero((uint8_t*) &global, sizeof(SGlobal));
+	bzero(&global, sizeof(SGlobal));
 	
 	global.dataSendToSlavePending = 0;
 	global.dataSendToSlaveIsValid = 1;
@@ -316,17 +312,11 @@ uint8_t RtcBugFixChsw(uint8_t inStupidTime)
 	return (10 * multiplesOf16) + inStupidTime;
 }
 
-
-uint32_t minCounterDebug = 0;
-
 uint32_t schedule_time_compare_helper(RTC_TimeTypeDef timeNow, RTC_DateTypeDef dateNow, RTC_TimeTypeDef timeLast, RTC_DateTypeDef dateLast)
 {
 	uint32_t nowInSeconds;
 	uint32_t lastInSeconds;
 	uint32_t resultDiff;
-	
-	if(timeNow.Minutes != timeLast.Minutes)
-		minCounterDebug++;
 
 	nowInSeconds  = (uint32_t)RtcBugFixChsw(timeNow.Hours) * 3600;
 	nowInSeconds += (uint32_t)RtcBugFixChsw(timeNow.Minutes) * 60;
@@ -335,16 +325,6 @@ uint32_t schedule_time_compare_helper(RTC_TimeTypeDef timeNow, RTC_DateTypeDef d
 	lastInSeconds  = (uint32_t)RtcBugFixChsw(timeLast.Hours) * 3600;
 	lastInSeconds += (uint32_t)RtcBugFixChsw(timeLast.Minutes) * 60;
 	lastInSeconds += (uint32_t)RtcBugFixChsw(timeLast.Seconds);
-
-/*
-		nowInSeconds  = (uint32_t)timeNow.Hours * 3600;
-	nowInSeconds += (uint32_t)timeNow.Minutes * 60;
-	nowInSeconds += (uint32_t)timeNow.Seconds;
-
-	lastInSeconds  = (uint32_t)timeLast.Hours * 3600;
-	lastInSeconds += (uint32_t)timeLast.Minutes * 60;
-	lastInSeconds += (uint32_t)timeLast.Seconds;
-*/
 	
 	if(dateNow.Date != dateLast.Date)
 	{
@@ -372,25 +352,25 @@ uint32_t schedule_time_compare_helper(RTC_TimeTypeDef timeNow, RTC_DateTypeDef d
   */
 extern RTC_HandleTypeDef RTCHandle;
 
-uint16_t schedule_update_timer_helper(int8_t thisSeconds)
+static void schedule_update_timer_helper(int8_t thisSeconds)
 {
 	static RTC_TimeTypeDef sTimeLast;
 	static RTC_DateTypeDef sDateLast;
 	RTC_TimeTypeDef sTimeNow;
 	RTC_DateTypeDef sDateNow;
 	uint32_t secondsPast;
-	uint32_t tempNewValue = 0;
 
 	HAL_RTC_GetTime(&RTCHandle, &sTimeNow, RTC_FORMAT_BCD);
 	HAL_RTC_GetDate(&RTCHandle, &sDateNow, RTC_FORMAT_BCD);
 
-	if(thisSeconds != 0) // otherwise just store sTimeLast, sDateLast and return 0
+	if(thisSeconds != 0) // otherwise just store sTimeLast, sDateLast
 	{
-		secondsPast = schedule_time_compare_helper(sTimeNow, sDateNow, sTimeLast, sDateLast);
-
 		if(thisSeconds > 0) // use this value instead, good for pre-loading sTimeLast and sDateLast
 		{
 			secondsPast	= thisSeconds;
+		} else {
+			// thisSeconds < 0 and not <= !
+			secondsPast = schedule_time_compare_helper(sTimeNow, sDateNow, sTimeLast, sDateLast);
 		}
 
 		if(global.seconds_since_last_dive)
@@ -401,7 +381,7 @@ uint16_t schedule_update_timer_helper(int8_t thisSeconds)
 			}
 			else
 			{
-				tempNewValue = ((uint32_t)global.seconds_since_last_dive) + secondsPast;
+				uint32_t tempNewValue = ((uint32_t)global.seconds_since_last_dive) + secondsPast;
 				if(tempNewValue > 777900) // a bit more than nine days [seconds]
 					global.seconds_since_last_dive = 0;
 				else
@@ -412,12 +392,7 @@ uint16_t schedule_update_timer_helper(int8_t thisSeconds)
 		
 	sTimeLast = sTimeNow;
 	sDateLast = sDateNow;
-	
-	return tempNewValue;
 }
-
-
-
 
 /**
   ******************************************************************************
@@ -827,9 +802,6 @@ void scheduleSurfaceMode(void)
 			if(global.seconds_since_last_dive)
 			{
 				schedule_update_timer_helper(-1);
-//				global.seconds_since_last_dive++;
-//				if(global.seconds_since_last_dive > 777900) // a bit more than nine days [seconds]
-//					global.seconds_since_last_dive = 0;
 			}
 
 			if(global.accidentRemainingSeconds)
@@ -946,9 +918,6 @@ void scheduleCompassCalibrationMode(void)
 	if(global.seconds_since_last_dive)
 	{
 				schedule_update_timer_helper(-1);
-//		global.seconds_since_last_dive += 60;
-//				if(global.seconds_since_last_dive > 777900) // a bit more than nine days [seconds]
-//					global.seconds_since_last_dive = 0;
 	}
 
 	scheduleUpdateLifeData(0);
@@ -1013,9 +982,6 @@ void scheduleSleepMode(void)
 		if(global.seconds_since_last_dive)
 		{
 			schedule_update_timer_helper(-1);
-//			global.seconds_since_last_dive += 2;
-//				if(global.seconds_since_last_dive > 777900) // a bit more than nine days [seconds]
-//					global.seconds_since_last_dive = 0;
 		}
 
 		if(global.accidentRemainingSeconds)
@@ -1334,13 +1300,6 @@ _Bool vpm_crush2(void)
 
 	}
 	return 0;
-};
-
-
-void initStructWithZeero(uint8_t* data, uint16_t length)
-{
-	for(uint16_t i = 0; i < length; i++)
-		data[i] = 0;
 }
 
 

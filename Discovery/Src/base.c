@@ -294,7 +294,7 @@ uint32_t base_tempLightLevel = 0;
 uint8_t	updateButtonsToDefault = 0;
 uint8_t	wasFirmwareUpdateCheckBattery = 0;
 
-static DoDisplayRefresh = 0;	/* trigger to refresh display data */
+static uint8_t DoDisplayRefresh = 0;	/* trigger to refresh display data */
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
