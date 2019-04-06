@@ -33,7 +33,7 @@
     ==============================================================================
               ##### History #####
   ==============================================================================
-    160211 added 4 bytes Serial in update Files after pruefsumme prior to binary
+    160211 added 4 bytes Serial in update Files after checksum prior to binary
     160211 0x6B changed to version only
     160623 fixed 0x72 (in V1.0.9)
     160623 fixed rebuild menu (before update) for V1.0.10
@@ -41,14 +41,14 @@
     ==============================================================================
               ##### CTS / RTS #####
   ==============================================================================
-    RTS ist immer Output, CTS is immer Input
+    RTS is Output, CTS is Input
 
-    BlueMod Pin D7 UART-RTS# ist Output
-    geht auf STM32F429 PA11 CTS (Input)
-    dito STM32 PA12 RTS geht auf  BlueMod UART-CTS# F3
+    BlueMod Pin D7 UART-RTS# is Output
+    connected to STM32F429 PA11 CTS (Input)
+    also STM32 PA12 RTS is connected to BlueMod UART-CTS# F3
 
-    siehe BlueMod_SR_HWreference_r06.pdf, Seite 156
-    und MAIN_CPU STM32F4 Reference manual DM00031020.pdf, Seite 990
+    see BlueMod_SR_HWreference_r06.pdf, page 156
+    and MAIN_CPU STM32F4 Reference manual DM00031020.pdf, page 990
 
 
     ==============================================================================
@@ -58,7 +58,6 @@
 
   [0x74] upload MainCPU firmware in EEPROM and start bootloader
 
-    OSTC3 stuff can be found in comm.asm
   */
 
 /* Includes ------------------------------------------------------------------*/
@@ -122,7 +121,7 @@ uint8_t receive_update_flex(uint8_t isRTEupdateALLOWED);
 uint8_t receive_update_data_flex(uint8_t* pBuffer1, uint8_t* pBuffer2, uint8_t RTEupdateALLOWED);
 uint8_t receive_update_data_mainCPU_firmware(void);
 uint8_t receive_update_data_mainCPU_variable_firmware(void);
-uint8_t receive_update_data_mainCPU_firmware_subrotuine(uint8_t region, uint8_t* pBuffer1, uint8_t* pBuffer2);
+uint8_t receive_update_data_mainCPU_firmware_subroutine(uint8_t region, uint8_t* pBuffer1, uint8_t* pBuffer2);
 HAL_StatusTypeDef receive_uart_large_size(UART_HandleTypeDef *huart, uint8_t *pData, uint32_t Size);
 static uint8_t openComm(uint8_t aRxByte);
 uint8_t HW_Set_Bluetooth_Name(uint16_t serial, uint8_t withEscapeSequence);
@@ -873,7 +872,7 @@ uint8_t select_mode(uint8_t type)
         return 0;
 
     default:
-        aTxBuffer[count++] = prompt4D4C(receiveStartByteUart); // hw 160712
+        aTxBuffer[count++] = prompt4D4C(receiveStartByteUart);
         break;
     }
 
@@ -1034,7 +1033,6 @@ uint8_t select_mode(uint8_t type)
 #ifndef BOOTLOADER_STANDALONE
     // full headers (256 byte)
     case 0x61:
-//			for(int StepBackwards = 0;StepBackwards<256;StepBackwards++) // comment Jef Driesen email 15.09.2015 and 3.3.2016
         for(int StepBackwards = 255; StepBackwards > -1; StepBackwards--)
         {
             logbook_getHeader(StepBackwards, &logbookHeader);
@@ -1047,7 +1045,6 @@ uint8_t select_mode(uint8_t type)
 
         // compact headers (16 byte)
     case 0x6D:
-//			for(int StepBackwards = 0;StepBackwards<256;StepBackwards++) // comment Jef Driesen email 15.09.2015 and 3.3.2016
         for(int StepBackwards = 255; StepBackwards > -1; StepBackwards--)
         {
             logbook_getHeader(StepBackwards, &logbookHeader);
@@ -1094,12 +1091,11 @@ uint8_t select_mode(uint8_t type)
 
     // get dive profile
     case 0x66:
-//			logbook_getHeader(aRxBuffer[0], &logbookHeader); // comment Jef Driesen email 15.09.2015
         logbook_getHeader(255 - aRxBuffer[0], &logbookHeader);
         plogbookHeaderOSTC3 = logbook_build_ostc3header(&logbookHeader);
         if(HAL_UART_Transmit(&UartHandle, (uint8_t*)plogbookHeaderOSTC3, 256,5000)!= HAL_OK)
             return 0;
-        ext_flash_open_read_sample(255 - aRxBuffer[0], &sampleTotalLength); // comment Jef Driesen email 15.09.2015 about length: changed in externLogbookFlash.c
+        ext_flash_open_read_sample(255 - aRxBuffer[0], &sampleTotalLength);
         while(sampleTotalLength >= 128)
         {
             ext_flash_read_next_sample_part(aTxBuffer,128);
@@ -1243,7 +1239,7 @@ uint8_t receive_update_data_cpu2(void)
 uint8_t receive_update_data_cpu2_sub(uint8_t* pBuffer)
 {
     uint8_t sBuffer[10];
-    uint32_t length, offsetTotal, pruefsumme, pruefsummeCalc;
+    uint32_t length, offsetTotal, checksum, checksumCalc;
     uint8_t id;
     const uint8_t id_RTE = 0xFE;
 
@@ -1262,16 +1258,16 @@ uint8_t receive_update_data_cpu2_sub(uint8_t* pBuffer)
     id = pBuffer[0];
     offsetTotal = 256  * 256 * 256 * (uint32_t)pBuffer[0] +  256 * 256 * (uint32_t)pBuffer[1] + 256 * (uint32_t)pBuffer[2] + pBuffer[3];
 
-    // get pruefsumme, bytes are in different order on Dev C++ code!!!
+    // get checksum, bytes are in different order on Dev C++ code!!!
     if(HAL_UART_Receive(&UartHandle, sBuffer, 4,5000)!= HAL_OK) // 58000
     {
         return 0;
     }
-    pruefsumme = 256  * 256 * 256 * (uint32_t)sBuffer[3] +  256 * 256 * (uint32_t)sBuffer[2] + 256 * (uint32_t)sBuffer[1] + sBuffer[0];
-    pruefsummeCalc = length + offsetTotal;
+    checksum = 256  * 256 * 256 * (uint32_t)sBuffer[3] +  256 * 256 * (uint32_t)sBuffer[2] + 256 * (uint32_t)sBuffer[1] + sBuffer[0];
+    checksumCalc = length + offsetTotal;
 
-    // no need to get code if pruefsumme == length is wrong
-    if(pruefsummeCalc != pruefsumme)
+    // no need to get code if checksum == length is wrong
+    if(checksumCalc != checksum)
     {
         return 0;
     }
@@ -1333,7 +1329,7 @@ uint8_t receive_update_data_mainCPU_firmware(void)
 
     uint8_t* pBuffer1 = (uint8_t*)getFrame(20);
 
-    answer = receive_update_data_mainCPU_firmware_subrotuine(1, pBuffer1, 0);
+    answer = receive_update_data_mainCPU_firmware_subroutine(1, pBuffer1, 0);
 
     releaseFrame(20,(uint32_t)pBuffer1);
 
@@ -1348,7 +1344,7 @@ uint8_t receive_update_data_mainCPU_variable_firmware(void)
     uint8_t* pBuffer1 = (uint8_t*)getFrame(20);
     uint8_t* pBuffer2 = (uint8_t*)getFrame(20);
 
-    answer = receive_update_data_mainCPU_firmware_subrotuine(2, pBuffer1, pBuffer2);
+    answer = receive_update_data_mainCPU_firmware_subroutine(2, pBuffer1, pBuffer2);
 
     releaseFrame(20,(uint32_t)pBuffer1);
     releaseFrame(20,(uint32_t)pBuffer2);
@@ -1361,7 +1357,7 @@ uint8_t receive_update_data_flex(uint8_t* pBuffer1, uint8_t* pBuffer2, uint8_t R
     uint8_t sBuffer[10];
     uint8_t serialBuffer[10];
     uint32_t length1, length2, lengthCompare, offsetCompare, ByteCompareStatus;
-    uint32_t lengthTotal, offsetTotal, pruefsumme, pruefsummeCalc;
+    uint32_t lengthTotal, offsetTotal;
     uint32_t checksum, checksumCalc = 0;
     uint8_t id;
     const uint8_t id_Region1_firmware = 0xFF;
@@ -1382,9 +1378,9 @@ uint8_t receive_update_data_flex(uint8_t* pBuffer1, uint8_t* pBuffer2, uint8_t R
     }
     id = sBuffer[0];
 
-    pruefsummeCalc = 256 * 256 * 256 * (uint32_t)sBuffer[0] +  256 * 256 * (uint32_t)sBuffer[1] + 256 * (uint32_t)sBuffer[2] + sBuffer[3];
-    pruefsummeCalc += lengthTotal;
-    //alt, geht nicht mehr wegen Font: pruefsummeCalc = lengthTotal + offsetTotal;
+    checksumCalc = 256 * 256 * 256 * (uint32_t)sBuffer[0] +  256 * 256 * (uint32_t)sBuffer[1] + 256 * (uint32_t)sBuffer[2] + sBuffer[3];
+    checksumCalc += lengthTotal;
+    //old, does no longer work because of the fonts: checksumCalc = lengthTotal + offsetTotal;
 
     if((id != id_Region1_firmware) && (id != id_RTE) && (id != id_FONT) && (id != id_FONT_OLD))
     {
@@ -1397,15 +1393,15 @@ uint8_t receive_update_data_flex(uint8_t* pBuffer1, uint8_t* pBuffer2, uint8_t R
     else
         offsetTotal = 256 * 256 * 256 * (uint32_t)sBuffer[0] +  256 * 256 * (uint32_t)sBuffer[1] + 256 * (uint32_t)sBuffer[2] + sBuffer[3];
 
-    // get pruefsumme, bytes are in different order on Dev C++ code!!!
+    // get checksum, bytes are in different order on Dev C++ code!!!
     if(HAL_UART_Receive(&UartHandle, sBuffer, 4,5000)!= HAL_OK) // 58000
     {
         return 0;
     }
-    pruefsumme = 256 * 256 * 256 * (uint32_t)sBuffer[3] +  256 * 256 * (uint32_t)sBuffer[2] + 256 * (uint32_t)sBuffer[1] + sBuffer[0];
+    checksum = 256 * 256 * 256 * (uint32_t)sBuffer[3] +  256 * 256 * (uint32_t)sBuffer[2] + 256 * (uint32_t)sBuffer[1] + sBuffer[0];
 
 
-    if(pruefsummeCalc != pruefsumme)
+    if(checksumCalc != checksum)
     {
         uint8_t ptr = 0;
         strcpy(&display_text[ptr]," checksum error");
@@ -1482,7 +1478,7 @@ uint8_t receive_update_data_flex(uint8_t* pBuffer1, uint8_t* pBuffer2, uint8_t R
     if(checksum !=  checksumCalc)
     {
         uint8_t ptr = 0;
-        strcpy(&display_text[ptr]," pruefsummen error");
+        strcpy(&display_text[ptr]," checksum error");
         ptr += 15;
         strcpy(&display_text[ptr],"\n\r");
         display_text[ptr] = 0;
@@ -1506,7 +1502,7 @@ uint8_t receive_update_data_flex(uint8_t* pBuffer1, uint8_t* pBuffer2, uint8_t R
             ptr +=5;
         }
         strcpy(&display_text[ptr],"\n\rpreparing for install.");
-        ptr += 25; // circa ungefï¿½hr
+        ptr += 25;
         display_text[255] = ptr + 1;
     }
     else if(id == id_RTE)
@@ -1544,7 +1540,7 @@ uint8_t receive_update_data_flex(uint8_t* pBuffer1, uint8_t* pBuffer2, uint8_t R
         strcpy(&display_text[ptr]," offset");
         ptr += 7;
         strcpy(&display_text[ptr],"\n\rpreparing for install.");
-        ptr += 25; // circa ungefï¿½hr
+        ptr += 25;
         display_text[255] = ptr + 1;
     }
 
@@ -1613,15 +1609,12 @@ uint8_t receive_update_data_flex(uint8_t* pBuffer1, uint8_t* pBuffer2, uint8_t R
 }
 
 
-uint8_t receive_update_data_mainCPU_firmware_subrotuine(uint8_t region, uint8_t* pBuffer1, uint8_t* pBuffer2)
+uint8_t receive_update_data_mainCPU_firmware_subroutine(uint8_t region, uint8_t* pBuffer1, uint8_t* pBuffer2)
 {
     uint8_t sBuffer[10];
     uint32_t length1, length2, lengthCompare, offsetCompare, ByteCompareStatus;
-    uint32_t lengthTotal, offsetTotal, pruefsumme, pruefsummeCalc;
-    uint32_t checksum, checksumCalc;
+    uint32_t lengthTotal, offsetTotal, checksum, checksumCalc = 0;
     uint8_t id;
-
-    checksumCalc = 0;
 
     //Get length
     if(HAL_UART_Receive(&UartHandle, sBuffer, 4,5000)!= HAL_OK) // 58000
@@ -1635,8 +1628,8 @@ uint8_t receive_update_data_mainCPU_firmware_subrotuine(uint8_t region, uint8_t*
 
     id = sBuffer[0];
 
-    pruefsummeCalc = 256 * 256 * 256 * (uint32_t)sBuffer[0] +  256 * 256 * (uint32_t)sBuffer[1] + 256 * (uint32_t)sBuffer[2] + sBuffer[3];
-    pruefsummeCalc += lengthTotal;
+    checksumCalc = 256 * 256 * 256 * (uint32_t)sBuffer[0] +  256 * 256 * (uint32_t)sBuffer[1] + 256 * (uint32_t)sBuffer[2] + sBuffer[3];
+    checksumCalc += lengthTotal;
 
     if((id != id_Region1_firmware) && (id != id_RTE) && (id != id_FONT) && (id != id_FONT_OLD))
         return 0;
@@ -1647,15 +1640,15 @@ uint8_t receive_update_data_mainCPU_firmware_subrotuine(uint8_t region, uint8_t*
     else
         offsetTotal = 256 * 256 * 256 * (uint32_t)sBuffer[0] +  256 * 256 * (uint32_t)sBuffer[1] + 256 * (uint32_t)sBuffer[2] + sBuffer[3];
 
-    // get pruefsumme, bytes are in different order on Dev C++ code!!!
+    // get checksum, bytes are in different order on Dev C++ code!!!
     if(HAL_UART_Receive(&UartHandle, sBuffer, 4,5000)!= HAL_OK) // 58000
         return 0;
 
-    pruefsumme = 256  * 256 * 256 * (uint32_t)sBuffer[3] +  256 * 256 * (uint32_t)sBuffer[2] + 256 * (uint32_t)sBuffer[1] + sBuffer[0];
+    checksum = 256  * 256 * 256 * (uint32_t)sBuffer[3] +  256 * 256 * (uint32_t)sBuffer[2] + 256 * (uint32_t)sBuffer[1] + sBuffer[0];
 
-    //alt: pruefsummeCalc = lengthTotal + offsetTotal;
+    //old: checksumCalc = lengthTotal + offsetTotal;
 
-    if(pruefsummeCalc != pruefsumme)
+    if(checksumCalc != checksum)
     {
         uint8_t ptr = 0;
         strcpy(&display_text[ptr]," checksum error");
@@ -1743,7 +1736,7 @@ uint8_t receive_update_data_mainCPU_firmware_subrotuine(uint8_t region, uint8_t*
         strcpy(&display_text[ptr]," offset");
         ptr += 7;
         strcpy(&display_text[ptr],"\n\rpreparing for install.");
-        ptr += 25; // circa ungefï¿½hr
+        ptr += 25;
         display_text[255] = ptr + 1;
 
     }
@@ -1763,7 +1756,7 @@ uint8_t receive_update_data_mainCPU_firmware_subrotuine(uint8_t region, uint8_t*
             ptr +=5;
         }
         strcpy(&display_text[ptr],"\n\rpreparing for install.");
-        ptr += 25; // circa ungefï¿½hr
+        ptr += 25;
         display_text[255] = ptr + 1;
     }
 
