@@ -382,10 +382,6 @@ void SPI_Evaluate_RX_Data()
 		global.dataSendToMaster.power_on_reset = 0;
 		global.deviceDataSendToMaster.power_on_reset = 0;
 
-	//TODO:REMOVE
-	//		if ( !global.dataSendToSlaveStopEval ) {
-	//			scheduleSpecial_Evaluate_DataSendToSlave();
-	//		}
 		scheduleSpecial_Evaluate_DataSendToSlave();
 
 		SPI_Start_single_TxRx_with_Master();
