@@ -30,7 +30,7 @@
 
 /* Exported functions --------------------------------------------------------*/
 void openInfo_Compass(void);
-void refreshInfo_Compass(void);
+void refreshInfo_Compass(GFX_DrawCfgScreen s);
 
 
 #endif /* TINFO_COMPASS_H */

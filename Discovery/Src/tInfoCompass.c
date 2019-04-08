@@ -27,10 +27,12 @@
 //////////////////////////////////////////////////////////////////////////////
 
 /* Includes ------------------------------------------------------------------*/
-#include "tInfoCompass.h"
 
+#include "gfx_engine.h"
 #include "gfx_fonts.h"
+#include "tHome.h"
 #include "tInfo.h"
+#include "tInfoCompass.h"
 
 #include <string.h>
 
@@ -59,8 +61,10 @@ void openInfo_Compass(void)
 /// @brief	there is only compass_DX_f, compass_DY_f, compass_DZ_f output during this mode
 ///					the accel is not called during this process
 //  ===============================================================================
-void refreshInfo_Compass(void)
+void refreshInfo_Compass(GFX_DrawCfgScreen s)
 {
+
+	tHome_show_lost_connection_count(&s);
     tInfoCompassTimeout--;
     if(tInfoCompassTimeout == 0)
     {
@@ -94,7 +98,7 @@ void refreshInfo_Compass(void)
     }
 
     snprintf(text,80,"Time left: %u s",(tInfoCompassTimeout+9)/10);
-    tInfo_write_content_simple(  20,800,  20, &FontT42, text, CLUT_InfoCompass);
+    tInfo_write_content_simple(  20,800,  25, &FontT42, text, CLUT_InfoCompass);
 
     for(int i = 0; i<3;i ++)
     {
