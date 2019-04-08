@@ -48,10 +48,6 @@
 /* Private types -------------------------------------------------------------*/
 const SGas Air = {79,0,0,0,0};
 
-uint8_t testarrayindex = 0; 
-uint32_t testarray[256];
-uint32_t testarrayMain[256];
-
 /* Exported variables --------------------------------------------------------*/
 SGlobal global;
 SDevice DeviceDataFlash;
@@ -121,7 +117,7 @@ void initGlobals(void)
 	global.ButtonPICdata[2] = 0xFF;
 	global.ButtonPICdata[3] = 0xFF;
 
-	global.I2C_SystemStatus = 0xFF; // 0x00 would be everything working
+	global.I2C_SystemStatus = HAL_ERROR; // 0x00 would be everything working
 	
 	global.lifeData.pressure_ambient_bar = INVALID_PREASURE_VALUE;
 	global.lifeData.pressure_surface_bar = INVALID_PREASURE_VALUE;
@@ -415,8 +411,8 @@ void schedule_check_resync(void)
 		/* Try to start communication again. If exchange is stuck during execution for some reason the TX will be aborted by the
 		 * function error handler
 		 */
-		SPI_Start_single_TxRx_with_Master();
 		Scheduler_Request_sync_with_SPI(SPI_SYNC_METHOD_SOFT);
+		SPI_Start_single_TxRx_with_Master();
 	}
 }
 
@@ -437,10 +433,8 @@ void scheduleDiveMode(void)
 	float lastPressure_bar = 0.0f;
 	global.dataSendToMaster.mode = MODE_DIVE;
 	global.deviceDataSendToMaster.mode = MODE_DIVE;
-	//uint16_t counterSecondsShallowDepth = 0;
 	uint8_t counter_exit = 0;
 	
-	Scheduler.tickstart = HAL_GetTick() - 1000;
 	Scheduler.counterSPIdata100msec = 0;
 	Scheduler.counterCompass100msec = 0;
 	Scheduler.counterPressure100msec = 0;
@@ -451,6 +445,7 @@ void scheduleDiveMode(void)
 	scheduleSetDate(&global.deviceData.diveCycles);
 	global.lifeData.counterSecondsShallowDepth = 0;
 
+	Scheduler.tickstart = HAL_GetTick();
 	while(global.mode == MODE_DIVE)
 	{
 		schedule_check_resync();
@@ -1335,8 +1330,7 @@ void copyActualGas(SGas gas)
 //Supports threadsave copying!!!
 void copyPressureData(void)
 {
-	global.dataSendToMaster.sensorErrors = I2C1_Status();
-	//uint8_t dataSendToMaster.
+	global.dataSendToMaster.sensorErrors = global.I2C_SystemStatus;
 	uint8_t boolPressureData = !global.dataSendToMaster.boolPressureData;
 	global.dataSendToMaster.data[boolPressureData].temperature = get_temperature();
 	global.dataSendToMaster.data[boolPressureData].pressure_mbar = get_pressure_mbar();
