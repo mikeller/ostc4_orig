@@ -71,6 +71,21 @@ void init_battery_gas_gauge(void)
 	I2C_Master_Transmit(DEVICE_BATTERYGAUGE, buffer, 2);
 }
 
+static void disable_adc(void)
+{
+	uint8_t buffer[2];
+	buffer[0] = 0x01;
+
+	// according to the datasheet of the LTC2942, the adc shall
+	// be disabled when writing to the gauge registers
+
+	// 0xF9 = 11111001:
+	// see init_battery_gas_gauge()
+	// Shutdown (1)
+	buffer[1] = 0xF9;
+	I2C_Master_Transmit(DEVICE_BATTERYGAUGE, buffer, 2);
+}
+
 
 void battery_gas_gauge_get_data(void)
 {
@@ -104,6 +119,7 @@ void battery_gas_gauge_get_data(void)
 
 void battery_gas_gauge_set_charge_full(void)
 {
+	disable_adc();
 	#ifdef OSTC_ON_DISCOVERY_HARDWARE
 		return;
 	#endif
@@ -113,11 +129,14 @@ void battery_gas_gauge_set_charge_full(void)
 	bufferSend[1] = 0xFF;
 	bufferSend[2] = 0xFF;
 	I2C_Master_Transmit(  DEVICE_BATTERYGAUGE, bufferSend, 3);
+	init_battery_gas_gauge();
 }
 
 
 void battery_gas_gauge_set(float percentage)
 {
+
+	disable_adc();
 	#ifdef OSTC_ON_DISCOVERY_HARDWARE
 		return;
 	#endif
@@ -135,6 +154,7 @@ void battery_gas_gauge_set(float percentage)
 	bufferSend[1] = (uint8_t)(mAhSend / 256);
 	bufferSend[2] = (uint8_t)(mAhSend & 0xFF);
 	I2C_Master_Transmit(  DEVICE_BATTERYGAUGE, bufferSend, 3);
+	init_battery_gas_gauge();
 }
 
 
