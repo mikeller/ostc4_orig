@@ -48,7 +48,7 @@
 
  [..] HAL_SPI_TxRxCpltCallback() restarts DMA and will call
  scheduleSpecial_Evaluate_DataSendToSlave() only if it is not blocked
- by I2C for example by setting global.dataSendToSlaveStopEval to 0.
+ by I2C.
  If the evaluation is blocked it has to be tested and executed afterwards.
  I2C is executed _without_ the usage of interrupts.
 
