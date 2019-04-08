@@ -23,6 +23,7 @@ static void I2C_Error_Handler(void)
 }
 */
 
+//TODO: remove this function. Why return a global variable?
 HAL_StatusTypeDef I2C1_Status(void)
 {
 return (HAL_StatusTypeDef)global.I2C_SystemStatus;
@@ -56,6 +57,7 @@ GPIO_PinState MX_I2C1_TestAndClear(void)
 	return HAL_I2C_Read_Data_PIN();
 }
 
+//TODO: make this void. return is never used
 HAL_StatusTypeDef MX_I2C1_Init(void)
 {
 	I2cHandle.Instance             = I2Cx;
@@ -97,7 +99,7 @@ void I2C_Error_count(void)
 	i2c_errors++;
 }
 
-
+//TODO: not used, remove
 HAL_StatusTypeDef I2C_Master_TransmitNoStop(  uint16_t DevAddress, uint8_t *pData, uint16_t Size)
 {
 	if(global.I2C_SystemStatus != HAL_OK)
@@ -123,8 +125,7 @@ HAL_StatusTypeDef I2C_Master_TransmitNoStop(  uint16_t DevAddress, uint8_t *pDat
 HAL_StatusTypeDef I2C_Master_Transmit(  uint16_t DevAddress, uint8_t *pData, uint16_t Size)
 {
 	if(global.I2C_SystemStatus != HAL_OK)
-		return (HAL_StatusTypeDef)(global.I2C_SystemStatus & 0x03);
-
+		return global.I2C_SystemStatus;
 	
 	global.dataSendToSlaveStopEval = 1;
 
@@ -135,38 +136,26 @@ HAL_StatusTypeDef I2C_Master_Transmit(  uint16_t DevAddress, uint8_t *pData, uin
 	}
 
 	global.dataSendToSlaveStopEval = 0;
-	//TODO: REMOVE.
-//	if(global.dataSendToSlavePending)
-//	{
-//		scheduleSpecial_Evaluate_DataSendToSlave();
-//	}
 	
 	return (HAL_StatusTypeDef)global.I2C_SystemStatus;
 }
 
-
+// TODO: return value never used
 HAL_StatusTypeDef I2C_Master_Receive(  uint16_t DevAddress, uint8_t *pData, uint16_t Size)
 {
 	if(global.I2C_SystemStatus != HAL_OK)
-		return (HAL_StatusTypeDef)global.I2C_SystemStatus;
-
-	uint8_t localHALstatusReturn = 0xFF;
+		return global.I2C_SystemStatus;
 
 	global.dataSendToSlaveStopEval = 1;
 
-  localHALstatusReturn = HAL_I2C_Master_Receive(&I2cHandle, DevAddress,  pData, Size, 10);
-	if(localHALstatusReturn != HAL_OK)
+	global.I2C_SystemStatus = HAL_I2C_Master_Receive(&I2cHandle, DevAddress,  pData, Size, 10);
+	if(global.I2C_SystemStatus != HAL_OK)
 	{
 		I2C_Error_count();
 	}
 
 	global.dataSendToSlaveStopEval = 0;
-	//TODO: REMOVE.
-//	if(global.dataSendToSlavePending)
-//	{
-//		scheduleSpecial_Evaluate_DataSendToSlave();
-//	}
 
-	return (HAL_StatusTypeDef)localHALstatusReturn;
+	return global.I2C_SystemStatus;
 }
 
