@@ -23,13 +23,6 @@ static void I2C_Error_Handler(void)
 }
 */
 
-//TODO: remove this function. Why return a global variable?
-HAL_StatusTypeDef I2C1_Status(void)
-{
-return (HAL_StatusTypeDef)global.I2C_SystemStatus;
-}
-
-
 GPIO_PinState HAL_I2C_Read_Data_PIN(void)
 {
 	return HAL_GPIO_ReadPin(I2Cx_SDA_GPIO_PORT,I2Cx_SDA_PIN);
@@ -57,7 +50,6 @@ GPIO_PinState MX_I2C1_TestAndClear(void)
 	return HAL_I2C_Read_Data_PIN();
 }
 
-//TODO: make this void. return is never used
 HAL_StatusTypeDef MX_I2C1_Init(void)
 {
 	I2cHandle.Instance             = I2Cx;
@@ -77,7 +69,7 @@ HAL_StatusTypeDef MX_I2C1_Init(void)
 	{
 		scheduleSpecial_Evaluate_DataSendToSlave();
 	}
-	return (HAL_StatusTypeDef)global.I2C_SystemStatus;
+	return global.I2C_SystemStatus;
 }
 
 
@@ -104,10 +96,9 @@ HAL_StatusTypeDef I2C_Master_Transmit(  uint16_t DevAddress, uint8_t *pData, uin
 		I2C_Error_count();
 	}
 	
-	return (HAL_StatusTypeDef)global.I2C_SystemStatus;
+	return global.I2C_SystemStatus;
 }
 
-// TODO: return value never used
 HAL_StatusTypeDef I2C_Master_Receive(  uint16_t DevAddress, uint8_t *pData, uint16_t Size)
 {
 	if(global.I2C_SystemStatus != HAL_OK)

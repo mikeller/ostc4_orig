@@ -69,7 +69,7 @@ typedef struct
 	uint8_t accidentFlag;
 	uint32_t accidentRemainingSeconds;
 	uint8_t sensorError[MAX_SENSORS];
-	uint8_t I2C_SystemStatus;
+	HAL_StatusTypeDef I2C_SystemStatus;
 } SGlobal;
 
 typedef struct

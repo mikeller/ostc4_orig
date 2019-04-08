@@ -29,7 +29,7 @@
  at the beginning of a dive the oldest value will be used
 */
 
-
+#include "scheduler.h"
 #include "pressure.h"
 #include "i2c.h"
 #include "rtc.h"
@@ -261,7 +261,7 @@ uint8_t init_pressure(void)
 	C2_x_2p16 = C[2] * 65536;
 	C1_x_2p15 = C[1] * 32768;
 	
-	if(I2C1_Status() == HAL_OK)
+	if(global.I2C_SystemStatus == HAL_OK)
 	{
 		pressureSensorInitSuccess = 1;
 	}
@@ -360,7 +360,7 @@ void  pressure_sensor_get_temperature_raw(void)
 
 void pressure_calculation(void)
 {
-	if(I2C1_Status() != HAL_OK)
+	if(global.I2C_SystemStatus != HAL_OK)
 		return;
 	
 	pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015();
