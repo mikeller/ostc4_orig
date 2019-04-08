@@ -210,7 +210,7 @@ void tInfo_refresh(void)
     if(inDebugMode())
         tDebug_refresh();
     else
-        refreshInfo_Compass();
+        refreshInfo_Compass(tIscreen);
 
     if(inDebugMode() || (get_globalState() == StICOMPASS)) /* could be timeout and exitInfo */
         GFX_SetFramesTopBottom(tIscreen.FBStartAdress, 0,480);
