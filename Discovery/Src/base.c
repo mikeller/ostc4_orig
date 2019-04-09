@@ -1707,7 +1707,7 @@ void deco_loop(void)
 		case CALC_BUEHLMANN:
 				buehlmann_calc_deco(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
 				buehlmann_ceiling_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
-				buehlmann_relative_gradient_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
+				buehlmann_super_saturation_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
 				decoLock = DECO_CALC_FINSHED_Buehlmann;
 				return;
 		 case CALC_BUEHLMANN_FUTURE:

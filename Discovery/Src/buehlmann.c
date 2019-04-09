@@ -786,22 +786,3 @@ void buehlmann_ceiling_calculator(SLifeData* pLifeData, SDiveSettings * pDiveSet
 		pDecoInfo->output_ceiling_meter = 999;
 	}
 }
-
-(??)
-(??)void buehlmann_super_saturation_calculator(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SDecoinfo * pDecoInfo)
-(??){
-(??)	float temp_tissue;
-(??)	float limit;
-(??)	float pres_respiration;
-(??)	float gf = 0;
-(??)	
-(??)	limit = tissue_tolerance_without_gf_correction(&temp_tissue);
-(??)	pres_respiration = pLifeData->pressure_ambient_bar;
-(??)	
-(??)	if( temp_tissue > pres_respiration )
-(??)	{
-(??)		gf = (pres_respiration - temp_tissue) / (limit - temp_tissue);
-(??)	}
-(??)	
-(??)	pDecoInfo->super_saturation = gf;
-(??)}
