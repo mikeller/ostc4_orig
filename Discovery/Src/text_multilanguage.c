@@ -156,11 +156,11 @@ static uint8_t text_IT_Ceiling[] = "Ceiling";
 static uint8_t text_ES_Ceiling[] = "Techo";
 
 // dive mode
-static uint8_t text_EN_ActualGradient[] = "Relative GF";
-static uint8_t text_DE_ActualGradient[] = "Relativ GF";
-static uint8_t text_FR_ActualGradient[] = "GF relatif";
-static uint8_t text_IT_ActualGradient[] = "GF relativo";
-static uint8_t text_ES_ActualGradient[] = "GF relativo";
+static uint8_t text_EN_ActualGradient[] = "Saturation";
+static uint8_t text_DE_ActualGradient[] = "";
+static uint8_t text_FR_ActualGradient[] = "";
+static uint8_t text_IT_ActualGradient[] = "";
+static uint8_t text_ES_ActualGradient[] = "";
 
 // dive mode
 static uint8_t text_EN_Stopwatch[] = "Stopwatch";
