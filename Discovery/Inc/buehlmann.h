@@ -32,7 +32,7 @@
 void buehlmann_init(void);
 void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SDecoinfo * pDecoInfo);
 void buehlmann_ceiling_calculator(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SDecoinfo * pDecoInfo);
-void buehlmann_relative_gradient_calculator(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SDecoinfo * pDecoInfo);
+void buehlmann_super_saturation_calculator(SLifeData* pLifeData, SDecoinfo * pDecoInfo);
 float buehlmann_get_gCNS(void);
 
 #endif /* BUEHLMANN_H */

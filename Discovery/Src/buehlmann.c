@@ -406,46 +406,43 @@ float tissue_tolerance(void)
 	return global_ceiling;
 }
 
-// hw 161121 for relative gradient
-float tissue_tolerance_without_gf_correction(float *tissue_inertgas_saturation_output)
+void buehlmann_super_saturation_calculator(SLifeData* pLifeData, SDecoinfo * pDecoInfo)
 {
 	float tissue_inertgas_saturation;
 	float inertgas_a;
 	float inertgas_b;
 	float ceiling;
-	float global_ceiling;
+	float super_saturation;
+	float pres_respiration = pLifeData->pressure_ambient_bar;
 	int ci;
 
-	global_ceiling = -1;
+	pDecoInfo->super_saturation = 0;
 
 	for (ci = 0; ci < 16; ci++)
 	{
 		if(gTissue_helium_bar[ci] == 0)
 		{
 			tissue_inertgas_saturation = gTissue_nitrogen_bar[ci];
-			//
 			inertgas_a = buehlmann_N2_a[ci];
 			inertgas_b = buehlmann_N2_b[ci];
 		}
 		else
 		{
 			tissue_inertgas_saturation =  gTissue_nitrogen_bar[ci] + gTissue_helium_bar[ci];
-			//
 			inertgas_a = ( ( buehlmann_N2_a[ci] *  gTissue_nitrogen_bar[ci]) + ( buehlmann_He_a[ci] * gTissue_helium_bar[ci]) ) / tissue_inertgas_saturation;
 			inertgas_b = ( ( buehlmann_N2_b[ci] *  gTissue_nitrogen_bar[ci]) + ( buehlmann_He_b[ci] * gTissue_helium_bar[ci]) ) / tissue_inertgas_saturation;
 		}
-		//
-		ceiling = inertgas_b * ( tissue_inertgas_saturation - inertgas_a );
-		if(ceiling > global_ceiling)
+
+		ceiling = pres_respiration / inertgas_b + inertgas_a;
+		if(tissue_inertgas_saturation > pres_respiration)
 		{
-			global_ceiling = ceiling;
-			if(tissue_inertgas_saturation_output)
-			{
-				*tissue_inertgas_saturation_output = tissue_inertgas_saturation;
-			}
+			super_saturation =
+					(tissue_inertgas_saturation - pres_respiration) / (ceiling - pres_respiration);
+
+			if (super_saturation > pDecoInfo->super_saturation)
+				pDecoInfo->super_saturation = super_saturation;
 		}
 	}
-	return global_ceiling;
 }
 
 
@@ -788,74 +785,4 @@ void buehlmann_ceiling_calculator(SLifeData* pLifeData, SDiveSettings * pDiveSet
 	{
 		pDecoInfo->output_ceiling_meter = 999;
 	}
-}
-
-
-void buehlmann_relative_gradient_calculator(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SDecoinfo * pDecoInfo)
-{
-	float gf_low;
-	float gf_high;
-	float gf_delta;
-	int dv_gf_low_stop_meter;
-
-	float rgf; // relative gradient factor by hwOS p2_deco.c
-	float temp_tissue;
-	float limit;
-	float pres_respiration;
-	float gf;
-
-	gf_low = pDiveSettings->gf_low;
-	gf_high = pDiveSettings->gf_high;
-
-	dv_gf_low_stop_meter = (int)((pDiveSettings->internal__pressure_first_stop_ambient_bar_as_upper_limit_for_gf_low_otherwise_zero - pLifeData->pressure_surface_bar) * 10);
-
-	if(dv_gf_low_stop_meter < 1)
-	{
-		gf_delta = 0;
-	}
-	else
-	{
-		gf_delta = gf_high - gf_low;
-		gf_delta /= dv_gf_low_stop_meter; // gf_delta is delta for each meter now!!
-	}
-
-	
-	limit = tissue_tolerance_without_gf_correction(&temp_tissue);
-	pres_respiration = pLifeData->pressure_ambient_bar;
-	
-	if( temp_tissue <= pres_respiration )
-	{
-		gf = 0.0;
-	}
-	else
-	{
-		gf = (temp_tissue  - pres_respiration)
-			 / (temp_tissue  - limit)
-			 * 100.0f;
-	}
-	
-	if(dv_gf_low_stop_meter < 1)
-	{
-		rgf = gf_high;
-	}
-	else
-	{
-		float temp1 = dv_gf_low_stop_meter; 
-		float temp2 = pLifeData->depth_meter;
-
-		if (temp2 <= 0)
-				rgf = gf_high;
-		else if (temp2 >= temp1)
-				rgf = gf_low;
-		else
-				rgf = gf_low + (temp1 - temp2)*gf_delta;
-	}
-	
-	rgf = gf / rgf;
-	
-	// avoid discussions about values > 100 below next deco stop
-	if((rgf > 1.0f) && (pLifeData->depth_meter >= pDecoInfo->output_ceiling_meter))
-		rgf = 1.0f;
-	
-	pDecoInfo->output_relative_gradient = rgf;
 }

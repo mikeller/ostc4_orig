@@ -306,7 +306,7 @@ int  vpm_calc(SLifeData* pINPUT,
     pDECOINFO->output_time_to_surface_seconds = 0;
     pDECOINFO->output_ndl_seconds = 0;
     pDECOINFO->output_ceiling_meter = 0;
-    pDECOINFO->output_relative_gradient = 0;
+    pDECOINFO->super_saturation = 0;
     uint8_t tmp_calc_status;
     for(int i=0;i<DECOINFO_STRUCT_MAX_STOPS;i++)
     {
