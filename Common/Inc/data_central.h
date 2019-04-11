@@ -86,7 +86,7 @@ typedef struct
 	int output_time_to_surface_seconds;
 	int output_ndl_seconds;
 	float output_ceiling_meter;
-	float output_relative_gradient;
+	float super_saturation;
 	uint32_t tickstamp;
 } 	SDecoinfo;
 

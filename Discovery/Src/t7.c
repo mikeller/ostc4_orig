@@ -2578,7 +2578,7 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
     /* actual GF */
     case 8:
         headerText[2] = TXT_ActualGradient;
-        snprintf(text,TEXTSIZE,"\020%.0f",100 * pDecoinfoStandard->output_relative_gradient);
+        snprintf(text,TEXTSIZE,"\020%.0f\016\016%%\017",100 * pDecoinfoStandard->super_saturation);
         break;
     }
     headerText[3] = 0;
@@ -3098,7 +3098,7 @@ void t7_SummaryOfLeftCorner(void)
     text[textpointer++] = '\n';
     text[textpointer++] = '\r';
     text[textpointer++] = '\t';
-    textpointer += snprintf(&text[textpointer],10,"\020%.0f",		100 * pDecoinfoStandard->output_relative_gradient);
+    textpointer += snprintf(&text[textpointer],10,"\020%.0f\016\016%%\017",		100 * pDecoinfoStandard->super_saturation);
     text[textpointer++] = '\n';
     text[textpointer++] = '\r';
     text[textpointer++] = '\t';
