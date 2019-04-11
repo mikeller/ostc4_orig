@@ -1706,14 +1706,13 @@ void deco_loop(void)
 				return;
 		case CALC_BUEHLMANN:
 				buehlmann_calc_deco(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
-				buehlmann_ceiling_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
+				buehlmann_ceiling_calculator(&stateDeco.lifeData, &stateDeco.decolistBuehlmann);
 				buehlmann_super_saturation_calculator(&stateDeco.lifeData,&stateDeco.decolistBuehlmann);
 				decoLock = DECO_CALC_FINSHED_Buehlmann;
 				return;
 		 case CALC_BUEHLMANN_FUTURE:
 				decom_tissues_exposure(stateDeco.diveSettings.future_TTS_minutes * 60,&stateDeco.lifeData);
 				buehlmann_calc_deco(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistFutureBuehlmann);
-				//buehlmann_ceiling_calculator(&stateDeco.lifeData,&stateDeco.diveSettings,&stateDeco.decolistBuehlmann);
 				decoLock = DECO_CALC_FINSHED_FutureBuehlmann;
 				return;
 		 default: break;

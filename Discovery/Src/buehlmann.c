@@ -67,7 +67,6 @@ float next_stop_depth_input_is_actual_stop_id(int actual_id);
 float get_gf_at_pressure(float pressure);
 void buehlmann_calc_ndl(void);
 _Bool dive1_check_deco(void);
-uint8_t buehlmann_tissue_test_tolerance(float depth_in_bar_absolute);
 
 /*
 _____________________________________________________________
@@ -446,7 +445,7 @@ void buehlmann_super_saturation_calculator(SLifeData* pLifeData, SDecoinfo * pDe
 }
 
 
-uint8_t buehlmann_tissue_test_tolerance(float depth_in_bar_absolute)
+float buehlmann_tissue_test_tolerance(float depth_in_bar_absolute)
 {
 	float tissue_inertgas_saturation;
 	float inertgas_a;
@@ -461,24 +460,20 @@ uint8_t buehlmann_tissue_test_tolerance(float depth_in_bar_absolute)
 		if(gTissue_helium_bar[ci] == 0)
 		{
 			tissue_inertgas_saturation = gTissue_nitrogen_bar[ci];
-			//
 			inertgas_a = buehlmann_N2_a[ci];
 			inertgas_b = buehlmann_N2_b[ci];
 		}
 		else
 		{
 			tissue_inertgas_saturation =  gTissue_nitrogen_bar[ci] + gTissue_helium_bar[ci];
-			//
 			inertgas_a = ( ( buehlmann_N2_a[ci] *  gTissue_nitrogen_bar[ci]) + ( buehlmann_He_a[ci] * gTissue_helium_bar[ci]) ) / tissue_inertgas_saturation;
 			inertgas_b = ( ( buehlmann_N2_b[ci] *  gTissue_nitrogen_bar[ci]) + ( buehlmann_He_b[ci] * gTissue_helium_bar[ci]) ) / tissue_inertgas_saturation;
 		}
-		//
 		inertgas_tolerance = ( (gGF_value / inertgas_b - gf_minus_1) * depth_in_bar_absolute ) + ( gGF_value * inertgas_a );
-		//
 		if(inertgas_tolerance < tissue_inertgas_saturation)
-			return 0;
+			return tissue_inertgas_saturation - inertgas_tolerance; // positive
 	}
-	return 1;
+	return tissue_inertgas_saturation - inertgas_tolerance; // negative
 }
 
 
@@ -715,74 +710,37 @@ _Bool dive1_check_deco(void)
 		return true;
 }
 
-
-void buehlmann_ceiling_calculator(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SDecoinfo * pDecoInfo)
+// compute ceiling recursively, with a resolution of 10cm. Notice
+// that the initial call shall guarantee that the found ceiling
+// is between low and high parameters.
+static float compute_ceiling(float low, float high)
 {
-	float gf_low;
-	float gf_high;
-	float gf_delta;
-	float dv_gf_low_stop_meter;
-	_Bool test_result;
-	float next_gf_value;
-	float next_pressure_absolute;
-	float depth_in_meter;
-	
-	gf_low = pDiveSettings->gf_low;
-	gf_high = pDiveSettings->gf_high;
-
-	dv_gf_low_stop_meter = (int)((pDiveSettings->internal__pressure_first_stop_ambient_bar_as_upper_limit_for_gf_low_otherwise_zero - pLifeData->pressure_surface_bar) * 10);
-
-	if(dv_gf_low_stop_meter < 1)
-	{
-		next_gf_value = gf_high; // fix hw 161024
-		gf_delta = 0;
+	if ((high - low) < 0.01)
+		return low;
+	else {
+		float next_pressure_absolute = (low + high)/2;
+		float test_result = buehlmann_tissue_test_tolerance(next_pressure_absolute);
+		if (test_result < 0)
+			return compute_ceiling(low, next_pressure_absolute);
+		else
+			return compute_ceiling(next_pressure_absolute, high);
 	}
-	else
-	{
-		next_gf_value = gf_high;
-		gf_delta = gf_high - gf_low;
-		gf_delta /= (dv_gf_low_stop_meter * 10); // gf_delta is delta for 10 cm !!
-	}
+}
 
-	depth_in_meter = 0;
-	next_pressure_absolute = pLifeData->pressure_surface_bar;
+void buehlmann_ceiling_calculator(SLifeData *pLifeData, SDecoinfo *pDecoInfo)
+{
+	float ceiling;
+
+	// this is just performance optimizing. The code below runs just fine
+	// without this. There is never a ceiling in NDL deco state
+	if (!pDecoInfo->output_time_to_surface_seconds) {
+		pDecoInfo->output_ceiling_meter = 0;
+		return;
+	}
 
 	memcpy(gTissue_nitrogen_bar, pLifeData->tissue_nitrogen_bar, (4*16));
 	memcpy(gTissue_helium_bar, pLifeData->tissue_helium_bar, (4*16));
-	gGF_value = next_gf_value / 100.0f;
-	//
-	test_result = buehlmann_tissue_test_tolerance(next_pressure_absolute);
-	//
-	while(!test_result && depth_in_meter < 200)
-	{
-		depth_in_meter += 0.1;
-		next_gf_value = fmaxf(gf_low, next_gf_value - gf_delta);
-		gGF_value = next_gf_value / 100.0f;
-		next_pressure_absolute += 0.01f; // 0.1 meter down
-		test_result = buehlmann_tissue_test_tolerance(next_pressure_absolute);
-	}
 
-	if(test_result)
-	{
-		pDecoInfo->output_ceiling_meter = depth_in_meter;
-
-		if(depth_in_meter >= 0)
-		{
-			for(int i = 0; i < 10; i++)
-			{
-				next_gf_value += gf_delta/10.0f;
-				gGF_value = next_gf_value / 100.0f;
-				next_pressure_absolute -= 0.01f; // 0.1 meter up
-				if(!buehlmann_tissue_test_tolerance(next_pressure_absolute))
-				{
-					pDecoInfo->output_ceiling_meter -= ((float)i)/10.0f;
-					break;
-				}
-			}
-		}
-	}
-	else
-	{
-		pDecoInfo->output_ceiling_meter = 999;
-	}
+	ceiling = compute_ceiling(pLifeData->pressure_surface_bar, 1.0f + pLifeData->max_depth_meter/10.0f);
+	pDecoInfo->output_ceiling_meter = (ceiling - pLifeData->pressure_surface_bar) * 10.0f;
 }
