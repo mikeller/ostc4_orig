@@ -56,7 +56,6 @@ static float gCNS;
 static int gNDL;
 
 SDiveSettings *pBuDiveSettings;
-SDecoinfo* pDecolistBuehlmann;
 float gGF_low_depth_bar;
 SStop gStop;
 
@@ -127,7 +126,6 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 	/* make input available global*/
 	pBuDiveSettings = pDiveSettings;
 
-	pDecolistBuehlmann = pDecoInfo;
 	/* internal copying */
 	gSurface_pressure_bar = pLifeData->pressure_surface_bar;
 
@@ -138,7 +136,7 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 	gGF_value = ((float)pBuDiveSettings->gf_low) / 100.0f;
 	
 	//
-	memcpy(&gDecotable, pDecolistBuehlmann, sizeof(SDecoinfo));
+	memcpy(&gDecotable, pDecoInfo, sizeof(SDecoinfo));
 	stoplist = gDecotable.output_stop_length_seconds;
 
 	if(pLifeData->dive_time_seconds < 60)
@@ -161,16 +159,16 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 	{
 	  buehlmann_backup_and_restore(false);
 		// no deco
-		pDecolistBuehlmann->output_time_to_surface_seconds = 0;
+	  pDecoInfo->output_time_to_surface_seconds = 0;
 		for(i = 0; i < DECOINFO_STRUCT_MAX_STOPS; i++)
-			pDecolistBuehlmann->output_stop_length_seconds[i] = 0;
+			pDecoInfo->output_stop_length_seconds[i] = 0;
 		// calc NDL
 		buehlmann_calc_ndl();
-		pDecolistBuehlmann->output_ndl_seconds = gNDL;
+		pDecoInfo->output_ndl_seconds = gNDL;
 		return;
 	}
 	buehlmann_backup_and_restore(false);
-	pDecolistBuehlmann->output_ndl_seconds = 0;
+	pDecoInfo->output_ndl_seconds = 0;
 
 	gGF_value = get_gf_at_pressure(gPressure);
 	//current ceiling at actual position
@@ -192,8 +190,7 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 				ceiling = tissue_tolerance();
 				if(tts_seconds > DECO_STOPS_MAX_TTS_CALCULATON_IN_SECONDS)
 			{
-				/* pInput == pBuehlmann */
-				pDecolistBuehlmann->output_time_to_surface_seconds = NINETY_NINE_MINUTES_IN_SECONDS;
+				pDecoInfo->output_time_to_surface_seconds = NINETY_NINE_MINUTES_IN_SECONDS;
 				return;// NINETY_NINE_MINUTES_IN_SECONDS;
 			}
 			} while ((ascend_time > 0 ) && ((gPressure - PRESSURE_TEN_METER ) > gSurface_pressure_bar) && (ceiling < (gPressure - PRESSURE_TEN_METER)));
@@ -205,8 +202,7 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 			ceiling = tissue_tolerance();
 			if(tts_seconds > DECO_STOPS_MAX_TTS_CALCULATON_IN_SECONDS)
 			{
-				/* pInput == pBuehlmann */
-				pDecolistBuehlmann->output_time_to_surface_seconds = NINETY_NINE_MINUTES_IN_SECONDS;
+				pDecoInfo->output_time_to_surface_seconds = NINETY_NINE_MINUTES_IN_SECONDS;
 				return;// NINETY_NINE_MINUTES_IN_SECONDS;
 			}
 			ambient_bar_to_deco_stop_depth_bar(ceiling);
@@ -237,9 +233,8 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 	// NDL check
 	if(ceiling <= gSurface_pressure_bar)
 	{
-		/* pInput == pBuehlmann  same pointer*/
 		// NDL with GF_low
-		pDecolistBuehlmann->output_time_to_surface_seconds = 0;
+		pDecoInfo->output_time_to_surface_seconds = 0;
 		return;
 	}
 	if (ceiling > pDiveSettings->internal__pressure_first_stop_ambient_bar_as_upper_limit_for_gf_low_otherwise_zero)
@@ -298,7 +293,7 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 	}
 
 	gDecotable.output_time_to_surface_seconds = tts_seconds;
-	memcpy(pDecolistBuehlmann, &gDecotable, sizeof(SDecoinfo));
+	memcpy(pDecoInfo, &gDecotable, sizeof(SDecoinfo));
 }
 
 
