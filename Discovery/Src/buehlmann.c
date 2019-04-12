@@ -14,7 +14,6 @@ float extExample_variable_can_be_used_with_extern;
 #include "buehlmann.h"
 #include "decom.h"
 
-
 extern const float buehlmann_N2_a[];
 extern const float buehlmann_N2_b[];
 extern const float buehlmann_He_a[];
@@ -37,12 +36,12 @@ typedef struct
 
 static void buehlmann_backup_and_restore(_Bool backup_restore_otherwise);
 static float tissue_tolerance(void);
-static void ambient_bar_to_deco_stop_depth_bar(float ceiling);
-static int ascend_with_all_gaschanges(float pressure_decrease);
-static float next_stop_depth_input_is_actual_stop_id(int actual_id);
-static float get_gf_at_pressure(float pressure);
-static void buehlmann_calc_ndl(void);
-static _Bool dive1_check_deco(void);
+static void ambient_bar_to_deco_stop_depth_bar(SDiveSettings *pDiveSettings, float ceiling);
+static int ascend_with_all_gaschanges(SDiveSettings *pDiveSettings, float pressure_decrease);
+static float next_stop_depth_input_is_actual_stop_id(SDiveSettings *pDiveSettings, int actual_id);
+static float get_gf_at_pressure(SDiveSettings *pDiveSettings, float pressure);
+static void buehlmann_calc_ndl(SDiveSettings *pDiveSettings);
+static _Bool dive1_check_deco(SDiveSettings *pDiveSettings);
 
 static SDecoinfo gDecotable;
 static float gSurface_pressure_bar;
@@ -55,13 +54,11 @@ static float gGF_value;
 static float gCNS;
 static int gNDL;
 
-SDiveSettings *pBuDiveSettings;
 float gGF_low_depth_bar;
 SStop gStop;
 
 void buehlmann_init(void)
 {
-
 }
 
 static void buehlmann_backup_and_restore(_Bool backup_restore_otherwise)
@@ -123,8 +120,6 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 	{
 		pDecoInfo->output_stop_length_seconds[i] = 0;
 	}
-	/* make input available global*/
-	pBuDiveSettings = pDiveSettings;
 
 	/* internal copying */
 	gSurface_pressure_bar = pLifeData->pressure_surface_bar;
@@ -133,7 +128,7 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 	gGas_id = 0;
 	memcpy(gTissue_nitrogen_bar, pLifeData->tissue_nitrogen_bar, (4*16));
 	memcpy(gTissue_helium_bar, pLifeData->tissue_helium_bar, (4*16));
-	gGF_value = ((float)pBuDiveSettings->gf_low) / 100.0f;
+	gGF_value = ((float)pDiveSettings->gf_low) / 100.0f;
 	
 	//
 	memcpy(&gDecotable, pDecoInfo, sizeof(SDecoinfo));
@@ -153,9 +148,9 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 		deco_reached = true;
 	}
 
-	gGF_value = ((float)pBuDiveSettings->gf_high) / 100.0f;
+	gGF_value = ((float)pDiveSettings->gf_high) / 100.0f;
 	buehlmann_backup_and_restore(true); // includes backup for gGF_value
-	if(!dive1_check_deco() )
+	if(!dive1_check_deco(pDiveSettings) )
 	{
 	  buehlmann_backup_and_restore(false);
 		// no deco
@@ -163,17 +158,17 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 		for(i = 0; i < DECOINFO_STRUCT_MAX_STOPS; i++)
 			pDecoInfo->output_stop_length_seconds[i] = 0;
 		// calc NDL
-		buehlmann_calc_ndl();
+		buehlmann_calc_ndl(pDiveSettings);
 		pDecoInfo->output_ndl_seconds = gNDL;
 		return;
 	}
 	buehlmann_backup_and_restore(false);
 	pDecoInfo->output_ndl_seconds = 0;
 
-	gGF_value = get_gf_at_pressure(gPressure);
+	gGF_value = get_gf_at_pressure(pDiveSettings, gPressure);
 	//current ceiling at actual position
 	ceiling = tissue_tolerance();
-	ambient_bar_to_deco_stop_depth_bar(ceiling);
+	ambient_bar_to_deco_stop_depth_bar(pDiveSettings, ceiling);
 
 	// set the base for all upcoming parameters
 	ceiling = gStop.depth + gSurface_pressure_bar;
@@ -185,7 +180,7 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 		// ascend within 10 mtr to GF_low // speed 12 mtr/min -> 50 sec / 10 mtr;  15 sec / 3 mtr.
 		if(ceiling < (gPressure - PRESSURE_TEN_METER) )
 		{ do {
-				ascend_time = ascend_with_all_gaschanges(PRESSURE_TEN_METER);
+				ascend_time = ascend_with_all_gaschanges(pDiveSettings, PRESSURE_TEN_METER);
 				tts_seconds += ascend_time;
 				ceiling = tissue_tolerance();
 				if(tts_seconds > DECO_STOPS_MAX_TTS_CALCULATON_IN_SECONDS)
@@ -197,7 +192,7 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 		}
 		do {
 			buehlmann_backup_and_restore(true);
-			ascend_time = ascend_with_all_gaschanges(PRESSURE_THREE_METER);
+			ascend_time = ascend_with_all_gaschanges(pDiveSettings, PRESSURE_THREE_METER);
 			tts_seconds += ascend_time;
 			ceiling = tissue_tolerance();
 			if(tts_seconds > DECO_STOPS_MAX_TTS_CALCULATON_IN_SECONDS)
@@ -205,7 +200,7 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 				pDecoInfo->output_time_to_surface_seconds = NINETY_NINE_MINUTES_IN_SECONDS;
 				return;// NINETY_NINE_MINUTES_IN_SECONDS;
 			}
-			ambient_bar_to_deco_stop_depth_bar(ceiling);
+			ambient_bar_to_deco_stop_depth_bar(pDiveSettings, ceiling);
 		} while ((ascend_time > 0 ) &&  ((gStop.depth + gSurface_pressure_bar) < gPressure));
 
 		if(gStop.depth + gSurface_pressure_bar > gPressure)
@@ -228,7 +223,7 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 		// ascend the last meters to first stop (especially consider any gas changes around)
 		pressure_delta = gPressure - ceiling;
 		ascend_time = (int) ceil(pressure_delta * 50.0f);
-		tts_seconds += ascend_with_all_gaschanges(pressure_delta);
+		tts_seconds += ascend_with_all_gaschanges(pDiveSettings, pressure_delta);
 	}
 	// NDL check
 	if(ceiling <= gSurface_pressure_bar)
@@ -250,10 +245,10 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 	{
 		do
 		{
-			next_depth = next_stop_depth_input_is_actual_stop_id(gStop.id);
-			gGF_value = get_gf_at_pressure(next_depth + gSurface_pressure_bar);
+			next_depth = next_stop_depth_input_is_actual_stop_id(pDiveSettings, gStop.id);
+			gGF_value = get_gf_at_pressure(pDiveSettings, next_depth + gSurface_pressure_bar);
 			buehlmann_backup_and_restore(true);
-			ascend_time = ascend_with_all_gaschanges(gStop.depth - next_depth);
+			ascend_time = ascend_with_all_gaschanges(pDiveSettings, gStop.depth - next_depth);
 			ceiling = tissue_tolerance();
 			/* pre check actual limit */
 			if(gDecotable.output_stop_length_seconds[gStop.id] >= 999*60)
@@ -267,8 +262,8 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 			{
 				next_depth = -1;
 				buehlmann_backup_and_restore(false);
-				decom_tissues_exposure2(10, &pBuDiveSettings->decogaslist[gGas_id], gPressure,gTissue_nitrogen_bar,gTissue_helium_bar); // some seconds at least at each stop
-				decom_oxygen_calculate_cns_exposure(10, &pBuDiveSettings->decogaslist[gGas_id], gPressure, &gCNS);
+				decom_tissues_exposure2(10, &pDiveSettings->decogaslist[gGas_id], gPressure,gTissue_nitrogen_bar,gTissue_helium_bar); // some seconds at least at each stop
+				decom_oxygen_calculate_cns_exposure(10, &pDiveSettings->decogaslist[gGas_id], gPressure, &gCNS);
         gDecotable.output_stop_length_seconds[gStop.id] += 10;
         tts_seconds += 10;
 			}
@@ -277,9 +272,9 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 		gStop.depth = next_depth;
     for(i = gGas_id + 1; i < BUEHLMANN_STRUCT_MAX_GASES; i++)
     {
-        if(pBuDiveSettings->decogaslist[i].change_during_ascent_depth_meter_otherwise_zero == 0)
+        if(pDiveSettings->decogaslist[i].change_during_ascent_depth_meter_otherwise_zero == 0)
             break;
-        float pressureChange =  ((float)pBuDiveSettings->decogaslist[i].change_during_ascent_depth_meter_otherwise_zero) / 10;
+        float pressureChange =  ((float)pDiveSettings->decogaslist[i].change_during_ascent_depth_meter_otherwise_zero) / 10;
         if(gStop.depth <= pressureChange + 0.00001f)
         {
             gGas_id = i;
@@ -404,7 +399,7 @@ static float buehlmann_tissue_test_tolerance(float depth_in_bar_absolute)
 }
 
 
-static void ambient_bar_to_deco_stop_depth_bar(float ceiling)
+static void ambient_bar_to_deco_stop_depth_bar(SDiveSettings *pDiveSettings, float ceiling)
 {
 	int i;
 
@@ -412,56 +407,56 @@ static void ambient_bar_to_deco_stop_depth_bar(float ceiling)
 
 	if(ceiling <= 0)
 	{
-		gStop.depth = pBuDiveSettings->last_stop_depth_bar;
+		gStop.depth = pDiveSettings->last_stop_depth_bar;
 		gStop.id = 0;
 		return;
 	}
 
-	if((ceiling -  pBuDiveSettings->last_stop_depth_bar) <= 0)
+	if((ceiling -  pDiveSettings->last_stop_depth_bar) <= 0)
 	{
-		gStop.depth =  pBuDiveSettings->last_stop_depth_bar;
+		gStop.depth =  pDiveSettings->last_stop_depth_bar;
 		gStop.id = 0;
 		return;
 	}
 
-	gStop.depth = pBuDiveSettings->input_second_to_last_stop_depth_bar;
+	gStop.depth = pDiveSettings->input_second_to_last_stop_depth_bar;
 	gStop.id = 1;
-	ceiling -= pBuDiveSettings->input_second_to_last_stop_depth_bar;
+	ceiling -= pDiveSettings->input_second_to_last_stop_depth_bar;
 
 	if(ceiling <= 0)
 		return;
 
 	for(i = 1; i < (DECOINFO_STRUCT_MAX_STOPS - 2); i++)
 	{
-		ceiling -= pBuDiveSettings->input_next_stop_increment_depth_bar;
+		ceiling -= pDiveSettings->input_next_stop_increment_depth_bar;
 		if(ceiling <= 0)
 			break;
 	}
-	gStop.depth += i * pBuDiveSettings->input_next_stop_increment_depth_bar;
+	gStop.depth += i * pDiveSettings->input_next_stop_increment_depth_bar;
 	gStop.id += i;
 	return;
 }
 
-static float next_stop_depth_input_is_actual_stop_id(int actual_id)
+static float next_stop_depth_input_is_actual_stop_id(SDiveSettings *pDiveSettings, int actual_id)
 {
 	if(actual_id == 0)
 		return 0;
 
 	if(actual_id == 1)
-		return pBuDiveSettings->last_stop_depth_bar;
+		return pDiveSettings->last_stop_depth_bar;
 
 	actual_id -= 2;
-	return pBuDiveSettings->input_second_to_last_stop_depth_bar + (actual_id * pBuDiveSettings->input_next_stop_increment_depth_bar);
+	return pDiveSettings->input_second_to_last_stop_depth_bar + (actual_id * pDiveSettings->input_next_stop_increment_depth_bar);
 }
 
-static int ascend_with_all_gaschanges(float pressure_decrease)
+static int ascend_with_all_gaschanges(SDiveSettings *pDiveSettings, float pressure_decrease)
 {
 	float pressureTop, pressureTop_tmp, pressureBottom, pressureChange, ascendrate_in_seconds_for_one_bar, pressure_difference;
 	int time_for_ascend = 0;
 	int seconds;
 	int i;
 
-	ascendrate_in_seconds_for_one_bar = 60 * 10 / pBuDiveSettings->ascentRate_meterperminute;
+	ascendrate_in_seconds_for_one_bar = 60 * 10 / pDiveSettings->ascentRate_meterperminute;
 
 	if(fabsf(gPressure - gSurface_pressure_bar) < PRESSURE_HALF_METER)
 	{
@@ -478,9 +473,9 @@ static int ascend_with_all_gaschanges(float pressure_decrease)
         pressureTop_tmp = pressureTop;
         for(i = gGas_id + 1; i < BUEHLMANN_STRUCT_MAX_GASES; i++)
         {
-            if(pBuDiveSettings->decogaslist[i].change_during_ascent_depth_meter_otherwise_zero == 0)
+            if(pDiveSettings->decogaslist[i].change_during_ascent_depth_meter_otherwise_zero == 0)
                 break;
-            pressureChange = gSurface_pressure_bar + ((float)pBuDiveSettings->decogaslist[i].change_during_ascent_depth_meter_otherwise_zero) / 10;
+            pressureChange = gSurface_pressure_bar + ((float)pDiveSettings->decogaslist[i].change_during_ascent_depth_meter_otherwise_zero) / 10;
             if(pressureBottom <= pressureChange)
             {
                 gGas_id = i;
@@ -493,9 +488,9 @@ static int ascend_with_all_gaschanges(float pressure_decrease)
         }
         for(i = gGas_id + 1; i < BUEHLMANN_STRUCT_MAX_GASES; i++)
         {
-            if(pBuDiveSettings->decogaslist[i].change_during_ascent_depth_meter_otherwise_zero == 0)
+            if(pDiveSettings->decogaslist[i].change_during_ascent_depth_meter_otherwise_zero == 0)
                 break;
-            pressureChange = gSurface_pressure_bar + ((float)pBuDiveSettings->decogaslist[i].change_during_ascent_depth_meter_otherwise_zero)/ 10;
+            pressureChange = gSurface_pressure_bar + ((float)pDiveSettings->decogaslist[i].change_during_ascent_depth_meter_otherwise_zero)/ 10;
             if((pressureChange < pressureBottom) && (pressureChange > pressureTop))
             {
                 pressureTop_tmp = pressureChange;
@@ -505,9 +500,9 @@ static int ascend_with_all_gaschanges(float pressure_decrease)
         if(pressure_difference > 0.0001f)
         {
           time_for_ascend = (int)ceilf(pressure_difference * ascendrate_in_seconds_for_one_bar);
-          decom_tissues_exposure_stage_schreiner(time_for_ascend, &pBuDiveSettings->decogaslist[gGas_id],
+          decom_tissues_exposure_stage_schreiner(time_for_ascend, &pDiveSettings->decogaslist[gGas_id],
                                               pressureBottom, pressureTop_tmp, gTissue_nitrogen_bar, gTissue_helium_bar);
-					decom_oxygen_calculate_cns_stage_SchreinerStyle(time_for_ascend,&pBuDiveSettings->decogaslist[gGas_id],
+					decom_oxygen_calculate_cns_stage_SchreinerStyle(time_for_ascend,&pDiveSettings->decogaslist[gGas_id],
                                               pressureBottom, pressureTop_tmp, &gCNS);
         }
         pressureBottom = pressureTop_tmp;
@@ -518,27 +513,27 @@ static int ascend_with_all_gaschanges(float pressure_decrease)
 }
 
 
-static float get_gf_at_pressure(float pressure)
+static float get_gf_at_pressure(SDiveSettings *pDiveSettings, float pressure)
 {
 	float gfSteigung = 0.0f;
 
 	if(gGF_low_depth_bar < 0)
 			gGF_low_depth_bar = PRESSURE_THREE_METER; // just to prevent erratic behaviour if variable is not set
 
-    gfSteigung = ((float)(pBuDiveSettings->gf_high - pBuDiveSettings->gf_low))/ gGF_low_depth_bar;
+    gfSteigung = ((float)(pDiveSettings->gf_high - pDiveSettings->gf_low))/ gGF_low_depth_bar;
 
 
 	if((pressure - gSurface_pressure_bar) <= PRESSURE_HALF_METER)
-		return ((float)pBuDiveSettings->gf_high) / 100.0f;
+		return ((float)pDiveSettings->gf_high) / 100.0f;
 
 	if(pressure >= gSurface_pressure_bar + gGF_low_depth_bar)
-		return ((float)pBuDiveSettings->gf_low) / 100.0f;
+		return ((float)pDiveSettings->gf_low) / 100.0f;
 
-	return (pBuDiveSettings->gf_high - gfSteigung * (pressure - gSurface_pressure_bar) )/ 100.0f;
+	return (pDiveSettings->gf_high - gfSteigung * (pressure - gSurface_pressure_bar) )/ 100.0f;
 }
 
 
-static void buehlmann_calc_ndl(void)
+static void buehlmann_calc_ndl(SDiveSettings *pDiveSettings)
 {
 	float local_tissue_nitrogen_bar[16];
 	float local_tissue_helium_bar[16];
@@ -546,7 +541,7 @@ static void buehlmann_calc_ndl(void)
 
 	gNDL = 0;
 	//Check ndl always use gHigh
-	gGF_value = ((float)pBuDiveSettings->gf_high) / 100.0f;
+	gGF_value = ((float)pDiveSettings->gf_high) / 100.0f;
 	//10 minutes steps
 	while(gNDL < (300 * 60))
 	{
@@ -554,11 +549,11 @@ static void buehlmann_calc_ndl(void)
 		memcpy(local_tissue_helium_bar, gTissue_helium_bar, (4*16));
 		//
 		gNDL += 600;
-		decom_tissues_exposure2(600, &pBuDiveSettings->decogaslist[gGas_id], gPressure,gTissue_nitrogen_bar,gTissue_helium_bar);
-		decom_oxygen_calculate_cns_exposure(600,&pBuDiveSettings->decogaslist[gGas_id],gPressure,&gCNS);
+		decom_tissues_exposure2(600, &pDiveSettings->decogaslist[gGas_id], gPressure,gTissue_nitrogen_bar,gTissue_helium_bar);
+		decom_oxygen_calculate_cns_exposure(600,&pDiveSettings->decogaslist[gGas_id],gPressure,&gCNS);
 		//tissues_exposure_at_gPressure_seconds(600);
 		buehlmann_backup_and_restore(true);
-		if(dive1_check_deco() == true)
+		if(dive1_check_deco(pDiveSettings))
 		{
 			buehlmann_backup_and_restore(false);
 			break;
@@ -581,10 +576,10 @@ static void buehlmann_calc_ndl(void)
 	{
 		gNDL += 60;
 		//tissues_exposure_at_gPressure_seconds(60);
-		decom_tissues_exposure2(60, &pBuDiveSettings->decogaslist[gGas_id], gPressure,gTissue_nitrogen_bar,gTissue_helium_bar);
-		decom_oxygen_calculate_cns_exposure(60,&pBuDiveSettings->decogaslist[gGas_id],gPressure,&gCNS);
+		decom_tissues_exposure2(60, &pDiveSettings->decogaslist[gGas_id], gPressure,gTissue_nitrogen_bar,gTissue_helium_bar);
+		decom_oxygen_calculate_cns_exposure(60,&pDiveSettings->decogaslist[gGas_id],gPressure,&gCNS);
 		buehlmann_backup_and_restore(true);
-		if(dive1_check_deco() == true)
+		if(dive1_check_deco(pDiveSettings))
 			break;
 		buehlmann_backup_and_restore(false);
 	}
@@ -598,7 +593,7 @@ static void buehlmann_calc_ndl(void)
 /// @brief	for NDL calculations
 ///					160614 using ceilingOther and not ceiling
 //  ===============================================================================
-static _Bool dive1_check_deco(void)
+static _Bool dive1_check_deco(SDiveSettings *pDiveSettings)
 {
 	// gGF_value is set in call routine;
 	// internes Backup!
@@ -608,7 +603,7 @@ static _Bool dive1_check_deco(void)
 	float ceilingOther; // new hw 160614
 
 	ceiling = tissue_tolerance();
-	ambient_bar_to_deco_stop_depth_bar(ceiling); // this will set gStop.depth :-) (and gStop.id)
+	ambient_bar_to_deco_stop_depth_bar(pDiveSettings, ceiling); // this will set gStop.depth :-) (and gStop.id)
 
 	// set the base for all upcoming parameters
 	ceilingOther = gStop.depth + gSurface_pressure_bar;
@@ -619,19 +614,16 @@ static _Bool dive1_check_deco(void)
 		// ascend within 10 mtr to GF_low // speed 12 mtr/min -> 50 sec / 10 mtr;  15 sec / 3 mtr.
 		while(((gPressure - PRESSURE_TEN_METER ) > gSurface_pressure_bar) && (ceiling < (gPressure - PRESSURE_TEN_METER)))
 		{
-			ascend_with_all_gaschanges(PRESSURE_TEN_METER);
+			ascend_with_all_gaschanges(pDiveSettings, PRESSURE_TEN_METER);
 			ceiling = tissue_tolerance();
 		}
 		while(((gPressure - PRESSURE_THREE_METER )> gSurface_pressure_bar) && (ceiling < gPressure))
 		{
-			ascend_with_all_gaschanges(PRESSURE_THREE_METER);
+			ascend_with_all_gaschanges(pDiveSettings, PRESSURE_THREE_METER);
 			ceiling = tissue_tolerance();
 		}
 	}
-	if(ceiling <= gSurface_pressure_bar)
-		return false;
-	else
-		return true;
+	return ceiling > gSurface_pressure_bar;
 }
 
 // compute ceiling recursively, with a resolution of 10cm. Notice
