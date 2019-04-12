@@ -43,7 +43,6 @@ static float get_gf_at_pressure(SDiveSettings *pDiveSettings, float pressure);
 static int buehlmann_calc_ndl(SDiveSettings *pDiveSettings);
 static _Bool dive1_check_deco(SDiveSettings *pDiveSettings);
 
-static SDecoinfo gDecotable;
 static float gSurface_pressure_bar;
 static float gPressure;
 static int gGas_id;
@@ -122,9 +121,7 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 	memcpy(gTissue_helium_bar, pLifeData->tissue_helium_bar, (4*16));
 	gGF_value = ((float)pDiveSettings->gf_low) / 100.0f;
 	
-	//
-	memcpy(&gDecotable, pDecoInfo, sizeof(SDecoinfo));
-	stoplist = gDecotable.output_stop_length_seconds;
+	stoplist = pDecoInfo->output_stop_length_seconds;
 
 	if(pLifeData->dive_time_seconds < 60)
 		return;
@@ -240,10 +237,10 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 			ascend_time = ascend_with_all_gaschanges(pDiveSettings, gStop.depth - next_depth);
 			ceiling = tissue_tolerance();
 			/* pre check actual limit */
-			if(gDecotable.output_stop_length_seconds[gStop.id] >= 999*60)
+			if(pDecoInfo->output_stop_length_seconds[gStop.id] >= 999*60)
 			{
-				tts_seconds -= 999*60 - gDecotable.output_stop_length_seconds[gStop.id];
-				gDecotable.output_stop_length_seconds[gStop.id] = 999*60;
+				tts_seconds -= 999*60 - pDecoInfo->output_stop_length_seconds[gStop.id];
+				pDecoInfo->output_stop_length_seconds[gStop.id] = 999*60;
 			}
 			else
 			/* more deco on the actual depth */
@@ -253,7 +250,7 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 				buehlmann_backup_and_restore(false);
 				decom_tissues_exposure2(10, &pDiveSettings->decogaslist[gGas_id], gPressure,gTissue_nitrogen_bar,gTissue_helium_bar); // some seconds at least at each stop
 				decom_oxygen_calculate_cns_exposure(10, &pDiveSettings->decogaslist[gGas_id], gPressure, &gCNS);
-        gDecotable.output_stop_length_seconds[gStop.id] += 10;
+				pDecoInfo->output_stop_length_seconds[gStop.id] += 10;
         tts_seconds += 10;
 			}
 		} while(next_depth == -1);
@@ -276,8 +273,7 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 		gStop.id--;
 	}
 
-	gDecotable.output_time_to_surface_seconds = tts_seconds;
-	memcpy(pDecoInfo, &gDecotable, sizeof(SDecoinfo));
+	pDecoInfo->output_time_to_surface_seconds = tts_seconds;
 }
 
 
