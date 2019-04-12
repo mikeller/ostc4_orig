@@ -40,19 +40,17 @@ static void ambient_bar_to_deco_stop_depth_bar(SDiveSettings *pDiveSettings, flo
 static int ascend_with_all_gaschanges(SDiveSettings *pDiveSettings, float pressure_decrease);
 static float next_stop_depth_input_is_actual_stop_id(SDiveSettings *pDiveSettings, int actual_id);
 static float get_gf_at_pressure(SDiveSettings *pDiveSettings, float pressure);
-static void buehlmann_calc_ndl(SDiveSettings *pDiveSettings);
+static int buehlmann_calc_ndl(SDiveSettings *pDiveSettings);
 static _Bool dive1_check_deco(SDiveSettings *pDiveSettings);
 
 static SDecoinfo gDecotable;
 static float gSurface_pressure_bar;
 static float gPressure;
 static int gGas_id;
-static float gTTS;
 static float gTissue_nitrogen_bar[16];
 static float gTissue_helium_bar[16];
 static float gGF_value;
 static float gCNS;
-static int gNDL;
 
 float gGF_low_depth_bar;
 SStop gStop;
@@ -65,20 +63,16 @@ static void buehlmann_backup_and_restore(_Bool backup_restore_otherwise)
 {
 	static float pressure;
 	static float gas_id;
-	static float tts;
 	static float tissue_nitrogen_bar[16];
 	static float tissue_helium_bar[16];
 	static float gf_value;
-	static int ndl;
 	static float cns;
 
 	if(backup_restore_otherwise)
 	{
 		pressure = gPressure;
 		gas_id = gGas_id;
-		tts = gTTS;
 		gf_value = gGF_value;
-		ndl = gNDL;
 		cns = gCNS;
 		memcpy(tissue_nitrogen_bar, gTissue_nitrogen_bar, (4*16));
 		memcpy(tissue_helium_bar, gTissue_helium_bar, (4*16));
@@ -87,9 +81,7 @@ static void buehlmann_backup_and_restore(_Bool backup_restore_otherwise)
 	{
 		gPressure = pressure;
 		gGas_id = gas_id;
-		gTTS = tts;
 		gGF_value = gf_value;
-		gNDL = ndl;
 		gCNS = cns;
 		memcpy(gTissue_nitrogen_bar, tissue_nitrogen_bar, (4*16));
 		memcpy(gTissue_helium_bar, tissue_helium_bar, (4*16));
@@ -140,8 +132,6 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 	// clean stop list
 	for(i = 0; i < DECOINFO_STRUCT_MAX_STOPS; i++)
 		stoplist[i] = 0;
-	gTTS = 0;
-	gNDL = 0;
 
 	if(pDiveSettings->internal__pressure_first_stop_ambient_bar_as_upper_limit_for_gf_low_otherwise_zero >= (gPressure - PRESSURE_150_CM))
 	{
@@ -149,17 +139,16 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 	}
 
 	gGF_value = ((float)pDiveSettings->gf_high) / 100.0f;
-	buehlmann_backup_and_restore(true); // includes backup for gGF_value
+	buehlmann_backup_and_restore(true);
 	if(!dive1_check_deco(pDiveSettings) )
 	{
-	  buehlmann_backup_and_restore(false);
+		buehlmann_backup_and_restore(false);
 		// no deco
-	  pDecoInfo->output_time_to_surface_seconds = 0;
+	  	pDecoInfo->output_time_to_surface_seconds = 0;
 		for(i = 0; i < DECOINFO_STRUCT_MAX_STOPS; i++)
 			pDecoInfo->output_stop_length_seconds[i] = 0;
 		// calc NDL
-		buehlmann_calc_ndl(pDiveSettings);
-		pDecoInfo->output_ndl_seconds = gNDL;
+		pDecoInfo->output_ndl_seconds = buehlmann_calc_ndl(pDiveSettings);;
 		return;
 	}
 	buehlmann_backup_and_restore(false);
@@ -533,25 +522,24 @@ static float get_gf_at_pressure(SDiveSettings *pDiveSettings, float pressure)
 }
 
 
-static void buehlmann_calc_ndl(SDiveSettings *pDiveSettings)
+static int buehlmann_calc_ndl(SDiveSettings *pDiveSettings)
 {
 	float local_tissue_nitrogen_bar[16];
 	float local_tissue_helium_bar[16];
 	int i;
+	int ndl = 0;
 
-	gNDL = 0;
 	//Check ndl always use gHigh
 	gGF_value = ((float)pDiveSettings->gf_high) / 100.0f;
 	//10 minutes steps
-	while(gNDL < (300 * 60))
+	while(ndl < (300 * 60))
 	{
 		memcpy(local_tissue_nitrogen_bar, gTissue_nitrogen_bar, (4*16));
 		memcpy(local_tissue_helium_bar, gTissue_helium_bar, (4*16));
 		//
-		gNDL += 600;
+		ndl += 600;
 		decom_tissues_exposure2(600, &pDiveSettings->decogaslist[gGas_id], gPressure,gTissue_nitrogen_bar,gTissue_helium_bar);
 		decom_oxygen_calculate_cns_exposure(600,&pDiveSettings->decogaslist[gGas_id],gPressure,&gCNS);
-		//tissues_exposure_at_gPressure_seconds(600);
 		buehlmann_backup_and_restore(true);
 		if(dive1_check_deco(pDiveSettings))
 		{
@@ -561,11 +549,11 @@ static void buehlmann_calc_ndl(SDiveSettings *pDiveSettings)
 		buehlmann_backup_and_restore(false);
 	}
 
-	if(gNDL < (300 * 60))
-		gNDL -= 600;
+	if(ndl < (300 * 60))
+		ndl -= 600;
 
-	if(gNDL > (150 * 60))
-		return;
+	if(ndl > (150 * 60))
+		return ndl;
 
 	// refine
 	memcpy(gTissue_nitrogen_bar, local_tissue_nitrogen_bar, (4*16));
@@ -574,7 +562,7 @@ static void buehlmann_calc_ndl(SDiveSettings *pDiveSettings)
 	//One minutes step
 	for(i = 0; i < 10; i++)
 	{
-		gNDL += 60;
+		ndl += 60;
 		//tissues_exposure_at_gPressure_seconds(60);
 		decom_tissues_exposure2(60, &pDiveSettings->decogaslist[gGas_id], gPressure,gTissue_nitrogen_bar,gTissue_helium_bar);
 		decom_oxygen_calculate_cns_exposure(60,&pDiveSettings->decogaslist[gGas_id],gPressure,&gCNS);
@@ -583,6 +571,7 @@ static void buehlmann_calc_ndl(SDiveSettings *pDiveSettings)
 			break;
 		buehlmann_backup_and_restore(false);
 	}
+	return ndl;
 }
 
 
