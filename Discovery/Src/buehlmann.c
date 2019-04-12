@@ -572,7 +572,7 @@ static void buehlmann_calc_ndl(SDiveSettings *pDiveSettings)
 	memcpy(gTissue_helium_bar, local_tissue_helium_bar, (4*16));
 
 	//One minutes step
-	for(i = 0; i < 20; i++)
+	for(i = 0; i < 10; i++)
 	{
 		gNDL += 60;
 		//tissues_exposure_at_gPressure_seconds(60);
@@ -583,8 +583,6 @@ static void buehlmann_calc_ndl(SDiveSettings *pDiveSettings)
 			break;
 		buehlmann_backup_and_restore(false);
 	}
-	//gNDL -= 60;
-	return;
 }
 
 
