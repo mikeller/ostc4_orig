@@ -88,7 +88,6 @@ uint32_t time_elapsed_ms(uint32_t ticksstart,uint32_t ticksnow);
 _Bool scheduleCheck_pressure_reached_dive_mode_level(void);
 void scheduleSetDate(SDeviceLine *line);
 
-extern void SPI_Evaluate_RX_Data();
 /* Exported functions --------------------------------------------------------*/
 
 void initGlobals(void)
@@ -136,7 +135,7 @@ void initGlobals(void)
 	
 	global.dataSendToMaster.power_on_reset = 1;
 	global.dataSendToMaster.header.checkCode[0] = 0xA1;
-	global.dataSendToMaster.header.checkCode[1] = 0xA2;
+	global.dataSendToMaster.header.checkCode[1] = SPI_RX_STATE_OFFLINE;
 	global.dataSendToMaster.header.checkCode[2] = 0xA3;
 	global.dataSendToMaster.header.checkCode[3] = 0xA4;
 	global.dataSendToMaster.footer.checkCode[3] = 0xE4;
@@ -176,6 +175,14 @@ void initGlobals(void)
 	Scheduler_Request_sync_with_SPI(SPI_SYNC_METHOD_HARD);
 }
 
+void reinitGlobals(void)
+{
+	global.dataSendToSlavePending = 0;
+	global.dataSendToSlaveIsValid = 0;
+	global.dataSendToSlaveIsNotValidCount = 0;
+	global.sync_error_count = 0;
+	global.check_sync_not_running = 0;
+}
 
 void scheduleSpecial_Evaluate_DataSendToSlave(void)
 {
@@ -276,7 +283,7 @@ void scheduleSpecial_Evaluate_DataSendToSlave(void)
 	memcpy(&DeviceDataFlash, &global.dataSendToSlave.data.DeviceData, sizeof(SDevice));
 	deviceDataFlashValid = 1;
 
-
+#if 0
 	//TODO: Temporary placed here. Duration ~210 ms.
 	if (global.I2C_SystemStatus != HAL_OK) {
 		MX_I2C1_TestAndClear();
@@ -285,6 +292,7 @@ void scheduleSpecial_Evaluate_DataSendToSlave(void)
 //		compass_init(0, 7);
 //		accelerator_init();
 	}
+#endif /* already called once a second */
 }
 
 
@@ -402,7 +410,7 @@ static void schedule_update_timer_helper(int8_t thisSeconds)
 void schedule_check_resync(void)
 {
 	/* counter is incremented in cyclic 100ms loop and reset to 0 if the transmission complete callback is called */
-	if((global.check_sync_not_running >= 3))
+	if((global.check_sync_not_running >= 5))
 	{
 //		global.dataSendToSlaveIsNotValidCount = 0;
 		global.check_sync_not_running = 0;
@@ -411,8 +419,8 @@ void schedule_check_resync(void)
 		/* Try to start communication again. If exchange is stuck during execution for some reason the TX will be aborted by the
 		 * function error handler
 		 */
-		Scheduler_Request_sync_with_SPI(SPI_SYNC_METHOD_SOFT);
 		SPI_Start_single_TxRx_with_Master();
+		Scheduler_Request_sync_with_SPI(SPI_SYNC_METHOD_HARD);
 	}
 }
 
@@ -434,7 +442,7 @@ void scheduleDiveMode(void)
 	global.dataSendToMaster.mode = MODE_DIVE;
 	global.deviceDataSendToMaster.mode = MODE_DIVE;
 	uint8_t counter_exit = 0;
-	
+
 	Scheduler.counterSPIdata100msec = 0;
 	Scheduler.counterCompass100msec = 0;
 	Scheduler.counterPressure100msec = 0;
@@ -739,8 +747,10 @@ void scheduleSurfaceMode(void)
 		/* Evaluate received data at 10 ms, 110 ms, 210 ms,... duration ~<1ms */
 		if(ticksdiff >= Scheduler.counterSPIdata100msec * 100 + 10)
 		{
-			SPI_Evaluate_RX_Data();
-			Scheduler.counterSPIdata100msec++;
+			if(SPI_Evaluate_RX_Data()!=0) /* did we receive something ? */
+			{			
+				Scheduler.counterSPIdata100msec++;
+			}
 		}
 
 		/* Evaluate pressure at 20 ms, 120 ms, 220 ms,... duration ~22ms] */
@@ -862,15 +872,16 @@ inline void Scheduler_Request_sync_with_SPI(uint8_t SyncMethod)
 	}
 }
 
-void Scheduler_SyncToSPI()
+void Scheduler_SyncToSPI(uint8_t TXtick)
 {
 	uint32_t deltatick = 0;
+	int8_t TXcompensation;
 
 	switch(dospisync)
 	{
 		case SPI_SYNC_METHOD_HARD:
 				//Set back tick counter
-				Scheduler.tickstart = HAL_GetTick();
+				Scheduler.tickstart = HAL_GetTick() - 4; /* consider 4ms offset for transfer */
 				Scheduler.counterSPIdata100msec = 0;
 				Scheduler.counterCompass100msec = 0;
 				Scheduler.counterPressure100msec = 0;
@@ -890,7 +901,27 @@ void Scheduler_SyncToSPI()
 				}
 				dospisync = SPI_SYNC_METHOD_NONE;
 			break;
-		default:
+		default:										/* continous sync activity */
+			if(TXtick < 100)							/* do not handle unexpected jump length > 100ms */
+			{
+				TXtick += 4;	/* add 4ms TX time to offset of 100ms time stamp */
+				deltatick = time_elapsed_ms(Scheduler.tickstart,HAL_GetTick());
+				deltatick %= 100;
+				if(deltatick > 50)
+				{
+					TXcompensation = deltatick - 100; /* neg drift */
+				}
+				else
+				{
+					TXcompensation = deltatick;		/* pos drift */
+				}
+				TXcompensation = TXtick - TXcompensation;
+				Scheduler.tickstart -= TXcompensation;
+			}
+			else
+			{
+				Scheduler_Request_sync_with_SPI(SPI_SYNC_METHOD_SOFT); /* A large shift in 100ms cycle occured => clip to 100ms in next sync call */
+			}
 			break;
 	}
 }
@@ -1000,6 +1031,7 @@ void scheduleSleepMode(void)
 	scheduleUpdateLifeData(-1);
 	clearDecoNow = 0;
 	setButtonsNow = 0;
+	reinitGlobals();
 }
 
 
