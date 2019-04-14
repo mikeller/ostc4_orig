@@ -96,6 +96,7 @@ extern SGlobal global;
 /* Function prototypes -----------------------------------------------*/
 
 void initGlobals(void);
+void reinitGlobals(void);
 
 void scheduleSurfaceMode(void);
 void scheduleDiveMode(void);
@@ -109,7 +110,7 @@ void scheduleUpdateDeviceDataChargerFull(void);
 void scheduleUpdateDeviceDataChargerCharging(void);
 
 void Scheduler_Request_sync_with_SPI(uint8_t SyncMethod);
-void Scheduler_SyncToSPI(void);
+void Scheduler_SyncToSPI(uint8_t TXtick);
 
 uint8_t scheduleSetButtonResponsiveness(void);
 

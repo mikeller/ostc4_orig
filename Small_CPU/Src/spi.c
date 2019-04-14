@@ -317,7 +317,15 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
 	/* restart SPI */
 	if (hspi == &hspi1)
 	{
-		Scheduler_SyncToSPI();
+		if(SPI_check_header_and_footer_ok())	/* process timestamp provided by main */
+		{
+			Scheduler_SyncToSPI(global.dataSendToSlave.header.checkCode[SPI_HEADER_INDEX_TX_TICK]);
+		}
+		else
+		{
+			Scheduler_SyncToSPI(0); /* => no async will be calculated */
+		}
+
 		SPIDataRX = 1;
 
 		/* stop data exchange? */
@@ -330,9 +338,10 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
 	}
 }
 
-void SPI_Evaluate_RX_Data()
+uint8_t SPI_Evaluate_RX_Data()
 {
 	uint8_t resettimeout = 1;
+	uint8_t ret = SPIDataRX;
 
 	if ((global.mode != MODE_SHUTDOWN) && ( global.mode != MODE_SLEEP) && (SPIDataRX))
 	{
@@ -385,12 +394,13 @@ void SPI_Evaluate_RX_Data()
 		scheduleSpecial_Evaluate_DataSendToSlave();
 
 		SPI_Start_single_TxRx_with_Master();
-	}
 
-	if(resettimeout)
-	{
-			global.check_sync_not_running = 0;
+		if(resettimeout)
+		{
+				global.check_sync_not_running = 0;
+		}
 	}
+	return ret;
 }
 
 static uint8_t SPI_check_header_and_footer_ok(void) {
