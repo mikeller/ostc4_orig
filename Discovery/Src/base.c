@@ -266,6 +266,7 @@ TIM_HandleTypeDef   TimDemoHandle; /* used in stm32f4xx_it.c too */
 
 uint8_t LastButtonPressed;
 uint32_t LastButtonPressedTick;
+uint32_t BaseTick100ms;			/* Tick at last 100ms cycle */
 
 /*
 uint32_t time_before;
@@ -384,8 +385,6 @@ int main(void)
     set_new_settings_missing_in_ext_flash(); // inlcudes update of firmware version  161121
 
     GFX_init( &pLayerInvisible );
-
-    TIM_init();
     TIM_BACKLIGHT_init();
 
     /*
@@ -476,6 +475,8 @@ int main(void)
         openInfo( StIDEBUG );
     }
 
+    TIM_init();		/* start cylic 100ms task */
+
     /* @brief main LOOP
      *
      * this is executed while no IRQ interrupts it
@@ -506,6 +507,9 @@ int main(void)
         {
 	        DoDisplayRefresh = 0;
         	RefreshDisplay();
+
+        	if(stateUsed == stateRealGetPointer())	/* Handle log entries while in dive mode*/
+                logbook_InitAndWrite();
         }
 
 #ifdef DEBUG_RUNTIME
@@ -561,6 +565,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     uint32_t timeout_in_seconds;
     uint32_t timeout_limit_Surface_in_seconds;
 
+
+    BaseTick100ms = HAL_GetTick();	/* store start of 100ms cycle */
+
     _Bool InDiveMode = 0;
     _Bool modeChange = 0; // to exit from menu and logbook
 
@@ -594,10 +601,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         DataEX_call();
 
         if(stateUsed == stateSimGetPointer())
+        {
             simulation_UpdateLifeData(1);
+        }
+
         check_warning();
-        if(stateUsed == stateRealGetPointer())
-            logbook_InitAndWrite();
         updateMiniLiveLogbook(1);
         timer_UpdateSecond(1);
         base_tempLightLevel = TIM_BACKLIGHT_adjust();
@@ -1338,7 +1346,7 @@ static void TIM_BACKLIGHT_init(void)
     sConfig.OCMode     = TIM_OCMODE_PWM1;
     sConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
     sConfig.OCFastMode = TIM_OCFAST_DISABLE;
-    sConfig.Pulse = 50 * 6;
+    sConfig.Pulse = 100; /* Initial brigthness of display */
 
     HAL_TIM_PWM_ConfigChannel(&TimBacklightHandle, &sConfig, TIM_BACKLIGHT_CHANNEL);
     HAL_TIM_PWM_Start(&TimBacklightHandle, TIM_BACKLIGHT_CHANNEL);

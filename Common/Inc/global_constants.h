@@ -42,7 +42,7 @@
 
 /* Define INDEX for information exchanged within the header */
 #define SPI_HEADER_INDEX_RX_STATE  (1)
-#define SPI_HEADER_INDEX_FRAME_CNT (2)
+#define SPI_HEADER_INDEX_TX_TICK   (2)
 
 #define SPI_RX_STATE_OK 		(0)
 #define SPI_RX_STATE_SHIFTED	(1)
