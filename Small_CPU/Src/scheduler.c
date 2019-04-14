@@ -172,6 +172,7 @@ void initGlobals(void)
 	global.deviceData.temperatureMinimum.value_int32 = INT32_MAX;
 	global.deviceData.voltageMinimum.value_int32 = INT32_MAX;
 
+	Scheduler.communicationTimeout = SPI_COM_TIMEOUT_START;
 	Scheduler_Request_sync_with_SPI(SPI_SYNC_METHOD_HARD);
 }
 
@@ -182,6 +183,7 @@ void reinitGlobals(void)
 	global.dataSendToSlaveIsNotValidCount = 0;
 	global.sync_error_count = 0;
 	global.check_sync_not_running = 0;
+	Scheduler.communicationTimeout = SPI_COM_TIMEOUT_START;
 }
 
 void scheduleSpecial_Evaluate_DataSendToSlave(void)
@@ -410,7 +412,7 @@ static void schedule_update_timer_helper(int8_t thisSeconds)
 void schedule_check_resync(void)
 {
 	/* counter is incremented in cyclic 100ms loop and reset to 0 if the transmission complete callback is called */
-	if((global.check_sync_not_running >= 5))
+	if((global.check_sync_not_running >= Scheduler.communicationTimeout))
 	{
 //		global.dataSendToSlaveIsNotValidCount = 0;
 		global.check_sync_not_running = 0;
@@ -420,6 +422,7 @@ void schedule_check_resync(void)
 		 * function error handler
 		 */
 		SPI_Start_single_TxRx_with_Master();
+		Scheduler.communicationTimeout = SPI_COM_TIMEOUT_COMMON;	/* Reduce error detection time */
 		Scheduler_Request_sync_with_SPI(SPI_SYNC_METHOD_HARD);
 	}
 }

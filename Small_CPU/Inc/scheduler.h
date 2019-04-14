@@ -40,6 +40,9 @@
 #define SCHEDULER_TICK_EXE1SEC	(980u) 	/* tick count based on cycle start which is used to trigger functions which */
 										/* shall be executed once in a second (20ms before cycle restarts) */
 
+#define SPI_COM_TIMEOUT_START		(5)		/* *100 ms timeout to avoid tiemout e.g. after Main wakeup */
+#define SPI_COM_TIMEOUT_COMMON		(3)		/* *100ms shorter timeout during normal operation to have a faster error reaction */
+
 typedef struct
 {
 	uint8_t mode;
@@ -84,6 +87,7 @@ typedef struct
 	uint8_t counterPressure100msec;
 	uint8_t counterCompass100msec;
 	uint8_t counterAmbientLight100msec;
+	uint8_t	communicationTimeout;
 	uint32_t tick_execute1second;
 	uint32_t tickstart;
 } SScheduleCtrl;
