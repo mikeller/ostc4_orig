@@ -862,6 +862,9 @@ void refresh_Customviews(void)
     case 7:
         text[4] = TXT_CNS;
         break;
+    case 8:
+    	text[4] = TXT_ActualGradient;
+    	break;
     /* none */
     case 0:
         text[4] = '-';
@@ -1008,7 +1011,7 @@ uint8_t OnAction_CornerStandard(uint32_t editId, uint8_t blockNumber, uint8_t di
 
     value += 1;
 
-    if(value > 7)
+    if(value > 8)
         value = 0;
 
     settingsGetPointer()->tX_userselectedLeftLowerCornerPrimary = value;

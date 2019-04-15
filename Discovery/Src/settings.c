@@ -1155,7 +1155,7 @@ uint8_t check_and_correct_settings(void)
 
 /*	uint8_t tX_userselectedLeftLowerCornerPrimary;
  */
-    if(Settings.tX_userselectedLeftLowerCornerPrimary > 7)
+    if(Settings.tX_userselectedLeftLowerCornerPrimary > 8)
     {
         Settings.tX_userselectedLeftLowerCornerPrimary = 1;
         corrections++;
