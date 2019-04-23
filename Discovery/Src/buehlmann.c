@@ -630,15 +630,15 @@ void buehlmann_ceiling_calculator(SLifeData *pLifeData, SDecoinfo *pDecoInfo)
 {
 	float ceiling;
 
+	memcpy(gTissue_nitrogen_bar, pLifeData->tissue_nitrogen_bar, (4*16));
+	memcpy(gTissue_helium_bar, pLifeData->tissue_helium_bar, (4*16));
+
 	// this is just performance optimizing. The code below runs just fine
 	// without this. There is never a ceiling in NDL deco state
 	if (!pDecoInfo->output_time_to_surface_seconds) {
 		pDecoInfo->output_ceiling_meter = 0;
 		return;
 	}
-
-	memcpy(gTissue_nitrogen_bar, pLifeData->tissue_nitrogen_bar, (4*16));
-	memcpy(gTissue_helium_bar, pLifeData->tissue_helium_bar, (4*16));
 
 	ceiling = compute_ceiling(pLifeData->pressure_surface_bar, 1.0f + pLifeData->max_depth_meter/10.0f);
 	pDecoInfo->output_ceiling_meter = (ceiling - pLifeData->pressure_surface_bar) * 10.0f;
