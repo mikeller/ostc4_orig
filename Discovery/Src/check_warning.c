@@ -38,24 +38,24 @@
 #include "decom.h"
 #include "tCCR.h"
 
-/* Private variables wit access ----------------------------------------------*/
-uint8_t betterGasId = 0;
-uint8_t betterSetpointId = 0;
-int8_t fallback = 0;
+/* Private variables with access ----------------------------------------------*/
+static uint8_t betterGasId = 0;
+static uint8_t betterSetpointId = 0;
+static int8_t fallback = 0;
 
 /* Private function prototypes -----------------------------------------------*/
-int8_t check_fallback(SDiveState * pDiveState);
-int8_t check_ppO2(SDiveState * pDiveState);
-int8_t check_O2_sensors(SDiveState * pDiveState);
-int8_t check_CNS(SDiveState * pDiveState);
-int8_t check_Deco(SDiveState * pDiveState);
-int8_t check_AscentRate(SDiveState * pDiveState);
-int8_t check_aGF(SDiveState * pDiveState);
-int8_t check_BetterGas(SDiveState * pDiveState);
-int8_t check_BetterSetpoint(SDiveState * pDiveState);
-int8_t check_Battery(SDiveState * pDiveState);
+static int8_t check_fallback(SDiveState * pDiveState);
+static int8_t check_ppO2(SDiveState * pDiveState);
+static int8_t check_O2_sensors(SDiveState * pDiveState);
+static int8_t check_CNS(SDiveState * pDiveState);
+static int8_t check_Deco(SDiveState * pDiveState);
+static int8_t check_AscentRate(SDiveState * pDiveState);
+static int8_t check_aGF(SDiveState * pDiveState);
+static int8_t check_BetterGas(SDiveState * pDiveState);
+static int8_t check_BetterSetpoint(SDiveState * pDiveState);
+static int8_t check_Battery(SDiveState * pDiveState);
 
-int8_t check_helper_same_oxygen_and_helium_content(SGasLine * gas1, SGasLine * gas2);
+static int8_t check_helper_same_oxygen_and_helium_content(SGasLine * gas1, SGasLine * gas2);
 
 /* Exported functions --------------------------------------------------------*/
 
@@ -123,7 +123,7 @@ uint8_t actualLeftMaxDepth(const SDiveState * pDiveState)
 
 
 /* Private functions ---------------------------------------------------------*/
-int8_t check_fallback(SDiveState * pDiveState)
+static int8_t check_fallback(SDiveState * pDiveState)
 {
 	if(fallback && ((pDiveState->mode != MODE_DIVE) || (pDiveState->diveSettings.diveMode != DIVEMODE_CCR)))
 		fallback = 0;
@@ -133,7 +133,7 @@ int8_t check_fallback(SDiveState * pDiveState)
 }
 
 
-int8_t check_ppO2(SDiveState * pDiveState)
+static int8_t check_ppO2(SDiveState * pDiveState)
 {
 	if(pDiveState->mode != MODE_DIVE)
 	{
@@ -171,7 +171,7 @@ int8_t check_ppO2(SDiveState * pDiveState)
 }
 
 
-int8_t check_O2_sensors(SDiveState * pDiveState)
+static int8_t check_O2_sensors(SDiveState * pDiveState)
 {
 	pDiveState->warnings.sensorLinkLost = 0;
 	pDiveState->warnings.sensorOutOfBounds[0] = 0;
@@ -193,7 +193,7 @@ int8_t check_O2_sensors(SDiveState * pDiveState)
 }
 
 
-int8_t check_BetterGas(SDiveState * pDiveState)
+static int8_t check_BetterGas(SDiveState * pDiveState)
 {
 	if(stateUsed->mode != MODE_DIVE)
 	{
@@ -276,7 +276,7 @@ int8_t check_BetterGas(SDiveState * pDiveState)
 
 /* check for better travel!!! setpoint hw 151210
  */ 
-int8_t check_BetterSetpoint(SDiveState * pDiveState)
+static int8_t check_BetterSetpoint(SDiveState * pDiveState)
 {
 	pDiveState->warnings.betterSetpoint = 0;
 	betterSetpointId = 0;
@@ -315,7 +315,7 @@ int8_t check_BetterSetpoint(SDiveState * pDiveState)
 
 /* hw 151030
  */
-int8_t check_helper_same_oxygen_and_helium_content(SGasLine * gas1, SGasLine * gas2) 
+static int8_t check_helper_same_oxygen_and_helium_content(SGasLine * gas1, SGasLine * gas2)
 {
 	if(gas1->helium_percentage != gas2->helium_percentage)
 		return 0;
@@ -327,7 +327,7 @@ int8_t check_helper_same_oxygen_and_helium_content(SGasLine * gas1, SGasLine * g
 }
 
 
-int8_t check_CNS(SDiveState * pDiveState)
+static int8_t check_CNS(SDiveState * pDiveState)
 {
 	if(stateUsed->mode != MODE_DIVE)
 	{
@@ -343,7 +343,7 @@ int8_t check_CNS(SDiveState * pDiveState)
 }
 
 
-int8_t check_Battery(SDiveState * pDiveState)
+static int8_t check_Battery(SDiveState * pDiveState)
 {
 	if(pDiveState->lifeData.battery_charge < 10)
 		pDiveState->warnings.lowBattery = 1;
@@ -354,7 +354,7 @@ int8_t check_Battery(SDiveState * pDiveState)
 }
 
 
-int8_t check_Deco(SDiveState * pDiveState)
+static int8_t check_Deco(SDiveState * pDiveState)
 {
 	if(stateUsed->mode != MODE_DIVE)
 	{
@@ -376,7 +376,7 @@ int8_t check_Deco(SDiveState * pDiveState)
 }
 
 
-int8_t check_AscentRate(SDiveState * pDiveState)
+static int8_t check_AscentRate(SDiveState * pDiveState)
 {
 	if(stateUsed->mode != MODE_DIVE)
 	{
@@ -396,7 +396,7 @@ int8_t check_AscentRate(SDiveState * pDiveState)
 }
 
 
-int8_t check_aGF(SDiveState * pDiveState)
+static int8_t check_aGF(SDiveState * pDiveState)
 {
 	if(stateUsed->mode != MODE_DIVE)
 	{
