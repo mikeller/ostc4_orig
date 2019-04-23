@@ -199,7 +199,7 @@ typedef struct
     int8_t percentageHe;
 } SManualGas;
 
-void logbook_writeSample(SDiveState state);
+void logbook_writeSample(SDiveState *state);
 void logbook_initNewdiveProfile(const SDiveState* pInfo, SSettings* pSettings);
 void logbook_EndDive(void);
 

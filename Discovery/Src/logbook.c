@@ -371,7 +371,7 @@ static void addS16(uint8_t *pos, int16_t var)
   * @param  SDiveState state:
   */
 
-void logbook_writeSample(SDiveState state)
+void logbook_writeSample(SDiveState *state)
 {
     uint8_t sample[256];
   //  int position = 0;
@@ -385,7 +385,7 @@ void logbook_writeSample(SDiveState state)
     int i = 0;
     for(i = 0; i <256 ;i++)
             sample[i] = 0;
-    addU16(sample, (uint16_t)(state.lifeData.depth_meter * 100));
+    addU16(sample, (uint16_t)(state->lifeData.depth_meter * 100));
     length += 2;
     sample[2] = 0;
     length++;
@@ -396,50 +396,50 @@ void logbook_writeSample(SDiveState state)
 
     //BuildEevntyte 1
 		// sub old 0-3 only one at a time
-    if(state.events.manualMarker)
+    if(state->events.manualMarker)
     {
         eventByte1.uw = 6;
     }
 		else
-    if(state.warnings.decoMissed)
+    if(state->warnings.decoMissed)
     {
         eventByte1.uw = 2;
     }
 		else
-    if(state.warnings.ppO2Low)
+    if(state->warnings.ppO2Low)
     {
         eventByte1.uw = 4;
     }
 		else
-    if(state.warnings.ppO2High)
+    if(state->warnings.ppO2High)
     {
         eventByte1.uw = 5;
     }
 		else
-    if(state.warnings.lowBattery)
+    if(state->warnings.lowBattery)
     {
         eventByte1.uw = 7;
     }
 		else
-    if(state.warnings.slowWarning)
+    if(state->warnings.slowWarning)
     {
         eventByte1.uw = 1;
     }
 		// sub bit 4 to 7
-    if(state.events.manuelGasSet)
+    if(state->events.manuelGasSet)
     {
         eventByte1.ub.bit4 = 1;
     }
-    if(state.events.gasChange)
+    if(state->events.gasChange)
     {
         eventByte1.ub.bit5 = 1;
     }
-    if(state.events.setpointChange)
+    if(state->events.setpointChange)
     {
         eventByte1.ub.bit6 = 1;
     }
 		// sub bit 7 + eventbyte2
-    if(state.events.bailout)
+    if(state->events.bailout)
     {
         eventByte1.ub.bit7 = 1;
         eventByte2.ub.bit0 = 1;
@@ -456,32 +456,32 @@ void logbook_writeSample(SDiveState state)
         length++;
     }
     //Add EventInfos
-    if(state.events.manuelGasSet)
+    if(state->events.manuelGasSet)
     {
         //manual gas in %O2 & %He
-        sample[length] = state.events.info_manuelGasSetO2;
+        sample[length] = state->events.info_manuelGasSetO2;
         length += 1;
-        sample[length] = state.events.info_manuelGasSetHe;
+        sample[length] = state->events.info_manuelGasSetHe;
         length += 1;
     }
-    if(state.events.gasChange)
+    if(state->events.gasChange)
     {
         //Current gas (gasid)
-        sample[length] = state.events.info_GasChange;
+        sample[length] = state->events.info_GasChange;
         length += 1;
     }
-    if(state.events.setpointChange)
+    if(state->events.setpointChange)
     {
         //New setpoint in cbar
-        sample[length] = state.events.info_SetpointChange;
+        sample[length] = state->events.info_SetpointChange;
         length += 1;
     }
-    if(state.events.bailout)
+    if(state->events.bailout)
     {
       //bailout gas in % O2 & %He
-        sample[length] = state.events.info_bailoutO2;
+        sample[length] = state->events.info_bailoutO2;
         length += 1;
-        sample[length] = state.events.info_bailoutHe;
+        sample[length] = state->events.info_bailoutHe;
         length += 1;
     }
 
@@ -489,7 +489,7 @@ void logbook_writeSample(SDiveState state)
     if(divisor.temperature == 0)
     {
 			divisor.temperature = smallHeader.tempDivisor - 1;
-			addS16(&sample[length], (int16_t)((state.lifeData.temperature_celsius * 10.0f) + 0.5f));
+			addS16(&sample[length], (int16_t)((state->lifeData.temperature_celsius * 10.0f) + 0.5f));
 			length += 2;
     }
     else
@@ -556,9 +556,9 @@ void logbook_writeSample(SDiveState state)
 
         for(int i = 0; i <3; i++)
         {
-          sample[length] = (uint8_t)(state.lifeData.ppO2Sensor_bar[i] * 100.0f + 0.5f);
+          sample[length] = (uint8_t)(state->lifeData.ppO2Sensor_bar[i] * 100.0f + 0.5f);
           length += 1;
-          addU16(&sample[length], (uint16_t)(state.lifeData.sensorVoltage_mV[i] * 10.0f + 0.5f));
+          addU16(&sample[length], (uint16_t)(state->lifeData.sensorVoltage_mV[i] * 10.0f + 0.5f));
           length += 2;
         }
       }
@@ -574,19 +574,19 @@ void logbook_writeSample(SDiveState state)
       if(divisor.decoplan == 0)
       {
           divisor.decoplan  = smallHeader.decoplanDivisor - 1;
-          if(state.diveSettings.deco_type.ub.standard == VPM_MODE)
+          if(state->diveSettings.deco_type.ub.standard == VPM_MODE)
           {
             for(int i = 0; i <15; i++)
             {
-              sample[length] = state.decolistVPM.output_stop_length_seconds[i] / 60;
+              sample[length] = state->decolistVPM.output_stop_length_seconds[i] / 60;
               length += 1;
             }
           }
-          else if(state.diveSettings.deco_type.ub.standard == GF_MODE)
+          else if(state->diveSettings.deco_type.ub.standard == GF_MODE)
           {
             for(int i = 0; i <15; i++)
             {
-              sample[length] = state.decolistBuehlmann.output_stop_length_seconds[i] / 60;
+              sample[length] = state->decolistBuehlmann.output_stop_length_seconds[i] / 60;
               length += 1;
             }
           }
@@ -609,7 +609,7 @@ void logbook_writeSample(SDiveState state)
     if(divisor.cns == 0)
     {
         divisor.cns = smallHeader.cnsDivisor - 1;
-        addU16(&sample[length], (uint16_t)state.lifeData.cns);
+        addU16(&sample[length], (uint16_t)state->lifeData.cns);
         length += 2;
     }
     else
@@ -1152,7 +1152,7 @@ void logbook_InitAndWrite(void)
 			logbook_initNewdiveProfile(pStateReal,settingsGetPointer());
 			min_temperature_float_celsius = pStateReal->lifeData.temperature_celsius;
 			//Write logbook sample
-			logbook_writeSample(*pStateReal);
+			logbook_writeSample(pStateReal);
 			resetEvents();
 			tickstart = HAL_GetTick();
 			bDiveMode = 1;
@@ -1166,7 +1166,7 @@ void logbook_InitAndWrite(void)
 		if(ticksdiff >= 2000)
 		{
 			//Write logbook sample
-			logbook_writeSample(*pStateReal);
+			logbook_writeSample(pStateReal);
 			resetEvents();
 			if(min_temperature_float_celsius > pStateReal->lifeData.temperature_celsius)
 				min_temperature_float_celsius = pStateReal->lifeData.temperature_celsius;
