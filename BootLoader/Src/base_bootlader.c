@@ -555,7 +555,7 @@ GPIO_test_I2C_lines();
 			}
 			if(status == HAL_OK)
 			{
-				tInfo_write("programm flash");
+				tInfo_write("program flash");
 				status = firmware_programFlashMemory(pBuffer,firmware_load_result);
 				if(status != HAL_OK)
 				{
@@ -628,7 +628,7 @@ GPIO_test_I2C_lines();
 			}
 			if(status == HAL_OK)
 			{
-				tInfo_write("programm flash");
+				tInfo_write("program flash");
 				status = firmware2_variable_upperpart_programFlashMemory(firmware_load_result,pOffset,pBuffer,firmware_load_result,0);
 				if(status != HAL_OK)
 				{
