@@ -1,0 +1,24 @@
+README.linux
+------------
+
+1. Compile the pack utilities
+
+cd src
+make checksum_final_add_fletcher
+make OSTC4pack_V4
+
+2. Edit create_full_update_bin.sh
+
+Set BUILD_PATH to the location where you build the individual parts
+of the firmware using the OpenSTM23 IDE. 
+
+Set BUILD_TYPE the either Debug or Release (or any other build style you 
+defined in the OpenSTM23 IDE).
+
+Set the "build project names" as defined in the OpenSTM23 IDE.
+
+3. Simpy run create_full_update_bin.sh
+
+Run it in the ostc4pack folder of the repository, and a file with name
+like OSTC4_<date>.bin is created containg the individual blobs.
+
