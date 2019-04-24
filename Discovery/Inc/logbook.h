@@ -199,7 +199,7 @@ typedef struct
     int8_t percentageHe;
 } SManualGas;
 
-void logbook_writeSample(SDiveState *state);
+void logbook_writeSample(const SDiveState *state);
 void logbook_initNewdiveProfile(const SDiveState* pInfo, SSettings* pSettings);
 void logbook_EndDive(void);
 
@@ -211,7 +211,7 @@ uint8_t logbook_getNumberOfHeaders(void);
 uint8_t logbook_getHeader(uint8_t StepBackwards,SLogbookHeader* pLogbookHeader);
 uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t* depth, uint8_t*  gasid, int16_t* temperature, uint16_t* ppo2, uint16_t* setpoint, uint16_t* sensor1, uint16_t* sensor2, uint16_t* sensor3, uint16_t* cns, uint8_t* bailout, uint16_t* decostopDepth);
 void logbook_test(void);
-void logbook_InitAndWrite(void);
+void logbook_InitAndWrite(const SDiveState* pStateReal);
 void logbook_recover_brokenlog(uint8_t headerId);
 
 uint16_t logbook_lastDive_diveNumber(void);

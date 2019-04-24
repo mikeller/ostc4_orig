@@ -775,18 +775,9 @@ _Bool deco_zone_reached(void)
 }
 
 
-void resetEvents(void)
+void resetEvents(const SDiveState *pStateUsed)
 {
-    SDiveState * pStateUsed;
-	if(stateUsed == stateRealGetPointer())
-	{
-		pStateUsed = stateRealGetPointerWrite();
-	}
-	else
-	{
-		pStateUsed = stateSimGetPointerWrite();
-	}
-	memset(&pStateUsed->events,0, sizeof(SEvents));
+	memset((void *)&pStateUsed->events, 0, sizeof(SEvents));
 }
 
 

@@ -90,10 +90,10 @@ static void clear_divisor(void);
 static void logbook_SetAverageDepth(float average_depth_meter);
 static void logbook_SetMinTemperature(float min_temperature_celsius);
 static void logbook_SetMaxCNS(float max_cns_percentage);
-static void logbook_SetCompartmentDesaturation(void);
+static void logbook_SetCompartmentDesaturation(const SDiveState * pStateReal);
 static void logbook_SetLastStop(float last_stop_depth_bar);
 static void logbook_writedata(void * data, int length_byte);
-static void logbook_UpdateHeader(void);
+static void logbook_UpdateHeader(const SDiveState * pStateReal);
 
 /* Exported functions --------------------------------------------------------*/
 
@@ -267,7 +267,7 @@ void logbook_initNewdiveProfile(const SDiveState* pInfo, SSettings* pSettings)
 	memcpy(header.n2Compartments, pInfo->lifeData.tissue_nitrogen_bar, 64);
 	memcpy(header.heCompartments, pInfo->lifeData.tissue_helium_bar, 64);
 
-	logbook_SetCompartmentDesaturation();
+	logbook_SetCompartmentDesaturation(pInfo);
 
 	ext_flash_start_new_dive_log_and_set_actualPointerSample((uint8_t*)&header);
 
@@ -371,7 +371,7 @@ static void addS16(uint8_t *pos, int16_t var)
   * @param  SDiveState state:
   */
 
-void logbook_writeSample(SDiveState *state)
+void logbook_writeSample(const SDiveState *state)
 {
     uint8_t sample[256];
   //  int position = 0;
@@ -1132,7 +1132,7 @@ uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t*
  *          and finishes logbook after end of dive
 *********************************************************************************/
 
-void logbook_InitAndWrite(void)
+void logbook_InitAndWrite(const SDiveState *pStateReal)
 {
 	SSettings *pSettings = settingsGetPointer();
 	static uint8_t bDiveMode = 0;
@@ -1140,8 +1140,6 @@ void logbook_InitAndWrite(void)
 	uint32_t ticksdiff = 0;
 	uint32_t lasttick = 0;
 	static float min_temperature_float_celsius = 0;
-
-	const SDiveState * pStateReal = stateRealGetPointer();
 
 	if(!bDiveMode)
 	{
@@ -1153,7 +1151,7 @@ void logbook_InitAndWrite(void)
 			min_temperature_float_celsius = pStateReal->lifeData.temperature_celsius;
 			//Write logbook sample
 			logbook_writeSample(pStateReal);
-			resetEvents();
+			resetEvents(pStateReal);
 			tickstart = HAL_GetTick();
 			bDiveMode = 1;
 		}
@@ -1167,7 +1165,7 @@ void logbook_InitAndWrite(void)
 		{
 			//Write logbook sample
 			logbook_writeSample(pStateReal);
-			resetEvents();
+			resetEvents(pStateReal);
 			if(min_temperature_float_celsius > pStateReal->lifeData.temperature_celsius)
 				min_temperature_float_celsius = pStateReal->lifeData.temperature_celsius;
 			tickstart = lasttick;
@@ -1187,7 +1185,7 @@ void logbook_InitAndWrite(void)
 				bDiveMode = 3;
 			}
 			if(bDiveMode == 3)
-				logbook_UpdateHeader();
+				logbook_UpdateHeader(pStateReal);
 		}
 	}
 	else if(bDiveMode == 3)
@@ -1196,7 +1194,7 @@ void logbook_InitAndWrite(void)
 		logbook_SetAverageDepth(pStateReal->lifeData.average_depth_meter);
 		logbook_SetMinTemperature(min_temperature_float_celsius);
 		logbook_SetMaxCNS(pStateReal->lifeData.cns);
-		logbook_SetCompartmentDesaturation();
+		logbook_SetCompartmentDesaturation(pStateReal);
 		logbook_SetLastStop(pStateReal->diveSettings.last_stop_depth_bar);
 		logbook_EndDive();
 		bDiveMode = 0;
@@ -1218,10 +1216,8 @@ void logbook_InitAndWrite(void)
   * @version V0.0.1
   * @date    27-Nov-2014
 *********************************************************************************/
-static void logbook_UpdateHeader(void)
+static void logbook_UpdateHeader(const SDiveState *pStateReal)
 {
-	const SDiveState * pStateReal = stateRealGetPointer();
-
 //	uint16_t secondsAtShallow = 0;
 	RTC_DateTypeDef Sdate;
 	RTC_TimeTypeDef Stime;
@@ -1339,9 +1335,8 @@ static void logbook_SetMaxCNS(float max_cns_percentage)
 }
 
 
-static void logbook_SetCompartmentDesaturation(void)
+static void logbook_SetCompartmentDesaturation(const SDiveState * pStateReal)
 {
-	const SDiveState * pStateReal = stateRealGetPointer();
 	SLifeData2 secondaryInformation  = { 0 };
 
 	decom_tissues_desaturation_time(&pStateReal->lifeData, &secondaryInformation);
