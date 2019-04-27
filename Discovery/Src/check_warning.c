@@ -61,14 +61,7 @@ static int8_t check_helper_same_oxygen_and_helium_content(SGasLine * gas1, SGasL
 
 void check_warning(void)
 {
-	SDiveState * pDiveState;
-
-	if(stateUsed == stateRealGetPointer())
-		pDiveState = stateRealGetPointerWrite();
-	else
-		pDiveState = stateSimGetPointerWrite();
-
-  check_warning2(pDiveState);
+  check_warning2(stateUsedWrite);
 }
 
 

@@ -487,14 +487,7 @@ void t3_refresh_customview(float depth)
     if((t3_selection_customview == CVIEW_sensors) &&(stateUsed->diveSettings.ccrOption == 0))
         t3_change_customview();
 
-    SDiveState * pDiveState;
-
-    if(stateUsed == stateRealGetPointer())
-        pDiveState = stateRealGetPointerWrite();
-    else
-        pDiveState = stateSimGetPointerWrite();
-
-    t3_basics_refresh_customview(depth, t3_selection_customview, &t3screen, &t3c1, &t3c2, pDiveState->diveSettings.diveMode);
+    t3_basics_refresh_customview(depth, t3_selection_customview, &t3screen, &t3c1, &t3c2, stateUsedWrite->diveSettings.diveMode);
 }
 
 

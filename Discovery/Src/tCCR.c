@@ -59,7 +59,7 @@ uint16_t count = 0;
 /* Private variables with external access via get_xxx() function -------------*/
 
 /* Private function prototypes -----------------------------------------------*/
-void tCCR_fallbackToFixedSetpoint(void);
+static void tCCR_fallbackToFixedSetpoint(void);
 
 #ifndef USART_IR_HUD
 
@@ -343,23 +343,17 @@ void tCCR_control(void)
 #endif
 /* Private functions ---------------------------------------------------------*/
 
-void tCCR_fallbackToFixedSetpoint(void)
+static void tCCR_fallbackToFixedSetpoint(void)
 {
     if((stateUsed->mode == MODE_DIVE) && (stateUsed->diveSettings.diveMode == DIVEMODE_CCR) && (stateUsed->diveSettings.CCR_Mode == CCRMODE_Sensors) && (stateUsed->diveSettings.fallbackOption))
     {
         uint8_t setpointCbar, actualGasID;
-        SDiveState *pState;
 
-        if(stateUsed == stateRealGetPointer())
-            pState = stateRealGetPointerWrite();
-        else
-            pState = stateSimGetPointerWrite();
+        setpointCbar = stateUsed->diveSettings.setpoint[1].setpoint_cbar;
+        stateUsedWrite->diveSettings.CCR_Mode = CCRMODE_FixedSetpoint;
 
-        setpointCbar = pState->diveSettings.setpoint[1].setpoint_cbar;
-        pState->diveSettings.CCR_Mode = CCRMODE_FixedSetpoint;
-
-        actualGasID = pState->lifeData.actualGas.GasIdInSettings;
-        setActualGas_DM(&pState->lifeData,actualGasID,setpointCbar);
+        actualGasID = stateUsed->lifeData.actualGas.GasIdInSettings;
+        setActualGas_DM(&stateUsedWrite->lifeData,actualGasID,setpointCbar);
 
         set_warning_fallback();
     }
