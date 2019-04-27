@@ -511,13 +511,10 @@ int main(void)
 // Enable this to make the simulator write a logbook entry
 // #define SIM_WRITES_LOGBOOK 1
 
-        if(stateUsed == stateSimGetPointer())
-        {
 #ifdef SIM_WRITES_LOGBOOK
+        if(stateUsed == stateSimGetPointer())
             logbook_InitAndWrite(stateUsed);
 #endif
-        }
-
         	if(stateUsed == stateRealGetPointer())	/* Handle log entries while in dive mode*/
                 logbook_InitAndWrite(stateUsed);
         }
