@@ -394,8 +394,8 @@ uint8_t uw;
 extern SDiveState stateSim;
 extern SDiveState stateDeco;
 extern uint8_t decoLock;
-extern const SDiveState * stateUsed;
-
+extern const SDiveState *stateUsed;
+extern SDiveState *stateUsedWrite;
 
 enum DECO_LOCK{
 		DECO_CALC_running,
