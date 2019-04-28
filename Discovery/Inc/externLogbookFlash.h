@@ -145,7 +145,6 @@ void ext_flash_enable_protection(void);
 void ext_flash_read_block_start(void);
 
 void ext_flash_repair_dive_log(void);
-void ext_flash_find_start(void);
 
 uint8_t ext_flash_erase_firmware_if_not_empty(void);
 uint8_t ext_flash_erase_firmware2_if_not_empty(void);

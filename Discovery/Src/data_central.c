@@ -100,17 +100,17 @@ SVpmRepetitiveData stateVPM =
 	.is_data_from_RTE_CPU = 0,
 };
 
-const SDiveState * stateUsed = &stateReal;
-
+const SDiveState *stateUsed = &stateReal;
+SDiveState *stateUsedWrite = &stateReal;
 
 void set_stateUsedToReal(void)
 {
-	stateUsed = &stateReal;
+	stateUsed = stateUsedWrite = &stateReal;
 }
 
 void set_stateUsedToSim(void)
 {
-	stateUsed = &stateSim;
+	stateUsed = stateUsedWrite = &stateSim;
 }
 
 _Bool is_stateUsedSetToSim(void)
@@ -458,38 +458,24 @@ void copyVpmRepetetiveDataToSim(void)
 
 void updateSetpointStateUsed(void)
 {
-	SLifeData *pLifeDataWrite;
-	
-	if(is_stateUsedSetToSim())
-		pLifeDataWrite = &stateSimGetPointerWrite()->lifeData;
-	else
-		pLifeDataWrite = &stateRealGetPointerWrite()->lifeData;
-
 	if(stateUsed->diveSettings.diveMode != DIVEMODE_CCR)
 	{
-		pLifeDataWrite->actualGas.setPoint_cbar = 0;
-		pLifeDataWrite->ppO2 = decom_calc_ppO2(stateUsed->lifeData.pressure_ambient_bar, &stateUsed->lifeData.actualGas);
+		stateUsedWrite->lifeData.actualGas.setPoint_cbar = 0;
+		stateUsedWrite->lifeData.ppO2 = decom_calc_ppO2(stateUsed->lifeData.pressure_ambient_bar, &stateUsed->lifeData.actualGas);
 	}
 	else
 	{
 		if(stateUsed->diveSettings.CCR_Mode == CCRMODE_Sensors)
 		{
-			pLifeDataWrite->actualGas.setPoint_cbar = get_ppO2SensorWeightedResult_cbar();
+			stateUsedWrite->lifeData.actualGas.setPoint_cbar = get_ppO2SensorWeightedResult_cbar();
 		}
 
 		if((stateUsed->lifeData.pressure_ambient_bar * 100) < stateUsed->lifeData.actualGas.setPoint_cbar)
-			pLifeDataWrite->ppO2 = stateUsed->lifeData.pressure_ambient_bar;
+			stateUsedWrite->lifeData.ppO2 = stateUsed->lifeData.pressure_ambient_bar;
 		else
-			pLifeDataWrite->ppO2 = ((float)stateUsed->lifeData.actualGas.setPoint_cbar) / 100;
+			stateUsedWrite->lifeData.ppO2 = ((float)stateUsed->lifeData.actualGas.setPoint_cbar) / 100;
 	}
 }
-
-/*
-void fallbackToFixedSetpoints(SLifeData *lifeData)
-{
-	
-}
-*/
 
 void setActualGasFirst(SLifeData *lifeData)
 {
@@ -555,37 +541,30 @@ void setActualGas(SLifeData *lifeData, uint8_t gasId, uint8_t setpoint_cbar)
 
 void setActualGas_DM(SLifeData *lifeData, uint8_t gasId, uint8_t setpoint_cbar)
 {
-  //Real dive => Set events for logbook
-	if(stateUsed == stateRealGetPointer())
-  {
-    SDiveState * pStateUsed;
-		pStateUsed = stateRealGetPointerWrite();
-
     if(stateUsed->diveSettings.ccrOption && gasId < 6)
     {
       if(lifeData->actualGas.GasIdInSettings != gasId)
       {
         SSettings* pSettings = settingsGetPointer();
-        pStateUsed->events.bailout = 1;
-        pStateUsed->events.info_bailoutO2 = pSettings->gas[gasId].oxygen_percentage;
-        pStateUsed->events.info_bailoutHe = pSettings->gas[gasId].helium_percentage;
+        stateUsedWrite->events.bailout = 1;
+        stateUsedWrite->events.info_bailoutO2 = pSettings->gas[gasId].oxygen_percentage;
+        stateUsedWrite->events.info_bailoutHe = pSettings->gas[gasId].helium_percentage;
       }
     }
     else
     {
       if(lifeData->actualGas.GasIdInSettings != gasId)
       {
-          pStateUsed->events.gasChange = 1;
-          pStateUsed->events.info_GasChange = gasId;
+    	  stateUsedWrite->events.gasChange = 1;
+    	  stateUsedWrite->events.info_GasChange = gasId;
       }
       if(	lifeData->actualGas.setPoint_cbar != setpoint_cbar)
       {
 				// setPoint_cbar = 255 -> change to sensor mode
-        pStateUsed->events.setpointChange = 1;
-        pStateUsed->events.info_SetpointChange = setpoint_cbar;
+    	  stateUsedWrite->events.setpointChange = 1;
+    	  stateUsedWrite->events.info_SetpointChange = setpoint_cbar;
       }
     }
-  }
 	setActualGas(lifeData, gasId, setpoint_cbar);
 }
 
@@ -597,23 +576,17 @@ void setActualGas_ExtraGas(SLifeData *lifeData, uint8_t oxygen, uint8_t helium, 
 	nitrogen -= oxygen;
 	nitrogen -= helium;
 
-  //Real dive => Set events for logbook
-	if(stateUsed == stateRealGetPointer())
-  {
-    SDiveState * pStateUsed;
-		pStateUsed = stateRealGetPointerWrite();
     if((lifeData->actualGas.nitrogen_percentage != nitrogen) || (lifeData->actualGas.helium_percentage != helium))
     {
-      pStateUsed->events.manuelGasSet = 1;
-      pStateUsed->events.info_manuelGasSetHe = helium;
-      pStateUsed->events.info_manuelGasSetO2 = oxygen;
+    	stateUsedWrite->events.manuelGasSet = 1;
+    	stateUsedWrite->events.info_manuelGasSetHe = helium;
+    	stateUsedWrite->events.info_manuelGasSetO2 = oxygen;
     }
     if(	lifeData->actualGas.setPoint_cbar != setpoint_cbar)
     {
-      pStateUsed->events.setpointChange = 1;
-      pStateUsed->events.info_SetpointChange = setpoint_cbar;
+    	stateUsedWrite->events.setpointChange = 1;
+    	stateUsedWrite->events.info_SetpointChange = setpoint_cbar;
     }
-  }
   lifeData->actualGas.GasIdInSettings = 0;
   lifeData->actualGas.nitrogen_percentage = nitrogen;
   lifeData->actualGas.helium_percentage = helium;
@@ -775,18 +748,9 @@ _Bool deco_zone_reached(void)
 }
 
 
-void resetEvents(void)
+void resetEvents(const SDiveState *pStateUsed)
 {
-    SDiveState * pStateUsed;
-	if(stateUsed == stateRealGetPointer())
-	{
-		pStateUsed = stateRealGetPointerWrite();
-	}
-	else
-	{
-		pStateUsed = stateSimGetPointerWrite();
-	}
-	memset(&pStateUsed->events,0, sizeof(SEvents));
+	memset((void *)&pStateUsed->events, 0, sizeof(SEvents));
 }
 
 

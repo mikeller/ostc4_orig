@@ -508,8 +508,15 @@ int main(void)
 	        DoDisplayRefresh = 0;
         	RefreshDisplay();
 
+// Enable this to make the simulator write a logbook entry
+// #define SIM_WRITES_LOGBOOK 1
+
+#ifdef SIM_WRITES_LOGBOOK
+        if(stateUsed == stateSimGetPointer())
+            logbook_InitAndWrite(stateUsed);
+#endif
         	if(stateUsed == stateRealGetPointer())	/* Handle log entries while in dive mode*/
-                logbook_InitAndWrite();
+                logbook_InitAndWrite(stateUsed);
         }
 
 #ifdef DEBUG_RUNTIME

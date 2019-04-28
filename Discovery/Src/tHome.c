@@ -285,10 +285,7 @@ void tHomeDiveMenuControl(uint8_t sendAction)
             break;
 
         case StDBEAR: // t5_gauge
-            if(is_stateUsedSetToSim())
-                stateSimGetPointerWrite()->diveSettings.compassHeading = (uint16_t)stateUsed->lifeData.compass_heading;
-            else
-                stateRealGetPointerWrite()->diveSettings.compassHeading = (uint16_t)stateUsed->lifeData.compass_heading;
+        	stateUsedWrite->diveSettings.compassHeading = (uint16_t)stateUsed->lifeData.compass_heading;
             set_globalState(StD);
             break;
 
