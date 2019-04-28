@@ -6,11 +6,12 @@
 
 uint8_t init_pressure(void);
 uint8_t pressure_update(void);
+void pressure_update_alternating(void);
 
 uint8_t is_init_pressure_done(void);
 
-void  pressure_sensor_get_pressure_raw(void);
-void  pressure_sensor_get_temperature_raw(void);
+HAL_StatusTypeDef  pressure_sensor_get_pressure_raw(void);
+HAL_StatusTypeDef  pressure_sensor_get_temperature_raw(void);
 void pressure_calculation(void);
 
 float get_temperature(void);

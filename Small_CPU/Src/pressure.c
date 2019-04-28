@@ -306,6 +306,28 @@ uint8_t pressure_update(void)
 	return (uint8_t)statusReturn;
 }
 
+/* Switch between pressure and temperature measurement with every successful read operation */
+void pressure_update_alternating(void)
+{
+	static uint8_t getTemperature= 0;
+
+	if(getTemperature)
+	{
+		if(pressure_sensor_get_temperature_raw() == HAL_OK)
+		{
+			getTemperature = 0;
+		}
+	}
+	else
+	{
+		if(pressure_sensor_get_pressure_raw() == HAL_OK)
+		{
+			getTemperature = 1;
+		}
+	}
+	pressure_calculation();
+	return;
+}
 
 static uint32_t pressure_sensor_get_one_value(uint8_t cmd, HAL_StatusTypeDef *statusReturn)
 {
@@ -333,12 +355,23 @@ static uint32_t pressure_sensor_get_one_value(uint8_t cmd, HAL_StatusTypeDef *st
 
 static HAL_StatusTypeDef pressure_sensor_get_data(void)
 {
+	uint32_t requestedValue = 0;
 	HAL_StatusTypeDef statusReturn1 = HAL_TIMEOUT;
 	HAL_StatusTypeDef statusReturn2 = HAL_TIMEOUT;
 	
-	D2 = pressure_sensor_get_one_value(CMD_ADC_D2 + CMD_ADC_4096, &statusReturn1);
-	D1 = pressure_sensor_get_one_value(CMD_ADC_D1 + CMD_ADC_4096, &statusReturn2);
 
+
+	requestedValue = pressure_sensor_get_one_value(CMD_ADC_D2 + CMD_ADC_1024, &statusReturn2);
+	if (statusReturn2 == HAL_OK)
+	{
+		D2 = requestedValue;
+	}
+
+	requestedValue = pressure_sensor_get_one_value(CMD_ADC_D1 + CMD_ADC_1024, &statusReturn1);
+	if (statusReturn1 == HAL_OK)
+	{
+		D1 = requestedValue;
+	}
 	if(statusReturn2 > statusReturn1) // if anything is not HAL_OK (0x00) or worse
 		return statusReturn2;
 	else
@@ -346,15 +379,32 @@ static HAL_StatusTypeDef pressure_sensor_get_data(void)
 }
 
 
-void  pressure_sensor_get_pressure_raw(void)
+HAL_StatusTypeDef  pressure_sensor_get_pressure_raw(void)
 {
-	D1 = pressure_sensor_get_one_value(CMD_ADC_D1 + CMD_ADC_4096, 0);
+	uint32_t requestedValue = 0;
+	HAL_StatusTypeDef statusReturn = HAL_TIMEOUT;
+
+	requestedValue = pressure_sensor_get_one_value(CMD_ADC_D1 + CMD_ADC_1024, &statusReturn);
+	if (statusReturn == HAL_OK)
+	{
+		D1 = requestedValue;
+	}
+
+	return statusReturn;
 }
 
 
-void  pressure_sensor_get_temperature_raw(void)
+HAL_StatusTypeDef  pressure_sensor_get_temperature_raw(void)
 {
-	D2 = pressure_sensor_get_one_value(CMD_ADC_D2 + CMD_ADC_4096, 0);
+	uint32_t requestedValue = 0;
+	HAL_StatusTypeDef statusReturn = HAL_TIMEOUT;
+
+	requestedValue = pressure_sensor_get_one_value(CMD_ADC_D2 + CMD_ADC_1024, &statusReturn);
+	if (statusReturn == HAL_OK)
+	{
+		D2 = requestedValue;
+	}
+	return statusReturn;
 }
 
 
