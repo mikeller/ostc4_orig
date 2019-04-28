@@ -779,7 +779,8 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 			DataEX_copy_to_VpmRepetitiveData();
 			data_old__lost_connection_to_slave_counter_temp = 0;
 			data_old__lost_connection_to_slave_counter_retry = 0;
-			pStateReal->data_old__lost_connection_to_slave = 0;
+			/* Do not yet reset state. Wait till common data has been received in next cycle. Otherwise invalid data may be forwarded for processing */
+			/* pStateReal->data_old__lost_connection_to_slave = 0; */
 			dataOut.header.checkCode[SPI_HEADER_INDEX_RX_STATE] = SPI_RX_STATE_OK;
 		}
 		else
@@ -966,6 +967,17 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		pStateReal->lifeData.ambient_light_level = dataIn.data[dataIn.boolAmbientLightData].ambient_light_level;
 		pStateReal->lifeData.battery_charge = dataIn.data[dataIn.boolBatteryData].battery_charge;
 		pStateReal->lifeData.battery_voltage = dataIn.data[dataIn.boolBatteryData].battery_voltage;
+
+		/* PIC data
+	 	 */
+		for(int i=0;i<4;i++)
+		{
+			pStateReal->lifeData.buttonPICdata[i] = dataIn.data[dataIn.boolPICdata].button_setting[i];
+		}
+
+		/* sensorErrors
+		 */
+		pStateReal->sensorErrorsRTE = dataIn.sensorErrors;
 	}
 
 	/* apnea specials
@@ -1040,69 +1052,6 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		pStateReal->lifeData.boolResetStopwatch = 0;
 	}
 	pStateReal->lifeData.stopwatch_seconds = pStateReal->lifeData.dive_time_seconds - pStateReal->lifeData.internal.stopwatch_start_at_this_dive_time_seconds;
-
-	/* wireless data
-	 */
-	uint16_t wirelessData[4][3];
-	for(int i=0;i<4;i++)
-	{
-		pStateReal->lifeData.wireless_data[i].ageInMilliSeconds = dataIn.data[dataIn.boolWirelessData].wireless_data[i].ageInMilliSeconds;	
-		pStateReal->lifeData.wireless_data[i].status = dataIn.data[dataIn.boolWirelessData].wireless_data[i].status;	
-		pStateReal->lifeData.wireless_data[i].numberOfBytes = dataIn.data[dataIn.boolWirelessData].wireless_data[i].numberOfBytes;	
-		for(int j=0;j<12;j++)
-			pStateReal->lifeData.wireless_data[i].data[j] = dataIn.data[dataIn.boolWirelessData].wireless_data[i].data[j];
-	}
-
-	// neu 160412
-	for(int i=0;i<4;i++)
-	{
-		if(pStateReal->lifeData.wireless_data[i].numberOfBytes == 10)
-		{
-			wirelessData[i][0] = (pStateReal->lifeData.wireless_data[i].data[0] >> 4) & 0x7F;
-			wirelessData[i][1] = 0;
-			wirelessData[i][2] = pStateReal->lifeData.wireless_data[i].ageInMilliSeconds;
-		}
-		else
-		{
-			wirelessData[i][0] = 0;
-			wirelessData[i][1] = 0;
-			wirelessData[i][2] = 0;
-		}
-	}
-
-	// aussortieren doppelte ids, j�ngster datensatz ist relevant
-	for(int i=0;i<3;i++)
-	{
-		if(wirelessData[i][0])
-		{
-			for(int j=i+1; j<4; j++)
-			{
-				if(wirelessData[i][0] == wirelessData[j][0])
-				{
-					if(wirelessData[i][2] > wirelessData[j][2])
-					{
-						wirelessData[i][0] = wirelessData[j][0];
-						wirelessData[i][1] = wirelessData[j][1];
-						wirelessData[i][2] = wirelessData[j][2];
-					}
-					wirelessData[j][0] = 0;
-					wirelessData[j][1] = 0;
-					wirelessData[j][2] = 0;
-				}
-			}
-		}
-	}
-
-	/* PIC data
- 	 */
-	for(int i=0;i<4;i++)
-	{
-		pStateReal->lifeData.buttonPICdata[i] = dataIn.data[dataIn.boolPICdata].button_setting[i];
-	}
-
-	/* sensorErrors
-	 */
-	pStateReal->sensorErrorsRTE = dataIn.sensorErrors;
 }
 
 
