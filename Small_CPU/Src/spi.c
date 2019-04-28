@@ -358,9 +358,10 @@ uint8_t SPI_Evaluate_RX_Data()
 				HAL_SPI_Abort_IT(&hspi1);
 				Scheduler_Request_sync_with_SPI(SPI_SYNC_METHOD_HARD);
 			}
-			 else
-			 {
-			 }
+			else
+			{
+			}
+			SPI_Start_single_TxRx_with_Master();
 		}
 		else
 		{
@@ -386,14 +387,13 @@ uint8_t SPI_Evaluate_RX_Data()
 					global.dataSendToMaster.header.checkCode[SPI_HEADER_INDEX_RX_STATE] = SPI_RX_STATE_OFFLINE;
 					resettimeout = 0;
 				}
+				HAL_SPI_TransmitReceive_DMA(&hspi1,(uint8_t*) &(global.dataSendToMaster),(uint8_t*) &(global.dataSendToSlave), EXCHANGE_BUFFERSIZE);
 		}
 
 		global.dataSendToMaster.power_on_reset = 0;
 		global.deviceDataSendToMaster.power_on_reset = 0;
 
 		scheduleSpecial_Evaluate_DataSendToSlave();
-
-		SPI_Start_single_TxRx_with_Master();
 
 		if(resettimeout)
 		{

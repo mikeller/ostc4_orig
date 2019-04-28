@@ -421,7 +421,7 @@ void schedule_check_resync(void)
 		/* Try to start communication again. If exchange is stuck during execution for some reason the TX will be aborted by the
 		 * function error handler
 		 */
-		SPI_Start_single_TxRx_with_Master();
+		HAL_SPI_TransmitReceive_DMA(&hspi1,(uint8_t*) &(global.dataSendToMaster),(uint8_t*) &(global.dataSendToSlave), EXCHANGE_BUFFERSIZE);
 		Scheduler.communicationTimeout = SPI_COM_TIMEOUT_COMMON;	/* Reduce error detection time */
 		Scheduler_Request_sync_with_SPI(SPI_SYNC_METHOD_HARD);
 	}
@@ -459,21 +459,23 @@ void scheduleDiveMode(void)
 	Scheduler.tickstart = HAL_GetTick();
 	while(global.mode == MODE_DIVE)
 	{
-		schedule_check_resync();
 		lasttick = HAL_GetTick();
 		ticksdiff = time_elapsed_ms(Scheduler.tickstart,lasttick);
 
 		if(ticksdiff >= Scheduler.counterSPIdata100msec * 100 + 10)
 		{
-			SPI_Evaluate_RX_Data();
-			Scheduler.counterSPIdata100msec++;
+			if(SPI_Evaluate_RX_Data()!=0) /* did we receive something ? */
+			{
+				Scheduler.counterSPIdata100msec++;
+			}
+			schedule_check_resync();
 		}
 
 		//Evaluate pressure at 20 ms, 120 ms, 220 ms,....
 		if(ticksdiff >= Scheduler.counterPressure100msec * 100 + 20)
 		{
 				global.check_sync_not_running++;
-				pressure_update();
+				pressure_update_alternating();
 				scheduleUpdateDeviceData();
 #ifdef DEMOMODE
 				if(global.demo_mode)
@@ -663,15 +665,17 @@ void scheduleTestMode(void)
 	
 	while(global.mode == MODE_TEST)
 	{
-		schedule_check_resync();
 		lasttick = HAL_GetTick();
 		ticksdiff = time_elapsed_ms(Scheduler.tickstart,lasttick);
 
 		//Evaluate received data at 10 ms, 110 ms, 210 ms,...
 		if(ticksdiff >= Scheduler.counterSPIdata100msec * 100 + 10)
 		{
-			SPI_Evaluate_RX_Data();
-			Scheduler.counterSPIdata100msec++;
+			if(SPI_Evaluate_RX_Data()!=0) /* did we receive something ? */
+			{
+				Scheduler.counterSPIdata100msec++;
+			}
+			schedule_check_resync();
 		}
 		
 		//Evaluate pressure at 20 ms, 120 ms, 220 ms,...
@@ -679,7 +683,7 @@ void scheduleTestMode(void)
 		{
 				global.check_sync_not_running++;
 
-				pressure_update();
+				pressure_update_alternating();
 				scheduleUpdateDeviceData();
 				global.lifeData.ascent_rate_meter_per_min = 0;
 				copyPressureData();
@@ -737,7 +741,7 @@ void scheduleSurfaceMode(void)
 
 	while(global.mode == MODE_SURFACE)
 	{
-		schedule_check_resync();
+
 		lasttick = HAL_GetTick();
 		ticksdiff = time_elapsed_ms(Scheduler.tickstart,lasttick);
 
@@ -754,13 +758,14 @@ void scheduleSurfaceMode(void)
 			{			
 				Scheduler.counterSPIdata100msec++;
 			}
+			schedule_check_resync();
 		}
 
 		/* Evaluate pressure at 20 ms, 120 ms, 220 ms,... duration ~22ms] */
 		if(ticksdiff >= Scheduler.counterPressure100msec * 100 + 20)
 		{
 				global.check_sync_not_running++;
-				pressure_update();
+				pressure_update_alternating();
 				scheduleUpdateDeviceData();
 				global.lifeData.ascent_rate_meter_per_min = 0;
 				copyPressureData();
