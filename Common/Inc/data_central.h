@@ -394,8 +394,8 @@ uint8_t uw;
 extern SDiveState stateSim;
 extern SDiveState stateDeco;
 extern uint8_t decoLock;
-extern const SDiveState * stateUsed;
-
+extern const SDiveState *stateUsed;
+extern SDiveState *stateUsedWrite;
 
 enum DECO_LOCK{
 		DECO_CALC_running,
@@ -454,7 +454,7 @@ uint8_t calc_MinOD(uint8_t gasId);
 int current_second(void);
 _Bool vpm_crush(SDiveState* pDiveState);
 _Bool deco_zone_reached(void);
-void resetEvents(void);
+void resetEvents(const SDiveState *pStateUsed);
 
 uint32_t crc32c_checksum(uint8_t* message, uint16_t length, uint8_t* message2, uint16_t length2);
 uint32_t	CRC_CalcBlockCRC(uint32_t *buffer, uint32_t words);

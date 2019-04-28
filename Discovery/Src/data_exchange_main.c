@@ -436,7 +436,7 @@ void DataEX_copy_to_deco(void)
 	    vpm_init(&pStateUsed->vpm,  pStateUsed->diveSettings.vpm_conservatism, 0, 0);
 	    buehlmann_init();
 	    timer_init();
-	    resetEvents();
+	    resetEvents(pStateUsed);
       pStateUsed->diveSettings.internal__pressure_first_stop_ambient_bar_as_upper_limit_for_gf_low_otherwise_zero = 0;
 			/*
 			 * ToDo by Peter

@@ -121,56 +121,7 @@ void openEdit_CompassHeading(void)
 
 uint8_t OnAction_CompassHeading	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
-    if(is_stateUsedSetToSim())
-        stateSimGetPointerWrite()->diveSettings.compassHeading = (uint16_t)stateUsed->lifeData.compass_heading;
-    else
-        stateRealGetPointerWrite()->diveSettings.compassHeading = (uint16_t)stateUsed->lifeData.compass_heading;
+	stateUsedWrite->diveSettings.compassHeading = (uint16_t)stateUsed->lifeData.compass_heading;
     exitMenuEdit_to_Home_with_Menu_Update();
     return EXIT_TO_HOME;
 }
-
-
-/*
-    uint8_t digitContentNew;
-    uint32_t newHeading;
-
-    if(action == ACTION_BUTTON_ENTER)
-    {
-        return digitContent;
-    }
-    if(action == ACTION_BUTTON_ENTER_FINAL)
-    {
-        evaluateNewString(editId, &newHeading, 0, 0, 0);
-        if(newHeading > 359)
-            newHeading = 0;
-
-        if(is_stateUsedSetToSim())
-            stateSimGetPointerWrite()->diveSettings.compassHeading = newHeading;
-        else
-            stateRealGetPointerWrite()->diveSettings.compassHeading = newHeading;
-        exitMenuEdit_to_Home_with_Menu_Update();
-        return EXIT_TO_HOME;
-    }
-    if(action == ACTION_BUTTON_NEXT)
-    {
-        digitContentNew = digitContent + 1;
-        if((digitNumber == 0) && (digitContentNew > '3'))
-            digitContentNew = '0';
-        else
-        if(digitContentNew > '9')
-            digitContentNew = '0';
-        return digitContentNew;
-    }
-    if(action == ACTION_BUTTON_BACK)
-    {
-        digitContentNew = digitContent - 1;
-        if((digitNumber == 0) && (digitContentNew < '0'))
-            digitContentNew = '3';
-        else
-        if(digitContentNew < '0')
-            digitContentNew = '9';
-        return digitContentNew;
-    }
-
-    return EXIT_TO_MENU;
-*/

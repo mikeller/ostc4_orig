@@ -115,53 +115,54 @@ uint8_t uw;
 /* Exported variables --------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-uint32_t	actualAddress = 0;
-uint32_t	entryPoint = 0;
+static uint32_t	actualAddress = 0;
+static uint32_t	entryPoint = 0;
 
-uint32_t	actualPointerHeader = 0;
-uint32_t	actualPointerSample = 0;
-uint32_t	LengthLeftSampleRead = 0;
-uint32_t	actualPointerDevicedata = 0;
-uint32_t	actualPointerVPM = 0;
-uint32_t	actualPointerSettings = 0;
-uint32_t	actualPointerFirmware = 0;
-uint32_t	actualPointerFirmware2 = 0;
+static uint32_t	actualPointerHeader = 0;
+static uint32_t	actualPointerSample = 0;
+static uint32_t	LengthLeftSampleRead = 0;
+static uint32_t	actualPointerDevicedata = 0;
+static uint32_t	actualPointerVPM = 0;
+static uint32_t	actualPointerSettings = 0;
+static uint32_t	actualPointerFirmware = 0;
+static uint32_t	actualPointerFirmware2 = 0;
 
 /* Private function prototypes -----------------------------------------------*/
-void chip_unselect(void);
-void chip_select(void);
-void error_led_on(void);
-void error_led_off(void);
+static void chip_unselect(void);
+static void chip_select(void);
+static void error_led_on(void);
+static void error_led_off(void);
 
-void write_spi(uint8_t data, uint8_t unselect_CS_afterwards);
-uint8_t read_spi(uint8_t unselect_CS_afterwards);
-void write_address(uint8_t unselect_CS_afterwards);
+static void write_spi(uint8_t data, uint8_t unselect_CS_afterwards);
+static uint8_t read_spi(uint8_t unselect_CS_afterwards);
+static void write_address(uint8_t unselect_CS_afterwards);
 static void Error_Handler_extflash(void);
 static void wait_chip_not_busy(void);
-void ext_flash_incf_address(uint8_t type);
+static void ext_flash_incf_address(uint8_t type);
 //void ext_flash_incf_address_ring(void);
-void ext_flash_decf_address_ring(uint8_t type);
+static void ext_flash_decf_address_ring(uint8_t type);
 
-void ext_flash_erase4kB(void);
-void ext_flash_erase32kB(void);
-void ext_flash_erase64kB(void);
-uint8_t ext_flash_erase_if_on_page_start(void);
+static void ext_flash_erase4kB(void);
+static void ext_flash_erase32kB(void);
+static void ext_flash_erase64kB(void);
+static uint8_t ext_flash_erase_if_on_page_start(void);
 
-void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, uint8_t do_not_erase);
+static void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, uint8_t do_not_erase);
 
-void ext_flash_read_block(uint8_t *getByte, uint8_t type);
-void ext_flash_read_block_multi(void *getByte, uint32_t size, uint8_t type);
-void ext_flash_read_block_stop(void);
+static void ext_flash_read_block(uint8_t *getByte, uint8_t type);
+static void ext_flash_read_block_multi(void *getByte, uint32_t size, uint8_t type);
+static void ext_flash_read_block_stop(void);
 
 static void ef_hw_rough_delay_us(uint32_t delayUs);
 static void ef_erase_64K(uint32_t blocks);
 
-void ext_flash_overwrite_sample_without_erase(uint8_t *pSample, uint16_t length);
+static void ext_flash_overwrite_sample_without_erase(uint8_t *pSample, uint16_t length);
 
-void ext_flash_disable_protection(void);
+static void ext_flash_disable_protection(void);
 
-_Bool ext_flash_test_remaining_space_of_page_empty(uint32_t pointer, uint16_t length);
-void ext_flash_set_to_begin_of_next_page(uint32_t *pointer, uint8_t type);
+static _Bool ext_flash_test_remaining_space_of_page_empty(uint32_t pointer, uint16_t length);
+static void ext_flash_set_to_begin_of_next_page(uint32_t *pointer, uint8_t type);
+static void ext_flash_find_start(void);
 
 
 /* Exported functions --------------------------------------------------------*/
@@ -731,7 +732,7 @@ void ext_flash_write_sample(uint8_t *pSample, uint16_t length)
 	settings->logFlashNextSampleStartAddress = actualPointerSample;
 }
 
-void ext_flash_overwrite_sample_without_erase(uint8_t *pSample, uint16_t length)
+static void ext_flash_overwrite_sample_without_erase(uint8_t *pSample, uint16_t length)
 {
 	ef_write_block(pSample,length, EF_SAMPLE, 1);
 }
@@ -1009,7 +1010,7 @@ uint8_t ext_flash_point_to_64k_block_in_headerSpace(uint8_t logId)
 ///	@date			22-June-2016
 
 //  ===============================================================================
-uint16_t ext_flash_repair_dive_numbers_starting_count_helper(uint8_t *data, uint8_t *change64k, uint16_t startNumber, uint8_t lastLogId)
+static uint16_t ext_flash_repair_dive_numbers_starting_count_helper(uint8_t *data, uint8_t *change64k, uint16_t startNumber, uint8_t lastLogId)
 {
 	const uint32_t headerStep = 0x800;
 	uint8_t	actualLogId = 0;
@@ -1103,7 +1104,7 @@ uint16_t ext_flash_repair_SPECIAL_dive_numbers_starting_count_with(uint16_t star
 	return lastCount;
 }
 
-
+/*
 void OLD_ext_flash_repair_SPECIAL_dive_numbers_starting_count_with(uint16_t startCount)
 {
 	uint16_t counterStorage[256];
@@ -1146,7 +1147,7 @@ void OLD_ext_flash_repair_SPECIAL_dive_numbers_starting_count_with(uint16_t star
 	startAbsolute = settingsGetPointer()->lastDiveLogId;
 
 
-/*	
+
 	if(start%2)
 	{
 		if(counterStorage[start] != startCount)
@@ -1183,7 +1184,7 @@ void OLD_ext_flash_repair_SPECIAL_dive_numbers_starting_count_with(uint16_t star
 		}
 		start--;
 	}
-*/
+
 //	for(int count = start; count > -1; count -= 2)
 
 	while(count > 0)
@@ -1289,7 +1290,7 @@ void OLD_ext_flash_repair_SPECIAL_dive_numbers_starting_count_with(uint16_t star
 	releaseFrame(97,logCopyDataPtr);
 	settingsGetPointer()->totalDiveCounter = startCount;
 }
-
+*/
 
 //  ===============================================================================
 //	ext_flash_repair_dive_log
@@ -1336,7 +1337,7 @@ void ext_flash_repair_dive_log(void)
 }
 
 
-void ext_flash_find_start(void)
+static void ext_flash_find_start(void)
 {
 	uint8_t id;
 	uint8_t  header1, header2;
@@ -1422,7 +1423,7 @@ void ext_flash_find_start(void)
 
 #endif
 
-void ext_flash_disable_protection(void)
+static void ext_flash_disable_protection(void)
 {
 /*	
 	extFlashStatusBit8_Type status;
@@ -1475,13 +1476,13 @@ void ext_flash_enable_protection(void)
 }
 
 
-void ext_flash_erase_chip(void)
+/*void ext_flash_erase_chip(void)
 {
 	wait_chip_not_busy();
 	write_spi(0x06,RELEASE);
 	write_spi(0x60,RELEASE);
 	wait_chip_not_busy();
-}
+}*/
 
 void ext_flash_erase_firmware(void)
 {
@@ -1525,7 +1526,7 @@ void ext_flash_erase_logbook(void)
 }
 
 
-void ext_flash_erase4kB(void)
+static void ext_flash_erase4kB(void)
 {
 	wait_chip_not_busy();
 	write_spi(0x06,RELEASE);/* WREN */
@@ -1536,7 +1537,7 @@ void ext_flash_erase4kB(void)
 /* be carefull - might not work with entire family and other products
  * see page 14 of LOGBOOK_V3_S25FS-S_00-271247.pdf
  */
-void ext_flash_erase32kB(void)
+static void ext_flash_erase32kB(void)
 {
 	uint32_t actualAddress_backup;
 	
@@ -1550,7 +1551,7 @@ void ext_flash_erase32kB(void)
 }
 
 
-void ext_flash_erase64kB(void)
+static void ext_flash_erase64kB(void)
 {
 	wait_chip_not_busy();
 	write_spi(0x06,RELEASE);/* WREN */
@@ -1567,7 +1568,7 @@ void ext_flash_read_block_start(void)
 }
 
 /* 4KB, 32KB, 64 KB, not the upper 16 MB with 4 Byte address at the moment */
-uint8_t ext_flash_erase_if_on_page_start(void)
+static uint8_t ext_flash_erase_if_on_page_start(void)
 {
 	if(actualAddress < 0x00008000)
 	{
@@ -1601,14 +1602,14 @@ uint8_t ext_flash_erase_if_on_page_start(void)
 }
 
 
-void ext_flash_read_block(uint8_t *getByte, uint8_t type)
+static void ext_flash_read_block(uint8_t *getByte, uint8_t type)
 {
 	*getByte = read_spi(HOLDCS);/* read data */
 	ext_flash_incf_address(type);
 }
 
 
-void ext_flash_read_block_multi(void *getByte, uint32_t size, uint8_t type)
+static void ext_flash_read_block_multi(void *getByte, uint32_t size, uint8_t type)
 {
 	uint8_t  *data;
 	data = getByte;
@@ -1621,7 +1622,7 @@ void ext_flash_read_block_multi(void *getByte, uint32_t size, uint8_t type)
 }
 
 
-void ext_flash_read_block_stop(void)
+static void ext_flash_read_block_stop(void)
 {
 	chip_unselect();
 }
@@ -1629,7 +1630,7 @@ void ext_flash_read_block_stop(void)
 
 /* Private functions ---------------------------------------------------------*/
 
-void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, uint8_t do_not_erase)
+static void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, uint8_t do_not_erase)
 {
 	uint32_t remaining_page_size, remaining_length, remaining_space_to_ring_end;
 	
@@ -1745,7 +1746,7 @@ void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, uint8_t d
 }
 
 
-_Bool ext_flash_test_remaining_space_of_page_empty(uint32_t pointer, uint16_t length)
+static _Bool ext_flash_test_remaining_space_of_page_empty(uint32_t pointer, uint16_t length)
 {
 	if((pointer & 0xFFF) == 0)
 		return 1;
@@ -1777,7 +1778,7 @@ _Bool ext_flash_test_remaining_space_of_page_empty(uint32_t pointer, uint16_t le
 }
 
 
-void ext_flash_set_to_begin_of_next_page(uint32_t *pointer, uint8_t type)
+static void ext_flash_set_to_begin_of_next_page(uint32_t *pointer, uint8_t type)
 {
 	uint32_t ringStart, ringStop;
 
@@ -1830,28 +1831,28 @@ static void ef_erase_64K(uint32_t blocks)
 }
 
 
-void chip_unselect(void)
+static void chip_unselect(void)
 {
 		HAL_GPIO_WritePin(EXTFLASH_CSB_GPIO_PORT,EXTFLASH_CSB_PIN,GPIO_PIN_SET); // chip select
 }
 
-void chip_select(void)
+static void chip_select(void)
 {
 	HAL_GPIO_WritePin(EXTFLASH_CSB_GPIO_PORT,EXTFLASH_CSB_PIN,GPIO_PIN_RESET); // chip select
 }
 
-void error_led_on(void)
+static void error_led_on(void)
 {
 		HAL_GPIO_WritePin(OSCILLOSCOPE_GPIO_PORT,OSCILLOSCOPE_PIN,GPIO_PIN_SET);
 }
 
-void error_led_off(void)
+static void error_led_off(void)
 {
 		HAL_GPIO_WritePin(OSCILLOSCOPE_GPIO_PORT,OSCILLOSCOPE_PIN,GPIO_PIN_RESET);
 }
 
 
-uint8_t read_spi(uint8_t unselect_CS_afterwards)
+static uint8_t read_spi(uint8_t unselect_CS_afterwards)
 {
 	uint8_t byte;
 
@@ -1870,7 +1871,7 @@ uint8_t read_spi(uint8_t unselect_CS_afterwards)
 }
 
 
-void write_spi(uint8_t data, uint8_t unselect_CS_afterwards)
+static void write_spi(uint8_t data, uint8_t unselect_CS_afterwards)
 {
 	chip_select();
 
@@ -1885,7 +1886,7 @@ void write_spi(uint8_t data, uint8_t unselect_CS_afterwards)
 }
 
 
-void write_address(uint8_t unselect_CS_afterwards)
+static void write_address(uint8_t unselect_CS_afterwards)
 {
 	uint8_t hi, med ,lo;
 
@@ -1916,7 +1917,7 @@ static void wait_chip_not_busy(void)
 }
 
 
-void ext_flash_incf_address(uint8_t type)
+static void ext_flash_incf_address(uint8_t type)
 {
 	uint32_t ringStart, ringStop;
 	
@@ -1963,7 +1964,7 @@ void ext_flash_incf_address(uint8_t type)
 }
 
 
-void ext_flash_decf_address_ring(uint8_t type)
+static void ext_flash_decf_address_ring(uint8_t type)
 {
 	uint32_t ringStart, ringStop;
 	
