@@ -527,7 +527,7 @@ uint8_t test5_unapproved(void)
                 input.events.gasChange = 0;
                 input.events.info_GasChange = 0;
             }
-            logbook_writeSample(input);
+            logbook_writeSample(&input);
     }
         volatile SLogbookHeader* logbookHeader = logbook_getCurrentHeader();
 
@@ -590,7 +590,7 @@ uint8_t test6_unapproved(void)
                         input.events.gasChange = 0;
                         input.events.info_GasChange = 0;
                 }
-            logbook_writeSample(input);
+            logbook_writeSample(&input);
     }
     volatile SLogbookHeader* logbookHeader = logbook_getCurrentHeader();
 
@@ -652,7 +652,7 @@ uint8_t test7_unapproved(void)
                         input.events.gasChange = 0;
                         input.events.info_GasChange = 0;
                 }
-            logbook_writeSample(input);
+            logbook_writeSample(&input);
     }
     volatile SLogbookHeader* logbookHeader = logbook_getCurrentHeader();
 
@@ -708,7 +708,7 @@ void test_log_only(uint8_t max_depth_meter, uint16_t divetime_minutes)
                     input.lifeData.depth_meter = 0;
             }
 
-            logbook_writeSample(input);
+            logbook_writeSample(&input);
     }
     volatile SLogbookHeader* logbookHeader = logbook_getCurrentHeader();
     logbookHeader->total_diveTime_seconds = input.lifeData.dive_time_seconds;
