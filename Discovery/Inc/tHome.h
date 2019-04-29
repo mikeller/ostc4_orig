@@ -115,8 +115,6 @@ void tHome_init(void);
 void tHome_refresh(void);
 void tHome_sleepmode_fun(void);
 void set_globalState_tHome(void);
-void switch_to_SimData_tHome(void);
-void switch_to_RealData_tHome(void);
 void tHome_change_field_button_pressed(void);
 void tHome_change_customview_button_pressed(void);
 
