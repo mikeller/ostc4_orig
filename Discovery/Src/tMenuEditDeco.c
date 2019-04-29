@@ -34,27 +34,27 @@
 #include "unit.h"
 
 /* Private variables ---------------------------------------------------------*/
-uint8_t lineSelected = 0;
+static uint8_t lineSelected = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 
-void openEdit_DiveMode(void);
-void openEdit_CCRModeSensorOrFixedSP(void);
-void openEdit_ppO2max(void);
-void openEdit_SafetyStop(void);
-void openEdit_FutureTTS(void);
-void openEdit_Salinity(void);
+static void openEdit_DiveMode(void);
+static void openEdit_CCRModeSensorOrFixedSP(void);
+static void openEdit_ppO2max(void);
+static void openEdit_SafetyStop(void);
+static void openEdit_FutureTTS(void);
+static void openEdit_Salinity(void);
 
 /* Announced function prototypes -----------------------------------------------*/
 
-uint8_t OnAction_OC			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_CC			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_Apnea		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_Gauge		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_FutureTTS	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_ppO2Max	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_SafetyStop (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_Salinity	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+static uint8_t OnAction_OC			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+static uint8_t OnAction_CC			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+static uint8_t OnAction_Apnea		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+static uint8_t OnAction_Gauge		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+static uint8_t OnAction_FutureTTS	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+static uint8_t OnAction_ppO2Max	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+static uint8_t OnAction_SafetyStop (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+static uint8_t OnAction_Salinity	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 /* Exported functions --------------------------------------------------------*/
 
 void openEdit_Deco(uint8_t line)
@@ -96,7 +96,7 @@ void openEdit_Deco(uint8_t line)
 /* Private functions ---------------------------------------------------------*/
 
 
-void openEdit_DiveMode(void)
+static void openEdit_DiveMode(void)
 {
 #define APNEAANDGAUGE
 
@@ -153,7 +153,7 @@ void openEdit_DiveMode(void)
     write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
 }
 
-uint8_t OnAction_OC						(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+static uint8_t OnAction_OC						(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     SSettings *pSettings = settingsGetPointer();
     if(pSettings->dive_mode == DIVEMODE_OC)
@@ -168,7 +168,7 @@ uint8_t OnAction_OC						(uint32_t editId, uint8_t blockNumber, uint8_t digitNum
 }
 
 
-uint8_t OnAction_CC						(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+static uint8_t OnAction_CC						(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     SSettings *pSettings = settingsGetPointer();
     if(pSettings->dive_mode == DIVEMODE_CCR)
@@ -183,7 +183,7 @@ uint8_t OnAction_CC						(uint32_t editId, uint8_t blockNumber, uint8_t digitNum
 }
 
 
-uint8_t OnAction_Apnea				(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+static uint8_t OnAction_Apnea				(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     SSettings *pSettings = settingsGetPointer();
     if(pSettings->dive_mode == DIVEMODE_Apnea)
@@ -198,7 +198,7 @@ uint8_t OnAction_Apnea				(uint32_t editId, uint8_t blockNumber, uint8_t digitNu
 }
 
 
-uint8_t OnAction_Gauge				(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+static uint8_t OnAction_Gauge				(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     SSettings *pSettings = settingsGetPointer();
     if(pSettings->dive_mode == DIVEMODE_Gauge)
@@ -213,7 +213,7 @@ uint8_t OnAction_Gauge				(uint32_t editId, uint8_t blockNumber, uint8_t digitNu
 }
 
 
-void openEdit_CCRModeSensorOrFixedSP(void)
+static void openEdit_CCRModeSensorOrFixedSP(void)
 {
     SSettings *pSettings = settingsGetPointer();
 
@@ -226,7 +226,7 @@ void openEdit_CCRModeSensorOrFixedSP(void)
 }
 
 
-void openEdit_SafetyStop(void)
+static void openEdit_SafetyStop(void)
 {
     uint32_t safetystopDuration, safetystopDepth;
     char text[64];
@@ -284,7 +284,7 @@ void openEdit_SafetyStop(void)
 }
 
 
-uint8_t OnAction_SafetyStop		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+static uint8_t OnAction_SafetyStop		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     uint8_t digitContentNew;
     uint32_t newSafetystopDuration, newSafetystopDepth;
@@ -372,7 +372,7 @@ uint8_t OnAction_SafetyStop		(uint32_t editId, uint8_t blockNumber, uint8_t digi
 }
 
 
-void openEdit_Salinity(void)
+static void openEdit_Salinity(void)
 {
     char text[32];
     uint16_t y_line;
@@ -396,7 +396,7 @@ void openEdit_Salinity(void)
 }
 
 
-uint8_t OnAction_Salinity(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+static uint8_t OnAction_Salinity(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     SSettings *pSettings;
     uint8_t digitContentNew;
@@ -439,7 +439,7 @@ uint8_t OnAction_Salinity(uint32_t editId, uint8_t blockNumber, uint8_t digitNum
 }
 
 
-void openEdit_ppO2max(void)
+static void openEdit_ppO2max(void)
 {
     uint8_t maxL_std, maxL_deco;
     uint16_t y_line;
@@ -480,7 +480,7 @@ void openEdit_ppO2max(void)
 }
 
 
-uint8_t OnAction_ppO2Max(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+static uint8_t OnAction_ppO2Max(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     SSettings *pSettings;
     uint8_t digitContentNew;
@@ -525,7 +525,7 @@ uint8_t OnAction_ppO2Max(uint32_t editId, uint8_t blockNumber, uint8_t digitNumb
 }
 
 
-void openEdit_FutureTTS(void)
+static void openEdit_FutureTTS(void)
 {
     uint8_t futureTTS;
     uint16_t y_line;
@@ -555,7 +555,7 @@ void openEdit_FutureTTS(void)
 }
 
 
-uint8_t OnAction_FutureTTS(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+static uint8_t OnAction_FutureTTS(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     SSettings *pSettings;
     int8_t digitContentNew;
@@ -592,29 +592,5 @@ uint8_t OnAction_FutureTTS(uint32_t editId, uint8_t blockNumber, uint8_t digitNu
             digitContentNew = '0' + 15;
         return digitContentNew;
     }
-/*
-    if(action == ACTION_BUTTON_NEXT)
-    {
-        digitContentNew = digitContent + 1;
-        if((digitNumber == 0) && (digitContentNew > '1'))
-            digitContentNew = '0';
-        else
-        if(digitContentNew > '9')
-            digitContentNew = '0';
-        return digitContentNew;
-    }
-    if(action == ACTION_BUTTON_BACK)
-    {
-        digitContentNew = digitContent - 1;
-        if((digitNumber == 0) && (digitContentNew < '0'))
-            digitContentNew = '1';
-        else
-        if(digitContentNew < '0')
-            digitContentNew = '9';
-        return digitContentNew;
-    }
-*/
     return EXIT_TO_MENU;
 }
-
-

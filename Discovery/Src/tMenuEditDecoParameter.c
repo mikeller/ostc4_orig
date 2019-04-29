@@ -36,12 +36,12 @@
 #define MEDP_TAB (380)
 
 /* Private function prototypes -----------------------------------------------*/
-void openEdit_DecoAlgorithm(void);
-void openEdit_DecoGF(void);
-void openEdit_DecoAltGF(void);
-void openEdit_DecoVPM(void);
-void openEdit_DecoLastStop(void);
-void openEdit_DM_SwitchAlgorithm(uint8_t line);
+static void openEdit_DecoAlgorithm(void);
+static void openEdit_DecoGF(void);
+static void openEdit_DecoAltGF(void);
+static void openEdit_DecoVPM(void);
+static void openEdit_DecoLastStop(void);
+static void openEdit_DM_SwitchAlgorithm(uint8_t line);
 
 //void openEdit_DecoGasUsage(void);
 
@@ -50,11 +50,6 @@ uint8_t OnAction_GF				(uint32_t editId, uint8_t blockNumber, uint8_t digitNumbe
 uint8_t OnAction_VPM			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_AltGF			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_LastStop		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-
-uint8_t OnAction_GasAMV			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_DefaultAMV		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_GasReserve		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-
 uint8_t OnAction_DM_ActiveGF	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_DM_ActiveVPM	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_DM_AltActiveGF	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
@@ -95,42 +90,31 @@ void openEdit_DecoParameter(uint8_t line)
 
 /* Private functions ---------------------------------------------------------*/
 
-void openEdit_DM_SwitchAlgorithm(uint8_t line)
+static void openEdit_DM_SwitchAlgorithm(uint8_t line)
 {
-    SDiveState * pState;
-
-    if(actual_menu_content == MENU_DIVE_REAL)
-    {
-        pState = stateRealGetPointerWrite();
-    }
-    else
-    {
-        pState = stateSimGetPointerWrite();
-    }
-
     switch(line)
     {
     case 1:
     default:
-        pState->diveSettings.deco_type.ub.standard = VPM_MODE;
+        stateUsedWrite->diveSettings.deco_type.ub.standard = VPM_MODE;
         break;
     case 2:
 
-        pState->diveSettings.gf_high = settingsGetPointer()->GF_high;
-        pState->diveSettings.gf_low = settingsGetPointer()->GF_low;
-        pState->diveSettings.deco_type.ub.standard = GF_MODE;
+    	stateUsedWrite->diveSettings.gf_high = settingsGetPointer()->GF_high;
+    	stateUsedWrite->diveSettings.gf_low = settingsGetPointer()->GF_low;
+    	stateUsedWrite->diveSettings.deco_type.ub.standard = GF_MODE;
         break;
     case 3:
-        pState->diveSettings.gf_high = settingsGetPointer()->aGF_high;
-        pState->diveSettings.gf_low = settingsGetPointer()->aGF_low;
-        pState->diveSettings.deco_type.ub.standard = GF_MODE;
+    	stateUsedWrite->diveSettings.gf_high = settingsGetPointer()->aGF_high;
+    	stateUsedWrite->diveSettings.gf_low = settingsGetPointer()->aGF_low;
+    	stateUsedWrite->diveSettings.deco_type.ub.standard = GF_MODE;
         break;
     }
     exitMenuEdit_to_Home_with_Menu_Update();
 }
 
 
-void openEdit_DecoAlgorithm(void)
+static void openEdit_DecoAlgorithm(void)
 {
     SSettings *pSettings = settingsGetPointer();
 
@@ -143,7 +127,7 @@ void openEdit_DecoAlgorithm(void)
 }
 
 
-void openEdit_DecoVPM(void)
+static void openEdit_DecoVPM(void)
 {
     uint8_t vpm;
     char text[32];
@@ -167,7 +151,7 @@ void openEdit_DecoVPM(void)
 }
 
 
-void openEdit_DecoGF(void)
+static void openEdit_DecoGF(void)
 {
     uint8_t gfLow,gfHigh;
     char text[32];
@@ -192,7 +176,7 @@ void openEdit_DecoGF(void)
 }
 
 
-void openEdit_DecoAltGF(void)
+static void openEdit_DecoAltGF(void)
 {
     uint8_t aGfLow,aGfHigh;
     char text[32];
@@ -216,7 +200,7 @@ void openEdit_DecoAltGF(void)
 }
 
 
-void openEdit_DecoLastStop(void)
+static void openEdit_DecoLastStop(void)
 {
     uint8_t lastStop;
     char text[32];
@@ -246,62 +230,6 @@ void openEdit_DecoLastStop(void)
     setEvent(StMDECOP5_LASTSTOP, 	(uint32_t)OnAction_LastStop);
     startEdit();
 }
-
-/*
-void openEdit_DecoGF_DM(void)
-    {
-      const SDiveSettings * pDiveSettings;
-        uint8_t activeGF, activeVPM, aActiveGF;
-        SSettings *pSettings = settingsGetPointer();
-
-        if(actual_menu_content == MENU_DIVE_REAL)
-        {
-            const SDiveState * pState = stateRealGetPointer();
-            pDiveSettings = &pState->diveSettings;
-        }
-        else
-        {
-            const SDiveState * pState = stateSimGetPointer();
-            pDiveSettings = &pState->diveSettings;
-        }
-        if(pDiveSettings->deco_type.ub.standard == VPM_MODE)
-        {
-            aActiveGF = 0;
-            activeGF = 0;
-            activeVPM = 1;
-        }
-        else
-        if((pDiveSettings->gf_high == pSettings->GF_high) && (pDiveSettings->gf_low == pSettings->GF_low))
-        {
-            aActiveGF = 0;
-            activeGF = 1;
-            activeVPM = 0;
-        }
-        else
-        {
-            aActiveGF = 1;
-            activeGF = 0;
-            activeVPM = 0;
-        }
-
-        write_label_fix(  30, 340,  90, &FontT42, TXT_ZHL16GF);
-        write_label_fix(  30, 340, 140, &FontT42, TXT_low_high);
-        write_label_fix( 400, 600,  90, &FontT42, TXT_VPM);
-        write_label_fix( 400, 600, 140, &FontT42, TXT_Conservatism);
-        write_label_fix( 660, 799,  90, &FontT42, TXT_aGF);
-
-        write_field_on_off(StMDECOP7_ActiveGF,		 30, 170, 405, &FontT48, "Active", activeGF);
-
-        write_field_on_off(StMDECOP8_ActiveVPM,	400, 600, 405, &FontT48, "Active", activeVPM);
-
-        write_field_on_off(StMDECOP9_ActiveAltGF,	660, 799, 405, &FontT48, "Active", aActiveGF);
-
-
-        setEvent(StMDECOP7_ActiveGF, 		(uint32_t)OnAction_DM_ActiveGF);
-        setEvent(StMDECOP8_ActiveVPM,		(uint32_t)OnAction_DM_ActiveVPM);
-        setEvent(StMDECOP9_ActiveAltGF, 		(uint32_t)OnAction_DM_AltActiveGF);
-}
-*/
 
 uint8_t OnAction_VPM(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
@@ -518,53 +446,9 @@ uint8_t OnAction_LastStop(uint32_t editId, uint8_t blockNumber, uint8_t digitNum
     return EXIT_TO_MENU;
 }
 
-
-uint8_t OnAction_ActiveGF(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    SSettings *pSettings;
-    pSettings = settingsGetPointer();
-
-    if(pSettings->deco_type.ub.standard == GF_MODE)
-        return 255;
-
-    pSettings->deco_type.ub.standard = GF_MODE;
-    tMenuEdit_set_on_off(editId, 1);
-    tMenuEdit_set_on_off(StMDECOP8_ActiveVPM, 0);
-
-    return UPDATE_DIVESETTINGS;
-}
-
-
-uint8_t OnAction_ActiveVPM(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    SSettings *pSettings;
-    pSettings = settingsGetPointer();
-
-    if(pSettings->deco_type.ub.standard == VPM_MODE)
-        return 255;
-
-    pSettings->deco_type.ub.standard = VPM_MODE;
-    tMenuEdit_set_on_off(editId, 1);
-    tMenuEdit_set_on_off(StMDECOP7_ActiveGF, 0);
-
-    return UPDATE_DIVESETTINGS;
-}
-
-
 uint8_t OnAction_DM_ActiveVPM(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
-    SDiveSettings * pDiveSettings;
-    if(actual_menu_content == MENU_DIVE_REAL)
-    {
-        SDiveState * pState = stateRealGetPointerWrite();
-        pDiveSettings = &pState->diveSettings;
-    }
-    else
-    {
-        SDiveState * pState = stateSimGetPointerWrite();
-        pDiveSettings = &pState->diveSettings;
-    }
-    pDiveSettings->deco_type.ub.standard = VPM_MODE;
+    stateUsedWrite->diveSettings.deco_type.ub.standard = VPM_MODE;
     return EXIT_TO_HOME;
 }
 
@@ -572,164 +456,20 @@ uint8_t OnAction_DM_ActiveVPM(uint32_t editId, uint8_t blockNumber, uint8_t digi
 uint8_t OnAction_DM_ActiveGF(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     SSettings *pSettings = settingsGetPointer();
-    SDiveSettings * pDiveSettings;
-    if(actual_menu_content == MENU_DIVE_REAL)
-    {
-        SDiveState * pState = stateRealGetPointerWrite();
-        pDiveSettings = &pState->diveSettings;
-    }
-    else
-    {
-        SDiveState * pState = stateSimGetPointerWrite();
-        pDiveSettings = &pState->diveSettings;
-    }
-    pDiveSettings->gf_high = pSettings->GF_high;
-    pDiveSettings->gf_low = pSettings->GF_low;
-    pDiveSettings->deco_type.ub.standard = GF_MODE;
+
+    stateUsedWrite->diveSettings.gf_high = pSettings->GF_high;
+    stateUsedWrite->diveSettings.gf_low = pSettings->GF_low;
+    stateUsedWrite->diveSettings.deco_type.ub.standard = GF_MODE;
     return EXIT_TO_HOME;
 }
 
 
 uint8_t OnAction_DM_AltActiveGF(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
-    SSettings *pSettings = settingsGetPointer();
-    SDiveSettings * pDiveSettings;
-    if(actual_menu_content == MENU_DIVE_REAL)
-    {
-        SDiveState * pState = stateRealGetPointerWrite();
-        pDiveSettings = &pState->diveSettings;
-    }
-    else
-    {
-        SDiveState * pState = stateSimGetPointerWrite();
-        pDiveSettings = &pState->diveSettings;
-    }
-    pDiveSettings->gf_high = pSettings->aGF_high;
-    pDiveSettings->gf_low = pSettings->aGF_low;
-    pDiveSettings->deco_type.ub.standard = GF_MODE;
+	SSettings *pSettings = settingsGetPointer();
+
+    stateUsedWrite->diveSettings.gf_high = pSettings->aGF_high;
+    stateUsedWrite->diveSettings.gf_low = pSettings->aGF_low;
+    stateUsedWrite->diveSettings.deco_type.ub.standard = GF_MODE;
     return EXIT_TO_HOME;
 }
-
-
-/*
-void openEdit_DecoGasUsage(void)
-{
-    uint8_t amv, reserve;
-    char text[32];
-    SSettings *pSettings;
-
-    pSettings = settingsGetPointer();
-
-    amv = pSettings->AtemMinutenVolumenLiter;
-    reserve = pSettings->ReserveFractionDenominator;
-
-    text[0] = '\a';
-    text[1] = TXT_AtemGasVorrat;
-    text[2] = 0;
-
-    write_topline(text);
-
-    write_label_fix(  30, 340,  90, &FontT42, TXT_LiterproMinute);
-    write_label_fix(  30, 340, 250, &FontT42, TXT_Default);
-    write_label_fix( 430, 740,  90, &FontT42, TXT_Reserve);
-
-    strcpy(text, "1/0");
-    text[2] += reserve;
-    write_field_udigit(StMDECOP5_AMV,				 30, 320, 150, &FontT105, "###", (uint32_t)amv, 0, 0, 0);
-    write_field_button(StMDECOP5_DefaultAMV,	 30, 170, 290,  &FontT48, "25");
-    write_field_button(StMDECOP5_RESERVE,		430, 640, 150, &FontT105, text);
-
-    setEvent(StMDECOP5_AMV, 				(uint32_t)OnAction_GasAMV);
-    setEvent(StMDECOP5_DefaultAMV, (uint32_t)OnAction_DefaultAMV);
-    setEvent(StMDECOP5_RESERVE, 		(uint32_t)OnAction_GasReserve);
-}
-
-
-uint8_t OnAction_GasAMV				(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    uint8_t digitContentNew;
-    uint32_t newAMV;
-    SSettings *pSettings;
-
-    if(action == ACTION_BUTTON_ENTER)
-    {
-        return digitContent;
-    }
-    if(action == ACTION_BUTTON_ENTER_FINAL)
-    {
-        evaluateNewString(editId, &newAMV, 0, 0, 0);
-
-        if(newAMV < 5)
-            newAMV = 5;
-        if(newAMV > 190)
-            newAMV = 190;
-
-        pSettings = settingsGetPointer();
-        pSettings->AtemMinutenVolumenLiter = newAMV;
-
-        tMenuEdit_newInput(editId, newAMV, 0, 0, 0);
-
-        return 255;
-    }
-    if(action == ACTION_BUTTON_NEXT)
-    {
-        if((digitNumber == 0) && (digitContentNew >= '1'))
-            digitContentNew = '0';
-        else
-            digitContentNew = digitContent + 1;
-        if(digitContentNew > '9')
-            digitContentNew = '0';
-        return digitContentNew;
-    }
-    if(action == ACTION_BUTTON_BACK)
-    {
-        if((digitNumber == 0) && (digitContentNew == '0'))
-            digitContentNew = '1';
-        else
-            digitContentNew = digitContent - 1;
-        if(digitContentNew < '0')
-            digitContentNew = '9';
-        return digitContentNew;
-    }
-
-    return UNSPECIFIC_RETURN;
-}
-
-
-uint8_t OnAction_DefaultAMV		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    uint32_t newAMV;
-    SSettings *pSettings;
-
-    newAMV = 25;
-
-    pSettings = settingsGetPointer();
-    pSettings->AtemMinutenVolumenLiter = newAMV;
-    tMenuEdit_newInput(StMDECOP5_AMV, newAMV, 0, 0, 0);
-
-    return UNSPECIFIC_RETURN;
-}
-
-
-uint8_t OnAction_GasReserve		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    uint32_t reserve;
-    SSettings *pSettings;
-    char text[32];
-
-    pSettings = settingsGetPointer();
-    reserve = pSettings->ReserveFractionDenominator;
-    if(reserve <= 3)
-        reserve = 4;
-    else
-        reserve = 3;
-
-    pSettings->ReserveFractionDenominator = reserve;
-
-    strcpy(text, "1/0");
-    text[2] += reserve;
-    tMenuEdit_newButtonText(editId, text);
-
-    return UNSPECIFIC_RETURN;
-}
-*/

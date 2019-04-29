@@ -77,11 +77,7 @@ void openEdit_ResetStopwatch(void)
 
 void openEdit_SetManualMarker(void)
 {
-    if(stateUsed == stateRealGetPointer())
-        stateRealGetPointerWrite()->events.manualMarker = 1;
-    else
-        stateSimGetPointerWrite()->events.manualMarker = 1;
-
+    stateUsedWrite->events.manualMarker = 1;
     exitMenuEdit_to_Home();
 }
 

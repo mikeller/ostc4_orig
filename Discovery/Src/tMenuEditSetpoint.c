@@ -43,20 +43,15 @@ typedef struct
 
 
 /* Private variables ---------------------------------------------------------*/
-SEditSetpointPage editSetpointPage;
+static SEditSetpointPage editSetpointPage;
 
 /* Private function prototypes -----------------------------------------------*/
 
-
 /* Announced function prototypes -----------------------------------------------*/
-uint8_t OnAction_SP_Setpoint    (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_SP_Depth       (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-//uint8_t OnAction_SP_First     (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-//uint8_t OnAction_SP_Active    (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-//uint8_t OnAction_SP_DM_Select (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_SP_DM_Sensor1	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_SP_DM_Sensor2	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_SP_DM_Sensor3	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+static uint8_t OnAction_SP_Setpoint    (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+static uint8_t OnAction_SP_DM_Sensor1	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+static uint8_t OnAction_SP_DM_Sensor2	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+static uint8_t OnAction_SP_DM_Sensor3	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 
 /* Exported functions --------------------------------------------------------*/
 
@@ -68,52 +63,46 @@ void openEdit_Setpoint(uint8_t line)
     if(actual_menu_content != MENU_SURFACE)
     {
         uint8_t setpointCbar, actualGasID;
-        SDiveState *pState;
         setpointCbar = 100;
 
-        if(actual_menu_content == MENU_DIVE_REAL)
-            pState = stateRealGetPointerWrite();
-        else
-            pState = stateSimGetPointerWrite();
-
         // actualGasID
-        if(pState->diveSettings.diveMode != DIVEMODE_CCR)
+        if(stateUsedWrite->diveSettings.diveMode != DIVEMODE_CCR)
         {
-            actualGasID = pState->lifeData.lastDiluent_GasIdInSettings;
+            actualGasID = stateUsedWrite->lifeData.lastDiluent_GasIdInSettings;
             if((actualGasID <= NUM_OFFSET_DILUENT) || (actualGasID > NUM_GASES + NUM_OFFSET_DILUENT))
                 actualGasID = NUM_OFFSET_DILUENT + 1;
         }
         else
-            actualGasID = pState->lifeData.actualGas.GasIdInSettings;
+            actualGasID = stateUsedWrite->lifeData.actualGas.GasIdInSettings;
 
         // setpointCbar, CCR_Mode and sensor menu
         if(line < 6)
         {
-            setpointCbar = pState->diveSettings.setpoint[line].setpoint_cbar;
-            pState->diveSettings.CCR_Mode = CCRMODE_FixedSetpoint;
+            setpointCbar = stateUsedWrite->diveSettings.setpoint[line].setpoint_cbar;
+            stateUsedWrite->diveSettings.CCR_Mode = CCRMODE_FixedSetpoint;
 
             // BetterSetpoint warning only once
             if(actualBetterSetpointId() == line)
             {
                 uint8_t depth;
-                depth = pState->diveSettings.setpoint[line].depth_meter;
+                depth = stateUsedWrite->diveSettings.setpoint[line].depth_meter;
                 // BetterSetpoint warning only once -> clear active
                 for(int i=0; i<=NUM_GASES; i++)
                 {
-                    pState->diveSettings.setpoint[i].note.ub.first = 0;
-                    if(pState->diveSettings.setpoint[i].depth_meter <= depth)
-                        pState->diveSettings.setpoint[i].note.ub.active = 0;
+                	stateUsedWrite->diveSettings.setpoint[i].note.ub.first = 0;
+                    if(stateUsedWrite->diveSettings.setpoint[i].depth_meter <= depth)
+                    	stateUsedWrite->diveSettings.setpoint[i].note.ub.active = 0;
                 }
-                pState->diveSettings.setpoint[line].note.ub.first = 1;
+                stateUsedWrite->diveSettings.setpoint[line].note.ub.first = 1;
             }
         }
         else
         {
-            if(pState->diveSettings.CCR_Mode != CCRMODE_Sensors)
+            if(stateUsedWrite->diveSettings.CCR_Mode != CCRMODE_Sensors)
             {
                 /* setpoint_cbar will be written by updateSetpointStateUsed() in main.c loop */
                 setpointCbar = 255;
-                pState->diveSettings.CCR_Mode = CCRMODE_Sensors;
+                stateUsedWrite->diveSettings.CCR_Mode = CCRMODE_Sensors;
             }
             else
             {
@@ -121,11 +110,11 @@ void openEdit_Setpoint(uint8_t line)
             }
         }
 
-        setActualGas_DM(&pState->lifeData,actualGasID,setpointCbar);
+        setActualGas_DM(&stateUsedWrite->lifeData,actualGasID,setpointCbar);
 
-        if(pState->diveSettings.diveMode != DIVEMODE_CCR)
+        if(stateUsedWrite->diveSettings.diveMode != DIVEMODE_CCR)
         {
-            pState->diveSettings.diveMode = DIVEMODE_CCR;
+        	stateUsedWrite->diveSettings.diveMode = DIVEMODE_CCR;
             unblock_diluent_page();
         }
 
@@ -155,11 +144,11 @@ void openEdit_Setpoint(uint8_t line)
             sensorActive[0] = 1;
             sensorActive[1] = 1;
             sensorActive[2] = 1;
-            if(pState->diveSettings.ppo2sensors_deactivated & 1)
+            if(stateUsedWrite->diveSettings.ppo2sensors_deactivated & 1)
                 sensorActive[0] = 0;
-            if(pState->diveSettings.ppo2sensors_deactivated & 2)
+            if(stateUsedWrite->diveSettings.ppo2sensors_deactivated & 2)
                 sensorActive[1] = 0;
-            if(pState->diveSettings.ppo2sensors_deactivated & 4)
+            if(stateUsedWrite->diveSettings.ppo2sensors_deactivated & 4)
                 sensorActive[2] = 0;
 
             write_field_on_off(StMSP_Sensor1,	 30, 95, ME_Y_LINE1,  &FontT48, "", sensorActive[0]);
@@ -241,7 +230,7 @@ void openEdit_Setpoint(uint8_t line)
     }
 }
 
-uint8_t OnAction_SP_Setpoint(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+static uint8_t OnAction_SP_Setpoint(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     int8_t digitContentNew;
     uint32_t new_integer_part, new_fractional_part, new_cbar, newDepth;
@@ -297,216 +286,73 @@ uint8_t OnAction_SP_Setpoint(uint32_t editId, uint8_t blockNumber, uint8_t digit
     return EXIT_TO_MENU;
 }
 
-uint8_t OnAction_SP_Depth(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    uint8_t digitContentNew;
-    uint32_t newDepth;
-
-    if(action == ACTION_BUTTON_ENTER)
-    {
-        return digitContent;
-    }
-    if(action == ACTION_BUTTON_ENTER_FINAL)
-    {
-        evaluateNewString(editId, &newDepth, 0, 0, 0);
-        if(newDepth > 255)
-            newDepth = 255;
-
-        editSetpointPage.pSetpointLine[editSetpointPage.spID].depth_meter = newDepth;
-
-        tMenuEdit_newInput(editId, newDepth, 0, 0, 0);
-        return UPDATE_DIVESETTINGS;
-    }
-    if(action == ACTION_BUTTON_NEXT)
-    {
-        digitContentNew = digitContent + 1;
-        if(digitContentNew > '9')
-            digitContentNew = '0';
-        return digitContentNew;
-    }
-    if(action == ACTION_BUTTON_BACK)
-    {
-        digitContentNew = digitContent - 1;
-        if(digitContentNew < '0')
-            digitContentNew = '9';
-        return digitContentNew;
-    }
-
-    return UNSPECIFIC_RETURN;
-}
-
 void openEdit_DiveSelectBetterSetpoint(void)
 {
     uint8_t spId;
-    SDiveState *pState;
     uint8_t depth;
 
     spId = actualBetterSetpointId();
 
-    if(actual_menu_content == MENU_DIVE_REAL)
-        pState = stateRealGetPointerWrite();
-    else
-        pState = stateSimGetPointerWrite();
-
-    depth = pState->diveSettings.setpoint[spId].depth_meter;
+    depth = stateUsedWrite->diveSettings.setpoint[spId].depth_meter;
 
     // BetterSetpoint warning only once -> clear active
     for(int i=0; i<=NUM_GASES; i++)
     {
-        pState->diveSettings.setpoint[i].note.ub.first = 0;
-        if(pState->diveSettings.setpoint[i].depth_meter <= depth)
-            pState->diveSettings.setpoint[i].note.ub.active = 0;
+    	stateUsedWrite->diveSettings.setpoint[i].note.ub.first = 0;
+        if(stateUsedWrite->diveSettings.setpoint[i].depth_meter <= depth)
+        	stateUsedWrite->diveSettings.setpoint[i].note.ub.active = 0;
     }
 
     // new setpoint
-    pState->diveSettings.setpoint[spId].note.ub.first = 1;
+    stateUsedWrite->diveSettings.setpoint[spId].note.ub.first = 1;
 
     // change in lifeData
-    setActualGas_DM(&pState->lifeData, pState->lifeData.actualGas.GasIdInSettings, pState->diveSettings.setpoint[spId].setpoint_cbar);
+    setActualGas_DM(&stateUsedWrite->lifeData, stateUsedWrite->lifeData.actualGas.GasIdInSettings, stateUsedWrite->diveSettings.setpoint[spId].setpoint_cbar);
 }
 
-uint8_t OnAction_SP_DM_Sensor1	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+static uint8_t OnAction_SP_DM_Sensor1	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
-    SDiveState * pDiveState = 0;
-
-    if(actual_menu_content == MENU_DIVE_REAL)
-        pDiveState = stateRealGetPointerWrite();
-    else
-        pDiveState = stateSimGetPointerWrite();
-
-    if(pDiveState->diveSettings.ppo2sensors_deactivated & 1)
+    if(stateUsedWrite->diveSettings.ppo2sensors_deactivated & 1)
     {
-        pDiveState->diveSettings.ppo2sensors_deactivated &= 4+2;
+    	stateUsedWrite->diveSettings.ppo2sensors_deactivated &= 4+2;
         tMenuEdit_set_on_off(editId, 1);
     }
     else
     {
-        pDiveState->diveSettings.ppo2sensors_deactivated |= 1;
+    	stateUsedWrite->diveSettings.ppo2sensors_deactivated |= 1;
         tMenuEdit_set_on_off(editId, 0);
     }
 
     return UNSPECIFIC_RETURN;
 }
 
-uint8_t OnAction_SP_DM_Sensor2	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+static uint8_t OnAction_SP_DM_Sensor2	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
-    SDiveState * pDiveState = 0;
-
-    if(actual_menu_content == MENU_DIVE_REAL)
-        pDiveState = stateRealGetPointerWrite();
-    else
-        pDiveState = stateSimGetPointerWrite();
-
-    if(pDiveState->diveSettings.ppo2sensors_deactivated & 2)
+    if(stateUsedWrite->diveSettings.ppo2sensors_deactivated & 2)
     {
-        pDiveState->diveSettings.ppo2sensors_deactivated &= 4+1;
+    	stateUsedWrite->diveSettings.ppo2sensors_deactivated &= 4+1;
         tMenuEdit_set_on_off(editId, 1);
     }
     else
     {
-        pDiveState->diveSettings.ppo2sensors_deactivated |= 2;
+    	stateUsedWrite->diveSettings.ppo2sensors_deactivated |= 2;
         tMenuEdit_set_on_off(editId, 0);
     }
 
     return UNSPECIFIC_RETURN;
 }
 
-uint8_t OnAction_SP_DM_Sensor3	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+static uint8_t OnAction_SP_DM_Sensor3	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
-    SDiveState * pDiveState = 0;
-
-    if(actual_menu_content == MENU_DIVE_REAL)
-        pDiveState = stateRealGetPointerWrite();
-    else
-        pDiveState = stateSimGetPointerWrite();
-
-    if(pDiveState->diveSettings.ppo2sensors_deactivated & 4)
+    if(stateUsedWrite->diveSettings.ppo2sensors_deactivated & 4)
     {
-        pDiveState->diveSettings.ppo2sensors_deactivated &= 2+1;
+    	stateUsedWrite->diveSettings.ppo2sensors_deactivated &= 2+1;
         tMenuEdit_set_on_off(editId, 1);
     }
     else
     {
-        pDiveState->diveSettings.ppo2sensors_deactivated |= 4;
+    	stateUsedWrite->diveSettings.ppo2sensors_deactivated |= 4;
         tMenuEdit_set_on_off(editId, 0);
     }
     return UNSPECIFIC_RETURN;
 }
-
-/* Private functions ---------------------------------------------------------*/
-
-/*
-uint8_t OnAction_SP_Active(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    uint8_t active, first;
-
-    first = editSetpointPage.pSetpointLine[editSetpointPage.spID].note.ub.first;
-
-    if(first)
-        return UNSPECIFIC_RETURN;
-
-    active = editSetpointPage.pSetpointLine[editSetpointPage.spID].note.ub.active;
-
-    if(active)
-    {
-        active = 0;
-        editSetpointPage.pSetpointLine[editSetpointPage.spID].note.ub.active = 0;
-    }
-    else
-    {
-        active = 1;
-        editSetpointPage.pSetpointLine[editSetpointPage.spID].note.ub.active = 1;
-    }
-    tMenuEdit_set_on_off(editId, active);
-
-    return UPDATE_DIVESETTINGS;
-}
-
-uint8_t OnAction_SP_First(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    uint8_t active, first, i;
-    SDiveState * pStateReal = stateRealGetPointerWrite();
-
-    first = editSetpointPage.pSetpointLine[editSetpointPage.spID].note.ub.first;
-
-    if(first)
-        return UNSPECIFIC_RETURN;
-
-    for(i=0;i<NUM_GASES;i++)
-        editSetpointPage.pSetpointLine[i].note.ub.first = 0;
-
-    editSetpointPage.pSetpointLine[editSetpointPage.spID].note.ub.first = 1;
-
-    active = editSetpointPage.pSetpointLine[editSetpointPage.spID].note.ub.active;
-    if(active == 0)
-    {
-        editSetpointPage.pSetpointLine[editSetpointPage.spID].note.ub.active = 1;
-    }
-
-    tMenuEdit_set_on_off(editId, 1);
-
-    return UPDATE_DIVESETTINGS;
-}
-
-uint8_t OnAction_SP_DM_Select(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    SDiveState * pDiveState = 0;
-
-    if(editSetpointPage.pSetpointLine[editSetpointPage.spID].note.ub.active == 0)
-        editSetpointPage.pSetpointLine[editSetpointPage.spID].note.ub.active = 1;
-
-    for(int i=0;i<NUM_GASES;i++)
-        editSetpointPage.pSetpointLine[i].note.ub.first = 0;
-
-    editSetpointPage.pSetpointLine[editSetpointPage.spID].note.ub.first = 1;
-
-    if(actual_menu_content == MENU_DIVE_REAL)
-        pDiveState = stateRealGetPointerWrite();
-    else
-        pDiveState = stateSimGetPointerWrite();
-
-    setActualGas_DM(&pDiveState->lifeData, pDiveState->lifeData.actualGas.GasIdInSettings, editSetpointPage.pSetpointLine[editSetpointPage.spID].setpoint_cbar);
-
-    return EXIT_TO_HOME;
-}
-*/

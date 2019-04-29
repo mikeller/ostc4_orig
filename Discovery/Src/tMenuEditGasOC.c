@@ -148,24 +148,14 @@ void openEdit_DiveGasSelect(uint8_t line, uint8_t ccr)
 
 void openEdit_DiveGasSelect_Subroutine(uint8_t line, uint8_t ccr)
 {
-    SDiveState * pState;
     uint8_t setpoint;
 
-    if(actual_menu_content == MENU_DIVE_REAL)
-    {
-        pState = stateRealGetPointerWrite();
-        editGasPage.pGasLine = pState->diveSettings.gas;
-    }
-    else
-    {
-        pState = stateSimGetPointerWrite();
-        editGasPage.pGasLine = pState->diveSettings.gas;
-    }
+    editGasPage.pGasLine = stateUsed->diveSettings.gas;
 
     if(ccr)
     {
         editGasPage.gasID = line + NUM_OFFSET_DILUENT;
-        setpoint = pState->lifeData.actualGas.setPoint_cbar;
+        setpoint = stateUsed->lifeData.actualGas.setPoint_cbar;
     }
     else
     {
@@ -178,7 +168,7 @@ void openEdit_DiveGasSelect_Subroutine(uint8_t line, uint8_t ccr)
 
     editGasPage.pGasLine[editGasPage.gasID].note.ub.active = 1;
     editGasPage.pGasLine[editGasPage.gasID].note.ub.first = 1;
-    setActualGas_DM(&pState->lifeData,editGasPage.gasID,setpoint);
+    setActualGas_DM(&stateUsedWrite->lifeData,editGasPage.gasID,setpoint);
 }
 
 /* extra gas and gas on/off option */
@@ -186,21 +176,12 @@ void openEdit_SpecialDiveGasMenu(uint8_t ccr)
 {
     char text[32];
     uint8_t oxygen, helium, gasOffset, textpointer, lineCount, ptrGas;
-    SDiveState * pState;
+    //SDiveState * pState;
 
-    if(actual_menu_content == MENU_DIVE_REAL)
-    {
-        pState = stateRealGetPointerWrite();
-        editGasPage.pGasLine = pState->diveSettings.gas;
-    }
-    else
-    {
-        pState = stateSimGetPointerWrite();
-        editGasPage.pGasLine = pState->diveSettings.gas;
-    }
+    editGasPage.pGasLine = stateUsed->diveSettings.gas;
     if(ccr)
     {
-        editGasPage.setpoint = pState->lifeData.actualGas.setPoint_cbar;
+        editGasPage.setpoint = stateUsed->lifeData.actualGas.setPoint_cbar;
     }
     editGasPage.ccr = ccr;
 
@@ -322,17 +303,12 @@ uint8_t OnAction_DM_Mix(uint32_t editId, uint8_t blockNumber, uint8_t digitNumbe
         if((newOxygen + newHelium) > 100)
             newOxygen = 100 - newHelium;
 
-        SDiveState * pDiveState = 0;
+        //SDiveState * pDiveState = 0;
 
         for(int i=1;i<=(2*NUM_GASES);i++)
             editGasPage.pGasLine[i].note.ub.first = 0;
 
-        if(actual_menu_content == MENU_DIVE_REAL)
-            pDiveState = stateRealGetPointerWrite();
-        else
-            pDiveState = stateSimGetPointerWrite();
-
-        setActualGas_ExtraGas(&pDiveState->lifeData, newOxygen, newHelium, 0);
+        setActualGas_ExtraGas(&stateUsedWrite->lifeData, newOxygen, newHelium, 0);
         tMEGas_check_switch_to_bailout();
         return EXIT_TO_HOME;
     }
@@ -357,16 +333,9 @@ uint8_t OnAction_DM_Mix(uint32_t editId, uint8_t blockNumber, uint8_t digitNumbe
 
 void tMEGas_check_switch_to_bailout(void)
 {
-    SDiveState *pState;
-
-    if(actual_menu_content == MENU_DIVE_REAL)
-        pState = stateRealGetPointerWrite();
-    else
-        pState = stateSimGetPointerWrite();
-
-    if(pState->diveSettings.diveMode == DIVEMODE_CCR)
+    if(stateUsed->diveSettings.diveMode == DIVEMODE_CCR)
     {
-        pState->diveSettings.diveMode = DIVEMODE_OC;
+    	stateUsedWrite->diveSettings.diveMode = DIVEMODE_OC;
         block_diluent_page();
     }
 }

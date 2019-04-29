@@ -422,27 +422,16 @@ void DateEx_copy_to_dataOut(void)
 
 void DataEX_copy_to_deco(void)
 {
-  SDiveState * pStateUsed;
 	if(decoLock == DECO_CALC_running)
         return;
-	if(stateUsed == stateRealGetPointer())
-		pStateUsed = stateRealGetPointerWrite();
-	else{
-		pStateUsed = stateSimGetPointerWrite();
-	}
 
 		if(decoLock == DECO_CALC_init_as_is_start_of_dive)
 		{
-	    vpm_init(&pStateUsed->vpm,  pStateUsed->diveSettings.vpm_conservatism, 0, 0);
+	    vpm_init(&stateUsedWrite->vpm,  stateUsedWrite->diveSettings.vpm_conservatism, 0, 0);
 	    buehlmann_init();
 	    timer_init();
-	    resetEvents(pStateUsed);
-      pStateUsed->diveSettings.internal__pressure_first_stop_ambient_bar_as_upper_limit_for_gf_low_otherwise_zero = 0;
-			/*
-			 * ToDo by Peter
-			 * copy VPM stuff etc. pp.
-			 * was   void initDiveState(SDiveSettings * pDiveSettings, SVpm * pVpm);
-			 */
+	    resetEvents(stateUsedWrite);
+	    stateUsedWrite->diveSettings.internal__pressure_first_stop_ambient_bar_as_upper_limit_for_gf_low_otherwise_zero = 0;
 		}
 
 		if(decoLock == DECO_CALC_FINSHED_Buehlmann)
@@ -454,48 +443,48 @@ void DataEX_copy_to_deco(void)
 
     //Deco_calculation finished
     case DECO_CALC_FINSHED_vpm:
-        memcpy(&pStateUsed->decolistVPM,&stateDeco.decolistVPM,sizeof(SDecoinfo));
-				pStateUsed->decolistVPM.tickstamp = HAL_GetTick();
-        pStateUsed->vpm.deco_zone_reached = stateDeco.vpm.deco_zone_reached;
+        memcpy(&stateUsedWrite->decolistVPM,&stateDeco.decolistVPM,sizeof(SDecoinfo));
+        stateUsedWrite->decolistVPM.tickstamp = HAL_GetTick();
+        stateUsedWrite->vpm.deco_zone_reached = stateDeco.vpm.deco_zone_reached;
         for(int i = 0; i< 16; i++)
         {
-            pStateUsed->vpm.adjusted_critical_radius_he[i] = stateDeco.vpm.adjusted_critical_radius_he[i];
-            pStateUsed->vpm.adjusted_critical_radius_n2[i] = stateDeco.vpm.adjusted_critical_radius_n2[i];
-            pStateUsed->vpm.adjusted_crushing_pressure_he[i] = stateDeco.vpm.adjusted_crushing_pressure_he[i];
-            pStateUsed->vpm.adjusted_crushing_pressure_n2[i] = stateDeco.vpm.adjusted_crushing_pressure_n2[i];
-            pStateUsed->vpm.initial_allowable_gradient_he[i] = stateDeco.vpm.initial_allowable_gradient_he[i];
-            pStateUsed->vpm.initial_allowable_gradient_n2[i] = stateDeco.vpm.initial_allowable_gradient_n2[i];
-            pStateUsed->vpm.max_actual_gradient[i] = stateDeco.vpm.max_actual_gradient[i];
+        	stateUsedWrite->vpm.adjusted_critical_radius_he[i] = stateDeco.vpm.adjusted_critical_radius_he[i];
+        	stateUsedWrite->vpm.adjusted_critical_radius_n2[i] = stateDeco.vpm.adjusted_critical_radius_n2[i];
+        	stateUsedWrite->vpm.adjusted_crushing_pressure_he[i] = stateDeco.vpm.adjusted_crushing_pressure_he[i];
+        	stateUsedWrite->vpm.adjusted_crushing_pressure_n2[i] = stateDeco.vpm.adjusted_crushing_pressure_n2[i];
+        	stateUsedWrite->vpm.initial_allowable_gradient_he[i] = stateDeco.vpm.initial_allowable_gradient_he[i];
+        	stateUsedWrite->vpm.initial_allowable_gradient_n2[i] = stateDeco.vpm.initial_allowable_gradient_n2[i];
+        	stateUsedWrite->vpm.max_actual_gradient[i] = stateDeco.vpm.max_actual_gradient[i];
         }
         break;
     case DECO_CALC_FINSHED_Buehlmann:
-        memcpy(&pStateUsed->decolistBuehlmann,&stateDeco.decolistBuehlmann,sizeof(SDecoinfo));
-				pStateUsed->decolistBuehlmann.tickstamp = HAL_GetTick();
+        memcpy(&stateUsedWrite->decolistBuehlmann,&stateDeco.decolistBuehlmann,sizeof(SDecoinfo));
+        stateUsedWrite->decolistBuehlmann.tickstamp = HAL_GetTick();
         //Copy Data to be stored if regular Buehlmann, not FutureBuehlmann
-        pStateUsed->diveSettings.internal__pressure_first_stop_ambient_bar_as_upper_limit_for_gf_low_otherwise_zero = stateDeco.diveSettings.internal__pressure_first_stop_ambient_bar_as_upper_limit_for_gf_low_otherwise_zero;
+        stateUsedWrite->diveSettings.internal__pressure_first_stop_ambient_bar_as_upper_limit_for_gf_low_otherwise_zero = stateDeco.diveSettings.internal__pressure_first_stop_ambient_bar_as_upper_limit_for_gf_low_otherwise_zero;
         break;
     case DECO_CALC_FINSHED_FutureBuehlmann:
-        memcpy(&pStateUsed->decolistFutureBuehlmann,&stateDeco.decolistFutureBuehlmann,sizeof(SDecoinfo));
-				pStateUsed->decolistFutureBuehlmann.tickstamp = HAL_GetTick();
+        memcpy(&stateUsedWrite->decolistFutureBuehlmann,&stateDeco.decolistFutureBuehlmann,sizeof(SDecoinfo));
+        stateUsedWrite->decolistFutureBuehlmann.tickstamp = HAL_GetTick();
         break;
     case DECO_CALC_FINSHED_Futurevpm:
-        memcpy(&pStateUsed->decolistFutureVPM,&stateDeco.decolistFutureVPM,sizeof(SDecoinfo));
-				pStateUsed->decolistFutureVPM.tickstamp = HAL_GetTick();
+        memcpy(&stateUsedWrite->decolistFutureVPM,&stateDeco.decolistFutureVPM,sizeof(SDecoinfo));
+        stateUsedWrite->decolistFutureVPM.tickstamp = HAL_GetTick();
         break;
     }
 
     //Copy Inputdata from stateReal to stateDeco
-    memcpy(&stateDeco.lifeData,&pStateUsed->lifeData,sizeof(SLifeData));
-    memcpy(&stateDeco.diveSettings,&pStateUsed->diveSettings,sizeof(SDiveSettings));
+    memcpy(&stateDeco.lifeData,&stateUsedWrite->lifeData,sizeof(SLifeData));
+    memcpy(&stateDeco.diveSettings,&stateUsedWrite->diveSettings,sizeof(SDiveSettings));
 
-    stateDeco.vpm.deco_zone_reached = pStateUsed->vpm.deco_zone_reached;
+    stateDeco.vpm.deco_zone_reached = stateUsedWrite->vpm.deco_zone_reached;
     // memcpy(&stateDeco.vpm,&pStateUsed->vpm,sizeof(SVpm));
     for(int i = 0; i< 16; i++)
     {
-        stateDeco.vpm.max_crushing_pressure_he[i] = pStateUsed->vpm.max_crushing_pressure_he[i];
-        stateDeco.vpm.max_crushing_pressure_n2[i] = pStateUsed->vpm.max_crushing_pressure_n2[i];
-        stateDeco.vpm.adjusted_critical_radius_he[i] = pStateUsed->vpm.adjusted_critical_radius_he[i];
-        stateDeco.vpm.adjusted_critical_radius_n2[i] = pStateUsed->vpm.adjusted_critical_radius_n2[i];
+        stateDeco.vpm.max_crushing_pressure_he[i] = stateUsedWrite->vpm.max_crushing_pressure_he[i];
+        stateDeco.vpm.max_crushing_pressure_n2[i] = stateUsedWrite->vpm.max_crushing_pressure_n2[i];
+        stateDeco.vpm.adjusted_critical_radius_he[i] = stateUsedWrite->vpm.adjusted_critical_radius_he[i];
+        stateDeco.vpm.adjusted_critical_radius_n2[i] = stateUsedWrite->vpm.adjusted_critical_radius_n2[i];
     }
 		decoLock = DECO_CALC_ready;
 }
