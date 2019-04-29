@@ -71,18 +71,6 @@ void set_globalState_tHome(void)
 }
 
 
-void switch_to_SimData_tHome(void)
-{
-    set_stateUsedToSim();
-}
-
-
-void switch_to_RealData_tHome(void)
-{
-    set_stateUsedToReal();
-}
-
-
 void tHome_init(void)
 {
     t7_init(); // standard + surface
