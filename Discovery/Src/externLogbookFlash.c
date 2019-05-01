@@ -1023,7 +1023,7 @@ static uint16_t ext_flash_repair_dive_numbers_starting_count_helper(uint8_t *dat
 
 	actualNumber = startNumber - 1;	
 
-	// wo ist der �lteste Tauchgang (der, der startNumber bekommt)
+	// where is the oldest dive (Which is now getting startNumber)
 	// use first header for ease (without HEADER2OFFSET for end of dive header)
 	// compare for lastLogId to prevent endless loop
 
@@ -1061,9 +1061,9 @@ static uint16_t ext_flash_repair_dive_numbers_starting_count_helper(uint8_t *dat
 //	ext_flash_repair_SPECIAL_dive_numbers_starting_count_with
 /// @brief	This function
 ///	@date    04-April-2016
-/// problem (160621): 64K Bl�cke (32 Tauchg�nge) weil neuer Flash Chip.
-/// Dieser Bereich muss auf einmal gel�scht werden.
-/// Vorher waren es 4K Bl�cke.
+/// problem (160621): 64K blocks (32 dives) in the new flash memory chip
+/// This block needs to be deleted
+/// these where only 4KB block before
 /// @output endCount, last diveNumber
 
 //  ===============================================================================
@@ -1072,7 +1072,7 @@ uint16_t ext_flash_repair_SPECIAL_dive_numbers_starting_count_with(uint16_t star
 	uint32_t logCopyDataPtr = 0;
 	uint8_t *data;
 	uint16_t lastCount;
-	uint8_t listOfChanged64kBlocks[8]; // 32 Tauchg�nge pro 64K
+	uint8_t listOfChanged64kBlocks[8]; // 32 dives each 64K
 	
 	logCopyDataPtr = getFrame(97);
 	data = (uint8_t *)logCopyDataPtr;
@@ -1534,7 +1534,7 @@ static void ext_flash_erase4kB(void)
 	write_address(RELEASE);
 }
 
-/* be carefull - might not work with entire family and other products
+/* be careful - might not work with entire family and other products
  * see page 14 of LOGBOOK_V3_S25FS-S_00-271247.pdf
  */
 static void ext_flash_erase32kB(void)
