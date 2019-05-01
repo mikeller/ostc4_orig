@@ -578,9 +578,9 @@ void setActualGas_ExtraGas(SLifeData *lifeData, uint8_t oxygen, uint8_t helium, 
 
     if((lifeData->actualGas.nitrogen_percentage != nitrogen) || (lifeData->actualGas.helium_percentage != helium))
     {
-    	stateUsedWrite->events.manuelGasSet = 1;
-    	stateUsedWrite->events.info_manuelGasSetHe = helium;
-    	stateUsedWrite->events.info_manuelGasSetO2 = oxygen;
+    	stateUsedWrite->events.manualGasSet = 1;
+    	stateUsedWrite->events.info_manualGasSetHe = helium;
+    	stateUsedWrite->events.info_manualGasSetO2 = oxygen;
     }
     if(	lifeData->actualGas.setPoint_cbar != setpoint_cbar)
     {

@@ -272,9 +272,9 @@ typedef struct
 	int16_t info_GasChange;
 	int16_t setpointChange;
 	int16_t info_SetpointChange;
-	int16_t manuelGasSet;
-	int16_t info_manuelGasSetHe;
-	int16_t info_manuelGasSetO2;
+	int16_t manualGasSet;
+	int16_t info_manualGasSetHe;
+	int16_t info_manualGasSetO2;
 	int16_t bailout;
 	int16_t info_bailoutHe;
 	int16_t info_bailoutO2;

@@ -161,9 +161,9 @@ void init_buehlmann(SDiveState* pInput)
     pInput->warnings.decoMissed = 0;
     pInput->events.gasChange = 0;
     pInput->events.info_GasChange = 0;
-    pInput->events.info_manuelGasSetO2 = 0;
-    pInput->events.info_manuelGasSetHe = 0;
-    pInput->events.manuelGasSet = 0;
+    pInput->events.info_manualGasSetO2 = 0;
+    pInput->events.info_manualGasSetHe = 0;
+    pInput->events.manualGasSet = 0;
     pInput->warnings.ppO2High = 0;
     pInput->warnings.ppO2Low = 0;
     pInput->warnings.slowWarning = 0;
