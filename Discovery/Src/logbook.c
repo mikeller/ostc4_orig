@@ -127,7 +127,7 @@ uint16_t logbook_lastDive_diveNumber(void)
 /**
   ******************************************************************************
   * @brief   logbook_getCurrentHeader. /
-  * @author  Peter Ryser
+  * @author  heinrichs weikamp
   * @version V0.0.1
   * @date    22-April-2014
   ******************************************************************************
@@ -158,7 +158,7 @@ uint8_t logbook_getNumberOfHeaders(void)
 /**
   ******************************************************************************
   * @brief   logbook_getHeader. /
-  * @author  Peter Ryser
+  * @author  heinrichs weikamp
   * @version V0.0.1
   * @date    22-April-2014
   ******************************************************************************
@@ -182,7 +182,7 @@ uint8_t logbook_getHeader(uint8_t StepBackwards,SLogbookHeader* pLogbookHeader)
   *           creates header and smallHeader from diveState and global Settings
   *           and writes new lookboock entry on flash device
   *           diveState
-  * @author  Peter Ryser
+  * @author  heinrichs weikamp
   * @version V0.0.1
   * @date    22-April-2014
   ******************************************************************************
@@ -317,7 +317,7 @@ void logbook_initNewdiveProfile(const SDiveState* pInfo, SSettings* pSettings)
 /**
   ******************************************************************************
   * @brief   clear_divisor /  clears divisor struct
-  * @author  Peter Ryser
+  * @author  heinrichs weikamp
   * @version V0.0.1
   * @date    22-April-2014
   ******************************************************************************
@@ -338,7 +338,7 @@ static void clear_divisor(void)
 /**
   ******************************************************************************
   * @brief   add16. /  adds 16 bit variable to 8 bit array
-  * @author  Peter Ryser
+  * @author  heinrichs weikamp
   * @version V0.0.1
   * @date    22-April-2014
   ******************************************************************************
@@ -359,7 +359,7 @@ static void addS16(uint8_t *pos, int16_t var)
 /**
   ******************************************************************************
   * @brief   logbook_writeSample. /  Writes one logbook sampl
-  * @author  Peter Ryser
+  * @author  heinrichs weikamp
   * @date    22-April-2014
   * @version V0.0.2
   * @since   20-June-2016
@@ -426,7 +426,7 @@ void logbook_writeSample(const SDiveState *state)
         eventByte1.uw = 1;
     }
 		// sub bit 4 to 7
-    if(state->events.manuelGasSet)
+    if(state->events.manualGasSet)
     {
         eventByte1.ub.bit4 = 1;
     }
@@ -456,12 +456,12 @@ void logbook_writeSample(const SDiveState *state)
         length++;
     }
     //Add EventInfos
-    if(state->events.manuelGasSet)
+    if(state->events.manualGasSet)
     {
         //manual gas in %O2 & %He
-        sample[length] = state->events.info_manuelGasSetO2;
+        sample[length] = state->events.info_manualGasSetO2;
         length += 1;
-        sample[length] = state->events.info_manuelGasSetHe;
+        sample[length] = state->events.info_manualGasSetHe;
         length += 1;
     }
     if(state->events.gasChange)
@@ -521,6 +521,11 @@ void logbook_writeSample(const SDiveState *state)
 					sample[length] = 0;
 					length += 1;
 					sample[length] = (uint8_t)pDecoinfo->output_ndl_seconds / 60;
+
+					// Limit stored sample within 0 to 240 mins (Since it's 8bit UINT only)
+					if ((pDecoinfo->output_ndl_seconds / 60) > 240) sample[length] = 240;
+					if ((pDecoinfo->output_ndl_seconds / 60) < 0) sample[length] = 0;
+
 					length += 1;
 				}
 				else if(pDecoinfo->output_time_to_surface_seconds)
@@ -630,7 +635,7 @@ void logbook_writeSample(const SDiveState *state)
 /**
   ******************************************************************************
   * @brief   readSample. /  Reads data of one logbook sample
-  * @author  Peter Ryser
+  * @author  heinrichs weikamp
   * @version V0.0.1
   * @date    22-April-2014
   ******************************************************************************
@@ -869,7 +874,7 @@ static uint16_t readSample(int32_t* depth, int16_t * gasid, int16_t* setpoint_cb
 /**
   ******************************************************************************
   * @brief   logbook_readSampleData. /  Reads sample data of whole logbook entry
-  * @author  Peter Ryser
+  * @author  heinrichs weikamp
   * @version V0.0.1
   * @date    22-April-2014
   ******************************************************************************
@@ -1538,7 +1543,7 @@ SLogbookHeaderOSTC3compact * logbook_build_ostc3header_compact(SLogbookHeader* p
 /**
   ******************************************************************************
   * @brief   logbook_readSampleData. /  Reads sample data of whole logbook entry
-  * @author  Peter Ryser
+  * @author  heinrichs weikamp
   * @version V0.0.1
   * @date    22-April-2014
   ******************************************************************************
