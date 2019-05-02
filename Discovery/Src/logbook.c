@@ -520,7 +520,7 @@ void logbook_writeSample(const SDiveState *state)
 				{
 					sample[length] = 0;
 					length += 1;
-					sample[length] = (uint8_t)pDecoinfo->output_ndl_seconds / 60;
+					sample[length] = (uint8_t)(pDecoinfo->output_ndl_seconds / 60);
 
 					// Limit stored sample within 0 to 240 mins (Since it's 8bit UINT only)
 					if ((pDecoinfo->output_ndl_seconds / 60) > 240) sample[length] = 240;
