@@ -32,7 +32,7 @@
 
 extern long vpm_time_calc_begin;
 enum DECOLIST{DECOSTOPS,FUTURESTOPS,BAILOUTSTOPS, OFF = -1}; // order is important!!
-enum VPM_CALC_STATUS{CALC_END, CALC_BEGIN, CALC_CRITICAL, CALC_FINAL_DECO, CALC_NULLZEIT };
+enum VPM_CALC_STATUS{CALC_END, CALC_BEGIN, CALC_CRITICAL, CALC_FINAL_DECO, CALC_NDL };
 
 float schreiner_equation__2(float *initial_inspired_gas_pressure,float *rate_change_insp_gas_pressure,float *interval_time_minutes,  const float *gas_time_constant,float *initial_gas_pressure);
 

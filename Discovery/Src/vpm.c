@@ -187,7 +187,7 @@ static int vpm_calc_critcal_volume(_Bool begin,_Bool calc_nulltime);
 static int vpm_check_converged(_Bool calc_nulltime);
 static int vpm_calc_final_deco(_Bool begin);
 static void BOYLES_LAW_COMPENSATION (float* First_Stop_Depth,float * Deco_Stop_Depth,float* Step_Size);
-static int vpm_calc_nullzeit(void);
+static int vpm_calc_ndl(void);
 static void  vpm_init_1(void);
 static void vpm_calc_deco_ceiling(void);
 
@@ -242,7 +242,7 @@ int  vpm_calc(SLifeData* pINPUT,
 
     if(pINPUT->dive_time_seconds < 10)
     {
-        vpm_calc_status = CALC_NULLZEIT;
+        vpm_calc_status = CALC_NDL;
         return vpm_calc_status;
     }
     pVpm = pVPM;
@@ -250,16 +250,16 @@ int  vpm_calc(SLifeData* pINPUT,
     pDecoInfo = pDECOINFO;
     pDiveSettings = pSettings;
 
-    if(vpm_calc_status == CALC_NULLZEIT)
+    if(vpm_calc_status == CALC_NDL)
     {
-        tmp_calc_status = vpm_calc_nullzeit();
+        tmp_calc_status = vpm_calc_ndl();
     }
     else
     {
         tmp_calc_status = CALC_BEGIN;
     }
     //Normal Deco calculation
-    if(tmp_calc_status != CALC_NULLZEIT)
+    if(tmp_calc_status != CALC_NDL)
     {
         max_first_stop_depth =  pVpm->max_first_stop_depth_save;
         run_time_start_of_deco_zone = pVpm->run_time_start_of_deco_zone_save;
@@ -694,7 +694,7 @@ static int vpm_calc_critcal_volume(_Bool begin,
                 pDecoInfo->output_ndl_seconds = 0;
             }
 
-            return CALC_NULLZEIT;
+            return CALC_NDL;
                     /* exit the critical volume l */
         }
 
@@ -2275,12 +2275,12 @@ static void BOYLES_LAW_COMPENSATION (float* First_Stop_Depth,
 }
 
 /* =============================================================================== */
-//	vpm_calc_nullzeit
-//     Purpose: This function calcs zero time (time where no decostops are needed)
+//	vpm_calc_ndl
+//     Purpose: This function computes NDL (time where no decostops are needed)
 //===============================================================================
 #define MAX_NDL	240
 
-static int vpm_calc_nullzeit(void)
+static int vpm_calc_ndl(void)
 {
     static float future_helium_pressure[16];
     static float future_nitrogen_pressure[16];
@@ -2319,7 +2319,7 @@ static int vpm_calc_nullzeit(void)
                 if(temp_segment_time >= MAX_NDL)
                 {
                     pDecoInfo->output_ndl_seconds = temp_segment_time * 60;
-                    return CALC_NULLZEIT;
+                    return CALC_NDL;
                 }
                 run_time += 60;
                 //goto L700;
@@ -2354,12 +2354,12 @@ static int vpm_calc_nullzeit(void)
             if(temp_segment_time >= MAX_NDL)
             {
                 pDecoInfo->output_ndl_seconds = temp_segment_time * 60;
-                return CALC_NULLZEIT;
+                return CALC_NDL;
             }
             if(nullzeit_unter60 && temp_segment_time > 60)
             {
                 nullzeit_unter60 = false;
-                return CALC_NULLZEIT;
+                return CALC_NDL;
             }
             run_time += 5;
             //goto L700;
@@ -2405,7 +2405,7 @@ static int vpm_calc_nullzeit(void)
         temp_segment_time += 5;
     pDecoInfo->output_ndl_seconds = temp_segment_time * 60;
     if(temp_segment_time > 1)
-        return CALC_NULLZEIT;
+        return CALC_NDL;
     else
         return CALC_BEGIN;
 }
