@@ -77,26 +77,13 @@
 #include <math.h>
 #include <time.h>
 
-//#include "compiler.h"
-//#include "sdramc.h"
 #include "vpm.h"
-//#include "buehlmann.h"
-
 #include "decom.h"
-
-//#include "decompression.h"
-//#include "taskmanagement\tissue_calls.h"
-#define true 1
-#define false 0
 
 #define GAS_N2 0
 #define GAS_HE 1
-/* temp vars to simplify UNFMTLISTs */
-float    fO2, fHe, fN2;
-float    dc, rc, ssc;
-short mc;
 
-const _Bool buehlmannSafety = true;
+static const _Bool buehlmannSafety = true;
 /* Common Block Declarations */
 
 extern const float SURFACE_TENSION_GAMMA;				//!Adj. Range: 0.015 to 0.065 N/m
@@ -104,75 +91,47 @@ extern const float SKIN_COMPRESSION_GAMMAC;				//!Adj. Range: 0.160 to 0.290 N/m
 extern const float UNITS_FACTOR;
 extern const float WATER_VAPOR_PRESSURE;				// (Schreiner value)  based on respiratory quotien
 extern const float CRIT_VOLUME_PARAMETER_LAMBDA;			//!Adj. Range: 6500 to 8300 fsw-min
-extern const float GRADIENT_ONSET_OF_IMPERM_ATM;			//!Adj. Range: 5.0 to 10.0 atm
+//extern const float GRADIENT_ONSET_OF_IMPERM_ATM;			//!Adj. Range: 5.0 to 10.0 atm
 extern const float REGENERATION_TIME_CONSTANT;			//!Adj. Range: 10080 to 51840 min
-extern const float PRESSURE_OTHER_GASES_MMHG;				//!Constant value for PO2 up to 2 atm
+//extern const float PRESSURE_OTHER_GASES_MMHG;				//!Constant value for PO2 up to 2 atm
 extern const float CONSTANT_PRESSURE_OTHER_GASES; // PRESSURE_OTHER_GASES_MMHG / 760. * UNITS_FACTOR;
 
 extern const float HELIUM_TIME_CONSTANT[];
 extern const float NITROGEN_TIME_CONSTANT[];
 
-float    minimum_deco_stop_time;
-float    run_time, run_time_first_stop;
-float    segment_time;
-short mix_number;
-float    barometric_pressure;
-_Bool altitude_dive_algorithm_off;
-_Bool units_equal_fsw, units_equal_msw;
+static float    minimum_deco_stop_time;
+static float    run_time, run_time_first_stop;
+static float    segment_time;
+static short mix_number;
+static float    barometric_pressure;
+static _Bool altitude_dive_algorithm_off;
+static _Bool units_equal_fsw, units_equal_msw;
 
 /* by hw 11.06.2015 to allow */
-float gCNS_VPM;
+static float gCNS_VPM;
 
-float    helium_pressure[16], nitrogen_pressure[16];
-//float    helium_pressure_crush[16], nitrogen_pressure_crush[16];
-//float    fraction_helium[MAX_GASMIXES + EXTRA_GASMIXES], fraction_nitrogen[MAX_GASMIXES + EXTRA_GASMIXES];
-//float    initial_critical_radius_he[16], initial_critical_radius_n2[16];
-//float    adjusted_critical_radius_he[16],
-//adjusted_critical_radius_n2[16];
-//float    max_crushing_pressure_he[16],
-//max_crushing_pressure_n2[16];
-float    surface_phase_volume_time[16];
-//float    max_actual_gradient[16];
-//float    amb_pressure_onset_of_imperm[16],
-//gas_tension_onset_of_imperm[16];
-//float    initial_helium_pressure_global[16],
-//initial_nitrogen_pressure_global[16];
-float    regenerated_radius_he[16],
-regenerated_radius_n2[16];
-//float    adjusted_crushing_pressure_he[16],
-//adjusted_crushing_pressure_n2[16];
-float    allowable_gradient_he[16],
-allowable_gradient_n2[16];
-//float    initial_allowable_gradient_he[16],
-//initial_allowable_gradient_n2[16];
+static float    helium_pressure[16], nitrogen_pressure[16];
+static float    surface_phase_volume_time[16];
+static float    regenerated_radius_he[16], regenerated_radius_n2[16];
+static float    allowable_gradient_he[16], allowable_gradient_n2[16];
 
 //_Bool deco_zone_reached;
-_Bool critical_volume_algorithm_off;
-float max_first_stop_depth;
-float max_deco_ceiling_depth;
-long vpm_time_calc_begin = 0;
+static _Bool critical_volume_algorithm_off;
+static float max_first_stop_depth;
+static float max_deco_ceiling_depth;
 //Boylslaw compensation
-float deco_gradient_he[16];
-float deco_gradient_n2[16];
-int last_nullzeit;
-int vpm_calc_what;
-int count_critical_volume_iteration;
-short number_of_changes;
- float   depth_change[11];
- float  step_size_change[11];
- float    rate_change[11];
- short mix_change[11];
+static float deco_gradient_he[16];
+static float deco_gradient_n2[16];
+static int vpm_calc_what;
+static int count_critical_volume_iteration;
+static short number_of_changes;
+static float   depth_change[11];
+static float  step_size_change[11];
+static float    rate_change[11];
+static short mix_change[11];
 
-const _Bool vpm_b = true;
+static const _Bool vpm_b = true;
 
-//extern
-/*extern float tissue_N2_saturation[4][16];
-extern float tissue_He_saturation[4][16];
-extern long dv_divetime;
-extern dive_data_t dive_data;
-extern int dive_ambient_pressure_mbar;
-extern long dv_seconds_since_last_dive;
-extern int tts[4];*/
 extern const float float_buehlmann_N2_factor_expositon_20_seconds[];
 extern const float float_buehlmann_He_factor_expositon_20_seconds[];
 extern const float float_buehlmann_N2_factor_expositon_one_minute[];
@@ -182,89 +141,57 @@ extern const float float_buehlmann_He_factor_expositon_five_minutes[];
 extern const float float_buehlmann_N2_factor_expositon_one_hour[];
 extern const float float_buehlmann_He_factor_expositon_one_hour[];
 
-//extern buehlmann_configuration_t buehlmann_config;
+static float    depth_start_of_deco_calc;
+static float    depth_start_of_deco_zone;
+static float    first_stop_depth;
+static float    run_time_start_of_deco_zone;
 
-extern unsigned char CCR_mode; //0x100 // by tissue_calls.c			// uchar
+static float r_nint(float *x);
+static float r_int(float *x);
+static _Bool nullzeit_unter60;
+static int vpm_calc_status;
+static _Bool buehlmann_wait_exceeded = false;
 
-//extern gaschange2_t gaschange_CCR_backup[2][BUEHLMANN_STRUCT_MAX_GASES];
+static SLifeData* pInput = NULL;
+static SVpm* pVpm = NULL;
+static SDecoinfo* pDecoInfo = NULL;
+static SDiveSettings* pDiveSettings = NULL;
 
-
-float starting_ambient_pressure_global;
-float ending_ambient_pressure_global;
-float    depth_start_of_deco_calc;
-float    depth_start_of_deco_zone;
-float    first_stop_depth;
-float    run_time_start_of_deco_zone;
-
-float r_nint(float *x);
-float r_int(float *x);
-_Bool repetitive_variables_not_valid = false;
-_Bool nullzeit_unter60;
-//enum VPM_CALC_STATUS{CALC_END,CALC_BEGIN,CALC_NULLZEIT };
-int vpm_calc_status;
-_Bool buehlmann_wait_exceeded = false;
-
-SLifeData* pInput = NULL;
-SVpm* pVpm = NULL;
-SDecoinfo* pDecoInfo = NULL;
-SDiveSettings* pDiveSettings = NULL;
-float r_nint(float *x)
+static float r_nint(float *x)
 {
     return( (*x)>=0 ?
     floorf(*x + 0.5f) : -floorf(0.5f - *x) );
 }
 
-float r_int(float *x)
+static float r_int(float *x)
 {
     return( (*x>0) ? floorf(*x) : -floorf(- *x) );
 }
 
 /** private functions
 */
-int onset_of_impermeability(float *starting_ambient_pressure, float *ending_ambient_pressure, float *rate, short *i);
-int radius_root_finder (float *a, float *b, float *c,float *low_bound,  float *high_bound, float *ending_radius);
-int nuclear_regeneration(float *dive_time);// clock_();
-int calc_deco_ceiling(float *deco_ceiling_depth,_Bool fallowablw);
+extern int radius_root_finder (float *a, float *b, float *c,float *low_bound,  float *high_bound, float *ending_radius);
 
-int calc_barometric_pressure(float *altitude);
-//extern /* Subroutine */ int vpm_repetitive_algorithm();
-//extern /* Subroutine */ int gas_loadings_surface_interval();
-int critical_volume(float *deco_phase_volume_time);	    ;
-int calc_start_of_deco_zone(float *starting_depth, float *rate, float *depth_start_of_deco_zone);
+static int nuclear_regeneration(float *dive_time);// clock_();
+static int calc_deco_ceiling(float *deco_ceiling_depth,_Bool fallowablw);
+static int critical_volume(float *deco_phase_volume_time);	    ;
+static int calc_start_of_deco_zone(float *starting_depth, float *rate, float *depth_start_of_deco_zone);
+static int calc_initial_allowable_gradient(void);
+static void decompression_stop(float *deco_stop_depth, float *step_size, _Bool final_deco_calculation);
+static int gas_loadings_ascent_descen(float* helium_pressure, float* nitrogen_pressure, float starting_depth,float ending_depth, float rate,_Bool check_gas_change);
+static int calc_surface_phase_volume_time(void);
+static int calc_max_actual_gradient(float *deco_stop_depth);
+static int projected_ascent(float *starting_depth, float *rate, float *deco_stop_depth, float *step_size);
+static void vpm_calc_deco(void);
+static int vpm_calc_critcal_volume(_Bool begin,_Bool calc_nulltime);
+static int vpm_check_converged(_Bool calc_nulltime);
+static int vpm_calc_final_deco(_Bool begin);
+static void BOYLES_LAW_COMPENSATION (float* First_Stop_Depth,float * Deco_Stop_Depth,float* Step_Size);
+static int vpm_calc_nullzeit(void);
+static void  vpm_init_1(void);
+static void vpm_calc_deco_ceiling(void);
 
-int calc_initial_allowable_gradient(void);
-void decompression_stop(float *deco_stop_depth, float *step_size, _Bool final_deco_calculation);
-int gas_loadings_ascent_descen(float* helium_pressure, float* nitrogen_pressure, float starting_depth,float ending_depth, float rate,_Bool check_gas_change);
-
-int calc_surface_phase_volume_time(void);
-int calc_max_actual_gradient(float *deco_stop_depth);
-int projected_ascent(float *starting_depth, float *rate, float *deco_stop_depth, float *step_size);
-void vpm_calc_deco(void);
-int vpm_calc_critcal_volume(_Bool begin,_Bool calc_nulltime);
-int vpm_check_converged(_Bool calc_nulltime);
-int vpm_calc_final_deco(_Bool begin);
-void BOYLES_LAW_COMPENSATION (float* First_Stop_Depth,float * Deco_Stop_Depth,float* Step_Size);
-int vpm_calc_nullzeit(void);
-int vpm_repetitive_algorithm(float *surface_interval_time);
-void  vpm_init_1(void);
-
-void vpm_calc_deco_ceiling(void);
-
-//extern /* Subroutine */ int gas_loadings_constant_depth();
-//extern /* Subroutine */ int vpm_altitude_dive_algorithm();
-//extern /* Subroutine */ int calc_max_actual_gradient(),
-//projected_ascent();
-
-void ______X_X_X___________________________________________________________(void);
-
-//#define ARGGG
-
-void vpm_reset_variables(void)
-{
-    repetitive_variables_not_valid = true;
-}
-
-void vpm_init_1(void)
+static void vpm_init_1(void)
 {
      units_equal_msw = true;
      units_equal_fsw = false;
@@ -389,7 +316,7 @@ void  vpm_saturation_after_ascent(SLifeData* input)
 /*     compartments due to a linear ascent or descent segment at a constant rate. */
 /* =============================================================================== */
 
-int gas_loadings_ascent_descen(float* helium_pressure,
+static int gas_loadings_ascent_descen(float* helium_pressure,
                                float* nitrogen_pressure,
                                float starting_depth,
                                float ending_depth,
@@ -480,24 +407,22 @@ int gas_loadings_ascent_descen(float* helium_pressure,
     return 0;
 } /* gas_loadings_ascent_descen */
 
-float last_phase_volume_time[16];
-float n2_pressure_start_of_deco_zone[16];
-float he_pressure_start_of_deco_zone[16];
-float phase_volume_time[16];
-float n2_pressure_start_of_ascent[16];
-float  he_pressure_start_of_ascent[16];
-float    run_time_start_of_deco_calc;
-float starting_depth;
-float last_run_time;
-float deco_phase_volume_time;
+static float last_phase_volume_time[16];
+static float n2_pressure_start_of_deco_zone[16];
+static float he_pressure_start_of_deco_zone[16];
+static float phase_volume_time[16];
+static float n2_pressure_start_of_ascent[16];
+static float  he_pressure_start_of_ascent[16];
+static float    run_time_start_of_deco_calc;
+static float starting_depth;
+static float last_run_time;
+static float deco_phase_volume_time;
+static float run_time_start_of_ascent;
+static float rate;
+static float    step_size;
+static _Bool vpm_violates_buehlmann;
 
-float run_time_start_of_ascent;
-
-float rate;
-float    step_size;
-_Bool vpm_violates_buehlmann;
-
-void  vpm_calc_deco(void)
+static  void  vpm_calc_deco(void)
 {
     /* System generated locals */
 
@@ -662,8 +587,8 @@ void  vpm_calc_deco(void)
 /* =============================================================================== */
 /* L50: */
 
-float  deco_stop_depth;
-int vpm_calc_critcal_volume(_Bool begin,
+static float  deco_stop_depth;
+static int vpm_calc_critcal_volume(_Bool begin,
                             _Bool calc_nulltime)
 {   /* loop will run continuous there is an exit stateme */
 
@@ -767,23 +692,6 @@ int vpm_calc_critcal_volume(_Bool begin,
                     pDecoInfo->output_stop_length_seconds[dp] = 0;
                 }
                 pDecoInfo->output_ndl_seconds = 0;
-                /*max_first_stop_depth = 0;
-                deco_zone_reached = false;
-                depth_start_of_deco_calc = 0;
-                depth_start_of_deco_zone = 0;
-                first_stop_depth = 0;
-                max_first_stop_depth_save = 0;
-                depth_start_of_deco_zone_save = 0;
-                run_time_start_of_deco_zone_save = 0;
-                tts[DECOSTOPS] = 0;
-                tts[NULLZEIT] = 0;
-                tts[FUTURESTOPS] = 0;
-                nullzeit_unter60 = false;
-                vpm_calc_status = CALC_NULLZEIT;
-                vpm_calc_what = DECOSTOPS;
-                float surfacetime = 0;
-                vpm_repetitive_algorithm(&surfacetime);*/
-
             }
 
             return CALC_NULLZEIT;
@@ -878,7 +786,7 @@ int vpm_calc_critcal_volume(_Bool begin,
 /* =============================================================================== */
 /* end of deco stop loop */
 
-int vpm_check_converged(_Bool calc_nulltime)
+static int vpm_check_converged(_Bool calc_nulltime)
 {
 
     short i;
@@ -975,7 +883,7 @@ int vpm_check_converged(_Bool calc_nulltime)
     //  }/* end of critical vol loop */
 }
 
-void vpm_calc_deco_ceiling(void)
+static void vpm_calc_deco_ceiling(void)
 {
 
     short i;
@@ -1088,7 +996,7 @@ void vpm_calc_deco_ceiling(void)
 /*     DECO STOP LOOP BLOCK FOR FINAL DECOMPRESSION SCHEDULE */
 /* =============================================================================== */
 
-int vpm_calc_final_deco(_Bool begin)
+static int vpm_calc_final_deco(_Bool begin)
 {
     short i;
     float    r1;
@@ -1264,7 +1172,7 @@ int vpm_calc_final_deco(_Bool begin)
 /*     normal length, but will have a major impact for saturation dives. */
 /* =============================================================================== */
 
-int nuclear_regeneration(float *dive_time)
+static int nuclear_regeneration(float *dive_time)
 {
     /* Local variables */
     float crush_pressure_adjust_ratio_he,
@@ -1373,7 +1281,7 @@ int nuclear_regeneration(float *dive_time)
 /*     gradients are tracked separately for helium and nitrogen. */
 /* =============================================================================== */
 
-int calc_initial_allowable_gradient()
+static int calc_initial_allowable_gradient()
 {
     float initial_allowable_grad_n2_pa,
     initial_allowable_grad_he_pa;
@@ -1428,7 +1336,7 @@ int calc_initial_allowable_gradient()
 /*     subroutine to determine the actual deco schedule. */
 /* =============================================================================== */
 
-int calc_deco_ceiling(float *deco_ceiling_depth,_Bool fallowable)
+static int calc_deco_ceiling(float *deco_ceiling_depth,_Bool fallowable)
 {
     /* System generated locals */
     float r1, r2;
@@ -1555,7 +1463,7 @@ int calc_deco_ceiling(float *deco_ceiling_depth,_Bool fallowable)
 /*     the repetitive algorithm from being overly conservative. */
 /* =============================================================================== */
 
-int calc_max_actual_gradient(float *deco_stop_depth)
+static int calc_max_actual_gradient(float *deco_stop_depth)
 {
     /* System generated locals */
     float r1;
@@ -1602,7 +1510,7 @@ int calc_max_actual_gradient(float *deco_stop_depth)
 /*     for a more detailed explanation of this algorithm. */
 /* =============================================================================== */
 
-int calc_surface_phase_volume_time()
+static int calc_surface_phase_volume_time()
 {
     /* Local variables */
     float decay_time_to_zero_gradient;
@@ -1662,7 +1570,7 @@ int calc_surface_phase_volume_time()
 /*     on the setting of the Critical Volume Parameter Lambda. */
 /* =============================================================================== */
 
-int critical_volume(float *deco_phase_volume_time)
+static int critical_volume(float *deco_phase_volume_time)
 {
     /* System generated locals */
     float r1;
@@ -1778,7 +1686,7 @@ int critical_volume(float *deco_phase_volume_time)
 /*     1992. */
 /* =============================================================================== */
 
-int calc_start_of_deco_zone(float *starting_depth,
+static int calc_start_of_deco_zone(float *starting_depth,
                             float *rate,
                             float *depth_start_of_deco_zone)
 {
@@ -1977,7 +1885,7 @@ int calc_start_of_deco_zone(float *starting_depth,
 /*     ascent can be made. */
 /* =============================================================================== */
 
-int projected_ascent(float *starting_depth,
+static int projected_ascent(float *starting_depth,
                      float *rate,
                      float *deco_stop_depth,
                      float *step_size)
@@ -2046,7 +1954,7 @@ int projected_ascent(float *starting_depth,
 /*     decompression stop. */
 /* =============================================================================== */
 
-void decompression_stop(float *deco_stop_depth,
+static void decompression_stop(float *deco_stop_depth,
                         float *step_size,
                         _Bool final_deco_calculation)
 {
@@ -2268,7 +2176,7 @@ dive_data.pressure = pressure_save;*/
 //    with decreasing ambient pressure during the decompression profile based
 //    on Boyle's Law considerations.
 //===============================================================================
-void BOYLES_LAW_COMPENSATION (float* First_Stop_Depth,
+static void BOYLES_LAW_COMPENSATION (float* First_Stop_Depth,
                               float*  Deco_Stop_Depth,
                               float* Step_Size)
 {
@@ -2370,7 +2278,7 @@ void BOYLES_LAW_COMPENSATION (float* First_Stop_Depth,
 //	vpm_calc_nullzeit
 //     Purpose: This function calcs zero time (time where no decostops are needed)
 //===============================================================================
-int vpm_calc_nullzeit(void)
+static int vpm_calc_nullzeit(void)
 {
     static float future_helium_pressure[16];
     static float future_nitrogen_pressure[16];
