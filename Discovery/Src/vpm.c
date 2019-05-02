@@ -240,7 +240,7 @@ int  vpm_calc(SLifeData* pINPUT,
         pDECOINFO->output_stop_length_seconds[i] = 0;
     }
 
-    if(pINPUT->dive_time_seconds < 10)
+    if(pINPUT->dive_time_seconds < 60)
     {
         vpm_calc_status = CALC_NDL;
         return vpm_calc_status;
