@@ -517,7 +517,7 @@ static float get_gf_at_pressure(SDiveSettings *pDiveSettings, float pressure)
 	return (pDiveSettings->gf_high - gfSteigung * (pressure - gSurface_pressure_bar) )/ 100.0f;
 }
 
-
+#define MAX_NDL 240
 static int buehlmann_calc_ndl(SDiveSettings *pDiveSettings)
 {
 	float local_tissue_nitrogen_bar[16];
@@ -528,7 +528,7 @@ static int buehlmann_calc_ndl(SDiveSettings *pDiveSettings)
 	//Check ndl always use gHigh
 	gGF_value = ((float)pDiveSettings->gf_high) / 100.0f;
 	//10 minutes steps
-	while(ndl < (300 * 60))
+	while(ndl < (MAX_NDL * 60))
 	{
 		memcpy(local_tissue_nitrogen_bar, gTissue_nitrogen_bar, (4*16));
 		memcpy(local_tissue_helium_bar, gTissue_helium_bar, (4*16));
@@ -545,10 +545,10 @@ static int buehlmann_calc_ndl(SDiveSettings *pDiveSettings)
 		buehlmann_backup_and_restore(false);
 	}
 
-	if(ndl < (300 * 60))
+	if(ndl < (MAX_NDL * 60))
 		ndl -= 600;
 
-	if(ndl > (150 * 60))
+	if(ndl > (MAX_NDL/2 * 60))
 		return ndl;
 
 	// refine
@@ -559,7 +559,6 @@ static int buehlmann_calc_ndl(SDiveSettings *pDiveSettings)
 	for(i = 0; i < 10; i++)
 	{
 		ndl += 60;
-		//tissues_exposure_at_gPressure_seconds(60);
 		decom_tissues_exposure2(60, &pDiveSettings->decogaslist[gGas_id], gPressure,gTissue_nitrogen_bar,gTissue_helium_bar);
 		decom_oxygen_calculate_cns_exposure(60,&pDiveSettings->decogaslist[gGas_id],gPressure,&gCNS);
 		buehlmann_backup_and_restore(true);
