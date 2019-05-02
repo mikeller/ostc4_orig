@@ -2278,6 +2278,8 @@ static void BOYLES_LAW_COMPENSATION (float* First_Stop_Depth,
 //	vpm_calc_nullzeit
 //     Purpose: This function calcs zero time (time where no decostops are needed)
 //===============================================================================
+#define MAX_NDL	240
+
 static int vpm_calc_nullzeit(void)
 {
     static float future_helium_pressure[16];
@@ -2295,8 +2297,7 @@ static int vpm_calc_nullzeit(void)
     int i = 0;
     int count = 0;
     int status = CALC_END;
-    //if(begin)
-    //{
+
         for(i = 0; i < 16;i++)
         {
             future_helium_pressure[i] =  pInput->tissue_helium_bar[i] * 10;//tissue_He_saturation[st_dive][i] * 10;
@@ -2306,22 +2307,16 @@ static int vpm_calc_nullzeit(void)
 
         mix_number = 0;
         ambient_pressure = pInput->pressure_ambient_bar  * 10;
-//		 fraction_helium_begin;
-//		 fraction_nitrogen_begin;
         decom_get_inert_gases( ambient_pressure / 10,  (&pDiveSettings->decogaslist[mix_number]) , &fraction_nitrogen_begin, &fraction_helium_begin );
         inspired_helium_pressure =(ambient_pressure - WATER_VAPOR_PRESSURE) * fraction_helium_begin;
         inspired_nitrogen_pressure =(ambient_pressure - WATER_VAPOR_PRESSURE) *fraction_nitrogen_begin;
 
-        //if(!nullzeit_unter60)
-        //{
             status = CALC_END;
             while (status == CALC_END)
             {
                 count++;
-                //if(count == 7)
-                    //return CALC_NULLZEIT2;
                 temp_segment_time  +=  60;
-                if(temp_segment_time >= 300)
+                if(temp_segment_time >= MAX_NDL)
                 {
                     pDecoInfo->output_ndl_seconds = temp_segment_time * 60;
                     return CALC_NULLZEIT;
@@ -2348,10 +2343,6 @@ static int vpm_calc_nullzeit(void)
                 future_helium_pressure[i - 1] = previous_helium_pressure[i-1];
                 future_nitrogen_pressure[i - 1] = previous_nitrogen_pressure[i - 1];
             }
-        //}
-    //}
-    //if(!nullzeit_unter60 || begin ||  temp_segment_time > 10)
-    //{
 
         status = CALC_END;
         if(temp_segment_time < 60)
@@ -2359,11 +2350,8 @@ static int vpm_calc_nullzeit(void)
 
         while (status == CALC_END)
         {
-        //	count++;
-            //if(count >= 5)
-                //return CALC_NULLZEIT2;
             temp_segment_time  +=  5;
-            if(temp_segment_time >= 300)
+            if(temp_segment_time >= MAX_NDL)
             {
                 pDecoInfo->output_ndl_seconds = temp_segment_time * 60;
                 return CALC_NULLZEIT;
@@ -2371,7 +2359,6 @@ static int vpm_calc_nullzeit(void)
             if(nullzeit_unter60 && temp_segment_time > 60)
             {
                 nullzeit_unter60 = false;
-                //tts[NULLZEIT] = temp_segment_time * 60;
                 return CALC_NULLZEIT;
             }
             run_time += 5;
@@ -2394,19 +2381,11 @@ static int vpm_calc_nullzeit(void)
             future_nitrogen_pressure[i - 1] = previous_nitrogen_pressure[i - 1];
         }
         status = CALC_END;
-        //if(temp_segment_time < 5)
-            //count = 2;
-    //}
-    //else
-        //count = 1;
+
     if(temp_segment_time <= 20)
     {
         while (status == CALC_END)
         {
-            //time_counter = temp_segment_time;
-            //count++;
-            //if(count > 2)
-                //return CALC_NULLZEIT2;
             temp_segment_time  +=  minimum_deco_stop_time;
             run_time += minimum_deco_stop_time;
             //goto L700;
