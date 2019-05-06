@@ -65,14 +65,14 @@ static uint8_t text_IT_Divetime[] = "Tempo";
 static uint8_t text_ES_Divetime[] = "Tiempo";
 
 // dive mode
-static uint8_t text_EN_MaxDepth[] = "Max depth";
-static uint8_t text_DE_MaxDepth[] = "Max Tiefe";
+static uint8_t text_EN_MaxDepth[] = "Max. depth";
+static uint8_t text_DE_MaxDepth[] = "Max. Tiefe";
 static uint8_t text_FR_MaxDepth[] = "Prof. max";    // Profondeur
 static uint8_t text_IT_MaxDepth[] = "Prof. max";
 static uint8_t text_ES_MaxDepth[] = "Prof. max";    
 
 // dive mode
-static uint8_t text_EN_AvgDepth[] = "Avg depth";
+static uint8_t text_EN_AvgDepth[] = "Avg. depth";
 static uint8_t text_DE_AvgDepth[] = "(/) Tiefe";
 static uint8_t text_FR_AvgDepth[] = "Prof. moy";
 static uint8_t text_IT_AvgDepth[] = "Prof. media";
@@ -157,7 +157,7 @@ static uint8_t text_ES_Ceiling[] = "Techo";
 
 // dive mode
 static uint8_t text_EN_ActualGradient[] = "Saturation";
-static uint8_t text_DE_ActualGradient[] = "";
+static uint8_t text_DE_ActualGradient[] = "Sättigung";
 static uint8_t text_FR_ActualGradient[] = "";
 static uint8_t text_IT_ActualGradient[] = "";
 static uint8_t text_ES_ActualGradient[] = "";

@@ -15,7 +15,7 @@
  * @warning
  @verbatim
  ==============================================================================
- ##### What about hardware without 8 MHz oscilator #####
+ ##### What about hardware without 8 MHz oscillator #####
  ==============================================================================
  [..] modify OTP Byte 1 at 0x1FFF7800 with ST-Link utility
 
@@ -33,7 +33,7 @@
  ==============================================================================
  ##### What it does #####
  ==============================================================================
- [..] All realtime stuff und all what has to be done during sleep
+ [..] All realtime stuff and all what has to be done during sleep
 
  [..] RealTimeClock. The entire time and date handling (including divetime)
  [..] Hardware control for pressure sensor, compass, battery monitor
@@ -64,16 +64,15 @@
  ==============================================================================
  ##### Real Time Clock #####
  ==============================================================================
- [..] Wehe sie zickt statt tickt!
- The RTC is a seperate part of hardware inside the CPU and is not affected
+  The RTC is a separate part of hardware inside the CPU and is not affected
  by reset. Only power-on reset does change something.
  This is fine but the RTC is vital for the Sleep mode as Wakeuptimer.
  This is the only date/time system in the OSTC. The main CPU is passive.
- Data transfer is done with localtime_rtc_tr und localtime_rtc_dr
+ Data transfer is done with localtime_rtc_tr and localtime_rtc_dr
  in HAL_RTC format to the main CPU and as HAL_RTC structs the way back for
  setting the actual time and date.
  The RTC unit has 20 Byte of V_bat powered SRAM. It could be used
- for something usefull in both CPUs.
+ for something useful in both CPUs.
 
  ==============================================================================
  ##### File system  #####
@@ -98,7 +97,7 @@
  ##### Firmware Update Info #####
  ==============================================================================
  V0.85			160531	scheduleCheck_pressure_reached_dive_mode_level() changes
- 160606	global.no_fly_time_minutes ist at least 24h after the dive
+ 160606	global.no_fly_time_minutes is at least 24h after the dive
  160613	ambient light fixed
  160720	compass calib to Flash  (8000 writes max. as erase has problems)
  160829	do not reset main CPU on power on!
@@ -109,7 +108,7 @@
  161024	no_fly_time_minutes Backup FIX
  seconds_since_last_dive now related to RTC clock
  161121	close to surface starts at 1 meter below last known surface pressure
- 161121	in surface mode dive mode starts @1 mtr difference if surface 880 mbar instead of 700 mbar before
+ 161121	in surface mode dive mode starts @1 mtr difference if surface 880 hPa instead of 700 hPa before
  V0.97+		170213	added global.dataSendToSlave.diveModeInfo for DIVEMODE_Apnea
  added global.dataSendToSlave.setEndDive
  DIVEMODE_Apnea special in scheduler.c (ticksdiff >= 1000) -> no tissue, cns, otu, no change in noFly Time etc.
@@ -165,19 +164,19 @@ const SFirmwareData cpu2_FirmwareData __attribute__(( section(".firmware_data") 
 		.versionFirst = 1,
 		.versionSecond = 8,
 		.versionThird = 0,
-		.versionBeta = 1,
+		.versionBeta = 0,
 
 /* 4 bytes with trailing 0 */
 		.signature = "mh",
 
 		.release_year = 19,
-		.release_month = 3,
-		.release_day = 10,
+		.release_month = 5,
+		.release_day = 6,
 		.release_sub = 0,
 
 		/* max 48 with trailing 0 */
 		//release_info ="12345678901234567890123456789012345678901"
-		.release_info = "compass stuff",
+		.release_info = "stable May'19",
 
 		/* for safety reasons and coming functions */
 		.magic[0] = FIRMWARE_MAGIC_FIRST, .magic[1] = FIRMWARE_MAGIC_SECOND,
