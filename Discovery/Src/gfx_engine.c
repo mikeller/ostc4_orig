@@ -114,27 +114,29 @@ enum LOGOSTATE
 /* Semi Private variables ---------------------------------------------------------*/
 
 DMA2D_HandleTypeDef	Dma2dHandle;
-LTDC_HandleTypeDef	LtdcHandle;
+static LTDC_HandleTypeDef	LtdcHandle;
 
 /* Private variables ---------------------------------------------------------*/
 
-uint8_t DMA2D_at_work = 0;
+static uint8_t DMA2D_at_work = 0;
 
-GFX_layerControl FrameHandler = { 0 };
+static GFX_layerControl FrameHandler = { 0 };
 
-uint32_t pInvisibleFrame = 0;
-uint32_t pLogoFrame = 0;
-uint8_t logoStatus;
-uint32_t pBackgroundHwFrame = 0;
-uint8_t backgroundHwStatus;
+static uint32_t pInvisibleFrame = 0;
+static uint32_t pLogoFrame = 0;
+static uint8_t logoStatus;
+static uint32_t pBackgroundHwFrame = 0;
+static uint8_t backgroundHwStatus;
 
-SFrameList frame[MAXFRAMES];
+static SFrameList frame[MAXFRAMES];
 
 #define MAXFRAMECOUNTER (28)
-uint8_t frameCounter[MAXFRAMECOUNTER] = { 0 };
+static uint8_t frameCounter[MAXFRAMECOUNTER] = { 0 };
 
-_Bool lock_changeLTDC	= 0;
+static _Bool lock_changeLTDC	= 0;
 
+static void GFX_clear_frame_immediately(uint32_t pDestination);
+static void GFX_draw_image_color(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window, const tImage *image);
 /* ITM Trace-----------------------------------------------------------------*/
 
 #include "stdio.h"
@@ -173,15 +175,15 @@ uint32_t MaxU32GFX(uint32_t a, uint32_t b)
 
 static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg, uint8_t character, tFont *Font);
 static uint32_t GFX_write_substring(GFX_CfgWriteString* cfg, GFX_DrawCfgWindow* hgfx, uint8_t textId, int8_t nextCharFor2Byte);
-uint32_t GFX_write__Modify_Xdelta__Centered(GFX_CfgWriteString* cfg, GFX_DrawCfgWindow* hgfx, const char *pText);
-uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GFX_DrawCfgWindow* hgfx, const char *pTextInput);
+static uint32_t GFX_write__Modify_Xdelta__Centered(GFX_CfgWriteString* cfg, GFX_DrawCfgWindow* hgfx, const char *pText);
+static uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GFX_DrawCfgWindow* hgfx, const char *pTextInput);
 static void GFX_Error_Handler(void);
 static void GFX_Dma2d_TransferComplete(DMA2D_HandleTypeDef* Dma2dHandle);
 static void GFX_Dma2d_TransferError(DMA2D_HandleTypeDef* Dma2dHandle);
-void  GFX_clear_frame_dma2d(uint8_t frameId);
+static void  GFX_clear_frame_dma2d(uint8_t frameId);
 
-uint32_t GFX_doubleBufferOne(void);
-uint32_t GFX_doubleBufferTwo(void);
+static uint32_t GFX_doubleBufferOne(void);
+static uint32_t GFX_doubleBufferTwo(void);
 
 
 /* Exported functions --------------------------------------------------------*/
@@ -190,29 +192,6 @@ uint8_t GFX_logoStatus(void)
 {
 	return logoStatus;
 }
-
-
-void GFX_helper_font_memory_list(const tFont *Font)
-{
-	int i;
-	uint8_t character;
-
-	// -----------------------------
-
-	for(character = 0x20; character < 0xFF; character++)
-	{
-		for(i=0;i<Font->length;i++)
-		{
-			if(Font->chars[i].code == character)
-			{
-				printf("%02x: 0x%0lx  0x%0lx\n\r",(uint8_t)character, (uint32_t)(Font->chars[i].image->data),((uint32_t)(Font->chars[i+1].image->data)-(uint32_t)(Font->chars[i].image->data)));
-				break;
-			}
-		}
-	}
-}
-
-
 
 void GFX_SetWindowLayer0(uint32_t pDestination, int16_t XleftGimpStyle, int16_t XrightGimpStyle, int16_t YtopGimpStyle, int16_t YbottomGimpStyle)
 {
@@ -258,51 +237,6 @@ void GFX_logoAutoOff(void)
 		logoStatus = LOGOSTART;
 }
 
-/*
-uint8_t	GFX_printf_firmware(char *text)
-{	
-	uint8_t zahl, ptr;
-	
-	ptr = 0;
-	zahl = settingsGetPointer()->firmwareVersion16to32bit.ub.first;
-	if(zahl >= 10)
-	{
-		text[ptr++] = '0' + (zahl / 10);
-		zahl = zahl - ((zahl / 10 ) * 10);
-	}
-	text[ptr++] = '0' + zahl;
-	text[ptr++] = '.';
-	
-	zahl = settingsGetPointer()->firmwareVersion16to32bit.ub.second;
-	if(zahl >= 10)
-	{
-		text[ptr++] = '0' + (zahl / 10);
-		zahl = zahl - ((zahl / 10 ) * 10);
-	}
-	text[ptr++] = '0' + zahl;
-	text[ptr++] = '.';
-
-	zahl = settingsGetPointer()->firmwareVersion16to32bit.ub.third;
-	if(zahl >= 10)
-	{
-		text[ptr++] = '0' + (zahl / 10);
-		zahl = zahl - ((zahl / 10 ) * 10);
-	}
-	text[ptr++] = '0' + zahl;
-	
-	if(settingsGetPointer()->firmwareVersion16to32bit.ub.betaFlag)
-	{
-		text[ptr++] = ' ';
-		text[ptr++] = 'b';
-		text[ptr++] = 'e';
-		text[ptr++] = 't';
-		text[ptr++] = 'a';
-	}
-	text[ptr] = 0;
-
-	return ptr;
-}
-*/
 
 void GFX_hwBackgroundOn(void)
 {
@@ -316,7 +250,7 @@ void GFX_hwBackgroundOff(void)
 }
 
 
-void GFX_build_hw_background_frame(void)
+static void GFX_build_hw_background_frame(void)
 {
 	GFX_DrawCfgScreen	tLogoTemp;
 	SWindowGimpStyle windowGimp;
@@ -350,9 +284,7 @@ void GFX_build_hw_background_frame(void)
 }
 
 
-
-
-void GFX_build_logo_frame(void)
+static void GFX_build_logo_frame(void)
 {
 	GFX_DrawCfgScreen	tLogoTemp;
 	SWindowGimpStyle windowGimp;
@@ -434,60 +366,6 @@ void GFX_init(uint32_t  * pDestinationOut)
 }
 
 
-void GFX_init1_no_DMA(uint32_t  * pDestinationOut, uint8_t blockFrames)
-{
-	frame[0].StartAddress = FBGlobalStart;
-	GFX_clear_frame_immediately(frame[0].StartAddress);
-	frame[0].status = CLEAR;
-	frame[0].caller = 0;
-
-	for(int i=1;i<MAXFRAMES;i++)
-	{
-		frame[i].StartAddress = frame[i-1].StartAddress + FBOffsetEachIndex;
-		GFX_clear_frame_immediately(frame[i].StartAddress);
-		frame[i].status = CLEAR;
-		frame[i].caller = 0;
-	}
-
-	for(int i=0;i<blockFrames;i++)
-	{
-		frame[i].status = BLOCKED;
-		frame[i].caller = 1;
-	}
-	
-	pInvisibleFrame = getFrame(2);
-	*pDestinationOut = pInvisibleFrame;
-
-	GFX_build_logo_frame();
-	GFX_build_hw_background_frame();
-}
-
-
-void GFX_init2_DMA(void)
-{
-  /* Register to memory mode with ARGB8888 as color Mode */
-  Dma2dHandle.Init.Mode         = DMA2D_R2M;
-  Dma2dHandle.Init.ColorMode    = DMA2D_ARGB4444;//to fake AL88,  before: DMA2D_ARGB8888;
-  Dma2dHandle.Init.OutputOffset = 0;
-
-  /* DMA2D Callbacks Configuration */
-  Dma2dHandle.XferCpltCallback  = GFX_Dma2d_TransferComplete;
-  Dma2dHandle.XferErrorCallback = GFX_Dma2d_TransferError;
-
-  Dma2dHandle.Instance  = DMA2D;
-
-  /* DMA2D Initialisation */
-	if(HAL_DMA2D_Init(&Dma2dHandle) != HAL_OK)
-		GFX_Error_Handler();
-
-  if(HAL_DMA2D_ConfigLayer(&Dma2dHandle, 1) != HAL_OK)
-		GFX_Error_Handler();
-
-	DMA2D_at_work = 255;
-}
-
-
-
 void GFX_SetFrameTop(uint32_t pDestination)
 {
 	lock_changeLTDC	= 1;
@@ -527,13 +405,13 @@ void GFX_SetFramesTopBottom(uint32_t pTop, uint32_t pBottom, uint32_t heightBott
 }
 
 
-uint32_t GFX_get_pActualFrameTop(void)
+static uint32_t GFX_get_pActualFrameTop(void)
 {
 	return FrameHandler.pActualTopBuffer;
 }
 
 
-uint32_t GFX_get_pActualFrameBottom(void)
+static uint32_t GFX_get_pActualFrameBottom(void)
 {
 	return FrameHandler.actualBottom.pBuffer;
 }
@@ -772,45 +650,8 @@ void GFX_VGA_transform(uint32_t pSource, uint32_t pDestination)
 	}
 }
 
-HAL_StatusTypeDef GFX_SetBackgroundColor(uint32_t LayerIdx, uint8_t red, uint8_t green, uint8_t blue)
-{
-  uint32_t tmp = 0;
-  uint32_t tmp1 = 0;
 
-  /* Process locked */
-  __HAL_LOCK(&LtdcHandle);
-
-  /* Change LTDC peripheral state */
-  LtdcHandle.State = HAL_LTDC_STATE_BUSY;
-
-  /* Check the parameters */
-  assert_param(IS_LTDC_LAYER(LayerIdx));
-
-  /* Copy new layer configuration into handle structure */
-  LtdcHandle.LayerCfg[LayerIdx].Backcolor.Red    = red;
-  LtdcHandle.LayerCfg[LayerIdx].Backcolor.Green  = green;
-  LtdcHandle.LayerCfg[LayerIdx].Backcolor.Blue   = blue;
-
-  /* Configure the LTDC Layer */
-  tmp = ((uint32_t)(green) << 8);
-  tmp1 = ((uint32_t)(red) << 16);
-  __HAL_LTDC_LAYER(&LtdcHandle, LayerIdx)->DCCR &= ~(LTDC_LxDCCR_DCBLUE | LTDC_LxDCCR_DCGREEN | LTDC_LxDCCR_DCRED | LTDC_LxDCCR_DCALPHA);
-  __HAL_LTDC_LAYER(&LtdcHandle, LayerIdx)->DCCR = (blue | tmp | tmp1 | 0xFF);
-
-  /* Sets the Reload type */
-  LtdcHandle.Instance->SRCR = LTDC_SRCR_IMR;
-
-  /* Initialize the LTDC state*/
-  LtdcHandle.State  = HAL_LTDC_STATE_READY;
-
-  /* Process unlocked */
-  __HAL_UNLOCK(&LtdcHandle);
-
-return HAL_OK;
-}
-
-
-void GFX_clear_frame_immediately(uint32_t pDestination)
+static void GFX_clear_frame_immediately(uint32_t pDestination)
 {
 	uint32_t i;
 	uint32_t* pfill = (uint32_t*) pDestination;
@@ -853,7 +694,7 @@ void GFX_clear_window_immediately(GFX_DrawCfgWindow* hgfx)
 }
 
 
-void  GFX_clear_frame_dma2d(uint8_t frameId)
+static void  GFX_clear_frame_dma2d(uint8_t frameId)
 {
 	if(frameId >= MAXFRAMES)
 		return;
@@ -889,7 +730,7 @@ void GFX_fill_buffer(uint32_t pDestination, uint8_t alpha, uint8_t color)
 }
 
 
-void gfx_flip(point_t *p1, point_t *p2)
+static void gfx_flip(point_t *p1, point_t *p2)
 {
 	point_t temp;
 	
@@ -1114,7 +955,7 @@ void GFX_draw_image_monochrome(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window,
 }
 	
 
-void GFX_draw_image_color(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window, const tImage *image)
+static void GFX_draw_image_color(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window, const tImage *image)
 {
 	uint16_t* pDestination;
 
@@ -1160,49 +1001,8 @@ void GFX_draw_image_color(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window, cons
 }
 
 
-int16_Point_t switchToOctantZeroFrom(uint8_t octant, int16_t x, int16_t y) 
-{
-	int16_Point_t answer;
-   switch(octant)
-	 {		 
-		case 0:// return (x,y);
-			answer.x = x;
-			answer.y = y;
-			break;
-		case 1:// return (y,x);
-			answer.x = y;
-			answer.y = x;
-			break;
-		case 2:// return (y, -x);
-			answer.x = y;
-			answer.y = -x;
-			break;
-		case 3:// return (-x, y);
-			answer.x = -x;
-			answer.y = y;
-			break;
-		case 4:// return (-x, -y);
-			answer.x = -x;
-			answer.y = -y;
-			break;
-		case 5:// return (-y, -x);
-			answer.x = -y;
-			answer.y = -x;
-			break;
-		case 6:// return (-y, x);
-			answer.x = -y;
-			answer.y = x;
-			break;
-		case 7:// return (x, -y);
-			answer.x = x;
-			answer.y = -y;
-			break;
-	 }
-	return answer;
-}
-
 /* this is NOT fast nor optimized */
-void GFX_draw_pixel(GFX_DrawCfgScreen *hgfx, int16_t x, int16_t y, uint8_t color)
+static void GFX_draw_pixel(GFX_DrawCfgScreen *hgfx, int16_t x, int16_t y, uint8_t color)
 {
 	uint16_t* pDestination;
 
@@ -1221,12 +1021,6 @@ void GFX_draw_pixel(GFX_DrawCfgScreen *hgfx, int16_t x, int16_t y, uint8_t color
 		pDestination += y;
 	}
 	*(__IO uint16_t*)pDestination = 0xFF << 8 | color;
-}
-
-
-/* store the quarter circle for given radius */
-void GFX_draw_circle_with_MEMORY(uint8_t use_memory, GFX_DrawCfgScreen *hgfx, point_t center, uint8_t radius, int8_t color)
-{
 }
 
 /* this is NOT fast nor optimized */
@@ -1393,96 +1187,6 @@ void GFX_draw_Grid(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window, int vlines,
 		}
     }
 }
-
-/*	drawVeilUntil ist auff�llen des Bereichs unter der Kurve mit etwas hellerer Farbe
- *	Xdivide ist nichr benutzt, wird weggelassen in dieser Version
- */
-/*
-void  GFX_graph_print(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, uint16_t drawVeilUntil, uint8_t Xdivide, uint16_t dataMin, uint16_t dataMax,  uint16_t *data, uint16_t datalength, uint8_t color, uint8_t *colour_data)
-{
-	if(window->bottom > 479)
-		return;
-	if(window->top > 479)
-		return;
-	if(window->right > 799)
-		return;
-	if(window->left > 799)
-		return;
-	if(window->bottom < 0)
-		return;
-	if(window->top < 0)
-		return;
-	if(window->right < 0)
-		return;
-	if(window->left < 0)
-		return;
-	if(window->bottom <= window->top)
-		return;
-	if(window->right <= window->left)
-		return;
-
-	uint16_t windowwidth = (uint16_t)window->right - (uint16_t)window->left;
-
-	if(dataMax == dataMin)
-		dataMax++;
-	
-	uint8_t invert = 0;	
-	if(dataMin > dataMax)
-	{
-		uint16_t dataFlip;
-		dataFlip = dataMin;
-		dataMin = dataMax;
-		dataMax = dataFlip;
-		invert = 1;
-	}
-	else
-		invert = 0;
-
-	uint16_t dataDelta = 0;
-	dataDelta = dataMax - dataMin;
-
-	uint8_t	colormask = color;
-
-	uint16_t loopX, loopData;
-	loopX = 0;
-	loopData = 0;
-	while((loopX <= windowwidth) & (loopData < datalength))
-	{
-
-	}
-
-
-	uint32_t pDestination_zero_veil = 0;
-	uint32_t pDestination = 0;
-	uint32_t pDestinationOld = 0;
-	int windowwidth = -1;
-	int windowheight = -1;
-	int w1 = -1;
-	int w2 = -1;
-	int value = -1;
-	uint8_t	colormask = 0;
-
-	// preparation
-	windowheight = window->bottom - window->top;
-	windowwidth = window->right - window->left;
-	pDestination_zero_veil = hgfx->FBStartAdress + 2 * (  (479 - (drawVeilUntil - 2) ) + ( (window->left) * hgfx->ImageHeight) );
-	
-	while((w1 <= windowwidth) & (w2 < datalength))
-	{
-		// before
-		if(colour_data != NULL)
-		{
-			colormask = color + colour_data[w2];
-		}
-    pDestination = hgfx->FBStartAdress + 2 * (  (479 - (window->top + value) ) + ( (w1 + window->left) * hgfx->ImageHeight) );
-	
-		// after
-		pDestination_zero_veil += (window->left) * hgfx->ImageHeight;
-	}	
-}
-*/
-
-
 
 //  ===============================================================================
 //	GFX_graph_print
@@ -2015,8 +1719,6 @@ void GFX_draw_box(GFX_DrawCfgScreen *hgfx, point_t LeftLow, point_t WidthHeight,
 		}
 	}
 }
-
-
 
 
 /**
@@ -3274,7 +2976,7 @@ static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg,
 	* @param  gfx_selected_language: 	gfx_selected_language
 	* @retval counter and *cText content
   */
-int8_t GFX_write__Modify_helper(char *cText, const char *pTextInput, uint8_t gfx_selected_language)
+static int8_t GFX_write__Modify_helper(char *cText, const char *pTextInput, uint8_t gfx_selected_language)
 {
 	uint32_t pText, backup;
 	uint8_t textId;
@@ -3374,7 +3076,7 @@ int8_t GFX_write__Modify_helper(char *cText, const char *pTextInput, uint8_t gfx
 	* @retval Ydelta:		0 if text has to start left ( and probably does not fit)
   */
 
-uint32_t GFX_write__Modify_Xdelta__Centered(GFX_CfgWriteString* cfg, GFX_DrawCfgWindow* hgfx, const char *pTextInput)
+static uint32_t GFX_write__Modify_Xdelta__Centered(GFX_CfgWriteString* cfg, GFX_DrawCfgWindow* hgfx, const char *pTextInput)
 {
 	char cText[101];
 	uint32_t result;
@@ -3444,7 +3146,7 @@ uint32_t GFX_write__Modify_Xdelta__Centered(GFX_CfgWriteString* cfg, GFX_DrawCfg
 }
 
 
-uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GFX_DrawCfgWindow* hgfx, const char *pTextInput)
+static uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GFX_DrawCfgWindow* hgfx, const char *pTextInput)
 {
 	char cText[101];
 	uint32_t result;
@@ -3542,8 +3244,6 @@ uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GFX_DrawC
 	return result;
 }
 
-
-
 void GFX_LTDC_Init(void)
 {
 	/*
@@ -3611,171 +3311,6 @@ void GFX_LTDC_Init(void)
   }
 }
 
-void GFX_VGA_LTDC_Init_test(void)
-{
-
-  LtdcHandle.Init.HorizontalSync = 48;
-  /* Vertical synchronization height = Vsync - 1 */
-  LtdcHandle.Init.VerticalSync = 3;
-  /* Accumulated horizontal back porch = Hsync + HBP - 1 */
-  LtdcHandle.Init.AccumulatedHBP = 48 + 40 - 1;
-  /* Accumulated vertical back porch = Vsync + VBP - 1 */
-  LtdcHandle.Init.AccumulatedVBP = 3 + 29 - 1;
-  /* Accumulated active width = Hsync + HBP + Active Width - 1 */
-  LtdcHandle.Init.AccumulatedActiveW = 800 + 48 + 40 - 1;//499;//500;//499;
-  /* Accumulated active height = Vsync + VBP + Active Heigh - 1 */
-  LtdcHandle.Init.AccumulatedActiveH = 480 + 3 + 29 - 1;
-  /* Total width = Hsync + HBP + Active Width + HFP - 1 */
-  LtdcHandle.Init.TotalWidth = 800 + 48 + 40 - 1 + 40;//508;//507;
-  /* Total height = Vsync + VBP + Active Heigh + VFP - 1 */
-  LtdcHandle.Init.TotalHeigh = 480 + 3 + 29 - 1 + 13;
-
-	/* Configure R,G,B component values for LCD background color */
-	LtdcHandle.Init.Backcolor.Red= 0;
-	LtdcHandle.Init.Backcolor.Blue= 0;
-	LtdcHandle.Init.Backcolor.Green= 0;
-
-	/* LCD clock configuration */
-	/* PLLSAI_VCO Input = HSE_VALUE/PLL_M = 1 Mhz */
-	/* PLLSAI_VCO Output = PLLSAI_VCO Input * PLLSAIN = 192 Mhz */
-	/* PLLLCDCLK = PLLSAI_VCO Output/PLLSAIR = 192/4 = 48 Mhz */
-	/* LTDC clock frequency = PLLLCDCLK / LTDC_PLLSAI_DIVR_8 = 48/4 = 6Mhz */
-
-/* done in main.c SystemClockConfig
-
-	PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_LTDC;
-	PeriphClkInitStruct.PLLSAI.PLLSAIN = 192;
-	PeriphClkInitStruct.PLLSAI.PLLSAIR = 4;
-	PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_8;
-	HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
-*/
-	/* Polarity */
-	LtdcHandle.Init.HSPolarity = LTDC_HSPOLARITY_AL;
-	LtdcHandle.Init.VSPolarity = LTDC_VSPOLARITY_AL;
-	LtdcHandle.Init.DEPolarity = LTDC_DEPOLARITY_AL;
-	LtdcHandle.Init.PCPolarity = LTDC_PCPOLARITY_IPC;//LTDC_PCPOLARITY_IPC;
-
-	LtdcHandle.Instance = LTDC;
-
-  /* Configure the LTDC */
-  if(HAL_LTDC_Init(&LtdcHandle) != HAL_OK) // auch init der GPIO Pins
-  {
-    /* Initialization Error */
-    GFX_Error_Handler();
-  }
-}
-
-
-void GFX_VGA_LTDC_Init_org(void)
-{
-
-  LtdcHandle.Init.HorizontalSync = 96;
-  /* Vertical synchronization height = Vsync - 1 */
-  LtdcHandle.Init.VerticalSync = 2;
-  /* Accumulated horizontal back porch = Hsync + HBP - 1 */
-  LtdcHandle.Init.AccumulatedHBP = 96 + 48;
-  /* Accumulated vertical back porch = Vsync + VBP - 1 */
-  LtdcHandle.Init.AccumulatedVBP = 2 + 35;
-  /* Accumulated active width = Hsync + HBP + Active Width - 1 */
-  LtdcHandle.Init.AccumulatedActiveW = 96 + 48 + 800;//499;//500;//499;
-  /* Accumulated active height = Vsync + VBP + Active Heigh - 1 */
-  LtdcHandle.Init.AccumulatedActiveH = 2 + 35 + 480;
-  /* Total width = Hsync + HBP + Active Width + HFP - 1 */
-  LtdcHandle.Init.TotalWidth = 96 + 48 + 800 + 12;//508;//507;
-  /* Total height = Vsync + VBP + Active Heigh + VFP - 1 */
-  LtdcHandle.Init.TotalHeigh = 2 + 35 + 480 + 12;
-
-	/* Configure R,G,B component values for LCD background color */
-	LtdcHandle.Init.Backcolor.Red= 0;
-	LtdcHandle.Init.Backcolor.Blue= 0;
-	LtdcHandle.Init.Backcolor.Green= 0;
-
-	/* LCD clock configuration */
-	/* PLLSAI_VCO Input = HSE_VALUE/PLL_M = 1 Mhz */
-	/* PLLSAI_VCO Output = PLLSAI_VCO Input * PLLSAIN = 192 Mhz */
-	/* PLLLCDCLK = PLLSAI_VCO Output/PLLSAIR = 192/4 = 48 Mhz */
-	/* LTDC clock frequency = PLLLCDCLK / LTDC_PLLSAI_DIVR_8 = 48/4 = 6Mhz */
-
-/* done in main.c SystemClockConfig
-
-	PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_LTDC;
-	PeriphClkInitStruct.PLLSAI.PLLSAIN = 192;
-	PeriphClkInitStruct.PLLSAI.PLLSAIR = 4;
-	PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_8;
-	HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
-*/
-	/* Polarity */
-	LtdcHandle.Init.HSPolarity = LTDC_HSPOLARITY_AL;
-	LtdcHandle.Init.VSPolarity = LTDC_VSPOLARITY_AH;
-	LtdcHandle.Init.DEPolarity = LTDC_DEPOLARITY_AL;
-	LtdcHandle.Init.PCPolarity = LTDC_PCPOLARITY_IPC;//LTDC_PCPOLARITY_IPC;
-
-	LtdcHandle.Instance = LTDC;
-
-  /* Configure the LTDC */
-  if(HAL_LTDC_Init(&LtdcHandle) != HAL_OK) // auch init der GPIO Pins
-  {
-    /* Initialization Error */
-    GFX_Error_Handler();
-  }
-}
-
-void GFX_VGA_LTDC_Init(void)
-//void GFX_VGA_LTDC_Init_640x480(void)
-{
-
-  LtdcHandle.Init.HorizontalSync = 96;
-  /* Vertical synchronization height = Vsync - 1 */
-  LtdcHandle.Init.VerticalSync = 2;
-  /* Accumulated horizontal back porch = Hsync + HBP - 1 */
-  LtdcHandle.Init.AccumulatedHBP = 96 + 48;
-  /* Accumulated vertical back porch = Vsync + VBP - 1 */
-  LtdcHandle.Init.AccumulatedVBP = 2 + 35;
-  /* Accumulated active width = Hsync + HBP + Active Width - 1 */
-  LtdcHandle.Init.AccumulatedActiveW = 96 + 48 + 640;//499;//500;//499;
-  /* Accumulated active height = Vsync + VBP + Active Heigh - 1 */
-  LtdcHandle.Init.AccumulatedActiveH = 2 + 35 + 480;
-  /* Total width = Hsync + HBP + Active Width + HFP - 1 */
-  LtdcHandle.Init.TotalWidth = 96 + 48 + 640 + 12;//508;//507;
-  /* Total height = Vsync + VBP + Active Heigh + VFP - 1 */
-  LtdcHandle.Init.TotalHeigh = 2 + 35 + 480 + 12;
-
-	/* Configure R,G,B component values for LCD background color */
-	LtdcHandle.Init.Backcolor.Red= 0;
-	LtdcHandle.Init.Backcolor.Blue= 0;
-	LtdcHandle.Init.Backcolor.Green= 0;
-
-	/* LCD clock configuration */
-	/* PLLSAI_VCO Input = HSE_VALUE/PLL_M = 1 Mhz */
-	/* PLLSAI_VCO Output = PLLSAI_VCO Input * PLLSAIN = 192 Mhz */
-	/* PLLLCDCLK = PLLSAI_VCO Output/PLLSAIR = 192/4 = 48 Mhz */
-	/* LTDC clock frequency = PLLLCDCLK / LTDC_PLLSAI_DIVR_8 = 48/4 = 6Mhz */
-
-/* done in main.c SystemClockConfig
-
-	PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_LTDC;
-	PeriphClkInitStruct.PLLSAI.PLLSAIN = 192;
-	PeriphClkInitStruct.PLLSAI.PLLSAIR = 4;
-	PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_8;
-	HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
-*/
-	/* Polarity */
-	LtdcHandle.Init.HSPolarity = LTDC_HSPOLARITY_AL;
-	LtdcHandle.Init.VSPolarity = LTDC_VSPOLARITY_AH;
-	LtdcHandle.Init.DEPolarity = LTDC_DEPOLARITY_AL;
-	LtdcHandle.Init.PCPolarity = LTDC_PCPOLARITY_IPC;//LTDC_PCPOLARITY_IPC;
-
-	LtdcHandle.Instance = LTDC;
-
-  /* Configure the LTDC */
-  if(HAL_LTDC_Init(&LtdcHandle) != HAL_OK) // auch init der GPIO Pins
-  {
-    /* Initialization Error */
-    GFX_Error_Handler();
-  }
-}
-
-
 void GFX_LTDC_LayerDefaultInit(uint16_t LayerIndex, uint32_t FB_Address)
 {
   LTDC_LayerCfgTypeDef   Layercfg;
@@ -3802,105 +3337,15 @@ void GFX_LTDC_LayerDefaultInit(uint16_t LayerIndex, uint32_t FB_Address)
 	HAL_LTDC_EnableCLUT(&LtdcHandle, LayerIndex);
 }
 
-void GFX_VGA_LTDC_LayerDefaultInit(uint16_t LayerIndex, uint32_t FB_Address)
-{
-  LTDC_LayerCfgTypeDef   Layercfg;
-
- /* Layer Init */
-  Layercfg.WindowX0 = 0;
-  Layercfg.WindowX1 = 640;
-  Layercfg.WindowY0 = 0;
-  Layercfg.WindowY1 = 480;
-  Layercfg.PixelFormat = LTDC_PIXEL_FORMAT_AL88;//LTDC_PIXEL_FORMAT_ARGB8888;
-  Layercfg.FBStartAdress = FB_Address;
-  Layercfg.Alpha = 255;
-  Layercfg.Alpha0 = 0;
-  Layercfg.Backcolor.Blue = 0;
-  Layercfg.Backcolor.Green = 0;
-  Layercfg.Backcolor.Red = 0;
-  Layercfg.BlendingFactor1 = LTDC_BLENDING_FACTOR1_PAxCA;
-  Layercfg.BlendingFactor2 = LTDC_BLENDING_FACTOR2_PAxCA;
-  Layercfg.ImageWidth = 640;
-  Layercfg.ImageHeight = 480;
-
-	HAL_LTDC_ConfigCLUT(&LtdcHandle, ColorLUT, CLUT_END, LayerIndex);
-  HAL_LTDC_ConfigLayer(&LtdcHandle, &Layercfg, LayerIndex);
-	HAL_LTDC_EnableCLUT(&LtdcHandle, LayerIndex);
-}
-
-void GFX_LTDC_LayerTESTInit(uint16_t LayerIndex, uint32_t FB_Address)
-{
-  LTDC_LayerCfgTypeDef   Layercfg;
-
- /* Layer Init */
-  Layercfg.WindowX0 = 0;
-  Layercfg.WindowX1 = 390;
-  Layercfg.WindowY0 = 0;
-  Layercfg.WindowY1 = 800;
-  Layercfg.PixelFormat = LTDC_PIXEL_FORMAT_AL88;//LTDC_PIXEL_FORMAT_ARGB8888;
-  Layercfg.FBStartAdress = FB_Address;
-  Layercfg.Alpha = 255;
-  Layercfg.Alpha0 = 255;
-  Layercfg.Backcolor.Blue = 0;
-  Layercfg.Backcolor.Green = 0;
-  Layercfg.Backcolor.Red = 200;
-  Layercfg.BlendingFactor1 = LTDC_BLENDING_FACTOR1_PAxCA;
-  Layercfg.BlendingFactor2 = LTDC_BLENDING_FACTOR2_PAxCA;
-  Layercfg.ImageWidth = 480;
-  Layercfg.ImageHeight = 800;
-
-	HAL_LTDC_ConfigCLUT(&LtdcHandle, ColorLUT, CLUT_END, LayerIndex);
-  HAL_LTDC_ConfigLayer(&LtdcHandle, &Layercfg, LayerIndex);
-	HAL_LTDC_EnableCLUT(&LtdcHandle, LayerIndex);
-}
-
-
-uint32_t GFX_doubleBufferOne(void)
+static uint32_t GFX_doubleBufferOne(void)
 {
 	return SDRAM_DOUBLE_BUFFER_ONE;
 }
 
 
-uint32_t GFX_doubleBufferTwo(void)
+static uint32_t GFX_doubleBufferTwo(void)
 {
 	return SDRAM_DOUBLE_BUFFER_TWO;
-}
-
-/*
-void doubleBufferClear(uint32_t pDestination)
-{
-	for(uint32_t i = 2*200*480; i > 0; i--)
-	{
-		*(__IO uint16_t*)pDestination = 0;
-		pDestination += 2;
-		*(__IO uint16_t*)pDestination = 0;
-		pDestination += 2;
-		*(__IO uint16_t*)pDestination = 0;
-		pDestination += 2;
-		*(__IO uint16_t*)pDestination = 0;
-		pDestination += 2;
-	}
-}
-
-
-void GFX_doubleBufferClearOne(void)
-{
-	doubleBufferClear(SDRAM_DOUBLE_BUFFER_ONE);
-}
-
-
-void GFX_doubleBufferClearTwo(void)
-{
-	doubleBufferClear(SDRAM_DOUBLE_BUFFER_TWO);
-}
-*/
-
-uint32_t getFrameByNumber(uint8_t ZeroToMaxFrames)
-{
-	if(ZeroToMaxFrames >= MAXFRAMES)
-		return 0;
-	else
-		return frame[ZeroToMaxFrames].StartAddress;
 }
 
 uint32_t getFrame(uint8_t callerId)
@@ -3985,15 +3430,6 @@ uint16_t blockedFramesCount(void)
 			count--;
 		
 	return count;
-}
-
-
-uint8_t getFrameCount(uint8_t frameId)
-{
-	if(frameId < (MAXFRAMECOUNTER - 3))
-		return frameCounter[frameId];
-	else
-		return frameCounter[MAXFRAMECOUNTER - 2];
 }
 
 
