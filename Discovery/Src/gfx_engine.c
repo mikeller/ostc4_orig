@@ -1575,7 +1575,7 @@ void GFX_graph_print(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, c
 		dataMax++;
 	dataDelta =  (unsigned long)(dataMax - dataMin);
 	dataDeltaHalve = dataDelta / 2;
-	while((w1 <= windowwidth) & (w2 < datalength))
+	while((w1 <= windowwidth) && (w2 < datalength))
 	{
 		int tmp = (10 * w1 * (long)datalength)/windowwidth;
 		w2 = tmp/10;
