@@ -32,9 +32,9 @@
   */
 	
 #define MLLsize (296)
-uint16_t MLLdataDepth[MLLsize];
-uint16_t MLLpointer  = 0;
-uint8_t MLLtickIntervallSeconds = 2;
+static uint16_t MLLdataDepth[MLLsize];
+static uint16_t MLLpointer  = 0;
+static uint8_t MLLtickIntervallSeconds = 2;
 	
 
 uint16_t *getMiniLiveLogbookPointerToData(void)

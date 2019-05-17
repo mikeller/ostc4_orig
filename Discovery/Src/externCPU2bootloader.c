@@ -35,37 +35,26 @@
 /* Exported variables --------------------------------------------------------*/
 
 /* Private types -------------------------------------------------------------*/
-#define BOOTLOADSPITIMEOUT 5000
 
 /* Private variables ---------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
 
-uint8_t boot_sync_frame(void);
-uint8_t boot_ack(void);
-uint8_t boot_get(uint8_t *RxBuffer);
-uint8_t boot_get_id(uint8_t *RxBuffer);
-uint8_t boot_get_version(uint8_t *RxBuffer);
-//uint8_t boot_go(uint32_t address);
-uint8_t boot_write_memory(uint32_t address, uint8_t length_minus_1, uint8_t *data);
-//uint8_t boot_erase_memory(uint16_t data_frame, uint16_t *page_numbers);
-uint8_t boot_erase_memory(void);
-uint8_t boot_write_protect(uint8_t number_of_sectors_minus_one, uint8_t *sector_codes);
-/*
-uint8_t boot_write_unprotect(void);
-uint8_t boot_readout_protect(void);
-uint8_t boot_readout_unprotect(void);
-*/
-void	Bootoader_send_command(uint8_t command);
-void Bootloader_spi_single(uint8_t TxByte);
-void Bootloader_spi(uint16_t lengthData, uint8_t *aTxBuffer, uint8_t *aRxBuffer);
-void Bootloader_Error_Handler(void);
+static uint8_t boot_sync_frame(void);
+static uint8_t boot_ack(void);
+static uint8_t boot_get_id(uint8_t *RxBuffer);
+static uint8_t boot_get_version(uint8_t *RxBuffer);
+static uint8_t boot_write_memory(uint32_t address, uint8_t length_minus_1, uint8_t *data);
+static uint8_t boot_erase_memory(void);
+static void	Bootloader_send_command(uint8_t command);
+static void Bootloader_spi_single(uint8_t TxByte);
+static void Bootloader_spi(uint16_t lengthData, uint8_t *aTxBuffer, uint8_t *aRxBuffer);
+static void Bootloader_Error_Handler(void);
 
 /* Exported functions --------------------------------------------------------*/
 
 uint8_t extCPU2bootloader_start(uint8_t *version, uint16_t *chipID)
 {
-//	uint8_t aTxBuffer[256] = { 0 };
 	uint8_t aRxBuffer[256] = { 0 };
 
 	HAL_GPIO_WritePin(SMALLCPU_CSB_GPIO_PORT,SMALLCPU_CSB_PIN,GPIO_PIN_RESET);
@@ -89,7 +78,7 @@ uint8_t extCPU2bootloader_internal(uint8_t* buffer, uint32_t length, char* displ
 {
   uint8_t version = 0;
   uint16_t chipID = 0;
-//  uint8_t ret;
+
   if(!extCPU2bootloader_start(&version,&chipID))
     return 0;
 	if(!boot_erase_memory())
@@ -135,28 +124,16 @@ uint8_t extCPU2bootloader(uint8_t* buffer, uint32_t length, char* display_text)
 
 /* Private functions --------------------------------------------------------*/
 
-uint8_t boot_sync_frame(void)
+static uint8_t boot_sync_frame(void)
 {
 	Bootloader_spi_single(0x5a);
 	return boot_ack();
 }
 
-
-uint8_t boot_get(uint8_t *RxBuffer)
+static uint8_t boot_get_version(uint8_t *RxBuffer)
 {
 	Bootloader_spi_single(0x5a);
-	Bootoader_send_command(0x00);
-	if(!boot_ack())
-		return 0;
-	Bootloader_spi(14, NULL, RxBuffer);
-	return boot_ack();
-}
-
-
-uint8_t boot_get_version(uint8_t *RxBuffer)
-{
-	Bootloader_spi_single(0x5a);
-	Bootoader_send_command(0x01);
+	Bootloader_send_command(0x01);
 	if(!boot_ack())
 		return 0;
 	Bootloader_spi(3, NULL, RxBuffer);
@@ -164,22 +141,15 @@ uint8_t boot_get_version(uint8_t *RxBuffer)
 }
 
 
-uint8_t boot_get_id(uint8_t *RxBuffer)
+static uint8_t boot_get_id(uint8_t *RxBuffer)
 {
 	Bootloader_spi_single(0x5a);
-	Bootoader_send_command(0x02);
+	Bootloader_send_command(0x02);
 	if(!boot_ack())
 		return 0;
 	Bootloader_spi(5, NULL, RxBuffer);
 	return boot_ack();
 }
-
-/*
-uint8_t boot_go(uint32_t address)
-{
-
-}
-*/
 
 
 uint8_t boot_write_memory(uint32_t address, uint8_t length_minus_1, uint8_t *data)
@@ -189,7 +159,7 @@ uint8_t boot_write_memory(uint32_t address, uint8_t length_minus_1, uint8_t *dat
 	uint16_t length;
 
 	Bootloader_spi_single(0x5a);
-	Bootoader_send_command(0x31);
+	Bootloader_send_command(0x31);
 	if(!boot_ack())
 		return 1;
 	HAL_Delay(5);
@@ -223,13 +193,12 @@ uint8_t boot_write_memory(uint32_t address, uint8_t length_minus_1, uint8_t *dat
   return 1;
 }
 
-//uint8_t boot_erase_memory(uint16_t data_frame, uint16_t *page_numbers)
-uint8_t boot_erase_memory(void)
+static uint8_t boot_erase_memory(void)
 {
 	uint8_t special_erase_with_checksum[3] = {0xFF, 0xFF, 0x00};
 
 	Bootloader_spi_single(0x5a);
-	Bootoader_send_command(0x44);
+	Bootloader_send_command(0x44);
 	if(!boot_ack())
 		return 0;
 	Bootloader_spi(3, special_erase_with_checksum, NULL);
@@ -243,30 +212,13 @@ uint8_t boot_erase_memory(void)
 uint8_t boot_write_unprotect(void)
 {
 	Bootloader_spi_single(0x5a);
-	Bootoader_send_command(0x73);
+	Bootloader_send_command(0x73);
 	if(!boot_ack())
 		return 0;
 	return boot_ack();
 }
 
-/*
-uint8_t boot_write_protect(uint8_t number_of_sectors_minus_one, uint8_t *sector_codes)
-{
-
-}
-
-uint8_t boot_readout_protect(void)
-{
-
-}
-
-uint8_t boot_readout_unprotect(void)
-{
-
-}
-*/
-
-uint8_t boot_ack(void)
+static uint8_t boot_ack(void)
 {
 	uint8_t answer = 0;
 
@@ -287,7 +239,7 @@ uint8_t boot_ack(void)
 		return 0;
 }
 
-void	Bootoader_send_command(uint8_t command)
+static void	Bootloader_send_command(uint8_t command)
 {
 	uint8_t send[2];
 	uint8_t receive[2];
@@ -297,13 +249,13 @@ void	Bootoader_send_command(uint8_t command)
 	Bootloader_spi(2, send, receive);
 }
 
-void Bootloader_spi_single(uint8_t TxByte)
+static void Bootloader_spi_single(uint8_t TxByte)
 {
 	Bootloader_spi(1,&TxByte, 0);
 }
 
 
-void Bootloader_spi(uint16_t lengthData, uint8_t *aTxBuffer, uint8_t *aRxBuffer)
+static void Bootloader_spi(uint16_t lengthData, uint8_t *aTxBuffer, uint8_t *aRxBuffer)
 {
 	uint8_t dummy[256] = { 0 };
 	uint8_t *tx_data;
@@ -334,10 +286,7 @@ void Bootloader_spi(uint16_t lengthData, uint8_t *aTxBuffer, uint8_t *aRxBuffer)
 }
 
 
-void Bootloader_Error_Handler(void)
+static void Bootloader_Error_Handler(void)
 {
 	while(1);
 }
-
-
-

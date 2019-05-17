@@ -51,7 +51,7 @@ static const float sim_descent_rate_meter_per_min = 20;
 
 
 //Private functions
-static float sim_get_ambiant_pressure(SDiveState * pDiveState);
+static float sim_get_ambient_pressure(SDiveState * pDiveState);
 static void sim_reduce_deco_time_one_second(SDiveState* pDiveState);
 static void simulation_set_aim_depth(int depth_meter);
 
@@ -157,7 +157,7 @@ void simulation_UpdateLifeData( _Bool checkOncePerSecond)
     pDiveState->lifeData.sensorVoltage_mV[2] = stateRealGetPointer()->lifeData.sensorVoltage_mV[2];
 
     pDiveState->lifeData.dive_time_seconds += 1;
-    pDiveState->lifeData.pressure_ambient_bar = sim_get_ambiant_pressure(pDiveState);
+    pDiveState->lifeData.pressure_ambient_bar = sim_get_ambient_pressure(pDiveState);
 
     if(!is_ambient_pressure_close_to_surface(&pDiveState->lifeData) && !(stateSimGetPointer()->lifeData.counterSecondsShallowDepth) )
     {
@@ -303,14 +303,14 @@ static void simulation_set_aim_depth(int depth_meter)
 
 /**
   ******************************************************************************
-  * @brief  simulates ambiant pressure depending on aim depth
+  * @brief  simulates ambient pressure depending on aim depth
   ******************************************************************************
   * @note if aim_depth != actual depth, the depth change within one second
   *       (depending on descent or ascent) rate is calculated
   * @param  SDiveState* pDiveState:
-  * @return float : new ambiant pressure
+  * @return float : new ambient pressure
   */
-static float sim_get_ambiant_pressure(SDiveState * pDiveState)
+static float sim_get_ambient_pressure(SDiveState * pDiveState)
 {
     //Calc next depth
     uint8_t actual_deco_stop = decom_get_actual_deco_stop(pDiveState);
@@ -351,7 +351,7 @@ static float sim_get_ambiant_pressure(SDiveState * pDiveState)
   * @param  SDiveState* pDiveState:
   * @return void
   */
-void sim_reduce_deco_time_one_second(SDiveState* pDiveState)
+static void sim_reduce_deco_time_one_second(SDiveState* pDiveState)
 {
     SDecoinfo* pDecoinfo;
     if(pDiveState->diveSettings.deco_type.ub.standard == GF_MODE)
