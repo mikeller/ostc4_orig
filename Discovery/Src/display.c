@@ -34,7 +34,7 @@ void display_power_on__1_of_2__pre_RGB(void)
 }
 
 
-void send(uint8_t *pData, uint16_t inputlength)
+static void send(uint8_t *pData, uint16_t inputlength)
 {
 	HAL_GPIO_WritePin(DISPLAY_CSB_GPIO_PORT,DISPLAY_CSB_PIN,GPIO_PIN_RESET); // chip select
 
@@ -48,7 +48,7 @@ void send(uint8_t *pData, uint16_t inputlength)
 }
 
 
-uint16_t convert8to9to8(uint8_t *pInput, uint8_t *pOutput,uint16_t inputlength)
+static uint16_t convert8to9to8(uint8_t *pInput, uint8_t *pOutput,uint16_t inputlength)
 {
 	uint16_t outputlength;
 	uint8_t readbit =  0x80;//0b1000000;
@@ -226,55 +226,6 @@ void display_power_on__2_of_2__post_RGB(void)
 	send((uint8_t*)bTxBuffer, length);
 }
 
-
-void display_power_off(void)
-{
-	uint8_t aTxBuffer[1];
-	uint8_t bTxBuffer[9];
-	uint16_t i,length;
-
-	for(i=0;i<9;i++)
-		bTxBuffer[i] = 0;
-
-	aTxBuffer[0] = DISPLAY_OFF;
-	length = convert8to9to8((uint8_t*)aTxBuffer,(uint8_t*)bTxBuffer,1);
-	send((uint8_t*)bTxBuffer, length);
-	HAL_Delay(5);
-
-	aTxBuffer[0] = SLEEP_IN;
-	length = convert8to9to8((uint8_t*)aTxBuffer,(uint8_t*)bTxBuffer,1);
-	send((uint8_t*)bTxBuffer, length);
-}
-
-
-void display_sleep(void)
-{
-	uint8_t aTxBuffer[1];
-	uint8_t bTxBuffer[9];
-	uint16_t i,length;
-
-	for(i=0;i<9;i++)
-		bTxBuffer[i] = 0;
-
-	aTxBuffer[0] = SLEEP_IN;
-	length = convert8to9to8((uint8_t*)aTxBuffer,(uint8_t*)bTxBuffer,1);
-	send((uint8_t*)bTxBuffer, length);
-}
-
-
-void display_sleep_release(void)
-{
-	uint8_t aTxBuffer[1];
-	uint8_t bTxBuffer[9];
-	uint16_t i,length;
-
-	for(i=0;i<9;i++)
-		bTxBuffer[i] = 0;
-
-	aTxBuffer[0] = SLEEP_OUT;
-	length = convert8to9to8((uint8_t*)aTxBuffer,(uint8_t*)bTxBuffer,1);
-	send((uint8_t*)bTxBuffer, length);
-}
 
 static void Display_Error_Handler(void)
 {
