@@ -123,12 +123,6 @@ void GFX_SetFrameTop(uint32_t pDestination);
 void GFX_SetFrameBottom(uint32_t pDestination, uint32_t x0, uint32_t y0, uint32_t width, uint32_t height);
 void GFX_SetFramesTopBottom(uint32_t pTop, uint32_t pBottom, uint32_t heightBottom);
 
-uint32_t GFX_get_pActualFrameTop(void);
-uint32_t GFX_get_pActualFrameBottom(void);
-
-//void GFX_SetFrameBuffer(uint32_t pDestination, uint32_t LayerIdx);
-//void GFX_SetFrameBufferAndResize(uint32_t pDestination, uint32_t LayerIdx, uint32_t height);
-
 void GFX_SetWindowLayer0(uint32_t pDestination, int16_t XleftGimpStyle, int16_t XrightGimpStyle, int16_t YtopGimpStyle, int16_t YbottomGimpStyle);
 void change_CLUT_entry(uint8_t entryToChange, uint8_t entryUsedForChange);
 
@@ -142,7 +136,6 @@ void GFX_LTDC_LayerTESTInit(uint16_t LayerIndex, uint32_t FB_Address);
 
 void GFX_fill_buffer(uint32_t pDestination, uint8_t alpha, uint8_t color);
 
-void GFX_clear_frame_immediately(uint32_t pDestination);
 void GFX_clear_window_immediately(GFX_DrawCfgWindow* hgfx);
 
 //void GFX_draw_circle_with_MEMORY(uint8_t use_memory, GFX_DrawCfgScreen *hgfx, point_t center, uint8_t radius, int8_t color);
@@ -189,16 +182,12 @@ void gfx_write_topline_simple(GFX_DrawCfgScreen *tMscreen, const char *text, uin
 void gfx_write_page_number(GFX_DrawCfgScreen *tMscreen, uint8_t page, uint8_t total, uint8_t color);
 
 void GFX_draw_image_monochrome(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window, const tImage *image, uint8_t color);
-void GFX_draw_image_color(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window, const tImage *image);
 void GFX_logoAutoOff(void);
 uint8_t GFX_logoStatus(void);
 void GFX_hwBackgroundOn(void);
 void GFX_hwBackgroundOff(void);
 
 uint8_t gfx_number_to_string(uint8_t max_digits, _Bool fill, char *pText, uint32_t number);
-
-void GFX_init1_no_DMA(uint32_t  * pDestinationOut, uint8_t blockFrames);
-void GFX_init2_DMA(void);
 
 uint8_t GFX_is_colorschemeDiveStandard(void);
 void GFX_use_colorscheme(uint8_t colorscheme);
