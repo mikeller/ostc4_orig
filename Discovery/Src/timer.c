@@ -57,18 +57,14 @@ void timer_UpdateSecond(_Bool checkOncePerSecond)
     }
 
     /** Stopwatch **/
-    if(bStopWatch && stateUsed->lifeData.depth_meter > 1)
+    if(bStopWatch && !is_ambient_pressure_close_to_surface(&stateUsedWrite->lifeData))
     {
-        if((stopWatchTime_Second == 0) && (stateUsed->lifeData.dive_time_seconds >= 1))
-        {
-            stopWatchTime_Second = stateUsed->lifeData.dive_time_seconds - 1;
-            stopWatchAverageDepth_Meter = stateUsed->lifeData.average_depth_meter * (stopWatchTime_Second - 1) / stopWatchTime_Second;
-        }
+        if(stopWatchTime_Second == 0)
+            stopWatchAverageDepth_Meter = stateUsed->lifeData.depth_meter;
         else
-        {
             stopWatchAverageDepth_Meter = (stopWatchAverageDepth_Meter * stopWatchTime_Second + stateUsed->lifeData.depth_meter)/ (stopWatchTime_Second + 1);
-            stopWatchTime_Second++;
-        }
+
+        stopWatchTime_Second++;
     }
 
     /** SafetyStop **/
@@ -125,7 +121,7 @@ void timer_UpdateSecond(_Bool checkOncePerSecond)
 
 void timer_Stopwatch_Restart(void)
 {
-  stopWatchTime_Second = 1;
+  stopWatchTime_Second = 0;
   stopWatchAverageDepth_Meter = stateUsed->lifeData.depth_meter;
   bStopWatch = true;
 }
