@@ -85,7 +85,6 @@ void copyPICdata(void);
 static void schedule_update_timer_helper(int8_t thisSeconds);
 uint32_t time_elapsed_ms(uint32_t ticksstart,uint32_t ticksnow);
 
-_Bool scheduleCheck_pressure_reached_dive_mode_level(void);
 void scheduleSetDate(SDeviceLine *line);
 
 /* Exported functions --------------------------------------------------------*/
@@ -771,7 +770,7 @@ void scheduleSurfaceMode(void)
 				copyPressureData();
 				Scheduler.counterPressure100msec++;
 				
-				if(scheduleCheck_pressure_reached_dive_mode_level())
+				if (!is_ambient_pressure_close_to_surface(&global.lifeData))
 					global.mode = MODE_DIVE;
 		}
 		
@@ -1029,7 +1028,7 @@ void scheduleSleepMode(void)
 			}
 		}
 
-		if(scheduleCheck_pressure_reached_dive_mode_level())
+		if (!is_ambient_pressure_close_to_surface(&global.lifeData))
 			global.mode = MODE_BOOT;
 
 		scheduleUpdateLifeData(2000);
@@ -1045,27 +1044,6 @@ void scheduleSleepMode(void)
 
 
 /* Private functions ---------------------------------------------------------*/
-
-
-/**
-  ******************************************************************************
-	* @brief   scheduleCheck_pressure_reached_dive_mode_level
-  * @author  heinrichs weikamp gmbh
-  * @version V0.0.1 from inline code
-  * @date    09-Sept-2015
-  ******************************************************************************
-  */
-_Bool scheduleCheck_pressure_reached_dive_mode_level(void)
-{
-		if(get_pressure_mbar() > 1160)
-			return 1;
-		else
-		if((global.mode == MODE_SURFACE) && (get_pressure_mbar() > (get_surface_mbar() + 100)) && (get_surface_mbar() > 880))
-			return 1;
-		else
-			return 0;
-}
-		
 
 /**
   ******************************************************************************
