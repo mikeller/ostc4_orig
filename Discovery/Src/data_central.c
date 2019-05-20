@@ -760,10 +760,10 @@ uint32_t	CRC_CalcBlockCRC(uint32_t *buffer, uint32_t words)
      return (cm_crc(&crc_model));
 }
  
-
+// This code is also in RTE. Keep it in sync when editing
 _Bool is_ambient_pressure_close_to_surface(SLifeData *lifeData)
 {
-	if(lifeData->pressure_ambient_bar < (lifeData->pressure_surface_bar + 0.04f))
+	if(lifeData->pressure_ambient_bar < (lifeData->pressure_surface_bar + 0.1f))
 		return true;
 	else
 		return false;
