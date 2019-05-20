@@ -159,11 +159,6 @@ void simulation_UpdateLifeData( _Bool checkOncePerSecond)
     pDiveState->lifeData.dive_time_seconds += 1;
     pDiveState->lifeData.pressure_ambient_bar = sim_get_ambient_pressure(pDiveState);
 
-    if(!is_ambient_pressure_close_to_surface(&pDiveState->lifeData) && !(stateSimGetPointer()->lifeData.counterSecondsShallowDepth) )
-    {
-        pDiveState->lifeData.dive_time_seconds_without_surface_time += 1;
-    }
-
     if(is_ambient_pressure_close_to_surface(&pDiveState->lifeData)) // new hw 170214
     {
         if(!(stateSimGetPointer()->lifeData.counterSecondsShallowDepth))
@@ -183,6 +178,11 @@ void simulation_UpdateLifeData( _Bool checkOncePerSecond)
     else
     {
         pDiveState->lifeData.counterSecondsShallowDepth = 0;
+    }
+
+    if(!is_ambient_pressure_close_to_surface(&pDiveState->lifeData) && !(stateSimGetPointer()->lifeData.counterSecondsShallowDepth) )
+    {
+    	pDiveState->lifeData.dive_time_seconds_without_surface_time += 1;
     }
 
     pDiveState->lifeData.depth_meter = (pDiveState->lifeData.pressure_ambient_bar - pDiveState->lifeData.pressure_surface_bar) * 10.0f;
