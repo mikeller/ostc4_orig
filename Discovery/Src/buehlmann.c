@@ -123,7 +123,7 @@ void buehlmann_calc_deco(SLifeData* pLifeData, SDiveSettings * pDiveSettings, SD
 	
 	stoplist = pDecoInfo->output_stop_length_seconds;
 
-	if(pLifeData->dive_time_seconds < 60)
+	if(pLifeData->dive_time_seconds_without_surface_time < 60)
 		return;
 
 	// clean stop list
