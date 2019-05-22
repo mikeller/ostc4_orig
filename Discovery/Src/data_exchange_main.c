@@ -860,7 +860,6 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 			//Init dive Mode
 			decoLock = DECO_CALC_init_as_is_start_of_dive;
 			pStateReal->lifeData.boolResetAverageDepth = 1;
-			pStateReal->lifeData.boolResetStopwatch = 1;
 		}
 
 		pStateReal->lifeData.cns = dataIn.data[dataIn.boolToxicData].cns;
@@ -992,7 +991,6 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		// reset max_depth_meter, average_depth_meter and internal values
 			pStateReal->lifeData.max_depth_meter = 0;
 			pStateReal->lifeData.boolResetAverageDepth = 1;
-			pStateReal->lifeData.boolResetStopwatch = 1;
 		}
 	}
 
@@ -1024,16 +1022,6 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 	}
 	if(*AvgDepthCount == 0)
 		*AvgDepthValue = 0;
-
-
-	/* stop watch
-	 */
-	if(pStateReal->lifeData.boolResetStopwatch)
-	{
-		pStateReal->lifeData.internal.stopwatch_start_at_this_dive_time_seconds = pStateReal->lifeData.dive_time_seconds;
-		pStateReal->lifeData.boolResetStopwatch = 0;
-	}
-	pStateReal->lifeData.stopwatch_seconds = pStateReal->lifeData.dive_time_seconds - pStateReal->lifeData.internal.stopwatch_start_at_this_dive_time_seconds;
 }
 
 
