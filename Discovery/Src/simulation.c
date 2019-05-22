@@ -201,7 +201,6 @@ void simulation_UpdateLifeData( _Bool checkOncePerSecond)
             pDiveState->lifeData.dive_time_seconds = 0;
             pDiveState->lifeData.max_depth_meter = 0;
             pDiveState->lifeData.boolResetAverageDepth = 1;
-            pDiveState->lifeData.boolResetStopwatch = 1;
         }
     }
 
