@@ -890,14 +890,7 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		pStateReal->mode = dataIn.mode;
 		pStateReal->chargeStatus = dataIn.chargeStatus;
 	
-		if(is_ambient_pressure_close_to_surface(&pStateReal->lifeData))
-		{
-			pStateReal->lifeData.depth_meter = 0;
-		}
-		else
-		{
-			pStateReal->lifeData.depth_meter = meter;
-		}
+		pStateReal->lifeData.depth_meter = meter;
 
 		pStateReal->lifeData.temperature_celsius = getTemperature(&dataIn);
 		pStateReal->lifeData.ascent_rate_meter_per_min = dataIn.data[dataIn.boolPressureData].ascent_rate_meter_per_min;
