@@ -1001,30 +1001,30 @@ void setAvgDepth(SDiveState *pStateReal) {
 
 	float *AvgDepthValue = &pStateReal->lifeData.average_depth_meter;
 	float	DepthNow = pStateReal->lifeData.depth_meter; 
-	uint32_t *AvgDepthCount = &pStateReal->lifeData.internal.average_depth_meter_Count;
-	uint32_t *AvgDepthTimer = &pStateReal->lifeData.internal.average_depth_last_update_dive_time_seconds_without_surface_time;
+	static uint32_t AvgDepthCount = 0;
+	static uint32_t AvgDepthTimer = 0;
 	uint32_t AvgSecondsSinceLast;
 	uint32_t DiveTime = pStateReal->lifeData.dive_time_seconds_without_surface_time;
 
 	if(pStateReal->lifeData.boolResetAverageDepth)
 	{
 		*AvgDepthValue = DepthNow;
-		*AvgDepthCount = 1;
-		*AvgDepthTimer = DiveTime;
+		AvgDepthCount = 0;
+		AvgDepthTimer = DiveTime;
 		pStateReal->lifeData.boolResetAverageDepth = 0;
 	}
-	else if (DiveTime > *AvgDepthTimer)
+	else if (DiveTime > AvgDepthTimer)
 	{
-		AvgSecondsSinceLast = DiveTime - *AvgDepthTimer;
+		AvgSecondsSinceLast = DiveTime - AvgDepthTimer;
 		for(int i=0;i<AvgSecondsSinceLast;i++)
 		{
-			*AvgDepthValue = (*AvgDepthValue * *AvgDepthCount + DepthNow) / (*AvgDepthCount + 1);
-			*AvgDepthCount += 1;
+			*AvgDepthValue = (*AvgDepthValue * AvgDepthCount + DepthNow) / (AvgDepthCount + 1);
+			AvgDepthCount += 1;
 		}
-		*AvgDepthTimer = DiveTime;
+		AvgDepthTimer = DiveTime;
 	}
-	if(*AvgDepthCount == 0)
-		*AvgDepthValue = 0;
+	if(AvgDepthCount == 0)
+		*AvgDepthValue = DepthNow;
 }
 
 

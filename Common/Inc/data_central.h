@@ -152,12 +152,6 @@ typedef struct
 }		SDeviceState;
 */
 
-typedef struct
-{
-	uint32_t average_depth_meter_Count;
-	uint32_t average_depth_last_update_dive_time_seconds_without_surface_time;
-} 	SHelper;
-
 /* struct SLifeData
  * contains data all actual data (pressure, stuturation, etc. as received from second ship
  * and has actualGas to be send to Small CPU (second chip)
@@ -227,10 +221,6 @@ typedef struct
 	 float ppO2Sensor_bar[3];
 	 float sensorVoltage_mV[3];
 	 float HUD_battery_voltage_V;
-
-	/* used by DataEX_copy_to_LifeData()
-	 */
-	SHelper internal;
 } 	SLifeData;
 
 
