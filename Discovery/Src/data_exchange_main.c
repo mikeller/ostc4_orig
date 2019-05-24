@@ -994,15 +994,18 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		}
 	}
 
-	/* average depth 
-	 */
+	setAvgDepth(pStateReal);
+}
+
+void setAvgDepth(SDiveState *pStateReal) {
+
 	float *AvgDepthValue = &pStateReal->lifeData.average_depth_meter;
 	float	DepthNow = pStateReal->lifeData.depth_meter; 
 	uint32_t *AvgDepthCount = &pStateReal->lifeData.internal.average_depth_meter_Count;
 	uint32_t *AvgDepthTimer = &pStateReal->lifeData.internal.average_depth_last_update_dive_time_seconds_without_surface_time;
 	uint32_t AvgSecondsSinceLast;
 	uint32_t DiveTime = pStateReal->lifeData.dive_time_seconds_without_surface_time;
-	
+
 	if(pStateReal->lifeData.boolResetAverageDepth)
 	{
 		*AvgDepthValue = DepthNow;

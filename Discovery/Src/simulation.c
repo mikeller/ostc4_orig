@@ -37,6 +37,7 @@
 #include "decom.h"
 #include "calc_crush.h"
 #include "data_exchange.h"
+#include "data_exchange_main.h"
 #include "timer.h"
 #include "check_warning.h"
 #include "vpm.h"
@@ -204,34 +205,7 @@ void simulation_UpdateLifeData( _Bool checkOncePerSecond)
         }
     }
 
-    /* average depth
-     */
-    float *AvgDepthValue = &pDiveState->lifeData.average_depth_meter;
-    float	DepthNow = pDiveState->lifeData.depth_meter;
-    uint32_t *AvgDepthCount = &pDiveState->lifeData.internal.average_depth_meter_Count;
-    uint32_t *AvgDepthTimer = &pDiveState->lifeData.internal.average_depth_last_update_dive_time_seconds_without_surface_time;
-    uint32_t AvgSecondsSinceLast;
-    uint32_t DiveTime = pDiveState->lifeData.dive_time_seconds_without_surface_time;
-
-    if(pDiveState->lifeData.boolResetAverageDepth)
-    {
-        *AvgDepthValue = DepthNow;
-        *AvgDepthCount = 1;
-        *AvgDepthTimer = DiveTime;
-        pDiveState->lifeData.boolResetAverageDepth = 0;
-    }
-    else if (DiveTime > *AvgDepthTimer)
-    {
-        AvgSecondsSinceLast = DiveTime - *AvgDepthTimer;
-        for(int i=0;i<AvgSecondsSinceLast;i++)
-        {
-            *AvgDepthValue = (*AvgDepthValue * *AvgDepthCount + DepthNow) / (*AvgDepthCount + 1);
-            *AvgDepthCount += 1;
-        }
-        *AvgDepthTimer = DiveTime;
-    }
-    if(*AvgDepthCount == 0)
-        *AvgDepthValue = 0;
+    setAvgDepth(pDiveState);
 
     /* Exposure Tissues
      */
