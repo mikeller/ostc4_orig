@@ -231,6 +231,7 @@
 #include "logbook_miniLive.h"
 #include "test_vpm.h"
 #include "tDebug.h"
+#include "motion.h"
 
 #ifdef DEMOMODE
 #include "demo.h"
@@ -339,6 +340,14 @@ int fputc(int ch, FILE *f) {
 #define MEASURECNT 60	/* number of measuremets to be stored */
 static uint32_t loopcnt[MEASURECNT];
 #endif
+
+static uint8_t ButtonAction = ACTION_END;
+
+static void StoreButtonAction(uint8_t action)
+{
+	ButtonAction = action;
+}
+
 //  ===============================================================================
 //	main
 /// @brief	This function makes initializations and has the nonIRQ endless loop
@@ -508,6 +517,11 @@ int main(void)
 	        DoDisplayRefresh = 0;
         	RefreshDisplay();
 
+            if(DETECT_NEG_SHAKE == detectShake(stateRealGetPointer()->lifeData.compass_pitch))
+           	{
+            	StoreButtonAction((uint8_t)ACTION_BUTTON_ENTER);
+           	}
+
 // Enable this to make the simulator write a logbook entry
 // #define SIM_WRITES_LOGBOOK 1
 
@@ -541,6 +555,9 @@ int main(void)
 
     }
 }
+
+
+
 
 //  ===============================================================================
 //	timer IRQ
@@ -849,12 +866,7 @@ static void RefreshDisplay()
 		break;
 	}
 }
-static uint8_t ButtonAction = ACTION_END;
 
-static void StoreButtonAction(uint8_t action)
-{
-	ButtonAction = action;
-}
 
 static void TriggerButtonAction()
 {
