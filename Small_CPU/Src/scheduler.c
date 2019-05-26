@@ -1560,9 +1560,11 @@ uint32_t time_elapsed_ms(uint32_t ticksstart,uint32_t ticksnow)
 }
 
 /* same as in data_central.c */
-_Bool is_ambient_pressure_close_to_surface(SLifeData *lifeDataCall)
+_Bool is_ambient_pressure_close_to_surface(SLifeData *lifeData)
 {
-	if(lifeDataCall->pressure_ambient_bar < (lifeDataCall->pressure_surface_bar + 0.1f)) // hw 161121 now 1 mter, before 0.04f
+	if (lifeData->pressure_ambient_bar > 1.16)
+		return false;
+	else if(lifeData->pressure_ambient_bar < (lifeData->pressure_surface_bar + 0.1f)) // hw 161121 now 1 mter, before 0.04f
 		return true;
 	else
 		return false;
