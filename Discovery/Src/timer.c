@@ -28,18 +28,17 @@
 
 #include "data_central.h"
 
-static long stopWatchTime_Second = 0;
 static _Bool bStopWatch = false;
 static float stopWatchAverageDepth_Meter = 0.0f;
 static long safetyStopCountDown_Second = 0;
+static long stopWatchOffset = 0;
 
 void timer_init(void)
 {
-  stopWatchTime_Second = 0;
   stopWatchAverageDepth_Meter = 0.0f;
   bStopWatch = true;
   safetyStopCountDown_Second = 0;
-
+  stopWatchOffset = 0;
 }
 
 void timer_UpdateSecond(_Bool checkOncePerSecond)
@@ -47,6 +46,7 @@ void timer_UpdateSecond(_Bool checkOncePerSecond)
     static int last_second = -1;
     static _Bool bSafetyStop = false;
     static float last_depth_meter = 0;
+    long stopWatchTime_Second = 0;
 
     if(checkOncePerSecond)
     {
@@ -57,14 +57,13 @@ void timer_UpdateSecond(_Bool checkOncePerSecond)
     }
 
     /** Stopwatch **/
+    stopWatchTime_Second = stateUsed->lifeData.dive_time_seconds_without_surface_time - stopWatchOffset;
     if(bStopWatch && !is_ambient_pressure_close_to_surface(&stateUsedWrite->lifeData))
     {
         if(stopWatchTime_Second == 0)
             stopWatchAverageDepth_Meter = stateUsed->lifeData.depth_meter;
         else
             stopWatchAverageDepth_Meter = (stopWatchAverageDepth_Meter * stopWatchTime_Second + stateUsed->lifeData.depth_meter)/ (stopWatchTime_Second + 1);
-
-        stopWatchTime_Second++;
     }
 
     /** SafetyStop **/
@@ -121,9 +120,9 @@ void timer_UpdateSecond(_Bool checkOncePerSecond)
 
 void timer_Stopwatch_Restart(void)
 {
-  stopWatchTime_Second = 0;
   stopWatchAverageDepth_Meter = stateUsed->lifeData.depth_meter;
   bStopWatch = true;
+  stopWatchOffset = stateUsed->lifeData.dive_time_seconds_without_surface_time;
 }
 
 void timer_Stopwatch_Stop(void)
@@ -133,7 +132,7 @@ void timer_Stopwatch_Stop(void)
 
 long timer_Stopwatch_GetTime(void)
 {
-  return stopWatchTime_Second;
+  return stateUsed->lifeData.dive_time_seconds_without_surface_time - stopWatchOffset;
 }
 
 float timer_Stopwatch_GetAvarageDepth_Meter(void)
