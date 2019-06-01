@@ -32,7 +32,6 @@
 
 #include "compass.h"
 #include "compass_LSM303D.h"
-#include "compass_LSM303DLHC.h"
 
 #include "i2c.h"
 #include "spi.h"
