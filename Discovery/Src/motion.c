@@ -12,7 +12,7 @@
 
 #define PITCH_HISTORY_ENTRIES		20	/* number of pitch value stored in buffer */
 #define	STABLE_STATE_COUNT			2	/* number of count to declare a state as stable (at the moment based on 100ms) */
-#define MOVE_DELTA_COUNT			5	/* Delta count needed to identify a valid movement */
+#define MOVE_DELTA_COUNT			10	/* Delta count needed to identify a valid movement */
 #define SHAKE_DELTA_COUNT			30	/* Delta count needed to identify a valid minima / maxima */
 
 
@@ -44,6 +44,8 @@ void InitMotion()
 
 }
 
+detectionState_t detectionState = DETECT_NOTHING;
+
 /* Detect if user is generating an pitch including return to starting position (shake) */
 /* This is done by feeding the past movements value per value into a state machine */
 detectionState_t detectShake(float currentPitch)
@@ -54,7 +56,7 @@ detectionState_t detectShake(float currentPitch)
 	static float startPitch = 0.0;
 
 	relativeMove_t relativeMove = RELATIVE_MOVE_INVALID;
-	static detectionState_t detectionState = DETECT_NOTHING;
+
 
 	pitchHistory[pitchWriteIdx] = currentPitch;
 	runningIdx = pitchWriteIdx;
