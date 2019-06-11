@@ -238,6 +238,7 @@
 static void TIM_DEMO_init(void);
 #endif
 
+
 //#include "lodepng.h"
 //#include <stdlib.h> // for malloc and free
 
@@ -519,7 +520,11 @@ int main(void)
 
             if(DETECT_NEG_SHAKE == detectShake(stateRealGetPointer()->lifeData.compass_pitch))
            	{
-            	StoreButtonAction((uint8_t)ACTION_BUTTON_ENTER);
+            	StoreButtonAction((uint8_t)ACTION_SHAKE_NEG);
+           	}
+            if(DETECT_POS_SHAKE == detectShake(stateRealGetPointer()->lifeData.compass_pitch))
+           	{
+            	StoreButtonAction((uint8_t)ACTION_SHAKE_POS);
            	}
 
 // Enable this to make the simulator write a logbook entry
@@ -910,14 +915,16 @@ static void TriggerButtonAction()
 					set_globalState(StD);
 				} else
 					tHome_change_field_button_pressed();
-			} else if (action == ACTION_BUTTON_ENTER) {
-				if ((status.page == PageDive) && (status.line == 0))
-					tHome_change_customview_button_pressed();
-				else if (status.page == PageSurface)
-					tHome_change_customview_button_pressed();
-				else
-					tHomeDiveMenuControl(action);
-			}
+			} else if ((action == ACTION_BUTTON_ENTER) || (action == ACTION_SHAKE_NEG) || (action == ACTION_SHAKE_POS))
+					{
+
+						if ((status.page == PageDive) && (status.line == 0))
+							tHome_change_customview_button_pressed(action);
+						else if (status.page == PageSurface)
+							tHome_change_customview_button_pressed(action);
+						else
+							tHomeDiveMenuControl(action);
+					}
 			break;
 
 		case BaseMenu:
