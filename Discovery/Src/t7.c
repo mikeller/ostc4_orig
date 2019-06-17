@@ -1525,48 +1525,48 @@ void t7_change_customview(uint8_t action)
 		}
     }
 
-       do
-       {
-           cv_disabled = 0;
-           for(int i=0;i<6;i++)
-           {
-               if((*pViews == cv_changelist[i]) && !CHECK_BIT_THOME(settingsGetPointer()->cv_configuration, cv_changelist[i]))
-               {
-                   cv_disabled = 1;
+    do
+    {
+        cv_disabled = 0;
+        for(int i=0;i<6;i++)
+        {
+             if((*pViews == cv_changelist[i]) && !CHECK_BIT_THOME(settingsGetPointer()->cv_configuration, cv_changelist[i]))
+             {
+            	 cv_disabled = 1;
                    break;
-               }
-           }
+             }
+        }
 
-           if (((*pViews == CVIEW_sensors) || (*pViews == CVIEW_sensors_mV)) &&
+        if (((*pViews == CVIEW_sensors) || (*pViews == CVIEW_sensors_mV)) &&
            	((stateUsed->diveSettings.ppo2sensors_deactivated) || (stateUsed->diveSettings.ccrOption == 0)))
-           {
-	           	cv_disabled = 1;
-           }
+        {
+	      	cv_disabled = 1;
+        }
 
-           if(cv_disabled)		/* view is disabled => jump to next view */
-           {
-            	if((action == ACTION_BUTTON_ENTER) || (action == ACTION_SHAKE_POS))
-            	{
-            		pViews++;
-					if(*pViews == CVIEW_END)
-					{
-						pViews = pStartView;
-					}
-            	}
-            	else
-            	{
-            		if(pViews == pStartView)
-            		{
-            			pViews = pLastView - 1;
-            		}
-            		else
-            		{
-            			pViews--;
-            		}
-            	}
-            }
-        } while(cv_disabled);
-    }
+        if(cv_disabled)		/* view is disabled => jump to next view */
+        {
+          	if((action == ACTION_BUTTON_ENTER) || (action == ACTION_SHAKE_POS))
+          	{
+           		pViews++;
+				if(*pViews == CVIEW_END)
+				{
+					pViews = pStartView;
+				}
+           	}
+           	else
+           	{
+           		if(pViews == pStartView)
+           		{
+           			pViews = pLastView - 1;
+           		}
+           		else
+           		{
+           			pViews--;
+           		}
+           	}
+        }
+    } while(cv_disabled);
+
     selection_customview = *pViews;
 }
 
