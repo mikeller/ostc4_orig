@@ -365,6 +365,7 @@ int main(void)
     uint8_t lastsecond = 0xFF;
 #endif
 
+    detectionState_t shakestate;
 
     set_globalState( StBoot0 );
     LastButtonPressed = 0;
@@ -518,11 +519,12 @@ int main(void)
 	        DoDisplayRefresh = 0;
         	RefreshDisplay();
 
-            if(DETECT_NEG_SHAKE == detectShake(stateRealGetPointer()->lifeData.compass_pitch))
+        	shakestate = detectShake(stateRealGetPointer()->lifeData.compass_pitch);
+            if(DETECT_NEG_SHAKE == shakestate)
            	{
             	StoreButtonAction((uint8_t)ACTION_SHAKE_NEG);
            	}
-            if(DETECT_POS_SHAKE == detectShake(stateRealGetPointer()->lifeData.compass_pitch))
+            if(DETECT_POS_SHAKE == shakestate)
            	{
             	StoreButtonAction((uint8_t)ACTION_SHAKE_POS);
            	}
