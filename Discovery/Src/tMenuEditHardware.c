@@ -134,7 +134,8 @@ void openEdit_FlipDisplay(void)
     tMenuEdit_init();
     tInfoLog_init();
     tM_build_pages();
-
+    GFX_build_logo_frame();
+    GFX_build_hw_background_frame();
 
     exitEditWithUpdate();
     exitMenuEdit_to_Home();
