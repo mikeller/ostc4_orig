@@ -1834,7 +1834,15 @@ void t7_refresh_customview(void)
         t7cC.WindowLineSpacing = 95;
         t7cC.WindowNumberOfTextLines = 3;
         text[textpointer] = 0;
+        if(pSettings->FlipDisplay)
+        {
+        	t7cC.WindowY1 -= 40;
+        }
         GFX_write_string(&FontT105,&t7cC,text,1);
+        if(pSettings->FlipDisplay)
+        {
+        	t7cC.WindowY1 += 40;
+        }
         break;
 
     case CVIEW_sensors_mV:
@@ -1864,7 +1872,15 @@ void t7_refresh_customview(void)
         t7cC.WindowLineSpacing = 95;
         t7cC.WindowNumberOfTextLines = 3;
         text[textpointer] = 0;
+        if(pSettings->FlipDisplay)
+        {
+        	t7cC.WindowY1 -= 40;
+        }
         GFX_write_string(&FontT48,&t7cC,text,1);
+        if(pSettings->FlipDisplay)
+        {
+        	t7cC.WindowY1 += 40;
+        }
         break;
 
     case CVIEW_Compass:
@@ -3055,6 +3071,11 @@ void t7_SummaryOfLeftCorner(void)
         fCNS = 999;
 
     t7cY0free.WindowY0 = t7cC.WindowY0 - 10;
+    if(settingsGetPointer()->FlipDisplay)
+    {
+    	t7cY0free.WindowY1 = 400;
+    }
+
     t7cY0free.WindowLineSpacing = 48;
     t7cY0free.WindowNumberOfTextLines = 6;
     t7cY0free.WindowTab = 420;
@@ -3079,12 +3100,23 @@ void t7_SummaryOfLeftCorner(void)
     text[textpointer++] = TXT_FutureTTS;
     text[textpointer++] = '\017';
     text[textpointer++] = 0;
-    t7cY0free.WindowX0 += 10;
-    t7cY0free.WindowY0 += 10;
-    GFX_write_string(&FontT24, &t7cY0free, text, 1);
-    t7cY0free.WindowX0 -= 10;
-    t7cY0free.WindowY0 -= 10;
 
+    if(!settingsGetPointer()->FlipDisplay)
+    {
+		t7cY0free.WindowX0 += 10;
+		t7cY0free.WindowY0 += 10;
+		GFX_write_string(&FontT24, &t7cY0free, text, 1);
+		t7cY0free.WindowX0 -= 10;
+		t7cY0free.WindowY0 -= 10;
+    }
+    else
+    {
+		t7cY0free.WindowY1 -= 10;
+		t7cY0free.WindowX1 -= 10;
+		GFX_write_string(&FontT24, &t7cY0free, text, 1);
+		t7cY0free.WindowY1 += 10;
+		t7cY0free.WindowX1 += 10;
+    }
     textpointer = 0;
     text[textpointer++] = '\t';
     textpointer += snprintf(&text[textpointer],10,"\020%01.2f",	stateUsed->lifeData.ppO2);

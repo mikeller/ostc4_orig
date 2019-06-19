@@ -153,7 +153,7 @@ uint32_t tMHardware_refresh(uint8_t line, char *text, uint16_t *tab, char *subte
         }
 //		textPointer += snprintf(&text[textPointer],25,"%i  %i  %i",button[0],button[1],button[2]);
         textPointer += snprintf(&text[textPointer],25,
-            "%i"
+            "%li"
             "\016\016"
             " %%"
             "\017",

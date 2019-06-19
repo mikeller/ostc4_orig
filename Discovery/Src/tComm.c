@@ -103,10 +103,11 @@ uint8_t setForcedBluetoothName = 0;
 uint8_t updateSettingsAndMenuOnExit = 0;
 
 /* Private types -------------------------------------------------------------*/
-#define BYTE_DOWNLOAD_MODE		(0xBB)
-#define BYTE_SERVICE_MODE		(0xAA)
+#define BYTE_DOWNLOAD_MODE			(0xBB)
+#define BYTE_SERVICE_MODE			(0xAA)
 
-#define UART_TIMEOUT_SECONDS	(120u)		/* Timeout for keeping connection open and waiting for data */
+#define UART_TIMEOUT_SECONDS		(120u)		/* Timeout for keeping connection open and waiting for data */
+#define UART_TIMEOUT_LARGE_BLOCK 	(6000u)		/* Timeout (ms) for receiption of an 16K data block (typical RX time ~4,5seconds) */
 
 const uint8_t id_Region1_firmware = 0xFF;
 const uint8_t id_RTE = 0xFE;
@@ -147,8 +148,18 @@ void tComm_init(void)
     tCwindow.WindowTab = 400;
     tCwindow.WindowX0 = 20;
     tCwindow.WindowX1 = 779;
-    tCwindow.WindowY0 = 0;
-    tCwindow.WindowY1 = 799;
+
+
+    if(!settingsGetPointer()->FlipDisplay)
+    {
+        tCwindow.WindowY0 = 0;
+        tCwindow.WindowY1 = 479;
+    }
+    else
+    {
+    	tCwindow.WindowY0 = 479 - 390;
+    	tCwindow.WindowY1 = 479 - 25;
+    }
 
     StartListeningToUART = 1;
 
@@ -225,7 +236,7 @@ void tComm_refresh(void)
     }
     else if(display_text[255])
     {
-      display_text[display_text[255]] = 0;
+        display_text[(uint8_t)display_text[255]] = 0;
         releaseFrame(18,tCscreen.FBStartAdress);
         tCscreen.FBStartAdress = getFrame(18);
         write_content_simple(&tCscreen, 0, 800, 480-24, &FontT24,"Exit",CLUT_ButtonSurfaceScreen);
@@ -1194,28 +1205,29 @@ uint8_t select_mode(uint8_t type)
 
 HAL_StatusTypeDef receive_uart_large_size(UART_HandleTypeDef *huart, uint8_t *pData, uint32_t Size)
 {
-    uint16_t length_16_blocks;
-    uint16_t length_16_remainder;
+    uint16_t length_16k_blocks;
+    uint16_t length_16k_remainder;
     uint32_t temp;
     HAL_StatusTypeDef result = HAL_OK;
     uint32_t pDataLocal;
 
-    length_16_blocks = (uint16_t) (Size / 0xFFFF);
-    temp = length_16_blocks;
-    temp *= 0xFFFF;
-    length_16_remainder = (uint16_t) ( Size - temp);
+    length_16k_blocks = (uint16_t) (Size / 0x3FFF);
+    temp = length_16k_blocks;
+    temp *= 0x3FFF;
+    length_16k_remainder = (uint16_t) ( Size - temp);
 
     pDataLocal = (uint32_t)pData;
 
-    while((result == HAL_OK) && length_16_blocks)
+
+    while((result == HAL_OK) && length_16k_blocks)
     {
-        result = HAL_UART_Receive(&UartHandle, (uint8_t *)pDataLocal, 0xFFFF , 60000);
-        pDataLocal += 0xFFFF;
-        length_16_blocks--;
+        result = HAL_UART_Receive(&UartHandle, (uint8_t *)pDataLocal, 0x3FFF , UART_TIMEOUT_LARGE_BLOCK);
+        pDataLocal += 0x3FFF;
+        length_16k_blocks--;
     }
-    if((result == HAL_OK) && length_16_remainder)
+    if((result == HAL_OK) && length_16k_remainder)
     {
-        result = HAL_UART_Receive(&UartHandle, (uint8_t *)pDataLocal, length_16_remainder , 60000);
+        result = HAL_UART_Receive(&UartHandle, (uint8_t *)pDataLocal, length_16k_remainder , UART_TIMEOUT_LARGE_BLOCK);
     }
     return result;
 }
