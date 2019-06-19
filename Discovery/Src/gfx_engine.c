@@ -250,7 +250,7 @@ void GFX_hwBackgroundOff(void)
 }
 
 
-static void GFX_build_hw_background_frame(void)
+void GFX_build_hw_background_frame(void)
 {
 	GFX_DrawCfgScreen	tLogoTemp;
 	SWindowGimpStyle windowGimp;
@@ -284,7 +284,7 @@ static void GFX_build_hw_background_frame(void)
 }
 
 
-static void GFX_build_logo_frame(void)
+void GFX_build_logo_frame(void)
 {
 	GFX_DrawCfgScreen	tLogoTemp;
 	SWindowGimpStyle windowGimp;

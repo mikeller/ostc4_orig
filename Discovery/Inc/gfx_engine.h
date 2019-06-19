@@ -182,6 +182,9 @@ void gfx_write_topline_simple(GFX_DrawCfgScreen *tMscreen, const char *text, uin
 void gfx_write_page_number(GFX_DrawCfgScreen *tMscreen, uint8_t page, uint8_t total, uint8_t color);
 
 void GFX_draw_image_monochrome(GFX_DrawCfgScreen *hgfx, SWindowGimpStyle window, const tImage *image, uint8_t color);
+void GFX_build_logo_frame(void);
+void GFX_build_hw_background_frame(void);
+
 void GFX_logoAutoOff(void);
 uint8_t GFX_logoStatus(void);
 void GFX_hwBackgroundOn(void);
