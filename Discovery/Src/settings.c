@@ -1391,7 +1391,7 @@ void hardwareBatchCode(uint8_t *high, uint8_t *low)
 
 uint8_t firmwareVersion_16bit_high(void)
 {
-    return ((firmware_FirmwareData.versionFirst & 0x1F)  << 3)	+ ((firmware_FirmwareData.versionSecond & 0x1C) >> 5);
+    return ((firmware_FirmwareData.versionFirst & 0x1F)  << 3)	+ ((firmware_FirmwareData.versionSecond & 0x1C) >> 2);
 }
 
 uint8_t firmwareVersion_16bit_low(void)
