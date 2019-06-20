@@ -1201,6 +1201,7 @@ void logbook_InitAndWrite(const SDiveState *pStateReal)
 		logbook_SetMaxCNS(pStateReal->lifeData.cns);
 		logbook_SetCompartmentDesaturation(pStateReal);
 		logbook_SetLastStop(pStateReal->diveSettings.last_stop_depth_bar);
+		header.batteryVoltage = pStateReal->lifeData.battery_voltage * 1000;
 		logbook_EndDive();
 		bDiveMode = 0;
 	} else
