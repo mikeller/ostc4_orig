@@ -1,0 +1,5 @@
+syntax: glob
+RefPrj/*
+.settings/*
+.project
+ostc4pack/OSTC4update_*.bin

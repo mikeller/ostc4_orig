@@ -1,0 +1,81 @@
+Configuration	OSTC4 CPU2 F411
+STM32CubeMX 	4.9.0
+Date	07/30/2015
+MCU	STM32F411RETx
+
+
+
+PERIPHERALS	MODES	FUNCTIONS	PINS
+ADC1	IN8	ADC1_IN8	PB0
+I2C1	I2C	I2C1_SCL	PB8
+I2C1	I2C	I2C1_SDA	PB9
+RCC	Crystal/Ceramic Resonator	RCC_OSC32_IN	PC14-OSC32_IN
+RCC	Crystal/Ceramic Resonator	RCC_OSC32_OUT	PC15-OSC32_OUT
+RTC	Internal Alarm	RTC_VS_RTC_Alarm_A_Intern	VP_RTC_VS_RTC_Alarm_A_Intern
+SPI1	Full-Duplex Slave	SPI1_MISO	PA6
+SPI1	Full-Duplex Slave	SPI1_MOSI	PA7
+SPI1	Full-Duplex Slave	SPI1_SCK	PA5
+SPI1	Hardware	SPI1_NSS	PA4
+SPI3	Full-Duplex Master	SPI3_MISO	PC11
+SPI3	Full-Duplex Master	SPI3_MOSI	PC12
+SPI3	Full-Duplex Master	SPI3_SCK	PC10
+SYS	SWD and Asynchronous Trace	SYS_JTMS-SWDIO	PA13
+SYS	SWD and Asynchronous Trace	SYS_JTCK-SWCLK	PA14
+SYS	SWD and Asynchronous Trace	SYS_JTDO-SWO	PB3
+
+
+
+Pin Nb	PINs	FUNCTIONs	LABELs
+3	PC14-OSC32_IN	RCC_OSC32_IN	
+4	PC15-OSC32_OUT	RCC_OSC32_OUT	
+8	PC0	GPIO_Output	Power Main CPU GPIO_Output
+9	PC1	GPIO_Output	Charger GPIO_Output
+10	PC2	GPIO_Input	Charger GPIO_Input
+11	PC3	GPIO_Output	LED GPIO_Output
+14	PA0-WKUP	GPIO_EXTI0	Wakeup Button Input GPIO_EXT0
+15	PA1	GPIO_EXTI1	Wireless Input GPIO_EXT1
+16	PA2	GPIO_EXTI2	Wireless Input GPIO_EXT2
+17	PA3	GPIO_EXTI3	Debug Test Button GPIO_EXT3
+20	PA4	SPI1_NSS	
+21	PA5	SPI1_SCK	
+22	PA6	SPI1_MISO	
+23	PA7	SPI1_MOSI	
+26	PB0	ADC1_IN8	Ambient Light ADC1_IN8
+33	PB12	GPIO_Output	Wireless Power GPIO_Output can be changed
+40	PC9	GPIO_Output	Button Control NSS
+46	PA13	SYS_JTMS-SWDIO	
+49	PA14	SYS_JTCK-SWCLK	
+51	PC10	SPI3_SCK	Button Control SPI3_SCK
+52	PC11	SPI3_MISO	Button Control SPI3_MISO
+53	PC12	SPI3_MOSI	Button Control SPI3_MOSI
+55	PB3	SYS_JTDO-SWO	
+61	PB8	I2C1_SCL	
+62	PB9	I2C1_SDA	
+
+
+
+SOFTWARE PROJECT
+
+Project Settings : 
+Project Name : OSTC4 CPU2 F411
+Project Folder : C:\workspaces\ARM_M4\OSTC4\OSTC4smallCPU
+Toolchain / IDE : MDK-ARM 4.73
+Firmware Package Name and Version : STM32Cube FW_F4 V1.7.0
+
+
+Code Generation Settings : 
+STM32Cube Firmware Library Package : Copy all used libraries into the project folder
+Generate peripheral initialization as a pair of '.c/.h' files per IP : No
+Backup previously generated files when re-generating : No
+Delete previously generated files when not re-generated : Yes
+Set all free pins as analog (to optimize the power consumption) : Yes
+
+
+Toolchains Settings : 
+Compiler Optimizations : Balanced Size/Speed
+
+
+
+
+
+
