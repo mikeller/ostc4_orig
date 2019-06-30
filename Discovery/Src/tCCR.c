@@ -46,15 +46,24 @@ typedef struct
     uint16_t checksum;
 } 	SIrLink;
 
+#define HUD_BABBLING_IDIOT			(30u)		/* 30 Bytes received without break */
+#define HUD_RX_FRAME_LENGTH			(15u)		/* Length of a HUD data frame */
+#define HUD_RX_FRAME_BREAK_MS		(100u)		/* Time used to detect a gap between two byte receptions => frame start */
+#define HUD_RX_START_DELAY_MS		(500u)		/* Delay for start of RX function to avoid start of reception while a transmission is ongoing. */
+												/* Based on an assumed cycle time by the sensor of 1 second. Started at time of last RX */
+
 /* Private variables ---------------------------------------------------------*/
-SIrLink receiveHUD[2];
-uint8_t boolHUDdata = 0;
-uint8_t data_old__lost_connection_to_HUD = 1;
+static SIrLink receiveHUD[2];
+static uint8_t boolHUDdata = 0;
+static uint8_t data_old__lost_connection_to_HUD = 1;
 
-uint8_t receiveHUDraw[16];
+static uint8_t receiveHUDraw[16];
 
-uint8_t StartListeningToUART_HUD = 0;
-uint16_t count = 0;
+static uint8_t StartListeningToUART_HUD = 0;
+static uint16_t HUDTimeoutCount = 0;
+
+static __IO ITStatus UartReadyHUD = RESET;
+static uint32_t LastReceivedTick_HUD = 0;
 
 /* Private variables with external access via get_xxx() function -------------*/
 
@@ -289,36 +298,69 @@ void tCCR_init(void)
     */
 void tCCR_tick(void)
 {
-    if(count < 3 * 10)
-        count++;
+    if(HUDTimeoutCount < 3 * 10)
+        HUDTimeoutCount++;
     else
     {
         data_old__lost_connection_to_HUD = 1;
-        if(count < 20 * 10)
-            count++;
+        if(HUDTimeoutCount < 20 * 10)
+            HUDTimeoutCount++;
         else
             tCCR_fallbackToFixedSetpoint();
     }
 }
 
+void tCCR_SetRXIndication(void)
+{
+	static uint8_t floatingRXCount = 0;
+
+	if((UartIR_HUD_Handle.RxXferSize == HUD_RX_FRAME_LENGTH) || (UartIR_HUD_Handle.RxXferSize == HUD_RX_FRAME_LENGTH - 1))	/* we expected a complete frame */
+	{
+		UartReadyHUD = SET;
+		LastReceivedTick_HUD = HAL_GetTick();
+		floatingRXCount = 0;
+	}
+	else	/* follow up of error handling */
+	{
+		if(time_elapsed_ms(LastReceivedTick_HUD, HAL_GetTick()) > HUD_RX_FRAME_BREAK_MS)	/* Reception took a while => frame start detected */
+		{
+			HAL_UART_Receive_IT(&UartIR_HUD_Handle, &receiveHUDraw[1], 14);					/* We have already the first byte => get the missing 14 */
+		}
+		else
+		{
+			if(floatingRXCount++ < HUD_BABBLING_IDIOT)
+			{
+				HAL_UART_Receive_IT(&UartIR_HUD_Handle, receiveHUDraw, 1);					/* Start polling of incoming bytes */
+			}
+			else																			/* Significant amount of data comming in without break => disable input */
+			{																				/* by not reactivation HUD RX, no recovery fromthis state */
+				stateUsedWrite->diveSettings.ppo2sensors_deactivated = 0x07;				/* Display deactivation */
+			}
+		}
+	}
+
+}
 
 void tCCR_restart(void)
 {
-    HAL_UART_Receive_IT(&UartIR_HUD_Handle, receiveHUDraw, 15);/* 15*/
+	HAL_UART_AbortReceive_IT(&UartIR_HUD_Handle);	/* Called by the error handler. RX will be restarted by control function */
+	StartListeningToUART_HUD = 1;
 }
 
 
 void tCCR_control(void)
 {
-    if((UartReadyHUD == RESET) && StartListeningToUART_HUD)
-    {
-            StartListeningToUART_HUD = 0;
-            HAL_UART_Receive_IT(&UartIR_HUD_Handle, receiveHUDraw, 15);/* 15*/
-    }
+
+	if((UartReadyHUD == RESET) && StartListeningToUART_HUD && (time_elapsed_ms(LastReceivedTick_HUD, HAL_GetTick()) > HUD_RX_START_DELAY_MS))
+	{
+		StartListeningToUART_HUD = 0;
+		HAL_UART_Receive_IT(&UartIR_HUD_Handle, receiveHUDraw, HUD_RX_FRAME_LENGTH);
+	}
 
     if(UartReadyHUD == SET)
     {
             UartReadyHUD = RESET;
+            StartListeningToUART_HUD = 1;
 
             memcpy(&receiveHUD[!boolHUDdata], receiveHUDraw, 11);
             receiveHUD[!boolHUDdata].battery_voltage_mV = receiveHUDraw[11] + (256 * receiveHUDraw[12]);
@@ -333,10 +375,18 @@ void tCCR_control(void)
             if(checksum == receiveHUD[!boolHUDdata].checksum)
             {
                 boolHUDdata = !boolHUDdata;
-                count = 0;
+                HUDTimeoutCount = 0;
                 data_old__lost_connection_to_HUD = 0;
             }
-            StartListeningToUART_HUD = 1;
+            else
+            {
+            	if(data_old__lost_connection_to_HUD)	/* we lost connection, maybe due to RX shift => start single byte read to resynchronize */
+            	{
+            		HAL_UART_Receive_IT(&UartIR_HUD_Handle, receiveHUDraw, 1);
+            		StartListeningToUART_HUD = 0;
+            	}
+            }
+            memset(receiveHUDraw,0,sizeof(receiveHUDraw));
     }
 }
 
