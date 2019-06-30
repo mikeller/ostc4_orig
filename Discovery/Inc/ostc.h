@@ -69,7 +69,6 @@ extern __IO ITStatus UartReady;
 #ifdef USART_IR_HUD
 extern UART_HandleTypeDef UartIR_HUD_Handle;
 #endif
-extern __IO ITStatus UartReadyHUD;
 
 #ifdef USART_PIEZO
 extern UART_HandleTypeDef UartPiezoTxHandle;

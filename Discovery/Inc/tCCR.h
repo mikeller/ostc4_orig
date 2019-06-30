@@ -38,6 +38,8 @@ void tCCR_control(void);
 void tCCR_restart(void);
 void tCCR_tick(void);
 
+void tCCR_SetRXIndication(void);
+
 float get_ppO2Sensor_bar(uint8_t sensor_id);
 float get_sensorVoltage_mV(uint8_t sensor_id);
 float get_HUD_battery_voltage_V(void);

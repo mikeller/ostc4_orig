@@ -46,7 +46,6 @@ UART_HandleTypeDef UartPiezoTxHandle;
 UART_HandleTypeDef UartIR_HUD_Handle;
 
 __IO ITStatus UartReady = RESET;
-__IO ITStatus UartReadyHUD = RESET;
 
 /* Private types -------------------------------------------------------------*/
 
@@ -304,7 +303,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
         UartReady = SET;
 }
 
-//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if(huart == &UartHandle)
@@ -312,7 +311,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     else
     if(huart == &UartIR_HUD_Handle)
     {
-        UartReadyHUD = SET;
+    	tCCR_SetRXIndication();
     }
 }
 
