@@ -110,7 +110,7 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c)
   /* I2C TX GPIO pin configuration  */
   GPIO_InitStruct.Pin       = I2Cx_SCL_PIN;
   GPIO_InitStruct.Mode      = GPIO_MODE_AF_OD;
-  GPIO_InitStruct.Pull      = GPIO_PULLUP;
+  GPIO_InitStruct.Pull      = GPIO_NOPULL;
   GPIO_InitStruct.Speed     = GPIO_SPEED_FAST;
   GPIO_InitStruct.Alternate = I2Cx_SCL_AF;
   
@@ -124,10 +124,14 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c)
     
   /*##-3- Configure the NVIC for I2C #########################################*/   
   /* NVIC for I2C1 */
+
+ /* The callbacks are not used => no need to activate the interrupts */
+ /*
   HAL_NVIC_SetPriority(I2Cx_ER_IRQn, 1, 2);
   HAL_NVIC_EnableIRQ(I2Cx_ER_IRQn);
   HAL_NVIC_SetPriority(I2Cx_EV_IRQn, 1, 3);
   HAL_NVIC_EnableIRQ(I2Cx_EV_IRQn);
+*/
 }
 
 /**
