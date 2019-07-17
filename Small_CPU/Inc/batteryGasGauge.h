@@ -29,6 +29,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 
+#include <stdint.h>
+
 void init_battery_gas_gauge(void);
 
 float get_voltage(void);
@@ -37,6 +39,7 @@ float get_charge(void);
 void battery_gas_gauge_get_data(void);
 void battery_gas_gauge_set_charge_full(void);
 void battery_gas_gauge_set(float percentage);
+uint8_t battery_gas_gauge_CheckConfigOK(void);
 
 #ifdef __cplusplus
 }
