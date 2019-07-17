@@ -617,10 +617,7 @@ void scheduleDiveMode(void)
 			{
 				MX_I2C1_TestAndClear();
 				MX_I2C1_Init();
-				if(!is_init_pressure_done())
-				{
-					init_pressure();
-				}
+				init_pressure();
 			}
 		}
 		if(ticksdiff >= 1000)
@@ -846,14 +843,23 @@ void scheduleSurfaceMode(void)
 			copyBatteryData();
 			copyDeviceData();
 
-			// new hw 170523
+/* check if I2C is not up an running and try to reactivate if necessary. Also do initialization if problem occured during startup */
 			if(global.I2C_SystemStatus != HAL_OK)
 			{
 				MX_I2C1_TestAndClear();
 				MX_I2C1_Init();
-				if(!is_init_pressure_done())
+				if(global.I2C_SystemStatus == HAL_OK)
 				{
 					init_pressure();
+					if(is_init_pressure_done())		/* Init surface data with initial measurement */
+					{
+						init_surface_ring();
+					}
+
+					if(!battery_gas_gauge_CheckConfigOK())
+					{
+						 init_battery_gas_gauge();
+					}
 				}
 			}
 		}
@@ -996,6 +1002,17 @@ void scheduleSleepMode(void)
 
 		MX_I2C1_Init();
 		pressure_sensor_get_pressure_raw();
+
+/* check if I2C is not up an running and try to reactivate if necessary. Also do initialization if problem occured during startup */
+		if(global.I2C_SystemStatus != HAL_OK)
+		{
+			MX_I2C1_TestAndClear();
+			MX_I2C1_Init();
+			if(global.I2C_SystemStatus == HAL_OK)
+			{
+				init_pressure();
+			}
+		}
 
 		if(secondsCount >= 30)
 		{
@@ -1562,6 +1579,10 @@ uint32_t time_elapsed_ms(uint32_t ticksstart,uint32_t ticksnow)
 /* same as in data_central.c */
 _Bool is_ambient_pressure_close_to_surface(SLifeData *lifeData)
 {
+	if(lifeData->pressure_ambient_bar == INVALID_PREASURE_VALUE)	/* as long as no valid data is available expect we are close to surface */
+	{
+		return true;
+	}
 	if (lifeData->pressure_ambient_bar > 1.16)
 		return false;
 	else if(lifeData->pressure_ambient_bar < (lifeData->pressure_surface_bar + 0.1f)) // hw 161121 now 1 mter, before 0.04f
