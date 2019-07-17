@@ -28,7 +28,7 @@
  the last 30 minutes will be saved once per minute in a endless loop
  at the beginning of a dive the oldest value will be used
 */
-
+#include "math.h"
 #include "scheduler.h"
 #include "pressure.h"
 #include "i2c.h"
@@ -45,6 +45,9 @@
 #define CMD_ADC_2048 0x06 // ADC OSR=2056
 #define CMD_ADC_4096 0x08 // ADC OSR=4096
 #define CMD_PROM_RD 0xA0 // Prom read command
+
+#define PRESSURE_HISTORY_SIZE			(8u)
+#define PRESSURE_JUMP_VALID_MBAR	    (500.0f)		/* values are measure several times a second => jumps > 5m very unlikely */
 
 static uint16_t get_ci_by_coef_num(uint8_t coef_num);
 //void pressure_calculation_new(void);
@@ -74,9 +77,11 @@ short C6plus100 = -1;
 */
 
 static float ambient_temperature = 0;
-static float ambient_pressure_mbar = 0;
-static float surface_pressure_mbar = 1000;
+static float ambient_pressure_mbar = 1000.0;
+static float surface_pressure_mbar = 1000.0;
 static float surface_ring_mbar[31] = { 0 };
+
+static float pressure_history_mbar[PRESSURE_HISTORY_SIZE];
 
 uint8_t secondCounterSurfaceRing = 0;
 
@@ -104,6 +109,13 @@ void init_surface_ring(void)
 	surface_pressure_mbar = ambient_pressure_mbar;
 }
 
+void init_pressure_history(void)
+{
+	for(int i=0; i<PRESSURE_HISTORY_SIZE; i++)
+	{
+		pressure_history_mbar[i] = 1000.0;
+	}
+}
 
 /* the ring has one place with 0
  * after that comes the oldest value
@@ -119,17 +131,20 @@ void update_surface_pressure(uint8_t call_rhythm_seconds)
 	
 	secondCounterSurfaceRing = 0;
 	
-	int hole;
-	for(hole=30;hole>0;hole--)
-		if(surface_ring_mbar[hole] == 0) { break; }
+	if(is_init_pressure_done())
+	{
+		int hole;
+		for(hole=30;hole>0;hole--)
+			if(surface_ring_mbar[hole] == 0) { break; }
 
-	surface_ring_mbar[hole] = ambient_pressure_mbar;
+		surface_ring_mbar[hole] = ambient_pressure_mbar;
 
-	hole++;
-	if(hole > 30)
-		hole = 0;
-	surface_pressure_mbar = surface_ring_mbar[hole];
-	surface_ring_mbar[hole] = 0;
+		hole++;
+		if(hole > 30)
+			hole = 0;
+		surface_pressure_mbar = surface_ring_mbar[hole];
+		surface_ring_mbar[hole] = 0;
+	}
 }
 
 #ifdef DEMOMODE
@@ -209,29 +224,6 @@ uint32_t demo_modify_temperature_and_pressure(int32_t divetime_in_seconds, uint8
 }
 #endif
 
-
-/* called just once on power on */
-/* TBD old DR5 code? */
-void init_pressure_DRx(void)
-{
-	uint8_t resetCommand[1] = {0x1E};
-
-	I2C_Master_Transmit(  DEVICE_PRESSURE, resetCommand, 1);
-	HAL_Delay(3);
-
-	C[1] =	get_ci_by_coef_num(0x02);
-	C[2] =	get_ci_by_coef_num(0x04);
-	C[3] =	get_ci_by_coef_num(0x06);
-	C[4] =	get_ci_by_coef_num(0x08);
-	C[5] =	get_ci_by_coef_num(0x0A);
-	C[6] =	get_ci_by_coef_num(0x0C);
-	
-	C5_x_2p8  = C[5] * 256;
-	C2_x_2p16 = C[2] * 65536;
-	C1_x_2p15 = C[1] * 32768;
-	pressure_update();
-}
-
 uint8_t is_init_pressure_done(void)
 {
 	return pressureSensorInitSuccess;
@@ -243,7 +235,10 @@ uint8_t init_pressure(void)
 	buffer[0] = 0x1e;
 	uint8_t retValue = 0xFF;
 	
-	
+	pressureSensorInitSuccess = false;
+	init_pressure_history();
+
+/* Send reset request to pressure sensor */
 	retValue = I2C_Master_Transmit(  DEVICE_PRESSURE, buffer, 1);
 	if(retValue != HAL_OK)
 	{
@@ -264,8 +259,10 @@ uint8_t init_pressure(void)
 	if(global.I2C_SystemStatus == HAL_OK)
 	{
 		pressureSensorInitSuccess = 1;
+		retValue = pressure_update();
+
 	}
-	return pressure_update();
+	return retValue;
 }
 
 
@@ -416,6 +413,40 @@ void pressure_calculation(void)
 	pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015();
 }
 
+static uint8_t pressure_plausible(float pressurevalue)
+{
+	static uint8_t pressurewriteindex = 0;
+	uint8_t retval = 0;
+	uint8_t index;
+	float pressure_average = 0;
+
+	for(index = 0; index < PRESSURE_HISTORY_SIZE; index++)
+	{
+		pressure_average += pressure_history_mbar[index];
+	}
+	pressure_average /= PRESSURE_HISTORY_SIZE;
+	if(pressure_average == 1000.0) /* first pressure calculation */
+	{
+		if(fabs(pressurevalue - pressure_average) < 11000.0)  /* just in case a reset occure during dive assume value equal < 100m as valid */
+		{
+			for(index = 0; index < PRESSURE_HISTORY_SIZE; index++)
+			{
+				pressure_history_mbar[index] = pressurevalue;	/* set history to current value */
+				retval = 1;
+			}
+		}
+	}
+	else
+	{
+		if(fabs(pressurevalue - pressure_average) < PRESSURE_JUMP_VALID_MBAR)
+		pressure_history_mbar[pressurewriteindex++] = pressurevalue;
+		pressurewriteindex &= 0x7;	/* wrap around if necessary */
+		retval = 1;
+	}
+
+	return retval;
+}
+
 static void pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015(void)
 {
 	uint32_t local_D1; // ADC value of the pressure conversion
@@ -425,6 +456,8 @@ static void pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015(void)
 	int64_t local_dT; // int32_t, difference between actual and measured temperature
 	int64_t local_OFF; // offset at actual temperature
 	int64_t local_SENS; // sensitivity at actual temperature
+
+	float calc_pressure;
 
 	int64_t T2;
 	int64_t OFF2;
@@ -479,7 +512,12 @@ static void pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015(void)
 								/  8192 );//     )) / 10; // pow(2,21), pow(2,13)
 
 	ambient_temperature 	= ((float)local_Tx100) / 100;
-	ambient_pressure_mbar	= ((float)local_Px10) / 10;
+
+	calc_pressure = ((float)local_Px10) / 10;
+	if(pressure_plausible(calc_pressure))
+	{
+		ambient_pressure_mbar = calc_pressure;
+	}
 }
 
 
