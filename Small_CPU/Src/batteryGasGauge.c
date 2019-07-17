@@ -22,6 +22,7 @@
   ******************************************************************************
   */ 
 /* Includes ------------------------------------------------------------------*/
+#include <string.h>	/* memset */
 #include "batteryGasGauge.h"
 #include "baseCPU2.h"
 #include "stm32f4xx_hal.h"
@@ -69,6 +70,25 @@ void init_battery_gas_gauge(void)
 	// Shutdown (0)
 	buffer[1] = 0xF8;
 	I2C_Master_Transmit(DEVICE_BATTERYGAUGE, buffer, 2);
+}
+
+uint8_t battery_gas_gauge_CheckConfigOK(void)
+{
+	#ifdef OSTC_ON_DISCOVERY_HARDWARE
+		return;
+	#endif
+
+	uint8_t retval = 0;
+	uint8_t bufferReceive[10];
+
+	memset(bufferReceive,0,sizeof(bufferReceive));
+
+	I2C_Master_Receive(DEVICE_BATTERYGAUGE, bufferReceive, 10);
+	if(bufferReceive[1] == 0xf8)
+	{
+		retval = 1;
+	}
+	return retval;
 }
 
 static void disable_adc(void)
