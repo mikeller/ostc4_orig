@@ -229,11 +229,13 @@
 #include "logbook_miniLive.h"
 #include "test_vpm.h"
 #include "tDebug.h"
+#include "motion.h"
 
 #ifdef DEMOMODE
 #include "demo.h"
 static void TIM_DEMO_init(void);
 #endif
+
 
 //#include "lodepng.h"
 //#include <stdlib.h> // for malloc and free
@@ -325,6 +327,14 @@ int fputc(int ch, FILE *f) {
 #define MEASURECNT 60	/* number of measuremets to be stored */
 static uint32_t loopcnt[MEASURECNT];
 #endif
+
+static uint8_t ButtonAction = ACTION_END;
+
+static void StoreButtonAction(uint8_t action)
+{
+	ButtonAction = action;
+}
+
 //  ===============================================================================
 //	main
 /// @brief	This function makes initializations and has the nonIRQ endless loop
@@ -341,6 +351,7 @@ int main(void)
     uint8_t lastsecond = 0xFF;
 #endif
 
+    detectionState_t shakestate;
     set_globalState( StBoot0 );
     LastButtonPressed = 0;
 
@@ -476,6 +487,16 @@ int main(void)
 	        DoDisplayRefresh = 0;
         	RefreshDisplay();
 
+        	shakestate = detectShake(stateRealGetPointer()->lifeData.compass_pitch);
+            if(DETECT_NEG_SHAKE == shakestate)
+           	{
+            	StoreButtonAction((uint8_t)ACTION_SHAKE_NEG);
+           	}
+            if(DETECT_POS_SHAKE == shakestate)
+           	{
+            	StoreButtonAction((uint8_t)ACTION_SHAKE_POS);
+           	}
+
 // Enable this to make the simulator write a logbook entry
 // #define SIM_WRITES_LOGBOOK 1
 
@@ -509,6 +530,9 @@ int main(void)
 
     }
 }
+
+
+
 
 //  ===============================================================================
 //	timer IRQ
@@ -817,12 +841,7 @@ static void RefreshDisplay()
 		break;
 	}
 }
-static uint8_t ButtonAction = ACTION_END;
 
-static void StoreButtonAction(uint8_t action)
-{
-	ButtonAction = action;
-}
 
 static void TriggerButtonAction()
 {
@@ -866,14 +885,16 @@ static void TriggerButtonAction()
 					set_globalState(StD);
 				} else
 					tHome_change_field_button_pressed();
-			} else if (action == ACTION_BUTTON_ENTER) {
-				if ((status.page == PageDive) && (status.line == 0))
-					tHome_change_customview_button_pressed();
-				else if (status.page == PageSurface)
-					tHome_change_customview_button_pressed();
-				else
-					tHomeDiveMenuControl(action);
-			}
+			} else if ((action == ACTION_BUTTON_ENTER) || (action == ACTION_SHAKE_NEG) || (action == ACTION_SHAKE_POS))
+					{
+
+						if ((status.page == PageDive) && (status.line == 0))
+							tHome_change_customview_button_pressed(action);
+						else if (status.page == PageSurface)
+							tHome_change_customview_button_pressed(action);
+						else
+							tHomeDiveMenuControl(action);
+					}
 			break;
 
 		case BaseMenu:

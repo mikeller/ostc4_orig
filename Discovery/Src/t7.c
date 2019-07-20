@@ -1479,9 +1479,10 @@ void t7_set_customview_to_primary(void)
             selection_customview = settingsGetPointer()->tX_customViewPrimary;
 }
 
-void t7_change_customview(void)
+void t7_change_customview(uint8_t action)
 {
-    const uint8_t *pViews;
+    uint8_t *pViews;
+    uint8_t *pStartView,*pCurView, *pLastView;
     _Bool cv_disabled = 0;
 
     if(stateUsed->mode == MODE_DIVE)
@@ -1489,54 +1490,83 @@ void t7_change_customview(void)
     else
         pViews = customviewsSurface;
 
-    while((*pViews != CVIEW_END) && (*pViews != selection_customview))
-        {pViews++;}
-
-    if(*pViews < CVIEW_END)
-        pViews++;
-
-
-    if(*pViews == CVIEW_END)
+    pStartView = pViews;
+    /* set pointer to currently selected view and count number of entries */
+    while((*pViews != CVIEW_END))
     {
-        if(stateUsed->mode == MODE_DIVE)
-            pViews = customviewsDive;
-        else
-            pViews = customviewsSurface;
+    	if (*pViews == selection_customview)
+    	{
+    		pCurView = pViews;
+    	}
+    	pViews++;
+    }
+    pLastView = pViews;
+    pViews = pCurView;
+
+    if((action == ACTION_BUTTON_ENTER) || (action == ACTION_SHAKE_POS))
+    {
+		if(*pViews < CVIEW_END)
+			pViews++;
+
+		if(*pViews == CVIEW_END)
+		{
+			pViews = pStartView;
+		}
+    }
+    else
+    {
+		if(pViews == pStartView)
+		{
+			pViews = pLastView - 1;
+		}
+		else
+		{
+			pViews--;
+		}
     }
 
-    if(stateUsed->mode == MODE_DIVE)
+    do
     {
-        do
+        cv_disabled = 0;
+        for(int i=0;i<6;i++)
         {
-            cv_disabled = 0;
-            for(int i=0;i<6;i++)
-            {
-                if((*pViews == cv_changelist[i]) && !CHECK_BIT_THOME(settingsGetPointer()->cv_configuration, cv_changelist[i]))
-                {
-                    cv_disabled = 1;
-                    break;
-                }
-            }
+             if((*pViews == cv_changelist[i]) && !CHECK_BIT_THOME(settingsGetPointer()->cv_configuration, cv_changelist[i]))
+             {
+            	 cv_disabled = 1;
+                   break;
+             }
+        }
 
-            if ((*pViews == CVIEW_sensors || *pViews == CVIEW_sensors_mV) &&
-            	stateUsed->diveSettings.ppo2sensors_deactivated)
-            {
-            	cv_disabled = 1;
-            }
+        if (((*pViews == CVIEW_sensors) || (*pViews == CVIEW_sensors_mV)) &&
+           	((stateUsed->diveSettings.ppo2sensors_deactivated) || (stateUsed->diveSettings.ccrOption == 0)))
+        {
+	      	cv_disabled = 1;
+        }
 
-            if(cv_disabled)
-            {
-                if(*pViews < CVIEW_END)
-                {
-                    pViews++;
-                }
-                else
-                {
-                    pViews = customviewsDive;
-                }
-            }
-        } while(cv_disabled);
-    }
+        if(cv_disabled)		/* view is disabled => jump to next view */
+        {
+          	if((action == ACTION_BUTTON_ENTER) || (action == ACTION_SHAKE_POS))
+          	{
+           		pViews++;
+				if(*pViews == CVIEW_END)
+				{
+					pViews = pStartView;
+				}
+           	}
+           	else
+           	{
+           		if(pViews == pStartView)
+           		{
+           			pViews = pLastView - 1;
+           		}
+           		else
+           		{
+           			pViews--;
+           		}
+           	}
+        }
+    } while(cv_disabled);
+
     selection_customview = *pViews;
 }
 
@@ -1570,11 +1600,11 @@ void t7_refresh_customview(void)
 	pSettings = settingsGetPointer();
 
     if((selection_customview == CVIEW_sensors) &&(stateUsed->diveSettings.ccrOption == 0))
-        t7_change_customview();
+        t7_change_customview(ACTION_BUTTON_ENTER);
     if((selection_customview == CVIEW_sensors_mV) &&(stateUsed->diveSettings.ccrOption == 0))
-        t7_change_customview();
+        t7_change_customview(ACTION_BUTTON_ENTER);
     if((selection_customview == CVIEW_sensors) &&(stateUsed->diveSettings.ccrOption == 0))
-        t7_change_customview();
+        t7_change_customview(ACTION_BUTTON_ENTER);
 
     switch(selection_customview)
     {

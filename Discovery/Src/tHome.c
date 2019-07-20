@@ -42,6 +42,7 @@
 #include "tMenuEditGasOC.h" // for openEdit_DiveSelectBetterGas()
 #include "tMenuEditSetpoint.h" // for openEdit_DiveSelectBetterSetpoint()
 #include "simulation.h"
+#include "motion.h"
 
 /* Private types -------------------------------------------------------------*/
 
@@ -330,11 +331,11 @@ void tHome_change_field_button_pressed(void)
 }
 
 
-void tHome_change_customview_button_pressed(void)
+void tHome_change_customview_button_pressed(uint8_t action)
 {
     tHome_tick_count_cview = 0;
     if(settingsGetPointer()->design == 7)
-        t7_change_customview();
+        t7_change_customview(action);
     else
     if(settingsGetPointer()->design == 3)
         t3_change_customview();
