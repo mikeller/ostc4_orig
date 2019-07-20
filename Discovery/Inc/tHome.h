@@ -116,7 +116,7 @@ void tHome_refresh(void);
 void tHome_sleepmode_fun(void);
 void set_globalState_tHome(void);
 void tHome_change_field_button_pressed(void);
-void tHome_change_customview_button_pressed(void);
+void tHome_change_customview_button_pressed(uint8_t action);
 
 void tHome_findNextStop(const uint16_t *list, uint8_t *depthOut, uint16_t *lengthOut);
 void tHomeDiveMenuControl(uint8_t sendAction);
