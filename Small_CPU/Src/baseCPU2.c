@@ -170,13 +170,13 @@ const SFirmwareData cpu2_FirmwareData __attribute__(( section(".firmware_data") 
 		.signature = "mh",
 
 		.release_year = 19,
-		.release_month = 7,
-		.release_day = 1,
+		.release_month = 8,
+		.release_day = 5,
 		.release_sub = 0,
 
 		/* max 48 with trailing 0 */
 		//release_info ="12345678901234567890123456789012345678901"
-		.release_info = "stable May'19",
+		.release_info = "stable Aug'19",
 
 		/* for safety reasons and coming functions */
 		.magic[0] = FIRMWARE_MAGIC_FIRST, .magic[1] = FIRMWARE_MAGIC_SECOND,
