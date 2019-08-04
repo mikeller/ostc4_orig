@@ -54,16 +54,16 @@ uint8_t RTEactualLow = 0;
 const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_firmware_data")) ) =
 {
     .versionFirst   = 1,
-    .versionSecond 	= 4,
-    .versionThird   = 9,
-    .versionBeta    = 1,
+    .versionSecond 	= 5,
+    .versionThird   = 0,
+    .versionBeta    = 0,
 
     /* 4 bytes with trailing 0 */
     .signature = "mh",
 
     .release_year = 19,
-    .release_month = 5,
-    .release_day = 6,
+    .release_month = 8,
+    .release_day = 5,
     .release_sub = 0,
 
     /* max 48 with trailing 0 */
