@@ -38,6 +38,7 @@
 #include "simulation.h"
 #include "timer.h"
 #include "unit.h"
+#include "motion.h"
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -567,6 +568,8 @@ void t7_refresh(void)
                 selection_customview = CVIEW_noneOrDebug;
             else
                 selection_customview = settingsGetPointer()->tX_customViewPrimary;
+
+            InitMotionDetection();
         }
 
         if(status.page == PageSurface)
@@ -597,6 +600,7 @@ void t7_refresh(void)
         {
             last_mode = MODE_SURFACE;
             selection_customview = customviewsSurface[0];
+            InitMotionDetection();
         }
         if(status.page == PageDive)
             set_globalState(StS);
@@ -1479,6 +1483,43 @@ void t7_set_customview_to_primary(void)
             selection_customview = settingsGetPointer()->tX_customViewPrimary;
 }
 
+uint8_t t7_GetEnabled_customviews()
+{
+    uint8_t *pViews;
+    uint8_t increment = 1;
+
+    uint8_t enabledViewCnt = 0;
+    uint32_t cv_config = settingsGetPointer()->cv_configuration;
+
+    if(stateUsed->mode == MODE_DIVE)
+        pViews = customviewsDive;
+    else
+        pViews = customviewsSurface;
+
+    while((*pViews != CVIEW_END))
+    {
+    	increment = 1;
+    /* check if view is enabled */
+        for(int i=0;i<6;i++)
+        {
+             if((*pViews == cv_changelist[i]) && !CHECK_BIT_THOME(cv_config, (1 << cv_changelist[i])))
+             {
+            	 increment = 0;
+                   break;
+             }
+        }
+        if (((*pViews == CVIEW_sensors) || (*pViews == CVIEW_sensors_mV)) &&
+           	((stateUsed->diveSettings.ppo2sensors_deactivated) || (stateUsed->diveSettings.ccrOption == 0)))
+        {
+        	increment = 0;
+        }
+
+    	pViews++;
+    	enabledViewCnt += increment;
+    }
+    return enabledViewCnt;
+}
+
 void t7_change_customview(uint8_t action)
 {
     uint8_t *pViews;
@@ -1503,7 +1544,7 @@ void t7_change_customview(uint8_t action)
     pLastView = pViews;
     pViews = pCurView;
 
-    if((action == ACTION_BUTTON_ENTER) || (action == ACTION_SHAKE_POS))
+    if((action == ACTION_BUTTON_ENTER) || (action == ACTION_PITCH_POS))
     {
 		if(*pViews < CVIEW_END)
 			pViews++;
@@ -1545,7 +1586,7 @@ void t7_change_customview(uint8_t action)
 
         if(cv_disabled)		/* view is disabled => jump to next view */
         {
-          	if((action == ACTION_BUTTON_ENTER) || (action == ACTION_SHAKE_POS))
+          	if((action == ACTION_BUTTON_ENTER) || (action == ACTION_PITCH_POS))
           	{
            		pViews++;
 				if(*pViews == CVIEW_END)

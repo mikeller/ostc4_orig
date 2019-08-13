@@ -47,6 +47,8 @@ void t7_set_customview_to_primary(void);
 
 void init_t7_compass(void);
 
+uint8_t t7_GetEnabled_customviews();
+
 /*
 	 void t7c_refresh(uint32_t FramebufferStartAddress);
 */
