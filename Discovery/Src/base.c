@@ -351,7 +351,7 @@ int main(void)
     uint8_t lastsecond = 0xFF;
 #endif
 
-    detectionState_t shakestate;
+    detectionState_t pitchstate;
     set_globalState( StBoot0 );
     LastButtonPressed = 0;
 
@@ -457,6 +457,7 @@ int main(void)
         setDebugMode();
         openInfo( StIDEBUG );
     }
+    InitMotionDetection();
 
     TIM_init();		/* start cylic 100ms task */
 
@@ -487,14 +488,24 @@ int main(void)
 	        DoDisplayRefresh = 0;
         	RefreshDisplay();
 
-        	shakestate = detectShake(stateRealGetPointer()->lifeData.compass_pitch);
-            if(DETECT_NEG_SHAKE == shakestate)
+        	switch(settingsGetPointer()->MotionDetection)
+        	{
+        		case MOTION_DETECT_MOVE: pitchstate = detectPitch(stateRealGetPointer()->lifeData.compass_pitch);
+        			break;
+        		case MOTION_DETECT_SECTOR: pitchstate = detectSectorButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
+        			break;
+        		default:
+        			pitchstate = DETECT_NOTHING;
+        			break;
+        	}
+
+			if(DETECT_NEG_PITCH == pitchstate)
            	{
-            	StoreButtonAction((uint8_t)ACTION_SHAKE_NEG);
+            	StoreButtonAction((uint8_t)ACTION_PITCH_NEG);
            	}
-            if(DETECT_POS_SHAKE == shakestate)
+            if(DETECT_POS_PITCH == pitchstate)
            	{
-            	StoreButtonAction((uint8_t)ACTION_SHAKE_POS);
+            	StoreButtonAction((uint8_t)ACTION_PITCH_POS);
            	}
 
 // Enable this to make the simulator write a logbook entry
@@ -885,11 +896,17 @@ static void TriggerButtonAction()
 					set_globalState(StD);
 				} else
 					tHome_change_field_button_pressed();
-			} else if ((action == ACTION_BUTTON_ENTER) || (action == ACTION_SHAKE_NEG) || (action == ACTION_SHAKE_POS))
+			} else if ((action == ACTION_BUTTON_ENTER) || (action == ACTION_PITCH_NEG) || (action == ACTION_PITCH_POS))
 					{
 
 						if ((status.page == PageDive) && (status.line == 0))
+						{
 							tHome_change_customview_button_pressed(action);
+							if((settingsGetPointer()->MotionDetection == MOTION_DETECT_SECTOR) && (action == ACTION_BUTTON_ENTER))  /* Button pressed while sector detection is active => calibrate to current pitch value */
+							{
+								DefinePitchSectors(stateRealGetPointer()->lifeData.compass_pitch);
+							}
+						}
 						else if (status.page == PageSurface)
 							tHome_change_customview_button_pressed(action);
 						else

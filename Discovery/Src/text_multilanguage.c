@@ -1262,6 +1262,32 @@ static uint8_t text_FR_ExtraNone[] = "non";
 static uint8_t text_IT_ExtraNone[] = "no";
 static uint8_t text_ES_ExtraNone[] = "ninguno";
 
+/* Menu SYS2 - Strings for Motion Control Selection */
+static uint8_t text_EN_MotionCtrl[] = "Motion Control";
+static uint8_t text_DE_MotionCtrl[] = "Bew. Steuerung";
+static uint8_t text_FR_MotionCtrl[] = "Motion Control";
+static uint8_t text_IT_MotionCtrl[] = "Motion Control";
+static uint8_t text_ES_MotionCtrl[] = "Motion Control";
+
+static uint8_t text_EN_MoCtrlNone[] = "Off";
+static uint8_t text_DE_MoCtrlNone[] = "Aus";
+static uint8_t text_FR_MoCtrlNone[] = "Off";
+static uint8_t text_IT_MoCtrlNone[] = "Off";
+static uint8_t text_ES_MoCtrlNone[] = "Off";
+
+static uint8_t text_EN_MoCtrlPitch[] = "Pitch move";
+static uint8_t text_DE_MoCtrlPitch[] = "Nickbewegung";
+static uint8_t text_FR_MoCtrlPitch[] = "Pitch move";
+static uint8_t text_IT_MoCtrlPitch[] = "Pitch move";
+static uint8_t text_ES_MoCtrlPitch[] = "Pitch move";
+
+static uint8_t text_EN_MoCtrlSector[] = "Sector";
+static uint8_t text_DE_MoCtrlSector[] = "Sektoren";
+static uint8_t text_FR_MoCtrlSector[] = "Sector";
+static uint8_t text_IT_MoCtrlSector[] = "Sector";
+static uint8_t text_ES_MoCtrlSector[] = "Sector";
+
+
 // Menu SYS2 Reset RTE and Firmware Update During Bluetooth Connection
 static uint8_t text_EN_DecoDataLost[] = "Decompression data will be lost";
 static uint8_t text_DE_DecoDataLost[] = "Dekompressionsdaten verloren!";
@@ -1716,6 +1742,10 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_ExtraBigFont,	{text_EN_ExtraBigFont, text_DE_ExtraBigFont, text_FR_ExtraBigFont, text_IT_ExtraBigFont, text_ES_ExtraBigFont}},
     {(uint8_t)TXT2BYTE_ExtraDecoGame,	{text_EN_ExtraDecoGame, text_DE_ExtraDecoGame, text_FR_ExtraDecoGame, text_IT_ExtraDecoGame, text_ES_ExtraDecoGame}},
     {(uint8_t)TXT2BYTE_ExtraNone,		{text_EN_ExtraNone, text_DE_ExtraNone, text_FR_ExtraNone, text_IT_ExtraNone, text_ES_ExtraNone}},
+	{(uint8_t)TXT2BYTE_MotionCtrl,		{text_EN_MotionCtrl, text_DE_MotionCtrl, text_FR_MotionCtrl, text_IT_MotionCtrl, text_ES_MotionCtrl}},
+	{(uint8_t)TXT2BYTE_MoCtrlNone,		{text_EN_MoCtrlNone, text_DE_MoCtrlNone, text_FR_MoCtrlNone, text_IT_MoCtrlNone, text_ES_MoCtrlNone}},
+	{(uint8_t)TXT2BYTE_MoCtrlPitch,		{text_EN_MoCtrlPitch, text_DE_MoCtrlPitch, text_FR_MoCtrlPitch, text_IT_MoCtrlPitch, text_ES_MoCtrlPitch}},
+	{(uint8_t)TXT2BYTE_MoCtrlSector,	{text_EN_MoCtrlSector, text_DE_MoCtrlSector, text_FR_MoCtrlSector, text_IT_MoCtrlSector, text_ES_MoCtrlSector}},
     {(uint8_t)TXT2BYTE_DecoDataLost,	{text_EN_DecoDataLost, text_DE_DecoDataLost, text_FR_DecoDataLost, text_IT_DecoDataLost, text_ES_DecoDataLost}},
     {(uint8_t)TXT2BYTE_Info,			{text_EN_Info, text_DE_Info, text_FR_Info, text_IT_Info, text_ES_Info}},
     {(uint8_t)TXT2BYTE_Korrekturwerte,  {text_EN_Korrekturwerte, text_DE_Korrekturwerte, text_FR_Korrekturwerte, text_IT_Korrekturwerte, text_ES_Korrekturwerte}},

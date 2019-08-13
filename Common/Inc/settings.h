@@ -216,6 +216,8 @@ typedef struct
 	uint8_t FlipDisplay;
 	/* new in 0xFFFF0019 */
 	uint32_t cv_configuration;
+	/* new in 0xFFFF001A */
+	uint8_t MotionDetection;
 
 } SSettings;
 
