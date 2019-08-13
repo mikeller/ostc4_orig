@@ -49,6 +49,8 @@
 #define PRESSURE_HISTORY_SIZE			(8u)
 #define PRESSURE_JUMP_VALID_MBAR	    (500.0f)		/* values are measure several times a second => jumps > 5m very unlikely */
 
+#define PRESSURE_SURFACE_QUE			(30u)			/* history buffer [minutes] for past pressure measurements */
+
 static uint16_t get_ci_by_coef_num(uint8_t coef_num);
 //void pressure_calculation_new(void);
 //void pressure_calculation_old(void);
@@ -79,7 +81,7 @@ short C6plus100 = -1;
 static float ambient_temperature = 0;
 static float ambient_pressure_mbar = 1000.0;
 static float surface_pressure_mbar = 1000.0;
-static float surface_ring_mbar[31] = { 0 };
+static float surface_ring_mbar[PRESSURE_SURFACE_QUE] = { 0 };
 
 static float pressure_history_mbar[PRESSURE_HISTORY_SIZE];
 
@@ -103,10 +105,12 @@ float get_surface_mbar(void)
 
 void init_surface_ring(void)
 {
-	surface_ring_mbar[0] = 0;
-	for(int i=1; i<31; i++)
-		surface_ring_mbar[i] = ambient_pressure_mbar;
-	surface_pressure_mbar = ambient_pressure_mbar;
+	if(surface_ring_mbar[0] == 0)					/* only initialize once. Keep value in place in case of an i2c recovery */
+	{
+		for(int i=0; i<PRESSURE_SURFACE_QUE; i++)
+			surface_ring_mbar[i] = ambient_pressure_mbar;
+		surface_pressure_mbar = ambient_pressure_mbar;
+	}
 }
 
 void init_pressure_history(void)
@@ -117,33 +121,34 @@ void init_pressure_history(void)
 	}
 }
 
-/* the ring has one place with 0
- * after that comes the oldest value
- * the new pressure is written in this hole
- * the oldest value is read and then the new hole
-*/
+
 void update_surface_pressure(uint8_t call_rhythm_seconds)
 {
-	secondCounterSurfaceRing += call_rhythm_seconds;
-	
-	if(secondCounterSurfaceRing < 60)
-		return;
-	
-	secondCounterSurfaceRing = 0;
-	
+	static uint8_t writeIndex = 0;		/* Reinitialization will reset all entries to the same value => no need to reinit write index */
+	static uint8_t avgCount = 0;
+	static float runningAvg = 0;
+
 	if(is_init_pressure_done())
 	{
-		int hole;
-		for(hole=30;hole>0;hole--)
-			if(surface_ring_mbar[hole] == 0) { break; }
+		runningAvg = (runningAvg * avgCount + ambient_pressure_mbar) / (avgCount +1);
+		avgCount++;
+		secondCounterSurfaceRing += call_rhythm_seconds;
 
-		surface_ring_mbar[hole] = ambient_pressure_mbar;
+		if(secondCounterSurfaceRing >= 60)
+		{
+			surface_ring_mbar[writeIndex] = runningAvg;
+			writeIndex++; /* the write index is now pointing to the oldest value in the buffer which will be overwritten next time */
 
-		hole++;
-		if(hole > 30)
-			hole = 0;
-		surface_pressure_mbar = surface_ring_mbar[hole];
-		surface_ring_mbar[hole] = 0;
+			if(writeIndex == PRESSURE_SURFACE_QUE)
+			{
+				writeIndex = 0;
+			}
+
+			surface_pressure_mbar = surface_ring_mbar[writeIndex]; /* 30 minutes old measurement */
+
+			secondCounterSurfaceRing = 0;
+			avgCount = 1;	/* use the current value as starting point but restart the weight decrement of the measurements */
+		}
 	}
 }
 
@@ -449,6 +454,9 @@ static uint8_t pressure_plausible(float pressurevalue)
 
 static void pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015(void)
 {
+	static float runningAvg = 0;
+	static uint8_t avgCnt = 0;
+
 	uint32_t local_D1; // ADC value of the pressure conversion
 	uint32_t local_D2; // ADC value of the temperature conversion
 	int32_t local_Px10; // compensated pressure value
@@ -516,7 +524,12 @@ static void pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015(void)
 	calc_pressure = ((float)local_Px10) / 10;
 	if(pressure_plausible(calc_pressure))
 	{
-		ambient_pressure_mbar = calc_pressure;
+		runningAvg = (avgCnt * runningAvg + calc_pressure) / (avgCnt + 1);
+		if (avgCnt < 10)	/* build an average considering the last measurements to a a weight "1 of 10" */
+		{					/* Main reason for this is the jitter of up to +-10 HPa in surface mode which is caused */
+			avgCnt++;		/* by the measurement range of the sensor which is focused on under water pressure measurement */
+		}
+		ambient_pressure_mbar = runningAvg;
 	}
 }
 
