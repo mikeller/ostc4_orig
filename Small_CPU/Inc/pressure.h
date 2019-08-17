@@ -5,6 +5,8 @@
 #include <stdint.h>
 
 uint8_t init_pressure(void);
+void pressure_set_offset (float pressureOffset, float temperatureOffset);
+
 uint8_t pressure_update(void);
 void pressure_update_alternating(void);
 
@@ -18,7 +20,7 @@ float get_temperature(void);
 float get_pressure_mbar(void);
 float get_surface_mbar(void);
 
-void init_surface_ring(void);
+void init_surface_ring(uint8_t force);
 void update_surface_pressure(uint8_t call_rhythm_seconds);
 
 uint32_t demo_modify_temperature_and_pressure(int32_t divetime_in_seconds, uint8_t subseconds, float ceiling_mbar);

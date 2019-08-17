@@ -334,7 +334,7 @@ int main(void) {
 
 	if(is_init_pressure_done())
 	{
-		init_surface_ring();
+		init_surface_ring(0);
 	}
 	init_battery_gas_gauge();
 	HAL_Delay(10);
@@ -363,7 +363,7 @@ int main(void) {
 	global.mode = MODE_POWERUP;
 #else
 	init_pressure();
-	init_surface_ring();
+	init_surface_ring(0);
 
 	ADCx_Init();
 	GPIO_Power_MainCPU_Init();
