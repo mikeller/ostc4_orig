@@ -158,6 +158,9 @@ const uint8_t *customviewsSurface	= customviewsSurfaceStandard;
 #define CUSTOMBOX_SPACE_INSIDE (CUSTOMBOX_LINE_RIGHT + 1 - (CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET + CUSTOMBOX_INSIDE_OFFSET))
 #define TOP_LINE_HIGHT (25)
 
+#define SHOW_AMBIENTE_SURFACE_DELTA		(0.02f)
+#define SHOW_AMBIENTE_DEBOUNCE			(0.003f)
+
 /* Exported functions --------------------------------------------------------*/
 
 void t7_init(void)
@@ -661,6 +664,7 @@ void t7_refresh_sleep_design_fun(void)
 
 void t7_refresh_surface(void)
 {
+	static float debounceAmbientPressure = 0;
     char text[256];
     uint8_t date[3], year,month,day;
     uint32_t color;
@@ -905,7 +909,19 @@ void t7_refresh_surface(void)
     /* surface pressure  and temperature */
     if(stateUsed->sensorErrorsRTE == 0)
     {
-        snprintf(text,30,"%01.0f\022\016\016 %s", stateUsed->lifeData.pressure_surface_bar * 1000.0f,TEXT_PRESSURE_UNIT);
+    	if(fabs(stateUsed->lifeData.pressure_surface_bar - stateUsed->lifeData.pressure_ambient_bar) < SHOW_AMBIENTE_SURFACE_DELTA)	/* show ambient pressure if difference to surface is significant*/
+    	{
+    		snprintf(text,30,"%01.0f\022\016\016 %s", stateUsed->lifeData.pressure_surface_bar * 1000.0f,TEXT_PRESSURE_UNIT);
+    	}
+    	else
+    	{
+    		if(fabsf(debounceAmbientPressure - stateUsed->lifeData.pressure_ambient_bar) > SHOW_AMBIENTE_DEBOUNCE)   /* there might be a jitter ~+-1 HPa on the pressure signal => update only if delta is bigger */
+    		{
+    			debounceAmbientPressure = stateUsed->lifeData.pressure_ambient_bar;
+    		}
+    		snprintf(text,30,"%01.0f\022\016\016 %s", debounceAmbientPressure * 1000.0f,TEXT_PRESSURE_UNIT);
+    	}
+
         GFX_write_string(&FontT48,&t7surfaceL,text,3);
 
         if(settingsGetPointer()->nonMetricalSystem)
@@ -1223,7 +1239,7 @@ void t7_refresh_surface_debugmode(void)
     else
     if(DataEX_lost_connection_count())
     {
-        snprintf(TextL1,TEXTSIZE,"\002%i",DataEX_lost_connection_count());
+        snprintf(TextL1,TEXTSIZE,"\002%ld",DataEX_lost_connection_count());
         Gfx_write_label_var(&t7screen,  600,800, 45,&FontT48,CLUT_Font020,TextL1);
     }
 
@@ -1288,7 +1304,7 @@ void t7_refresh_surface_debugmode(void)
 
 extern uint32_t base_tempLightLevel;
 
-    snprintf(TextL1,TEXTSIZE,"# %u (%u)",stateUsed->lifeData.ambient_light_level, base_tempLightLevel);
+    snprintf(TextL1,TEXTSIZE,"# %u (%ld)",stateUsed->lifeData.ambient_light_level, base_tempLightLevel);
     Gfx_write_label_var(&t7screen,  401,600,310,&FontT42,CLUT_DiveMainLabel,"Light");
     Gfx_write_label_var(&t7screen,  401,800,355,&FontT48,CLUT_Font020,TextL1);
 
