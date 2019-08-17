@@ -1219,8 +1219,8 @@ uint8_t check_and_correct_settings(void)
 
 /*	int8_t offsetPressure_mbar;
  */
-    if((Settings.offsetPressure_mbar > 20) ||
-         (Settings.offsetPressure_mbar < -20))
+    if((Settings.offsetPressure_mbar > PRESSURE_OFFSET_LIMIT_MBAR) ||
+         (Settings.offsetPressure_mbar < -1 * PRESSURE_OFFSET_LIMIT_MBAR))
     {
         Settings.offsetPressure_mbar = 0;
         corrections++;
@@ -1730,13 +1730,13 @@ uint8_t writeData(uint8_t * data)
                 if(data[1] & 0x80)
                 {
                     data[1] = ~(data[1]);
-                    if(!checkValue(data[1],0,20))
+                    if(!checkValue(data[1],0,PRESSURE_OFFSET_LIMIT_MBAR))
                             return ERROR_;
                     Settings.offsetPressure_mbar = 0 - data[1];
                 }
                 else
                 {
-                    if(!checkValue(data[1],0,20))
+                    if(!checkValue(data[1],0,PRESSURE_OFFSET_LIMIT_MBAR))
                             return ERROR_;
                     Settings.offsetPressure_mbar = data[1];
                 }
@@ -2094,12 +2094,12 @@ uint8_t readDataLimits__8and16BitValues_4and7BytesOutput(uint8_t what, uint8_t *
 
     case 0x35:
         data[datacounter++] =  PARAM_SINT;
-        data[datacounter++] = (uint8_t)(256 - 20); // == -20
+        data[datacounter++] = (uint8_t)(256 - PRESSURE_OFFSET_LIMIT_MBAR); // == -20
         if(settingsGetPointerStandard()->offsetPressure_mbar < 0)
             data[datacounter++] = (uint8_t)(127 - settingsGetPointerStandard()->offsetPressure_mbar);
         else
             data[datacounter++] = settingsGetPointerStandard()->offsetPressure_mbar;
-        data[datacounter++] = 20;
+        data[datacounter++] = PRESSURE_OFFSET_LIMIT_MBAR;
         break;
 
     case 0x36:
