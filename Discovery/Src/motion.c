@@ -11,6 +11,7 @@
 #include "motion.h"
 #include "data_central.h"
 #include "t7.h"
+#include "settings.h"
 
 #define	STABLE_STATE_COUNT			2	/* number of count to declare a state as stable (at the moment based on 100ms) */
 #define STABLE_STATE_TIMEOUT		5	/* Detection shall be aborted if a movement state is stable for more than 500ms */
@@ -24,6 +25,7 @@
 #define SECTOR_BORDER				400.0	/* Define a value which is out of limit to avoid not wanted key events */
 #define SECTOR_FILTER				10		/* Define speed for calculated angle to follow real value */
 
+#define SECTOR_MAX					10		/* maximum number of sectors */
 
 static detectionState_t detectionState = DETECT_NOTHING;
 
@@ -61,11 +63,22 @@ uint8_t GetSectorForPitch(float pitch)
 	return sector;
 }
 
-void DefinePitchSectors(float centerPitch)
+void DefinePitchSectors(float centerPitch,uint8_t numOfSectors)
 {
 	uint8_t index;
 
-	sectorCount =  t7_GetEnabled_customviews();
+	if(numOfSectors == CUSTOMER_DEFINED_VIEWS)
+	{
+		sectorCount =  t7_GetEnabled_customviews();
+		if(sectorCount > 5)
+		{
+			sectorCount = 5;	/* more views are hard to manually control */
+		}
+	}
+	else
+	{
+		sectorCount = numOfSectors;
+	}
 	sectorSize = SECTOR_WINDOW / sectorCount;
 
 	PitchSector[0].upperlimit = centerPitch + (SECTOR_WINDOW / 2);
@@ -91,7 +104,17 @@ void InitMotionDetection(void)
 	curSector = 0;
 	sectorSize = 0;
 	sectorCount = 0;
-	DefinePitchSectors(0);
+
+	switch(settingsGetPointer()->MotionDetection)
+	{
+		case MOTION_DETECT_SECTOR: DefinePitchSectors(0,CUSTOMER_DEFINED_VIEWS);
+			break;
+		case MOTION_DETECT_MOVE: DefinePitchSectors(0,SECTOR_MAX);
+			break;
+		default:
+			break;
+	}
+
 }
 
 /* Map the current pitch value to a sector and create button event in case the sector is left */

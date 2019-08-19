@@ -10,6 +10,7 @@
 
 
 /* exported data types */
+#define CUSTOMER_DEFINED_VIEWS	(100u)	/* value will cause the function to detect the numer of selected views */
 
 typedef enum
 {
@@ -39,7 +40,7 @@ typedef struct
 } SSector;
 
 void InitMotionDetection(void);
-void DefinePitchSectors(float centerAngle);
+void DefinePitchSectors(float centerAngle, uint8_t numOfSectors);
 detectionState_t detectPitch(float currentPitch);
 detectionState_t detectSectorButtonEvent(float curPitch);
 

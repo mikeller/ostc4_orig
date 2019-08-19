@@ -904,7 +904,7 @@ static void TriggerButtonAction()
 							tHome_change_customview_button_pressed(action);
 							if((settingsGetPointer()->MotionDetection == MOTION_DETECT_SECTOR) && (action == ACTION_BUTTON_ENTER))  /* Button pressed while sector detection is active => calibrate to current pitch value */
 							{
-								DefinePitchSectors(stateRealGetPointer()->lifeData.compass_pitch);
+								DefinePitchSectors(stateRealGetPointer()->lifeData.compass_pitch,CUSTOMER_DEFINED_VIEWS);
 							}
 						}
 						else if (status.page == PageSurface)
