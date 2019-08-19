@@ -66,6 +66,8 @@
 #define DDMMYY 1
 #define YYMMDD 2
 
+#define PRESSURE_OFFSET_LIMIT_MBAR	50
+
 /*	2015 Jan 30, hw, deco and travel added for MenuEditGas
 	* can be used for buehlmann, vpm, etc. later but be carefull
 	*	with current implemenation */

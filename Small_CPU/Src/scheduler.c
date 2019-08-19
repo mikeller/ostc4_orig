@@ -43,7 +43,9 @@
 #include "tm_stm32f4_otp.h"
 
 
-#define INVALID_PREASURE_VALUE (100.0F)
+#define INVALID_PREASURE_VALUE 			(100.0f)
+#define START_DIVE_MOUNTAIN_MODE_BAR	(0.88f)
+#define START_DIVE_IMMEDIATLY_BAR		(1.16f)
 
 /* Private types -------------------------------------------------------------*/
 const SGas Air = {79,0,0,0,0};
@@ -279,6 +281,10 @@ void scheduleSpecial_Evaluate_DataSendToSlave(void)
 	/* for simulation / testing */
 	global.ceiling_from_main_CPU_mbar	= global.dataSendToSlave.data.ambient_pressure_mbar_ceiling;
 	
+	/* Set pressure and temperature offsets */
+	pressure_set_offset (global.dataSendToSlave.data.offsetPressureSensor_mbar, global.dataSendToSlave.data.offsetTemperatureSensor_centiDegree);
+
+
 	/* for device data updates */
 	deviceDataFlashValid = 0;
 	memcpy(&DeviceDataFlash, &global.dataSendToSlave.data.DeviceData, sizeof(SDevice));
@@ -853,7 +859,7 @@ void scheduleSurfaceMode(void)
 					init_pressure();
 					if(is_init_pressure_done())		/* Init surface data with initial measurement */
 					{
-						init_surface_ring();
+						init_surface_ring(0);
 					}
 
 					if(!battery_gas_gauge_CheckConfigOK())
@@ -1045,9 +1051,11 @@ void scheduleSleepMode(void)
 			}
 		}
 
-		if (!is_ambient_pressure_close_to_surface(&global.lifeData))
+		if (((!is_ambient_pressure_close_to_surface(&global.lifeData)) && (global.lifeData.pressure_surface_bar > START_DIVE_MOUNTAIN_MODE_BAR ))
+				|| (global.lifeData.pressure_ambient_bar > START_DIVE_IMMEDIATLY_BAR))
+		{
 			global.mode = MODE_BOOT;
-
+		}
 		scheduleUpdateLifeData(2000);
 	}
 	while(global.mode == MODE_SLEEP);
@@ -1583,7 +1591,7 @@ _Bool is_ambient_pressure_close_to_surface(SLifeData *lifeData)
 	{
 		return true;
 	}
-	if (lifeData->pressure_ambient_bar > 1.16)
+	if (lifeData->pressure_ambient_bar > START_DIVE_IMMEDIATLY_BAR)
 		return false;
 	else if(lifeData->pressure_ambient_bar < (lifeData->pressure_surface_bar + 0.1f)) // hw 161121 now 1 mter, before 0.04f
 		return true;
