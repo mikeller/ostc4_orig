@@ -54,16 +54,16 @@ uint8_t RTEactualLow = 0;
 const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_firmware_data")) ) =
 {
     .versionFirst   = 1,
-    .versionSecond 	= 4,
-    .versionThird   = 9,
-    .versionBeta    = 1,
+    .versionSecond 	= 5,
+    .versionThird   = 0,
+    .versionBeta    = 0,
 
     /* 4 bytes with trailing 0 */
     .signature = "mh",
 
     .release_year = 19,
-    .release_month = 5,
-    .release_day = 6,
+    .release_month = 8,
+    .release_day = 5,
     .release_sub = 0,
 
     /* max 48 with trailing 0 */
@@ -1224,8 +1224,8 @@ uint8_t check_and_correct_settings(void)
 
 /*	int8_t offsetPressure_mbar;
  */
-    if((Settings.offsetPressure_mbar > 20) ||
-         (Settings.offsetPressure_mbar < -20))
+    if((Settings.offsetPressure_mbar > PRESSURE_OFFSET_LIMIT_MBAR) ||
+         (Settings.offsetPressure_mbar < -1 * PRESSURE_OFFSET_LIMIT_MBAR))
     {
         Settings.offsetPressure_mbar = 0;
         corrections++;
@@ -1740,13 +1740,13 @@ uint8_t writeData(uint8_t * data)
                 if(data[1] & 0x80)
                 {
                     data[1] = ~(data[1]);
-                    if(!checkValue(data[1],0,20))
+                    if(!checkValue(data[1],0,PRESSURE_OFFSET_LIMIT_MBAR))
                             return ERROR_;
                     Settings.offsetPressure_mbar = 0 - data[1];
                 }
                 else
                 {
-                    if(!checkValue(data[1],0,20))
+                    if(!checkValue(data[1],0,PRESSURE_OFFSET_LIMIT_MBAR))
                             return ERROR_;
                     Settings.offsetPressure_mbar = data[1];
                 }
@@ -2104,12 +2104,12 @@ uint8_t readDataLimits__8and16BitValues_4and7BytesOutput(uint8_t what, uint8_t *
 
     case 0x35:
         data[datacounter++] =  PARAM_SINT;
-        data[datacounter++] = (uint8_t)(256 - 20); // == -20
+        data[datacounter++] = (uint8_t)(256 - PRESSURE_OFFSET_LIMIT_MBAR); // == -20
         if(settingsGetPointerStandard()->offsetPressure_mbar < 0)
             data[datacounter++] = (uint8_t)(127 - settingsGetPointerStandard()->offsetPressure_mbar);
         else
             data[datacounter++] = settingsGetPointerStandard()->offsetPressure_mbar;
-        data[datacounter++] = 20;
+        data[datacounter++] = PRESSURE_OFFSET_LIMIT_MBAR;
         break;
 
     case 0x36:
