@@ -494,6 +494,8 @@ int main(void)
         			break;
         		case MOTION_DETECT_SECTOR: pitchstate = detectSectorButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
         			break;
+        		case MOTION_DETECT_SCROLL: pitchstate = detectScrollButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
+        		     break;
         		default:
         			pitchstate = DETECT_NOTHING;
         			break;
@@ -902,9 +904,9 @@ static void TriggerButtonAction()
 						if ((status.page == PageDive) && (status.line == 0))
 						{
 							tHome_change_customview_button_pressed(action);
-							if((settingsGetPointer()->MotionDetection == MOTION_DETECT_SECTOR) && (action == ACTION_BUTTON_ENTER))  /* Button pressed while sector detection is active => calibrate to current pitch value */
+							if((settingsGetPointer()->MotionDetection != MOTION_DETECT_OFF) && (action == ACTION_BUTTON_ENTER))  /* Button pressed while motion detection is active => calibrate to current pitch value */
 							{
-								DefinePitchSectors(stateRealGetPointer()->lifeData.compass_pitch,CUSTOMER_DEFINED_VIEWS);
+								DefinePitchSectors(stateRealGetPointer()->lifeData.compass_pitch,CUSTOMER_KEEP_LAST_SECTORS);
 							}
 						}
 						else if (status.page == PageSurface)

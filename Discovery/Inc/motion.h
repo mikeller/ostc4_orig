@@ -10,13 +10,15 @@
 
 
 /* exported data types */
-#define CUSTOMER_DEFINED_VIEWS	(100u)	/* value will cause the function to detect the numer of selected views */
+#define CUSTOMER_DEFINED_VIEWS	(100u)	/* value will cause the function to detect the number of selected views */
+#define CUSTOMER_KEEP_LAST_SECTORS	(200u)	/* do not update number of sectors, just define the new center position */
 
 typedef enum
 {
 		MOTION_DETECT_OFF = 0,
 		MOTION_DETECT_SECTOR,
-		MOTION_DETECT_MOVE
+		MOTION_DETECT_MOVE,
+		MOTION_DETECT_SCROLL
 } MotionDetectMethod_t;
 
 typedef enum
@@ -43,5 +45,6 @@ void InitMotionDetection(void);
 void DefinePitchSectors(float centerAngle, uint8_t numOfSectors);
 detectionState_t detectPitch(float currentPitch);
 detectionState_t detectSectorButtonEvent(float curPitch);
+detectionState_t detectScrollButtonEvent(float curPitch);
 
 #endif /* INC_MOTION_H_ */

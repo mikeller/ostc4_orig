@@ -1287,6 +1287,11 @@ static uint8_t text_FR_MoCtrlSector[] = "Sector";
 static uint8_t text_IT_MoCtrlSector[] = "Sector";
 static uint8_t text_ES_MoCtrlSector[] = "Sector";
 
+static uint8_t text_EN_MoCtrlScroll[] = "Scroll";
+static uint8_t text_DE_MoCtrlScroll[] = "Karussell";
+static uint8_t text_FR_MoCtrlScroll[] = "Scroll";
+static uint8_t text_IT_MoCtrlScroll[] = "Scroll";
+static uint8_t text_ES_MoCtrlScroll[] = "Scroll";
 
 // Menu SYS2 Reset RTE and Firmware Update During Bluetooth Connection
 static uint8_t text_EN_DecoDataLost[] = "Decompression data will be lost";
@@ -1746,6 +1751,7 @@ const tText text_array2[] =
 	{(uint8_t)TXT2BYTE_MoCtrlNone,		{text_EN_MoCtrlNone, text_DE_MoCtrlNone, text_FR_MoCtrlNone, text_IT_MoCtrlNone, text_ES_MoCtrlNone}},
 	{(uint8_t)TXT2BYTE_MoCtrlPitch,		{text_EN_MoCtrlPitch, text_DE_MoCtrlPitch, text_FR_MoCtrlPitch, text_IT_MoCtrlPitch, text_ES_MoCtrlPitch}},
 	{(uint8_t)TXT2BYTE_MoCtrlSector,	{text_EN_MoCtrlSector, text_DE_MoCtrlSector, text_FR_MoCtrlSector, text_IT_MoCtrlSector, text_ES_MoCtrlSector}},
+	{(uint8_t)TXT2BYTE_MoCtrlScroll,	{text_EN_MoCtrlScroll, text_DE_MoCtrlScroll, text_FR_MoCtrlScroll, text_IT_MoCtrlScroll, text_ES_MoCtrlScroll}},
     {(uint8_t)TXT2BYTE_DecoDataLost,	{text_EN_DecoDataLost, text_DE_DecoDataLost, text_FR_DecoDataLost, text_IT_DecoDataLost, text_ES_DecoDataLost}},
     {(uint8_t)TXT2BYTE_Info,			{text_EN_Info, text_DE_Info, text_FR_Info, text_IT_Info, text_ES_Info}},
     {(uint8_t)TXT2BYTE_Korrekturwerte,  {text_EN_Korrekturwerte, text_DE_Korrekturwerte, text_FR_Korrekturwerte, text_IT_Korrekturwerte, text_ES_Korrekturwerte}},

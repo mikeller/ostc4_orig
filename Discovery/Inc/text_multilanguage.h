@@ -278,6 +278,7 @@ extern const tText text_array2[];
 		TXT2BYTE_MoCtrlNone,
 		TXT2BYTE_MoCtrlPitch,
 		TXT2BYTE_MoCtrlSector,
+		TXT2BYTE_MoCtrlScroll,
 		/* */
 		TXT2BYTE_DecoDataLost,
 		TXT2BYTE_Info,
