@@ -1508,9 +1508,9 @@ uint8_t t7_GetEnabled_customviews()
     uint32_t cv_config = settingsGetPointer()->cv_configuration;
 
     if(stateUsed->mode == MODE_DIVE)
-        pViews = customviewsDive;
+        pViews = (uint8_t*)customviewsDive;
     else
-        pViews = customviewsSurface;
+        pViews = (uint8_t*)customviewsSurface;
 
     while((*pViews != CVIEW_END))
     {
@@ -1543,9 +1543,9 @@ void t7_change_customview(uint8_t action)
     _Bool cv_disabled = 0;
 
     if(stateUsed->mode == MODE_DIVE)
-        pViews = customviewsDive;
+        pViews = (uint8_t*)customviewsDive;
     else
-        pViews = customviewsSurface;
+        pViews = (uint8_t*)customviewsSurface;
 
     pStartView = pViews;
     /* set pointer to currently selected view and count number of entries */
