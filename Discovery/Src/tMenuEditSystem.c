@@ -155,6 +155,7 @@ void openEdit_CustomviewDivemode(uint8_t line)
 
     pSettings->cv_configuration ^= 1 << (cv_changelist[line-1]);
     WriteSettings = 1;
+    InitMotionDetection(); /* consider new view setup for view selection by motion */
     exitMenuEdit_to_Menu_with_Menu_Update();
 }
 
@@ -925,6 +926,9 @@ void refresh_Customviews(void)
 		case MOTION_DETECT_SECTOR:
 			text[5] = TXT2BYTE_MoCtrlSector;
 			break;
+		case MOTION_DETECT_SCROLL:
+			text[5] = TXT2BYTE_MoCtrlScroll;
+					break;
 		default:
 			snprintf(&text[4],2,"%u",settingsGetPointer()->MotionDetection);
 		break;
@@ -1075,20 +1079,24 @@ uint8_t OnAction_MotionCtrl	 (uint32_t editId, uint8_t blockNumber, uint8_t digi
     uint8_t newValue;
     switch(settingsGetPointer()->MotionDetection)
     {
-    case 0:
-        newValue = 1;
+    case MOTION_DETECT_OFF:
+        newValue = MOTION_DETECT_MOVE;
         break;
-    case 1:
-        newValue = 2;
+    case MOTION_DETECT_MOVE:
+        newValue = MOTION_DETECT_SECTOR;
         break;
-    case 2:
-        newValue = 0;
+    case MOTION_DETECT_SECTOR:
+        newValue = MOTION_DETECT_SCROLL;
         break;
+    case MOTION_DETECT_SCROLL:
+    	newValue = MOTION_DETECT_OFF;
+    	break;
     default:
-        newValue = 0;
+        newValue = MOTION_DETECT_OFF;
         break;
     }
     settingsGetPointer()->MotionDetection = newValue;
+    InitMotionDetection();
     return UNSPECIFIC_RETURN;
 }
 

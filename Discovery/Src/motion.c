@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 #include <math.h>
 #include "motion.h"
 #include "data_central.h"
@@ -20,21 +21,22 @@
 #define PITCH_DELTA_END				10	/* Delta allowed between start and end position */
 
 
-#define SECTOR_WINDOW				40.0  	/* Pitch window which is used for custom view projection */
+#define SECTOR_WINDOW				80.0  	/* Pitch window which is used for custom view projection */
 #define SECTOR_HYSTERY				3		/* Additional offset to avoid fast changing displays */
 #define SECTOR_BORDER				400.0	/* Define a value which is out of limit to avoid not wanted key events */
 #define SECTOR_FILTER				10		/* Define speed for calculated angle to follow real value */
 
-#define SECTOR_MAX					10		/* maximum number of sectors */
+#define SECTOR_MAX					20		/* maximum number of sectors */
+#define SECTOR_SCROLL				6		/* number of sectors used for scroll detection */
 
-static detectionState_t detectionState = DETECT_NOTHING;
+detectionState_t detectionState = DETECT_NOTHING;
 
-static uint8_t curSector;
+uint8_t curSector;
 static uint8_t targetSector;
 static uint8_t sectorSize;
 static uint8_t sectorCount;
 
-SSector PitchSector[10];			/* max number of enabled custom views */
+SSector PitchSector[SECTOR_MAX];			/* max number of enabled custom views */
 
 
 uint8_t GetSectorForPitch(float pitch)
@@ -70,12 +72,13 @@ void DefinePitchSectors(float centerPitch,uint8_t numOfSectors)
 	if(numOfSectors == CUSTOMER_DEFINED_VIEWS)
 	{
 		sectorCount =  t7_GetEnabled_customviews();
-		if(sectorCount > 5)
+		if(sectorCount > 7)
 		{
-			sectorCount = 5;	/* more views are hard to manually control */
+			sectorCount = 7;	/* more views are hard to manually control */
 		}
 	}
 	else
+	if(numOfSectors != CUSTOMER_KEEP_LAST_SECTORS)
 	{
 		sectorCount = numOfSectors;
 	}
@@ -110,6 +113,8 @@ void InitMotionDetection(void)
 		case MOTION_DETECT_SECTOR: DefinePitchSectors(0,CUSTOMER_DEFINED_VIEWS);
 			break;
 		case MOTION_DETECT_MOVE: DefinePitchSectors(0,SECTOR_MAX);
+			break;
+		case MOTION_DETECT_SCROLL: DefinePitchSectors(0,SECTOR_SCROLL);
 			break;
 		default:
 			break;
@@ -147,22 +152,184 @@ detectionState_t detectSectorButtonEvent(float curPitch)
 	return PitchEvent;
 }
 
+/* Check if pitch is not in center position and trigger a button action if needed */
+detectionState_t detectScrollButtonEvent(float curPitch)
+{
+	static uint8_t	delayscroll = 0;		/* slow dow the number of scroll events */
 
+	uint8_t PitchEvent = DETECT_NOTHING;
+	uint8_t newSector;
+
+	if(delayscroll == 0)
+	{
+		newSector = GetSectorForPitch(stateRealGetPointer()->lifeData.compass_pitch);
+		/* for scroll detection the motion windoe is split into 6 sectors => set event accoring to the sector number*/
+		switch(newSector)
+		{
+			case 0:
+			case 1:	PitchEvent = DETECT_POS_PITCH;
+				break;
+			case 4:
+			case 5:	PitchEvent = DETECT_NEG_PITCH;
+				break;
+			default:
+				break;
+		}
+		if(PitchEvent != DETECT_NOTHING)
+		{
+			delayscroll = 5;
+		}
+	}
+	else
+	{
+		delayscroll--;
+	}
+	return PitchEvent;
+}
+
+
+uint8_t sectorhist[20];
+uint8_t sectorindex = 0;
 /* Detect if user is generating an pitch including return to starting position */
 /* This is done by feeding the past movements value per value into a state machine */
 detectionState_t detectPitch(float currentPitch)
 {
+	static uint8_t lastSector = 0;
+	static uint8_t startSector = 0;
 	static uint8_t stableCnt = 0;
-	static float lastPitch = 0.0;
-	static float startPitch = 0.0;
-	float curSpeed;
-
 
 	if((detectionState == DETECT_NEG_PITCH) || (detectionState == DETECT_POS_PITCH))	/* discard last detection */
 	{
 		detectionState = DETECT_NOTHING;
 	}
 
+	curSector = GetSectorForPitch(stateRealGetPointer()->lifeData.compass_pitch);
+
+	sectorhist[sectorindex++] = curSector;
+	if(sectorindex == 20) sectorindex=0;
+
+	/* feed value into state machine */
+	switch (detectionState)
+	{
+			case DETECT_NOTHING: 	if(curSector == lastSector)	/* detect a stable condition before evaluating for the next move */
+									{
+										stableCnt++;
+									}
+									else
+									{
+										stableCnt=0;
+									}
+
+									if(stableCnt > STABLE_STATE_COUNT)
+									{
+										detectionState = DETECT_START;
+										stableCnt = 0;
+										startSector = lastSector;
+									}
+				break;
+			case DETECT_START:		if(curSector != lastSector)
+									{
+										if(abs(curSector - startSector) > 1)
+										{
+											if(curSector > lastSector)
+											{
+												detectionState = DETECT_POS_MOVE;
+											}
+											else
+											{
+												detectionState = DETECT_NEG_MOVE;
+											}
+											stableCnt = 0;
+											startSector = lastSector;
+										}
+										else
+										{
+											stableCnt++;		/* reset start sector in case of slow movement */
+										}
+								//		startPitch = lastPitch;
+									}
+				break;
+			case DETECT_NEG_MOVE:
+			case DETECT_POS_MOVE:	if(curSector != lastSector) /* still moving?  */
+									{
+										stableCnt++;
+									}
+									else
+									{
+				//						if(stableCnt >= 1)	/* debounce movement */
+										{
+											if(abs(startSector - curSector) > 2)
+											{
+												detectionState++;
+												stableCnt = 0;
+											}
+											else
+											{
+											//	detectionState = DETECT_NOTHING;
+												stableCnt++;	/* maybe on the boundary of a sector => handle as stable */
+											}
+										}
+#if 0
+										else
+										{
+									//		detectionState = DETECT_NOTHING;
+											stableCnt++;	/* maybe on the boundary of a sector => handle as stable */
+										}
+#endif
+									}
+				break;
+			case DETECT_MINIMA:
+			case DETECT_MAXIMA:		/* stay at maximum for short time to add a pattern for user interaction */
+									if(curSector == lastSector)
+									{
+										stableCnt++;
+									}
+									else
+									{
+										if(stableCnt > 0)	/* restart movement after a short break? */
+										{
+											detectionState++;
+											stableCnt = 0;
+										}
+										else
+										{
+								//			detectionState = DETECT_NOTHING;
+											stableCnt++;	/* maybe on the boundary of a sector => handle as stable */
+										}
+									}
+				break;
+			case DETECT_RISEBACK:
+			case DETECT_FALLBACK:	if(curSector == lastSector)		/* check if we are back at start position at end of movement */
+									{
+										if(abs(startSector - curSector) <= 1) //(curSector == startSector)
+										{
+											detectionState++;
+											stableCnt = 0;
+										}
+										else
+										{
+																		//			detectionState = DETECT_NOTHING;
+																					stableCnt++;	/* maybe on the boundary of a sector => handle as stable */
+										}
+									}
+									else
+									{
+										stableCnt++;
+									}
+				break;
+			default:
+				detectionState = DETECT_NOTHING;
+				break;
+
+	}
+	lastSector = curSector;
+	if(stableCnt > STABLE_STATE_TIMEOUT)
+	{
+		detectionState = DETECT_NOTHING;
+		stableCnt = 0;
+	}
+
+#if 0
 	curSpeed = currentPitch - lastPitch;
 
 	/* feed value into state machine */
@@ -263,5 +430,6 @@ detectionState_t detectPitch(float currentPitch)
 	}
 
 	lastPitch = currentPitch;
+#endif
 	return detectionState;
 }
