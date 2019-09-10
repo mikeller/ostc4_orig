@@ -32,6 +32,7 @@
 #include "externLogbookFlash.h" // for SAMPLESTART and SAMPLESTOP
 #include "text_multilanguage.h" // for LANGUAGE_END
 #include "tHome.h" // for CVIEW_END
+#include "Motion.h"
 
 SSettings Settings;
 
@@ -307,7 +308,7 @@ const SSettings SettingsStandard = {
     .FactoryButtonBalance[2] = 3,
 	.FlipDisplay = 0,
 	.cv_configuration = 0xFFFFFFFF,
-	.MotionDetection = 0,
+	.MotionDetection = MOTION_DETECT_OFF,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -453,7 +454,7 @@ void set_new_settings_missing_in_ext_flash(void)
     	pSettings->cv_configuration = 0xFFFFFFFF;
     	// no break
     case 0xFFFF0019:
-    	pSettings->MotionDetection = 0;
+    	pSettings->MotionDetection = MOTION_DETECT_OFF;
     	// no break
     default:
         pSettings->header = pStandard->header;
@@ -1352,9 +1353,9 @@ uint8_t check_and_correct_settings(void)
     	Settings.FlipDisplay = 0;
 	    corrections++;
    	}
-    if(Settings.MotionDetection > 2) /* At the moment only two detection functions available */
+    if(Settings.MotionDetection >= MOTION_DETECT_END)
    	{
-    	Settings.MotionDetection = 0;
+    	Settings.MotionDetection = MOTION_DETECT_OFF;
 	    corrections++;
    	}
 
