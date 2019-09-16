@@ -488,17 +488,20 @@ int main(void)
 	        DoDisplayRefresh = 0;
         	RefreshDisplay();
 
-        	switch(settingsGetPointer()->MotionDetection)
+        	if(stateUsed->mode == MODE_DIVE)			/* handle motion events in divemode only */
         	{
-        		case MOTION_DETECT_MOVE: pitchstate = detectPitch(stateRealGetPointer()->lifeData.compass_pitch);
-        			break;
-        		case MOTION_DETECT_SECTOR: pitchstate = detectSectorButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
-        			break;
-        		case MOTION_DETECT_SCROLL: pitchstate = detectScrollButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
-        		     break;
-        		default:
-        			pitchstate = DETECT_NOTHING;
-        			break;
+				switch(settingsGetPointer()->MotionDetection)
+				{
+					case MOTION_DETECT_MOVE: pitchstate = detectPitch(stateRealGetPointer()->lifeData.compass_pitch);
+						break;
+					case MOTION_DETECT_SECTOR: pitchstate = detectSectorButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
+						break;
+					case MOTION_DETECT_SCROLL: pitchstate = detectScrollButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
+						 break;
+					default:
+						pitchstate = DETECT_NOTHING;
+						break;
+				}
         	}
 
 			if(DETECT_NEG_PITCH == pitchstate)
