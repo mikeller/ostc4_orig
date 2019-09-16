@@ -36,6 +36,8 @@
 	* @{
 	*/
 
+void set_CustomsviewsSubpage(uint8_t page);
+
 /* Exported variables --------------------------------------------------------*/
 
 

@@ -1501,6 +1501,7 @@ void t7_set_customview_to_primary(void)
 
 uint8_t t7_GetEnabled_customviews()
 {
+	int8_t i;
     uint8_t *pViews;
     uint8_t increment = 1;
 
@@ -1516,14 +1517,23 @@ uint8_t t7_GetEnabled_customviews()
     {
     	increment = 1;
     /* check if view is enabled */
-        for(int i=0;i<6;i++)
+    	i=0;
+    	do
         {
-             if((*pViews == cv_changelist[i]) && !CHECK_BIT_THOME(cv_config, (1 << cv_changelist[i])))
+             if(*pViews == cv_changelist[i])
              {
-            	 increment = 0;
-                   break;
+            	 if(!CHECK_BIT_THOME(cv_config, cv_changelist[i]))
+             	 {
+            	 	 increment = 0;
+             	 }
+                 break;
              }
-        }
+             i++;
+        } while(cv_changelist[i] != CVIEW_END);
+    	if(cv_changelist[i] == CVIEW_END)
+    	{
+    		 increment = 0;
+    	}
         if (((*pViews == CVIEW_sensors) || (*pViews == CVIEW_sensors_mV)) &&
            	((stateUsed->diveSettings.ppo2sensors_deactivated) || (stateUsed->diveSettings.ccrOption == 0)))
         {
@@ -1538,6 +1548,7 @@ uint8_t t7_GetEnabled_customviews()
 
 void t7_change_customview(uint8_t action)
 {
+	int8_t i;
     uint8_t *pViews;
     uint8_t *pStartView,*pCurView, *pLastView;
     _Bool cv_disabled = 0;
@@ -1585,13 +1596,15 @@ void t7_change_customview(uint8_t action)
     do
     {
         cv_disabled = 0;
-        for(int i=0;i<6;i++)
+        i=0;
+       	while(cv_changelist[i] != CVIEW_END)
         {
              if((*pViews == cv_changelist[i]) && !CHECK_BIT_THOME(settingsGetPointer()->cv_configuration, cv_changelist[i]))
              {
             	 cv_disabled = 1;
                    break;
              }
+             i++;
         }
 
         if (((*pViews == CVIEW_sensors) || (*pViews == CVIEW_sensors_mV)) &&

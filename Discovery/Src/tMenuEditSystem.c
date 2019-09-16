@@ -35,11 +35,18 @@
 #include "ostc.h"
 #include "settings.h" // for getLicence()
 #include "tHome.h"  // for enum CUSTOMVIEWS and init_t7_compass()
+#include "tMenu.h"
 #include "tMenuEdit.h"
+#include "tMenuSystem.h"
 #include "Motion.h"
+#include "t7.h"
 
+
+#define CV_SUBPAGE_MAX		(2u)	/* max number of customer view selection pages */
 /* Private variables ---------------------------------------------------------*/
-uint8_t infoPage = 0;
+static uint8_t infoPage = 0;
+
+
 
 /* Private function prototypes -----------------------------------------------*/
 void openEdit_DateTime(void);
@@ -150,13 +157,38 @@ void openEdit_System(uint8_t line)
 
 void openEdit_CustomviewDivemode(uint8_t line)
 {
+	static uint8_t customviewsSubpage = 0;
 	SSettings *pSettings = settingsGetPointer();
 	extern _Bool WriteSettings;
+	char text[MAX_PAGE_TEXTSIZE];
+	uint16_t tabPosition;
+	uint32_t id;
 
-    pSettings->cv_configuration ^= 1 << (cv_changelist[line-1]);
-    WriteSettings = 1;
-    InitMotionDetection(); /* consider new view setup for view selection by motion */
-    exitMenuEdit_to_Menu_with_Menu_Update();
+
+	if((line == 6) || (cv_changelist[customviewsSubpage * 5 + line-1] == CVIEW_END))		/* select next set of views */
+	{
+		customviewsSubpage++;
+		if(customviewsSubpage == CV_SUBPAGE_MAX)
+		{
+			customviewsSubpage = 0;
+		}
+		set_CustomsviewsSubpage(customviewsSubpage);
+		/* rebuild the selection page with the next set of customer views */
+		id = tMSystem_refresh(0, text, &tabPosition, NULL);
+		tM_build_page(id, text, tabPosition, NULL);
+		openMenu(0);
+	}
+	else
+	{
+		pSettings->cv_configuration ^= 1 << (cv_changelist[customviewsSubpage * 5 + line-1]);
+		if(t7_GetEnabled_customviews() == 0)
+		{
+			pSettings->cv_configuration ^= (1 << CVIEW_noneOrDebug);
+		}
+		WriteSettings = 1;
+		InitMotionDetection(); /* consider new view setup for view selection by motion */
+		exitMenuEdit_to_Menu_with_Menu_Update();
+	}
 }
 
 
