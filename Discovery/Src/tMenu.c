@@ -315,7 +315,7 @@ static void tM_create_pagenumbering(void)
 }
 
 
-static void tM_build_page(uint32_t id, char *text, uint16_t tab, char *subtext)
+void tM_build_page(uint32_t id, char *text, uint16_t tab, char *subtext)
 {
     uint8_t linesFound;
     uint16_t i;

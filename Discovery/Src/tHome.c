@@ -57,7 +57,7 @@ static uint16_t display_toogle_count;
 static uint16_t tHome_tick_count_cview;
 static uint16_t tHome_tick_count_field;
 
-const uint8_t cv_changelist[6] = {CVIEW_Compass, CVIEW_SummaryOfLeftCorner, CVIEW_Tissues, CVIEW_Profile, CVIEW_EADTime, CVIEW_Gaslist};
+const uint8_t cv_changelist[] = {CVIEW_Compass, CVIEW_SummaryOfLeftCorner, CVIEW_Tissues, CVIEW_Profile, CVIEW_EADTime, CVIEW_Gaslist, CVIEW_noneOrDebug, CVIEW_Decolist,CVIEW_sensors,CVIEW_sensors_mV, CVIEW_END};
 
 /* Private function prototypes -----------------------------------------------*/
 
