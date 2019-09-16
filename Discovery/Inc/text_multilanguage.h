@@ -295,6 +295,7 @@ extern const tText text_array2[];
 		TXT2BYTE_ButtonRight,
 		/* */
 		TXT2BYTE_Summary,
+		TXT2BYTE_DispNoneDbg,
 		TXT2BYTE_ApneaLast,
 		TXT2BYTE_ApneaTotal,
 		TXT2BYTE_ApneaSurface,
