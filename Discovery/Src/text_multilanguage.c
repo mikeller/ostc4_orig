@@ -1346,6 +1346,12 @@ static uint8_t text_FR_Summary[] = "Exposé";
 static uint8_t text_IT_Summary[] = "Tutto schermo";
 static uint8_t text_ES_Summary[] = "Visión general";
 
+static uint8_t text_EN_DispNoneDbg[] = "Debug/None";
+static uint8_t text_DE_DispNoneDbg[] = "Debug/Leer";
+static uint8_t text_FR_DispNoneDbg[] = "Debug/None";
+static uint8_t text_IT_DispNoneDbg[] = "Debug/None";
+static uint8_t text_ES_DispNoneDbg[] = "Debug/None";
+
 static uint8_t text_EN_ApneaTotal[] = "total";
 static uint8_t text_DE_ApneaTotal[] = "gesamt";
 static uint8_t text_FR_ApneaTotal[] = "";
@@ -1767,6 +1773,7 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_ButtonMitte,		{text_EN_ButtonMitte, text_DE_ButtonMitte, text_FR_ButtonMitte, text_IT_ButtonMitte, text_ES_ButtonMitte}},
     {(uint8_t)TXT2BYTE_ButtonRight,		{text_EN_ButtonRight, text_DE_ButtonRight, text_FR_ButtonRight, text_IT_ButtonRight, text_ES_ButtonRight}},
     {(uint8_t)TXT2BYTE_Summary,			{text_EN_Summary, text_DE_Summary, text_FR_Summary, text_IT_Summary, text_ES_Summary}},
+	{(uint8_t)TXT2BYTE_DispNoneDbg,     {text_EN_DispNoneDbg, text_DE_DispNoneDbg, text_FR_DispNoneDbg, text_IT_DispNoneDbg, text_ES_DispNoneDbg}},
     {(uint8_t)TXT2BYTE_ApneaLast,		{text_EN_ApneaLast, text_DE_ApneaLast, text_FR_ApneaLast, text_IT_ApneaLast, text_ES_ApneaLast}},
     {(uint8_t)TXT2BYTE_ApneaTotal,		{text_EN_ApneaTotal, text_DE_ApneaTotal, text_FR_ApneaTotal, text_IT_ApneaTotal, text_ES_ApneaTotal}},
     {(uint8_t)TXT2BYTE_ApneaSurface,	{text_EN_ApneaSurface, text_DE_ApneaSurface, text_FR_ApneaSurface, text_IT_ApneaSurface, text_ES_ApneaSurface}},
