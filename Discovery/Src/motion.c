@@ -26,8 +26,8 @@
 #define SECTOR_BORDER				400.0	/* Define a value which is out of limit to avoid not wanted key events */
 #define SECTOR_FILTER				10		/* Define speed for calculated angle to follow real value */
 
-#define SECTOR_MAX					20		/* maximum number of sectors */
-#define SECTOR_SCROLL				6		/* number of sectors used for scroll detection */
+#define SECTOR_MAX					19		/* maximum number of sectors */
+#define SECTOR_SCROLL				7		/* number of sectors used for scroll detection */
 
 detectionState_t detectionState = DETECT_NOTHING;
 
@@ -155,7 +155,7 @@ detectionState_t detectSectorButtonEvent(float curPitch)
 /* Check if pitch is not in center position and trigger a button action if needed */
 detectionState_t detectScrollButtonEvent(float curPitch)
 {
-	static uint8_t	delayscroll = 0;		/* slow dow the number of scroll events */
+	static uint8_t	delayscroll = 0;		/* slow down the number of scroll events */
 
 	uint8_t PitchEvent = DETECT_NOTHING;
 	uint8_t newSector;
@@ -169,8 +169,8 @@ detectionState_t detectScrollButtonEvent(float curPitch)
 			case 0:
 			case 1:	PitchEvent = DETECT_POS_PITCH;
 				break;
-			case 4:
-			case 5:	PitchEvent = DETECT_NEG_PITCH;
+			case 5:
+			case 6:	PitchEvent = DETECT_NEG_PITCH;
 				break;
 			default:
 				break;
@@ -246,7 +246,6 @@ detectionState_t detectPitch(float currentPitch)
 										{
 											stableCnt++;		/* reset start sector in case of slow movement */
 										}
-								//		startPitch = lastPitch;
 									}
 				break;
 			case DETECT_NEG_MOVE:
@@ -256,26 +255,15 @@ detectionState_t detectPitch(float currentPitch)
 									}
 									else
 									{
-				//						if(stableCnt >= 1)	/* debounce movement */
+										if(abs(startSector - curSector) > 2)
 										{
-											if(abs(startSector - curSector) > 2)
-											{
-												detectionState++;
-												stableCnt = 0;
-											}
-											else
-											{
-											//	detectionState = DETECT_NOTHING;
-												stableCnt++;	/* maybe on the boundary of a sector => handle as stable */
-											}
+											detectionState++;
+											stableCnt = 0;
 										}
-#if 0
 										else
 										{
-									//		detectionState = DETECT_NOTHING;
-											stableCnt++;	/* maybe on the boundary of a sector => handle as stable */
-										}
-#endif
+												stableCnt++;	/* maybe on the boundary of a sector => handle as stable */
+										}								
 									}
 				break;
 			case DETECT_MINIMA:
@@ -293,7 +281,6 @@ detectionState_t detectPitch(float currentPitch)
 										}
 										else
 										{
-								//			detectionState = DETECT_NOTHING;
 											stableCnt++;	/* maybe on the boundary of a sector => handle as stable */
 										}
 									}
@@ -308,8 +295,7 @@ detectionState_t detectPitch(float currentPitch)
 										}
 										else
 										{
-																		//			detectionState = DETECT_NOTHING;
-																					stableCnt++;	/* maybe on the boundary of a sector => handle as stable */
+											stableCnt++;	/* maybe on the boundary of a sector => handle as stable */
 										}
 									}
 									else
@@ -329,107 +315,5 @@ detectionState_t detectPitch(float currentPitch)
 		stableCnt = 0;
 	}
 
-#if 0
-	curSpeed = currentPitch - lastPitch;
-
-	/* feed value into state machine */
-	switch (detectionState)
-	{
-			case DETECT_NOTHING: 	if(fabsf(curSpeed) < MOVE_DELTA_SPEED)	/* detect a stable condition before evaluating for the next move */
-									{
-										stableCnt++;
-									}
-									else
-									{
-										stableCnt=0;
-									}
-
-									if(stableCnt > STABLE_STATE_COUNT)
-									{
-										detectionState = DETECT_START;
-										stableCnt = 0;
-									}
-				break;
-			case DETECT_START:		if(fabsf(curSpeed) > MOVE_DELTA_SPEED)
-									{
-										if(curSpeed > 0)
-										{
-											detectionState = DETECT_POS_MOVE;
-										}
-										else
-										{
-											detectionState = DETECT_NEG_MOVE;
-										}
-										stableCnt = 0;
-										startPitch = lastPitch;
-									}
-				break;
-			case DETECT_NEG_MOVE:
-			case DETECT_POS_MOVE:	if(fabsf(curSpeed) > MOVE_DELTA_SPEED )
-									{
-										stableCnt++;
-									}
-									else
-									{
-										if(stableCnt >= STABLE_STATE_COUNT)	/* debounce movement */
-										{
-											if(fabsf(startPitch - currentPitch) > PITCH_DELTA_COUNT)
-											{
-												detectionState++;
-											}
-											else
-											{
-												detectionState = DETECT_NOTHING;
-											}
-										}
-										else
-										{
-											detectionState = DETECT_NOTHING;
-										}
-										stableCnt = 0;
-									}
-				break;
-			case DETECT_MINIMA:
-			case DETECT_MAXIMA:		/* stay at maximum for short time to add a pattern for user interaction */
-									if(fabsf(curSpeed) < MOVE_DELTA_SPEED )
-									{
-										stableCnt++;
-									}
-									else
-									{
-										if(stableCnt > 0)
-										{
-											detectionState++;
-										}
-										else
-										{
-											detectionState = DETECT_NOTHING;
-										}
-										stableCnt = 0;
-									}
-				break;
-			case DETECT_RISEBACK:
-			case DETECT_FALLBACK:	if(fabsf(curSpeed) < MOVE_DELTA_SPEED)
-									{
-										if(fabsf(startPitch - currentPitch) < PITCH_DELTA_END)
-										{
-											detectionState++;
-										}
-									}
-									stableCnt++;
-				break;
-			default:
-				detectionState = DETECT_NOTHING;
-				break;
-
-	}
-	if(stableCnt > STABLE_STATE_TIMEOUT)
-	{
-		detectionState = DETECT_NOTHING;
-		stableCnt = 0;
-	}
-
-	lastPitch = currentPitch;
-#endif
 	return detectionState;
 }
