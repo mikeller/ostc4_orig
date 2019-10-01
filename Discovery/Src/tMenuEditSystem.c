@@ -35,11 +35,16 @@
 #include "ostc.h"
 #include "settings.h" // for getLicence()
 #include "tHome.h"  // for enum CUSTOMVIEWS and init_t7_compass()
+#include "tMenu.h"
 #include "tMenuEdit.h"
+#include "tMenuSystem.h"
+#include "t7.h"
+
+/* uncomment to activate debug view option */
+/*#define HAVE_DEBUG_VIEW */
 
 /* Private variables ---------------------------------------------------------*/
-
-uint8_t infoPage = 0;
+static uint8_t infoPage = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 void openEdit_DateTime(void);
@@ -576,10 +581,14 @@ void openEdit_Design(void)
 
     write_field_button(StMSYS3_Units,			400, 700, ME_Y_LINE1,  &FontT48, "");
     write_field_button(StMSYS3_Colors,		400, 700, ME_Y_LINE2,  &FontT48, "");
-//	write_field_button(StMSYS3_Debug,			400, 700, ME_Y_LINE3,  &FontT48, "");
+#ifdef HAVE_DEBUG_VIEW
+	write_field_button(StMSYS3_Debug,			400, 700, ME_Y_LINE3,  &FontT48, "");
+#endif
     setEvent(StMSYS3_Units,		(uint32_t)OnAction_Units);
     setEvent(StMSYS3_Colors,	(uint32_t)OnAction_Colorscheme);
-//	setEvent(StMSYS3_Debug,		(uint32_t)OnAction_DebugInfo);
+#ifdef HAVE_DEBUG_VIEW
+	setEvent(StMSYS3_Debug,		(uint32_t)OnAction_DebugInfo);
+#endif
 }
 
 
@@ -620,7 +629,7 @@ void refresh_Design(void)
     text[1] = 0;
     write_label_var( 400, 700, ME_Y_LINE2, &FontT48, text);
 
-/*
+#ifdef HAVE_DEBUG_VIEW
     // specials
     text[0] = TXT_2BYTE;
     text[1] = TXT2BYTE_ShowDebug;
@@ -633,7 +642,7 @@ void refresh_Design(void)
         text[0] = '\006';
     text[1] = 0;
     write_label_var( 400, 700, ME_Y_LINE3, &FontT48, text);
-*/
+#endif
 
     // design
     text[0] = TXT_Depth;
@@ -732,7 +741,7 @@ void openEdit_Customview(void)
     write_field_button(StMSYS4_CViewStandard,		400, 700, ME_Y_LINE2,  &FontT48, "");
 
     write_field_button(StMSYS4_CornerTimeout,		400, 700, ME_Y_LINE3,  &FontT48, "");
-    write_field_button(StMSYS4_CornerStandard,	400, 700, ME_Y_LINE4,  &FontT48, "");
+    write_field_button(StMSYS4_CornerStandard,		400, 700, ME_Y_LINE4,  &FontT48, "");
 
     write_field_button(StMSYS4_ExtraDisplay,		400, 700, ME_Y_LINE5,  &FontT48, "");
 
