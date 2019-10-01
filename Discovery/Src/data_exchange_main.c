@@ -693,40 +693,31 @@ void DataEX_control_connection_while_asking_for_sleep(void)
 	}
 }
 
-#define AVERAGE_COUNT	4
 static float getSampleDepth(SDataExchangeSlaveToMaster *d, SDiveState *ds)
 {
-	static uint8_t c = 0;
-	static float ambient[AVERAGE_COUNT] = {0};
-	static float surface[AVERAGE_COUNT]= {0};
-	static float depth[AVERAGE_COUNT]= {0};
+	float ambient = 0;
+	float surface = 0;
+	float depth = 0;
+	float density = 0;
 
-	ambient[c] = d->data[d->boolPressureData].pressure_mbar / 1000.0f;
-	surface[c] = d->data[d->boolPressureData].surface_mbar / 1000.0f;
-	float density = ((float)( 100 + settingsGetPointer()->salinity)) / 100.0f;
+	ambient = d->data[d->boolPressureData].pressure_mbar / 1000.0f;
+	surface = d->data[d->boolPressureData].surface_mbar / 1000.0f;
+	density = ((float)( 100 + settingsGetPointer()->salinity)) / 100.0f;
 
-	ds->lifeData.pressure_ambient_bar = (ambient[0] + ambient[1] + ambient[2] + ambient[3])/4.0f;
-	ds->lifeData.pressure_surface_bar = (surface[0] + surface[1] + surface[2] + surface[3])/4.0f;
-	depth[c] = (ambient[c] - surface[c]) / (0.09807f * density);
+	ds->lifeData.pressure_ambient_bar = ambient;
+	ds->lifeData.pressure_surface_bar = surface;
+	depth = (ambient - surface) / (0.09807f * density);
+	ds->lifeData.bool_temp1 = d->data[d->boolPressureData].SPARE1;
 
-	c++;
-	if (c == AVERAGE_COUNT) c = 0;
-
-	return (depth[0] + depth[1] + depth[2] + depth[3])/4.0f;
+	return depth;
 }
 
-#define TEMP_AVERAGE_COUNT	3
 static float getTemperature(SDataExchangeSlaveToMaster *d)
 {
-	static uint8_t c = 0;
-	static float temp[TEMP_AVERAGE_COUNT] = {0};
+	float temp = 0;
+	temp = d->data[d->boolPressureData].temperature;
 
-	temp[c] = d->data[d->boolPressureData].temperature;
-
-	c++;
-	if (c == TEMP_AVERAGE_COUNT) c = 0;
-
-	return (temp[0] + temp[1] + temp[2])/3.0f;
+	return temp;
 }
 
 void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
