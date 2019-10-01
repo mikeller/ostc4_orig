@@ -44,19 +44,15 @@ typedef struct
     uint8_t setpoint;
 } SEditGasPage;
 
-#define MAX_SENDER_AT_ONCE 5
 
 /* Private variables ---------------------------------------------------------*/
 SEditGasPage editGasPage;
-
-uint16_t wirelessSender[MAX_SENDER_AT_ONCE];
 
 /* Private function prototypes -----------------------------------------------*/
 void create_text_with_u8(char *text, const char *text1, uint8_t inputU8, const char *text2);
 
 void openEdit_Gas(uint8_t line, uint8_t ccr);
 void openEdit_GasType(void);
-void openEdit_Wireless(void);
 
 void openEdit_DiveGasSelect(uint8_t line, uint8_t ccr);
 void openEdit_SpecialDiveGasMenu(uint8_t ccr);
@@ -70,15 +66,11 @@ uint8_t OnAction_GasType		(uint32_t editId, uint8_t blockNumber, uint8_t digitNu
 uint8_t OnAction_ChangeDepth	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_SetToMOD		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_BottleSize		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_Wireless		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 
 uint8_t OnAction_First			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_Deco			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_Travel			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_Inactive		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-
-uint8_t OnAction_WirelessID		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_NoWireless		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 
 uint8_t OnAction_DM_Active		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_DM_Mix			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
@@ -344,8 +336,7 @@ void tMEGas_check_switch_to_bailout(void)
 /* surface mode */
 void openEdit_Gas(uint8_t line, uint8_t ccr)
 {
-    uint8_t gasID, oxygen, helium, depthDeco, active, first, depthMOD, deco, travel, inactive;//, bottleSizeLiter;, bottleWirelessStatus;
-    //uint16_t bottleWirelessId;//, bottleWirelessIdSmall;
+    uint8_t gasID, oxygen, helium, depthDeco, active, first, depthMOD, deco, travel, inactive;//, bottleSizeLiter;
 
     char text[32];
     char textMOD[32];
@@ -385,9 +376,6 @@ void openEdit_Gas(uint8_t line, uint8_t ccr)
     travel = editGasPage.pGasLine[gasID].note.ub.travel;
 
     //bottleSizeLiter = editGasPage.pGasLine[gasID].bottle_size_liter;
-//	bottleWirelessStatus = editGasPage.pGasLine[gasID].bottle_wireless_status;
-    //bottleWirelessId = editGasPage.pGasLine[gasID].bottle_wireless_id;
-    //bottleWirelessIdSmall = bottleWirelessId & 0x0F;
 
     if(active)
         inactive = 0;
@@ -487,14 +475,6 @@ void openEdit_Gas(uint8_t line, uint8_t ccr)
         write_label_var(  20 ,800, ME_Y_LINE5, &FontT48, text);
         write_field_2digit(StMOG_Bottle,		600, 710, ME_Y_LINE5, &FontT48,"## ltr", (uint32_t)bottleSizeLiter, 0, 0, 0);
 
-        txtptr = 0;
-        text[txtptr++] = TXT_2BYTE;
-        text[txtptr++] = TXT2BYTE_WirelessSender;
-        text[txtptr++] = ' ';
-        if(!bottleWirelessId)
-            text[txtptr++] = '\021';
-        txtptr += snprintf(&text[txtptr],20,"%u (%04X)",bottleWirelessIdSmall, bottleWirelessId);
-        write_field_button(StMOG_Wireless,	20, 710, ME_Y_LINE6, &FontT48, text);
 */
         stop_cursor_fields();
 
@@ -522,7 +502,6 @@ void openEdit_Gas(uint8_t line, uint8_t ccr)
         }
 /*
         setEvent(StMOG_Bottle, 				(uint32_t)OnAction_BottleSize);
-        setEvent(StMOG_Wireless,			(uint32_t)OnAction_Wireless);
 */
         write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
     }
@@ -605,205 +584,6 @@ uint8_t OnAction_GasType(uint32_t editId, uint8_t blockNumber, uint8_t digitNumb
     openEdit_GasType();
     return UNSPECIFIC_RETURN;
 }
-
-void openEdit_Wireless(void)
-{
-    uint8_t gasID, wirelessSenderAvailable, isNotMatched, isMatchedWithThis, wirelessSenderActive[MAX_SENDER_AT_ONCE], senderCount, isInList; //, wirelessStatus;
-    uint16_t wirelessId, wirelessSenderIdSmall, wirelessIdTemp;
-    char text[32];
-    uint8_t txtptr;
-
-    if(editGasPage.ccr)
-    {
-        resetMenuEdit(CLUT_MenuPageGasCC);
-        setBackMenu((uint32_t)openEdit_GasCC, editGasPage.gasID - NUM_OFFSET_DILUENT, 5);
-    }
-    else
-    {
-        resetMenuEdit(CLUT_MenuPageGasOC);
-        setBackMenu((uint32_t)openEdit_GasOC, editGasPage.gasID, 5);
-    }
-
-    gasID = editGasPage.gasID;
-    wirelessId = editGasPage.pGasLine[gasID].bottle_wireless_id;
-//	wirelessStatus = editGasPage.pGasLine[gasID].bottle_wireless_status;
-
-
-    /* header */
-    int i = 0;
-    if(gasID >= 10)
-    {
-        i = 1;
-        strcpy(text, "\001" "Gas #10 X");
-    }
-    else
-        strcpy(text, "\001" "Gas #0 X");
-
-    if(editGasPage.ccr)
-        text[8+i] = TXT_Diluent_Gas_Edit;
-    else
-        text[8+i] = TXT_OC_Gas_Edit;
-
-    if(gasID >= 10)
-        text[6+i] += gasID - 10;
-    else
-        text[6+i] += gasID;
-    write_topline(text);
-
-    senderCount = 0;
-    wirelessSenderAvailable = 0;
-    if(wirelessId)
-    {
-        wirelessSender[senderCount] = wirelessId;
-        wirelessSenderActive[senderCount] = 0;
-        wirelessSenderAvailable++;
-        senderCount++;
-    }
-
-    for(int i=0;i<4;i++)
-    {
-        if((stateUsed->lifeData.wireless_data[i].ageInMilliSeconds) && (stateUsed->lifeData.wireless_data[i].ageInMilliSeconds <= 60000) && ((stateUsed->lifeData.wireless_data[i].data[1] & 0x0F) != 0))
-        {
-            wirelessIdTemp = stateUsed->lifeData.wireless_data[i].data[0] * 256;
-            wirelessIdTemp += stateUsed->lifeData.wireless_data[i].data[1];
-            if(wirelessId && (wirelessId == wirelessIdTemp))
-                wirelessSenderActive[0] = 1;
-            else
-            {
-                isInList = 0;
-                for(int j=0;j<wirelessSenderAvailable;j++)
-                {
-                    if(wirelessSender[j] == wirelessIdTemp)
-                    {
-                        isInList = 1;
-                        break;
-                    }
-                }
-                if(!isInList)
-                {
-                    wirelessSender[senderCount] = wirelessIdTemp;
-                    wirelessSenderActive[senderCount] = 1;
-                    wirelessSenderAvailable++;
-                    senderCount++;
-                }
-            }
-        }
-    }
-
-    if(wirelessSenderAvailable > MAX_SENDER_AT_ONCE)
-        wirelessSenderAvailable = MAX_SENDER_AT_ONCE;
-
-    isNotMatched = 1;
-
-    for(int i=0;i<wirelessSenderAvailable;i++)
-    {
-        wirelessSenderIdSmall = wirelessSender[i] & 0x0F;
-
-        txtptr = 0;
-        if(!wirelessSenderActive[i])
-            text[txtptr++] = '\021';
-        txtptr += snprintf(&text[txtptr],10,"%u (%04X)",wirelessSenderIdSmall, wirelessSender[i]);
-
-        if(wirelessId == wirelessSender[i])
-        {
-            isMatchedWithThis = 1;
-            isNotMatched = 0;
-        }
-        else
-        {
-            isMatchedWithThis = 0;
-            for(int j=1; j <= 2*NUM_GASES; j++)
-            {
-                if((gasID != j) && (settingsGetPointer()->gas[j].bottle_wireless_id == wirelessSender[i]))
-                {
-                    txtptr += snprintf(&text[txtptr],20,"  used by Gas #%i",i);
-                    break;
-                }
-            }
-        }
-        write_field_on_off(StMOG_Transmitter1 + i,  30, 710, ME_Y_LINE1 + (i * ME_Y_LINE_STEP), &FontT48, text, isMatchedWithThis);
-    }
-
-
-    txtptr = 0;
-    text[txtptr++] = TXT_2BYTE;
-    text[txtptr++] = TXT2BYTE_WirelessDisconnect;
-    text[txtptr++] = 0;
-    write_field_on_off(StMOG_NoTransmitter,  30, 400, ME_Y_LINE6, &FontT48, text, isNotMatched);
-
-    // setEvent has to be _after_ all fields are written
-    for(int i=0;i<wirelessSenderAvailable;i++)
-        setEvent(StMOG_Transmitter1 + i,	(uint32_t)OnAction_WirelessID);
-
-    setEvent(StMOG_NoTransmitter, (uint32_t)OnAction_NoWireless);
-}
-
-
-uint8_t OnAction_Wireless(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    openEdit_Wireless();
-    return UNSPECIFIC_RETURN;
-}
-
-
-uint8_t OnAction_WirelessID		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    if((editId < StMOG_Transmitter1) || (editId > StMOG_Transmitter5))
-        return UNSPECIFIC_RETURN;
-
-    uint8_t line, isMatched;
-
-    line = editId - StMOG_Transmitter1;
-
-
-    if(editGasPage.pGasLine[editGasPage.gasID].bottle_wireless_id == wirelessSender[line])
-        isMatched = 1;
-    else
-        isMatched = 0;
-
-    editGasPage.pGasLine[editGasPage.gasID].bottle_wireless_id = wirelessSender[line];
-//	editGasPage.pGasLine[editGasPage.gasID].bottle_wireless_status = 0;
-
-    for(int i=0;i<5;i++)
-    {
-        if((StMOG_Transmitter1 + i) != editId)
-            tMenuEdit_set_on_off(StMOG_Transmitter1 + i, 0);
-    }
-    tMenuEdit_set_on_off(editId, 1);
-    tMenuEdit_set_on_off(StMOG_NoTransmitter, 0);
-
-    if(!isMatched)
-        return UPDATE_DIVESETTINGS;
-    else
-        return UPDATE_AND_EXIT_TO_MENU;
-}
-
-
-uint8_t OnAction_NoWireless		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    uint8_t isNotMatched;
-
-    if(editGasPage.pGasLine[editGasPage.gasID].bottle_wireless_id == 0)
-        isNotMatched = 1;
-    else
-        isNotMatched = 1;
-
-    editGasPage.pGasLine[editGasPage.gasID].bottle_wireless_id = 0;
-//	editGasPage.pGasLine[editGasPage.gasID].bottle_wireless_status = 0;
-
-    tMenuEdit_set_on_off(StMOG_Transmitter1, 0);
-    tMenuEdit_set_on_off(StMOG_Transmitter2, 0);
-    tMenuEdit_set_on_off(StMOG_Transmitter3, 0);
-    tMenuEdit_set_on_off(StMOG_Transmitter4, 0);
-    tMenuEdit_set_on_off(StMOG_Transmitter5, 0);
-    tMenuEdit_set_on_off(StMOG_NoTransmitter, 1);
-
-    if(!isNotMatched)
-        return UPDATE_DIVESETTINGS;
-    else
-        return UPDATE_AND_EXIT_TO_MENU;
-}
-
 
 uint8_t OnAction_Mix(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {

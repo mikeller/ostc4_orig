@@ -74,7 +74,7 @@ void tMG_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext, uint8_t
 {
     const SGasLine * pGasLine;
 
-    uint8_t  gasId, oxygen, helium, depthUp, active, first, typeDeco, wirelessId;
+    uint8_t  gasId, oxygen, helium, depthUp, active, first, typeDeco;
     float fPpO2limitHigh = 0;
     float fPpO2ofGasAtThisDepth = 0;
     //uint8_t senderCode, depthDown,;
@@ -142,7 +142,6 @@ void tMG_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext, uint8_t
             typeDeco = pGasLine[gasId].note.ub.deco;
             mod = calc_MOD(gasId);
             ltr = pGasLine[gasId].bottle_size_liter;
-            wirelessId = pGasLine[gasId].bottle_wireless_id;
             //bar = stateUsed->lifeData.bottle_bar[gasId];
 
             if(active)
@@ -224,12 +223,6 @@ void tMG_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext, uint8_t
                     if(ltr)
                         color[2] = '\020';
                     /* bar */
-                    if(wirelessId)
-                        color[3] = '\020';
-                    /* wireless */
-                    if(wirelessId)
-                        color[4] = '\020';
-                    /* ltr, bar  */
 
                     if(mod < depthUp)
                     {
@@ -301,18 +294,6 @@ void tMG_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext, uint8_t
                     "\017",
                     color[3], bar
                 );
-*/
-                /* wireless */
-/*
-                if(wirelessId)
-                {
-                    textPointer += snprintf(&text[textPointer], 8,\
-                        "%c"
-                        "  *"
-                        "%u",
-                        color[4], (wirelessId%0x0F)
-                    );
-                }
 */
                 text[textPointer++] = '\035';
                 text[textPointer++] = '\n';
