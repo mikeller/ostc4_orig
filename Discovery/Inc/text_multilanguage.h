@@ -166,6 +166,7 @@ extern const tText text_array2[];
 		TXT2BYTE_ResetStopwatch,
 		TXT2BYTE_SetMarker,
 		TXT2BYTE_CompassHeading,
+		TXT2BYTE_EndDiveMode,
 		/* */
 		TXT2BYTE_Simulator,
 		TXT2BYTE_StartSimulator,
@@ -237,8 +238,6 @@ extern const tText text_array2[];
 		TXT2BYTE_AmbientTemperature,
 		/* */
 		TXT2BYTE_Bottle,
-		TXT2BYTE_WirelessSender,
-		TXT2BYTE_WirelessDisconnect,
 		/* */
 		TXT2BYTE_Gaslist,
 		TXT2BYTE_Clock,

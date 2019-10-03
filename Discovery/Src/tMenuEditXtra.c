@@ -33,12 +33,15 @@
 #include "simulation.h"
 #include "timer.h"
 #include "tMenuEdit.h"
+#include "data_exchange_main.h"
+
 
 /* Private function prototypes -----------------------------------------------*/
 void openEdit_CompassHeading(void);
 void openEdit_ResetStopwatch(void);
 void openEdit_SimFollowDecostops(void);
 void openEdit_SetManualMarker(void);
+void openEdit_SetEndDive(void);
 
 /* Announced function prototypes -----------------------------------------------*/
 uint8_t OnAction_CompassHeading	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
@@ -63,7 +66,14 @@ void openEdit_Xtra(uint8_t line)
         openEdit_SetManualMarker();
         break;
     case 4:
-        openEdit_SimFollowDecostops();
+    	if(is_stateUsedSetToSim())
+    	{
+    		 openEdit_SimFollowDecostops();
+    	}
+    	else
+    	{
+    		openEdit_SetEndDive();
+    	}
         break;
     }
 }
@@ -78,6 +88,12 @@ void openEdit_ResetStopwatch(void)
 void openEdit_SetManualMarker(void)
 {
     stateUsedWrite->events.manualMarker = 1;
+    exitMenuEdit_to_Home();
+}
+
+void openEdit_SetEndDive(void)
+{
+	dataOutGetPointer()->setEndDive = 1;
     exitMenuEdit_to_Home();
 }
 
