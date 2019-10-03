@@ -551,10 +551,6 @@ void scheduleDiveMode(void)
 			Scheduler.tick_execute1second = 0xFFFFFFFF;	/* execute once only in the second cycle */
 			if(global.dataSendToSlave.diveModeInfo != DIVEMODE_Apnea)
 			{
-				if(ManualExitDiveCounter)
-				{
-					ManualExitDiveCounter--;
-				}
 				scheduleUpdateLifeData(0); // includes tissues
 				global.lifeData.dive_time_seconds++; // there is dive_time_seconds_without_surface_time too
 				global.lifeData.ppO2 = decom_calc_ppO2(global.lifeData.pressure_ambient_bar, &global.lifeData.actualGas);
@@ -832,6 +828,11 @@ void scheduleSurfaceMode(void)
 				global.accidentRemainingSeconds = 0;
 				vpm_init(&global.vpm, global.conservatism, global.repetitive_dive, global.seconds_since_last_dive);
 				clearDecoNow = 0;
+			}
+
+			if(ManualExitDiveCounter)
+			{
+				ManualExitDiveCounter--;
 			}
 
 			if(global.seconds_since_last_dive)
