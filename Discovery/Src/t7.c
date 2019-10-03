@@ -1144,73 +1144,8 @@ void t7_refresh_surface(void)
     draw_frame(0,0, CLUT_pluginboxSurface, CLUT_Font020);
 }
 
-void t7_refresh_surface_debugmode_wireless_info(void)
-{
-    char text[400];
-    uint8_t colorDataLost = 0;
-    int txtPointer = 0;
-    uint8_t numberOfBytes = 0;
-
-    GFX_DrawCfgWindow textWindow =
-    {
-        .Image = &t7screen,
-        .WindowNumberOfTextLines = 5,
-        .WindowLineSpacing = 70,
-        .WindowTab = 220,
-        .WindowX0 = 10,
-        .WindowX1 = 790,
-        .WindowY0 = 10,
-        .WindowY1 = 380
-    };
-
-    Gfx_write_label_var(&t7screen,  10,600,  10,&FontT42,CLUT_DiveMainLabel,"Wireless Data");
-
-    if(stateUsed->data_old__lost_connection_to_slave)
-    {
-        Gfx_write_label_var(&t7screen, 600,800,10,&FontT42,CLUT_Font020,"CPU2?");
-        colorDataLost = 1;
-    }
-
-    txtPointer = 0;
-    for(int i=0;i<4;i++)
-    {
-        if((!stateUsed->lifeData.wireless_data[i].ageInMilliSeconds) || colorDataLost)
-            text[txtPointer++] = '\021';
-
-        numberOfBytes = stateUsed->lifeData.wireless_data[i].numberOfBytes;
-        if((numberOfBytes > 0) && (numberOfBytes <= 10))
-        {
-            txtPointer += snprintf(&text[txtPointer],20,"%02u s  %02u\t"
-                ,(stateUsed->lifeData.wireless_data[i].ageInMilliSeconds)/1000
-                ,stateUsed->lifeData.wireless_data[i].status
-            );
-            if(numberOfBytes > 8) ///< lifeData.wireless_data[i].data[j] has only size of 8
-                numberOfBytes = 8;
-            for(int j=0;j<numberOfBytes;j++)
-            {
-                txtPointer += snprintf(&text[txtPointer],4," %02X"
-                    ,stateUsed->lifeData.wireless_data[i].data[j]
-                );
-            }
-        }
-        text[txtPointer++] = '\n';
-        text[txtPointer++] = '\r';
-        text[txtPointer++] = '\020';
-        text[txtPointer] = 0;
-    }
-    GFX_write_string(&FontT48,&textWindow,text,1);
-
-}
-
-
 void t7_refresh_surface_debugmode(void)
 {
-    if(selection_customview%2 == 1)
-    {
-        t7_refresh_surface_debugmode_wireless_info();
-        return;
-    }
-
     // could be warning, now just to set RTE variables
     DataEX_check_RTE_version__needs_update();
 
@@ -1312,6 +1247,16 @@ extern uint32_t base_tempLightLevel;
 //	Gfx_write_label_var(&t7screen,  601,800,310,&FontT42,CLUT_DiveMainLabel,"Light");
 //	Gfx_write_label_var(&t7screen,  601,800,355,&FontT48,CLUT_Font020,TextL1);
 
+/* show surface pressure state */
+    if(stateUsed->lifeData.bool_temp1 )
+    {
+    	snprintf(TextL1,TEXTSIZE,"stable");
+    }
+    else
+    {
+    	snprintf(TextL1,TEXTSIZE,"unstable");
+    }
+    Gfx_write_label_var(&t7screen,  500,800,400,&FontT48,CLUT_Font020,TextL1);
 
 
     if(Sdate.Year < 15)
