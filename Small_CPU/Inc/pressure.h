@@ -20,6 +20,9 @@ float get_temperature(void);
 float get_pressure_mbar(void);
 float get_surface_mbar(void);
 
+uint8_t is_surface_pressure_stable(void);
+float set_last_surface_pressure_stable(void);
+
 void init_surface_ring(uint8_t force);
 void update_surface_pressure(uint8_t call_rhythm_seconds);
 
