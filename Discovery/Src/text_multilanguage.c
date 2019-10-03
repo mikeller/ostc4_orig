@@ -1,4 +1,4 @@
-﻿///////////////////////////////////////////////////////////////////////////////
+﻿/////////////////////////////////////////////////////////////////////////////
 /// -*- coding: UTF-8 -*-
 ///
 /// \file   Discovery/Src/text_multilanguage.c
@@ -721,6 +721,13 @@ static uint8_t text_DE_CompassHeading[] = "Kompasskurs";
 static uint8_t text_FR_CompassHeading[] = "Cap";
 static uint8_t text_IT_CompassHeading[] = "Direzione bussola";
 static uint8_t text_ES_CompassHeading[] = "Rumbo brújula";
+
+// Dive Menu
+static uint8_t text_EN_EndDiveMode[] = "End dive";
+static uint8_t text_DE_EndDiveMode[] = "Tauchgang beenden";
+static uint8_t text_FR_EndDiveMode[] = "End dive";
+static uint8_t text_IT_EndDiveMode[] = "End dive";
+static uint8_t text_ES_EndDiveMode[] = "End dive";
 
 // Menu SIM
 static uint8_t text_EN_Simulator[] = "Simulator";
@@ -1505,18 +1512,6 @@ static uint8_t text_FR_GasVorrat[] = "";
 static uint8_t text_IT_GasVorrat[] = "";
 static uint8_t text_ES_GasVorrat[] = "";
 
-static uint8_t text_EN_WirelessSender[] = "wireless id";
-static uint8_t text_DE_WirelessSender[] = "Sender ID";
-static uint8_t text_FR_WirelessSender[] = "";
-static uint8_t text_IT_WirelessSender[] = "Numero di serie";
-static uint8_t text_ES_WirelessSender[] = "wireless id";
-
-static uint8_t text_EN_WirelessDisconnect[] = "Disconnect";
-static uint8_t text_DE_WirelessDisconnect[] = "Nicht verbunden";
-static uint8_t text_FR_WirelessDisconnect[] = "";
-static uint8_t text_IT_WirelessDisconnect[] = "Disconnesso";
-static uint8_t text_ES_WirelessDisconnect[] = "Desconectado";
-
 static uint8_t text_EN_FlipDisplay[] = "Flip display";
 static uint8_t text_DE_FlipDisplay[] = "Anzeige spiegeln";
 static uint8_t text_FR_FlipDisplay[] = "";
@@ -1622,7 +1617,8 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_ResetStopwatch,  {text_EN_ResetStopwatch, text_DE_ResetStopwatch, text_FR_ResetStopwatch, text_IT_ResetStopwatch, text_ES_ResetStopwatch}},
     {(uint8_t)TXT2BYTE_SetMarker,		{text_EN_SetMarker, text_DE_SetMarker, text_FR_SetMarker, text_IT_SetMarker, text_ES_SetMarker}},
     {(uint8_t)TXT2BYTE_CompassHeading,  {text_EN_CompassHeading, text_DE_CompassHeading, text_FR_CompassHeading, text_IT_CompassHeading, text_ES_CompassHeading}},
-    {(uint8_t)TXT2BYTE_Simulator,		{text_EN_Simulator, text_DE_Simulator, text_FR_Simulator, text_IT_Simulator, text_ES_Simulator}},
+    {(uint8_t)TXT2BYTE_EndDiveMode,		{text_EN_EndDiveMode, text_DE_EndDiveMode, text_FR_EndDiveMode, text_IT_EndDiveMode, text_ES_EndDiveMode}},
+	{(uint8_t)TXT2BYTE_Simulator,		{text_EN_Simulator, text_DE_Simulator, text_FR_Simulator, text_IT_Simulator, text_ES_Simulator}},
     {(uint8_t)TXT2BYTE_StartSimulator,  {text_EN_StartSimulator, text_DE_StartSimulator, text_FR_StartSimulator, text_IT_StartSimulator, text_ES_StartSimulator}},
     {(uint8_t)TXT2BYTE_Intervall,		{text_EN_Intervall, text_DE_Intervall, text_FR_Intervall, text_IT_Intervall, text_ES_Intervall}},
     {(uint8_t)TXT2BYTE_SimDiveTime,		{text_EN_SimDiveTime, text_DE_SimDiveTime, text_FR_SimDiveTime, text_IT_SimDiveTime, text_ES_SimDiveTime}},
@@ -1684,8 +1680,6 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_NumberOfDives,	{text_EN_NumberOfDives, text_DE_NumberOfDives, text_FR_NumberOfDives, text_IT_NumberOfDives, text_ES_NumberOfDives}},
     {(uint8_t)TXT2BYTE_AmbientTemperature,{text_EN_AmbientTemperature, text_DE_AmbientTemperature, text_FR_AmbientTemperature, text_IT_AmbientTemperature, text_ES_AmbientTemperature}},
     {(uint8_t)TXT2BYTE_Bottle,			{text_EN_Bottle, text_DE_Bottle, text_FR_Bottle, text_IT_Bottle, text_ES_Bottle}},
-    {(uint8_t)TXT2BYTE_WirelessSender,{text_EN_WirelessSender, text_DE_WirelessSender, text_FR_WirelessSender, text_IT_WirelessSender, text_ES_WirelessSender}},
-    {(uint8_t)TXT2BYTE_WirelessDisconnect,{text_EN_WirelessDisconnect, text_DE_WirelessDisconnect, text_FR_WirelessDisconnect, text_IT_WirelessDisconnect, text_ES_WirelessDisconnect}},
     {(uint8_t)TXT2BYTE_Gaslist,			{text_EN_Gaslist, text_DE_Gaslist, text_FR_Gaslist, text_IT_Gaslist, text_ES_Gaslist}},
     {(uint8_t)TXT2BYTE_Clock,			{text_EN_Clock, text_DE_Clock, text_FR_Clock, text_IT_Clock, text_ES_Clock}},
     {(uint8_t)TXT2BYTE_Sunday,			{text_EN_Sunday, text_DE_Sunday, text_FR_Sunday, text_IT_Sunday, text_ES_Sunday}},

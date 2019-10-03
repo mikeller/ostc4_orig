@@ -94,6 +94,16 @@ uint32_t tMXtra_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext)
         strcpy(&text[textPointer],"\n\r");
         textPointer += 2;
     }
+    else
+    {
+    	if((line == 0) || (line == 4))		/* end dive mode only used during real dives */
+    	    {
+    	        text[textPointer++] = TXT_2BYTE;
+    	        text[textPointer++] = TXT2BYTE_EndDiveMode;
+    	    }
+    	strcpy(&text[textPointer],"\n\r");
+    	textPointer += 2;
+    }
 
     return StMXTRA;
 }
