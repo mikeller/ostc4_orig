@@ -161,8 +161,8 @@ uint8_t hasExternalClock(void) {
 // SHALL LOAD AT 0x08000000 + 0x00005000 = 0x08005000.
 // See CPU2-RTE.ld
 const SFirmwareData cpu2_FirmwareData __attribute__(( section(".firmware_data") ))= {
-		.versionFirst = 1,
-		.versionSecond = 9,
+		.versionFirst = 2,
+		.versionSecond = 0,
 		.versionThird = 0,
 		.versionBeta = 0,
 
@@ -170,8 +170,8 @@ const SFirmwareData cpu2_FirmwareData __attribute__(( section(".firmware_data") 
 		.signature = "mh",
 
 		.release_year = 19,
-		.release_month = 8,
-		.release_day = 5,
+		.release_month = 10,
+		.release_day = 6,
 		.release_sub = 0,
 
 		/* max 48 with trailing 0 */
