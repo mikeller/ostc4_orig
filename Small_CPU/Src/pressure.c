@@ -46,7 +46,7 @@
 #define CMD_ADC_4096 0x08 // ADC OSR=4096
 #define CMD_PROM_RD 0xA0 // Prom read command
 
-#define PRESSURE_SURFACE_MAX_MBAR		(1070.0f)		/* It is very unlikely that pressure at surface is greater than this value => clip to it */
+#define PRESSURE_SURFACE_MAX_MBAR		(1030.0f)		/* It is unlikely that pressure at surface is greater than this value => clip to it */
 #define PRESSURE_HISTORY_SIZE			(8u)
 #define PRESSURE_JUMP_VALID_MBAR	    (500.0f)		/* values are measure several times a second => jumps > 5m very unlikely */
 
