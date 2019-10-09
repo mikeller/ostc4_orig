@@ -46,11 +46,20 @@
 #define CMD_ADC_4096 0x08 // ADC OSR=4096
 #define CMD_PROM_RD 0xA0 // Prom read command
 
-#define PRESSURE_SURFACE_MAX_MBAR		(1030.0f)		/* It is unlikely that pressure at surface is greater than this value => clip to it */
-#define PRESSURE_HISTORY_SIZE			(8u)
-#define PRESSURE_JUMP_VALID_MBAR	    (500.0f)		/* values are measure several times a second => jumps > 5m very unlikely */
+/* remove comment to use a predefined profile for pressure changes instead of real world data */
+/* #define SIMULATE_PRESSURE */
 
-#define PRESSURE_SURFACE_QUE			(30u)			/* history buffer [minutes] for past pressure measurements */
+#define PRESSURE_SURFACE_MAX_MBAR			(1030.0f)		/* It is unlikely that pressure at surface is greater than this value => clip to it */
+#define PRESSURE_HISTORY_SIZE				(8u)
+#define PRESSURE_JUMP_VALID_MBAR	    	(500.0f)		/* values are measure several times a second => jumps > 5m very unlikely */
+
+#define PRESSURE_SURFACE_QUE					(30u)			/* history buffer [minutes] for past pressure measurements */
+#define PRESSURE_SURFACE_EVA_WINDOW				(15u)			/* Number of entries evaluated during instability test. Used to avoid detection while dive enters water */
+#define PRESSURE_SURFACE_STABLE_LIMIT			(10u)			/* Define pressure as stable if delta (mBar) is below this value */
+#define PRESSURE_SURFACE_DETECT_STABLE_CNT		(5u)			/* Event count to detect stable condition */
+#define PRESSURE_SURFACE_UNSTABLE_LIMIT			(50u)			/* Define pressure as not stable if delta (mBar) is larger than this value */
+#define PRESSURE_SURFACE_DETECT_UNSTABLE_CNT	(3u)			/* Event count to detect unstable condition */
+
 
 static uint16_t get_ci_by_coef_num(uint8_t coef_num);
 //void pressure_calculation_new(void);
@@ -86,6 +95,10 @@ static float ambient_pressure_mbar = 1000.0;
 static float surface_pressure_mbar = 1000.0;
 static float surface_ring_mbar[PRESSURE_SURFACE_QUE] = { 0 };
 
+static uint8_t surface_pressure_writeIndex = 0;
+static float surface_pressure_stable_value = 0;
+static uint8_t surface_pressure_stable = 0;
+
 static float pressure_history_mbar[PRESSURE_HISTORY_SIZE];
 
 static uint8_t secondCounterSurfaceRing = 0;
@@ -119,6 +132,7 @@ void init_surface_ring(uint8_t force)
 		for(int i=0; i<PRESSURE_SURFACE_QUE; i++)
 			surface_ring_mbar[i] = ambient_pressure_mbar;
 		surface_pressure_mbar = ambient_pressure_mbar;
+		surface_pressure_writeIndex = 0;			/* index of the oldest value in the ring buffer */
 	}
 }
 
@@ -130,10 +144,81 @@ void init_pressure_history(void)
 	}
 }
 
+uint8_t is_surface_pressure_stable(void)
+{
+	return surface_pressure_stable;
+}
 
+float set_last_surface_pressure_stable(void)
+{
+	surface_pressure_mbar = surface_pressure_stable_value;
+	return surface_pressure_stable_value;
+}
+
+/* iterate backward through the history memory and evaluate the changes pressure changes during the last 30 minutes */
+void evaluate_surface_pressure()
+{
+	uint8_t index;
+	float lastvalue;
+	uint8_t stablecnt = 0;
+	uint8_t unstablecnt = 0;
+	uint8_t EvaluationWindow = PRESSURE_SURFACE_QUE - PRESSURE_SURFACE_EVA_WINDOW;	/* do not use the latest 15 values to avoid unstable condition due to something like fin handling */
+	uint8_t EvaluatedValues = 0;
+
+	lastvalue = surface_ring_mbar[surface_pressure_writeIndex];
+	surface_pressure_stable_value = surface_ring_mbar[surface_pressure_writeIndex]; /* default: if no stable value is found return the oldest value */
+	index = surface_pressure_writeIndex;
+	surface_pressure_stable = 1;
+
+	if(index == 0)
+	{
+		index = PRESSURE_SURFACE_QUE - 1;
+	}
+	else
+	{
+		index = index - 1;
+	}
+	do
+	{
+		if((EvaluatedValues < EvaluationWindow) &&
+			(fabs(surface_pressure_stable_value - surface_ring_mbar[index]) > PRESSURE_SURFACE_UNSTABLE_LIMIT)) /* unusual change during last 30 minutes */
+		{
+			unstablecnt++;
+			if(unstablecnt > PRESSURE_SURFACE_DETECT_UNSTABLE_CNT)
+			{
+				surface_pressure_stable = 0;
+			}
+		}
+	/* search for a value which does not change for several iterations */
+		if (fabs(lastvalue - surface_ring_mbar[index]) < PRESSURE_SURFACE_STABLE_LIMIT)
+		{
+			stablecnt++;
+		}
+		else
+		{
+			stablecnt = 0;
+		}
+		if ((stablecnt >= PRESSURE_SURFACE_DETECT_STABLE_CNT) && (surface_pressure_stable == 0)&&(surface_pressure_stable_value == surface_ring_mbar[surface_pressure_writeIndex])) /* pressure is unstable => search for new stable value */
+		{
+			surface_pressure_stable_value = surface_ring_mbar[index];
+			unstablecnt = 0;
+		}
+
+		lastvalue = surface_ring_mbar[index];
+
+		if(index == 0)
+		{
+			index = PRESSURE_SURFACE_QUE - 1;
+		}
+		else
+		{
+			index = index - 1;
+		}
+		EvaluatedValues++;
+	} while (index != surface_pressure_writeIndex);
+}
 void update_surface_pressure(uint8_t call_rhythm_seconds)
 {
-	static uint8_t writeIndex = 0;		/* Reinitialization will reset all entries to the same value => no need to reinit write index */
 
 
 	if(is_init_pressure_done())
@@ -146,24 +231,25 @@ void update_surface_pressure(uint8_t call_rhythm_seconds)
 		{
 			if(runningAvg < PRESSURE_SURFACE_MAX_MBAR)
 			{
-				surface_ring_mbar[writeIndex] = runningAvg;
+				surface_ring_mbar[surface_pressure_writeIndex] = runningAvg;
 			}
 			else
 			{
-				surface_ring_mbar[writeIndex] =	PRESSURE_SURFACE_MAX_MBAR;
+				surface_ring_mbar[surface_pressure_writeIndex] =	PRESSURE_SURFACE_MAX_MBAR;
 			}
-			writeIndex++; /* the write index is now pointing to the oldest value in the buffer which will be overwritten next time */
+			surface_pressure_writeIndex++; /* the write index is now pointing to the oldest value in the buffer which will be overwritten next time */
 
-			if(writeIndex == PRESSURE_SURFACE_QUE)
+			if(surface_pressure_writeIndex == PRESSURE_SURFACE_QUE)
 			{
-				writeIndex = 0;
+				surface_pressure_writeIndex = 0;
 			}
 
-			surface_pressure_mbar = surface_ring_mbar[writeIndex]; /* 30 minutes old measurement */
+			surface_pressure_mbar = surface_ring_mbar[surface_pressure_writeIndex]; /* 30 minutes old measurement */
 
 			secondCounterSurfaceRing = 0;
 			avgCount = 1;	/* use the current value as starting point but restart the weight decrement of the measurements */
 		}
+		evaluate_surface_pressure();
 	}
 }
 
@@ -425,12 +511,74 @@ HAL_StatusTypeDef  pressure_sensor_get_temperature_raw(void)
 }
 
 
+#ifdef SIMULATE_PRESSURE
+void pressure_simulation()
+{
+	static uint32_t tickstart = 0;
+	static float pressure_sim_mbar = 0;
+	static uint32_t passedSecond = 0;
+	static uint32_t secondtick = 0;
+
+	uint32_t lasttick = 0;
+
+
+
+	if( tickstart == 0)
+	{
+		tickstart = HAL_GetTick(); /* init time stamp */
+		secondtick = tickstart;
+		pressure_sim_mbar = 1000;
+	}
+
+	lasttick = HAL_GetTick();
+	if(time_elapsed_ms(secondtick,lasttick) > 1000) /* one second passed since last tick */
+	{
+		secondtick = lasttick;
+		passedSecond++;
+
+#ifdef DIVE_AFTER_LANDING
+		if(passedSecond < 10) pressure_sim_mbar = 1000.0;	 /* stay stable for 10 seconds */
+		else if(passedSecond < 300) pressure_sim_mbar -= 1.0; /* decrease pressure in 5 minutes target 770mbar => delta 330 */
+		else if(passedSecond < 900) pressure_sim_mbar += 0.0;	/*stay stable 10 minutes*/
+		else if(passedSecond < 1500) pressure_sim_mbar += 0.5;	/* return to 1 bar in 10 Minutes*/
+		else if(passedSecond < 1800) pressure_sim_mbar += 0.0;	/* 5 minutes break */
+		else if(passedSecond < 2000) pressure_sim_mbar += 10.0; /* start dive */
+		else if(passedSecond < 2300) pressure_sim_mbar += 0.0;  /* stay on depth */
+		else if(passedSecond < 2500) pressure_sim_mbar -= 10.0; /* return to surface */
+		else pressure_sim_mbar = 1000.0;					/* final state */
+#else	/* short dive */
+		if(passedSecond < 10) pressure_sim_mbar = 1000.0;	   /* stay stable for 10 seconds */
+		else if(passedSecond < 180) pressure_sim_mbar += 10.0; /* Start dive */
+		else if(passedSecond < 300) pressure_sim_mbar += 0.0;	/*stay on depth*/
+		else if(passedSecond < 460) pressure_sim_mbar -= 10.0;	/* return to surface */
+		else if(passedSecond < 600) pressure_sim_mbar += 0.0;   /* stay */
+		else if(passedSecond < 610) pressure_sim_mbar = 1000.0; /* get ready for second dive */
+		else if(passedSecond < 780) pressure_sim_mbar += 10.0; /* Start dive */
+		else if(passedSecond < 900) pressure_sim_mbar += 0.0;	/*stay on depth*/
+		else if(passedSecond < 1060) pressure_sim_mbar -= 10.0;	/* return to surface */
+		else if(passedSecond < 1200) pressure_sim_mbar += 0.0;   /* stay */
+		else pressure_sim_mbar = 1000.0;					/* final state */
+#endif
+	}
+
+
+	ambient_pressure_mbar = pressure_sim_mbar;
+	ambient_temperature = 25.0;
+	return;
+}
+
+#endif
+
 void pressure_calculation(void)
 {
 	if(global.I2C_SystemStatus != HAL_OK)
 		return;
-	
+
+#ifdef SIMULATE_PRESSURE
+	pressure_simulation();
+#else
 	pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015();
+#endif
 }
 
 static uint8_t pressure_plausible(float pressurevalue)
@@ -552,156 +700,6 @@ static void pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015(void)
 		ambient_pressure_mbar = runningAvg;
 	}
 }
-
-
-/*
-void pressure_calculation_new(void)
-{
-#define POW2_8	(256)
-#define POW2_17	(131072)
-#define POW2_6	(64)
-#define POW2_16	(65536)
-#define POW2_7	(128)
-#define POW2_23	(8388608)
-#define POW2_21	(2097152)
-#define POW2_15	(32768)
-#define POW2_13	(8192)
-#define POW2_37	(137438953472)
-#define POW2_4	(16)
-#define POW2_33	(8589934592)
-#define POW2_3	(8)
-	
-	int32_t	P; // compensated pressure value
-	int32_t T; // compensated temperature value
-	int32_t dT; // difference between actual and measured temperature
-	int64_t OFF; // offset at actual temperature
-	int64_t SENS;
-
-	int32_t T2;
-	int64_t OFF2;
-	int64_t SENS2;
-	
-	dT 		= ((int32_t)D2) - ((int32_t)C[5]) * POW2_8;
-	OFF 	= ((int64_t)C[2]) * POW2_16 + ((int64_t)dT) * ((int64_t)C[4]) / POW2_7;
-	SENS 	= ((int64_t)C[1]) * POW2_15 + ((int64_t)dT) * ((int64_t)C[3]) / POW2_8;
-
-	T	= 2000 + (dT * ((int32_t)C[6])) / POW2_23;
-
-
-if(T < 2000) // low temperature
-	{
-		T2 = 3 * dT * dT;
-		T2 /= POW2_33;
-		OFF2 = ((int64_t)T) - 2000;
-		OFF2 *= OFF2;
-		OFF2 *= 3;
-		OFF2 /= 2;
-		SENS2 = ((int64_t)T) - 2000;
-		SENS2 *= SENS2;
-		SENS2 *= 5;
-		SENS2 /= POW2_3;
-	}
-	else // high temperature
-	{
-		T2 = 7 * dT * dT;
-		T2 /= POW2_37;
-		OFF2 = ((int64_t)T) - 2000;
-		OFF2 *= OFF2;
-		OFF2 /= POW2_4;
-		SENS2 = 0;
-	}
-
-	T = T - T2;
-	OFF = OFF - OFF2;
-	SENS = SENS - SENS2;
-	
-	P = (int32_t)(((((int64_t)D1) * SENS) / POW2_21 - OFF) / POW2_13);
-	
-	ambient_temperature 	= ((float)T) / 100;
-	ambient_pressure_mbar	= ((float)P) / 10;
-}
-*/
-
-/*
-void pressure_calculation_old(void) {
-	//
-	double ambient_temperature_centigrad = 0;
-	double ambient_pressure_decimbar = 0;
-	
-	// static for debug
-	static int64_t dt = 0;
-	static int64_t temp = 0;
-	static int64_t ms_off = 0;
-	static int64_t sens = 0;
-	//
-	static int64_t ms_off2 = 0;
-	static int64_t sens2 = 0;
-	static int64_t t2 = 0;
-
-	if((D2 == 0) || (D1 == 0))
-		return;
-	//
-
-	// dT = D2 - C[5] * POW2_8;
-	// T	= 2000 + (dT * C[6]) / POW2_23;
-	dt = (int64_t)D2 - C5_x_2p8;
-	//temp ; // in 10 milliGrad Celcius
-	ambient_temperature_centigrad = 2000 + dt * C[6] / 8388608;
-	
-
-	if(ambient_temperature_centigrad < 2000) // low temperature
-		{
-			t2 = 3 * dt;
-			t2 *= dt;
-			t2 /= 8589934592;
-			ms_off2 = ambient_temperature_centigrad - 2000;
-			ms_off2 *= ms_off2;
-			sens2 = ms_off2;
-			ms_off2 *= 3;
-			ms_off2 /= 2;
-			sens2 *= 5;
-			sens2 /= 8;
-		}
-		else // high temperature
-		{
-			t2 = 7 * dt;
-			t2 *= dt;
-			t2 /= 137438953472;
-			ms_off2 = ambient_temperature_centigrad - 2000;
-			ms_off2 *= ms_off2;
-			ms_off2 /= 16;
-			sens2 = 0;
-		}
-	
-	
-	//
-
-	// pressure
-	// OFF 	= C[2] * POW2_16 + dT * C[4] / POW2_7;
-	// SENS = C[1] * POW2_15 + dT * C[3] / POW2_8;
-	ms_off =  C[4] * dt;
-	ms_off /= 128;
-	ms_off += C2_x_2p16;
-	//
-	sens =  C[3] * dt;
-	sens /= 256;
-	sens += C1_x_2p15;
-
-	// 2nd order correction
-	ambient_temperature_centigrad -= t2;
-	ms_off -= ms_off2;
-	sens -= sens2;
-
-	ambient_temperature = ambient_temperature_centigrad / 100;
-		// P = (D1 * SENS / POW2_21 - OFF) / POW2_13;
-	temp = D1 * sens;
-	temp /= 2097152;
-	temp -= ms_off;
-	temp /= 8192;
-	ambient_pressure_decimbar = temp; // to float/double
-	ambient_pressure_mbar = ambient_pressure_decimbar / 10;
-}
-*/
 
 
 /* taken from AN520 by meas-spec.com dated 9. Aug. 2011
