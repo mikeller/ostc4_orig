@@ -32,6 +32,7 @@
 #include "externLogbookFlash.h" // for SAMPLESTART and SAMPLESTOP
 #include "text_multilanguage.h" // for LANGUAGE_END
 #include "tHome.h" // for CVIEW_END
+#include "Motion.h"
 
 SSettings Settings;
 
@@ -82,7 +83,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
  * There might even be entries with fixed values that have no range
  */
 const SSettings SettingsStandard = {
-    .header = 0xFFFF0019,
+    .header = 0xFFFF001A,
     .warning_blink_dsec = 8 * 2,
     .lastDiveLogId = 0,
     .logFlashNextSampleStartAddress = 0,
@@ -307,6 +308,7 @@ const SSettings SettingsStandard = {
     .FactoryButtonBalance[2] = 3,
 	.FlipDisplay = 0,
 	.cv_configuration = 0xFFFFFFFF,
+	.MotionDetection = MOTION_DETECT_OFF,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -353,6 +355,7 @@ void set_new_settings_missing_in_ext_flash(void)
 
     pSettings->scooterControl = 0;
 
+    /* Pointing to the old header data => set new data depending on what had been added since last version */
     switch(pSettings->header)
     {
     case 0xFFFF0000:
@@ -449,6 +452,9 @@ void set_new_settings_missing_in_ext_flash(void)
     	// no break
     case 0xFFFF0018:
     	pSettings->cv_configuration = 0xFFFFFFFF;
+    	// no break
+    case 0xFFFF0019:
+    	pSettings->MotionDetection = MOTION_DETECT_OFF;
     	// no break
     default:
         pSettings->header = pStandard->header;
@@ -1347,6 +1353,11 @@ uint8_t check_and_correct_settings(void)
     	Settings.FlipDisplay = 0;
 	    corrections++;
    	}
+    if(Settings.MotionDetection >= MOTION_DETECT_END)
+   	{
+    	Settings.MotionDetection = MOTION_DETECT_OFF;
+	    corrections++;
+   	}
 
     if(corrections > 255)
         return 255;
@@ -1399,7 +1410,7 @@ uint8_t firmwareVersion_16bit_low(void)
     return ((firmware_FirmwareData.versionSecond & 0x03)  << 6)	+ ((firmware_FirmwareData.versionThird & 0x1F) << 1) + (firmware_FirmwareData.versionBeta & 0x01);
 }
 
-SSettings* settingsGetPointer(void)
+inline SSettings* settingsGetPointer(void)
 {
     return &Settings;
 }

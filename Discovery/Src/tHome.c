@@ -42,6 +42,7 @@
 #include "tMenuEditGasOC.h" // for openEdit_DiveSelectBetterGas()
 #include "tMenuEditSetpoint.h" // for openEdit_DiveSelectBetterSetpoint()
 #include "simulation.h"
+#include "motion.h"
 
 /* Private types -------------------------------------------------------------*/
 
@@ -56,7 +57,7 @@ static uint16_t display_toogle_count;
 static uint16_t tHome_tick_count_cview;
 static uint16_t tHome_tick_count_field;
 
-const uint8_t cv_changelist[6] = {CVIEW_Compass, CVIEW_SummaryOfLeftCorner, CVIEW_Tissues, CVIEW_Profile, CVIEW_EADTime, CVIEW_Gaslist};
+const uint8_t cv_changelist[] = {CVIEW_Compass, CVIEW_SummaryOfLeftCorner, CVIEW_Tissues, CVIEW_Profile, CVIEW_EADTime, CVIEW_Gaslist, CVIEW_noneOrDebug, CVIEW_Decolist,CVIEW_sensors,CVIEW_sensors_mV, CVIEW_END};
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -330,11 +331,11 @@ void tHome_change_field_button_pressed(void)
 }
 
 
-void tHome_change_customview_button_pressed(void)
+void tHome_change_customview_button_pressed(uint8_t action)
 {
     tHome_tick_count_cview = 0;
     if(settingsGetPointer()->design == 7)
-        t7_change_customview();
+        t7_change_customview(action);
     else
     if(settingsGetPointer()->design == 3)
         t3_change_customview();
