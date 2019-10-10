@@ -502,16 +502,16 @@ int main(void)
 						pitchstate = DETECT_NOTHING;
 						break;
 				}
+				if(DETECT_NEG_PITCH == pitchstate)
+	           	{
+	            	StoreButtonAction((uint8_t)ACTION_PITCH_NEG);
+	           	}
+	            if(DETECT_POS_PITCH == pitchstate)
+	           	{
+	            	StoreButtonAction((uint8_t)ACTION_PITCH_POS);
+	           	}
         	}
 
-			if(DETECT_NEG_PITCH == pitchstate)
-           	{
-            	StoreButtonAction((uint8_t)ACTION_PITCH_NEG);
-           	}
-            if(DETECT_POS_PITCH == pitchstate)
-           	{
-            	StoreButtonAction((uint8_t)ACTION_PITCH_POS);
-           	}
 
 // Enable this to make the simulator write a logbook entry
 // #define SIM_WRITES_LOGBOOK 1
