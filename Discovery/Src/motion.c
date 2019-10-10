@@ -16,59 +16,66 @@
 
 #define	STABLE_STATE_COUNT			2	/* number of count to declare a state as stable (at the moment based on 100ms) */
 #define STABLE_STATE_TIMEOUT		5	/* Detection shall be aborted if a movement state is stable for more than 500ms */
-#define MOVE_DELTA_SPEED			4	/* Delta speed needed to identify a valid movement */
-#define PITCH_DELTA_COUNT			10	/* Delta count needed to identify a valid minima / maxima */
-#define PITCH_DELTA_END				10	/* Delta allowed between start and end position */
-
 
 #define SECTOR_WINDOW				80.0  	/* Pitch window which is used for custom view projection */
+#define SECTOR_WINDOW_MAX			120.0  	/* Pitch window which will be greater than the divers field of view */
 #define SECTOR_HYSTERY				3		/* Additional offset to avoid fast changing displays */
 #define SECTOR_BORDER				400.0	/* Define a value which is out of limit to avoid not wanted key events */
 #define SECTOR_FILTER				10		/* Define speed for calculated angle to follow real value */
 
-#define SECTOR_MAX					19		/* maximum number of sectors */
+#define SECTOR_MAX					30		/* maximum number of sectors */
 #define SECTOR_SCROLL				7		/* number of sectors used for scroll detection */
 
-detectionState_t detectionState = DETECT_NOTHING;
+static detectionState_t detectionState = DETECT_NOTHING;
 
 uint8_t curSector;
 static uint8_t targetSector;
-static uint8_t sectorSize;
+static float sectorSize;
+static float sectorwindow;
 static uint8_t sectorCount;
 
-SSector PitchSector[SECTOR_MAX];			/* max number of enabled custom views */
+static float sector_upperborder;
+static float sector_lowerborder;
 
 
 uint8_t GetSectorForPitch(float pitch)
 {
-	static float lastPitch = 1000;
+	static uint8_t lastsector = 0xFF;
 	float newPitch;
-	uint8_t index;
 	uint8_t sector = 0;
 
-	if(lastPitch == 1000)						/* init at first call */
+
+	newPitch = pitch + (sectorwindow / 2.0);		/* do not use negativ values */
+	if (newPitch < 0.0)							/* clip value */
 	{
-		lastPitch = pitch;
+		newPitch = 0.0;
+	}
+	if (newPitch > sectorwindow)							/* clip value */
+	{
+		newPitch = sectorwindow;
 	}
 
-	newPitch = lastPitch + (pitch / SECTOR_FILTER);
-
-	for(index = 1; index < sectorCount; index++)
+	if(lastsector == 0xFF)						/* First call of function => make sure a new sector is set */
 	{
-		if((pitch < PitchSector[index].upperlimit) && (pitch > PitchSector[index].lowerlimit ))
-		{
-			sector = index;
-			break;
-		}
+		sector_lowerborder = SECTOR_BORDER;
+		sector_upperborder = SECTOR_BORDER * -1.0;
+
 	}
-	lastPitch = newPitch;
-	return sector;
+
+	/* switch to other sector? */
+	if((newPitch > sector_upperborder) || (newPitch <= sector_lowerborder))
+	{
+		sector = (uint16_t) newPitch / sectorSize;
+		sector_lowerborder = sector * sectorSize - SECTOR_HYSTERY;
+		sector_upperborder = (sector + 1) * sectorSize + SECTOR_HYSTERY;
+		lastsector = sector;
+	}
+
+	return lastsector;
 }
 
 void DefinePitchSectors(float centerPitch,uint8_t numOfSectors)
 {
-	uint8_t index;
-
 	if(numOfSectors == CUSTOMER_DEFINED_VIEWS)
 	{
 		sectorCount =  t7_GetEnabled_customviews();
@@ -82,19 +89,17 @@ void DefinePitchSectors(float centerPitch,uint8_t numOfSectors)
 	{
 		sectorCount = numOfSectors;
 	}
-	sectorSize = SECTOR_WINDOW / sectorCount;
 
-	PitchSector[0].upperlimit = centerPitch + (SECTOR_WINDOW / 2);
-	PitchSector[0].lowerlimit = PitchSector[0].upperlimit - sectorSize - SECTOR_HYSTERY;
-
-	for(index = 1; index < sectorCount; index++)
+	if(sectorCount == SECTOR_MAX)
 	{
-		PitchSector[index].upperlimit = PitchSector[0].upperlimit - index * sectorSize + SECTOR_HYSTERY;
-		PitchSector[index].lowerlimit = PitchSector[0].upperlimit - (index + 1) * sectorSize - SECTOR_HYSTERY;
+		sectorwindow = 	SECTOR_WINDOW_MAX;
+	}
+	else
+	{
+		sectorwindow = 	SECTOR_WINDOW;
 	}
 
-	PitchSector[0].upperlimit = SECTOR_BORDER;
-	PitchSector[index - 1].lowerlimit = SECTOR_BORDER * -1.0;
+	sectorSize = sectorwindow / sectorCount;
 
 /* get the current sector */
 	curSector = GetSectorForPitch(stateRealGetPointer()->lifeData.compass_pitch);
@@ -135,7 +140,7 @@ detectionState_t detectSectorButtonEvent(float curPitch)
 	{
 		targetSector = newTargetSector;
 	}
-	lastTargetSector = 	newTargetSector;
+	lastTargetSector = newTargetSector;
 	if(targetSector != curSector)
 	{
 		 if(targetSector > curSector)
@@ -205,17 +210,10 @@ detectionState_t detectPitch(float currentPitch)
 
 	curSector = GetSectorForPitch(stateRealGetPointer()->lifeData.compass_pitch);
 
-	sectorhist[sectorindex++] = curSector;
-	if(sectorindex == 20) sectorindex=0;
-
 	/* feed value into state machine */
 	switch (detectionState)
 	{
-			case DETECT_NOTHING: 	if(curSector == lastSector)	/* detect a stable condition before evaluating for the next move */
-									{
-										stableCnt++;
-									}
-									else
+			case DETECT_NOTHING: 	if(curSector != lastSector)	/* detect a stable condition before evaluating for the next move */
 									{
 										stableCnt=0;
 									}
@@ -242,71 +240,51 @@ detectionState_t detectPitch(float currentPitch)
 											stableCnt = 0;
 											startSector = lastSector;
 										}
-										else
-										{
-											stableCnt++;		/* reset start sector in case of slow movement */
-										}
 									}
 				break;
 			case DETECT_NEG_MOVE:
-			case DETECT_POS_MOVE:	if(curSector != lastSector) /* still moving?  */
-									{
-										stableCnt++;
-									}
-									else
+			case DETECT_POS_MOVE:	if(curSector == lastSector)		/* Moved to a max? */
 									{
 										if(abs(startSector - curSector) > 2)
 										{
 											detectionState++;
 											stableCnt = 0;
 										}
-										else
+										if(stableCnt > 2)
 										{
-												stableCnt++;	/* maybe on the boundary of a sector => handle as stable */
-										}								
-									}
-				break;
-			case DETECT_MINIMA:
-			case DETECT_MAXIMA:		/* stay at maximum for short time to add a pattern for user interaction */
-									if(curSector == lastSector)
-									{
-										stableCnt++;
-									}
-									else
-									{
-										if(stableCnt > 0)	/* restart movement after a short break? */
-										{
-											detectionState++;
+											detectionState = DETECT_NOTHING;
 											stableCnt = 0;
 										}
-										else
-										{
-											stableCnt++;	/* maybe on the boundary of a sector => handle as stable */
-										}
+									}
+				break;
+			case DETECT_MAXIMA:
+			case DETECT_MINIMA:		if(curSector != lastSector)		/* reset timeout detection */
+									{
+										detectionState++;
+										stableCnt = 0;
 									}
 				break;
 			case DETECT_RISEBACK:
-			case DETECT_FALLBACK:	if(curSector == lastSector)		/* check if we are back at start position at end of movement */
+			case DETECT_FALLBACK:
+									if(curSector == lastSector)		/* check if we are back at start position at end of movement */
 									{
-										if(abs(startSector - curSector) <= 1) //(curSector == startSector)
+										if(abs(startSector - curSector) <= 1)
 										{
-											detectionState++;
-											stableCnt = 0;
-										}
-										else
-										{
-											stableCnt++;	/* maybe on the boundary of a sector => handle as stable */
+											if(stableCnt > 2)
+											{
+												detectionState++;
+												stableCnt = 0;
+											}
 										}
 									}
-									else
-									{
-										stableCnt++;
-									}
-				break;
+								break;
 			default:
 				detectionState = DETECT_NOTHING;
 				break;
-
+	}
+	if(detectionState != DETECT_START)
+	{
+		stableCnt++;
 	}
 	lastSector = curSector;
 	if(stableCnt > STABLE_STATE_TIMEOUT)
