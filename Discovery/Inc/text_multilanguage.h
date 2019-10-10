@@ -273,6 +273,12 @@ extern const tText text_array2[];
 		TXT2BYTE_ExtraDecoGame,
 		TXT2BYTE_ExtraNone,
 		/* */
+		TXT2BYTE_MotionCtrl,
+		TXT2BYTE_MoCtrlNone,
+		TXT2BYTE_MoCtrlPitch,
+		TXT2BYTE_MoCtrlSector,
+		TXT2BYTE_MoCtrlScroll,
+		/* */
 		TXT2BYTE_DecoDataLost,
 		TXT2BYTE_Info,
 		TXT2BYTE_Korrekturwerte,
@@ -288,6 +294,7 @@ extern const tText text_array2[];
 		TXT2BYTE_ButtonRight,
 		/* */
 		TXT2BYTE_Summary,
+		TXT2BYTE_DispNoneDbg,
 		TXT2BYTE_ApneaLast,
 		TXT2BYTE_ApneaTotal,
 		TXT2BYTE_ApneaSurface,

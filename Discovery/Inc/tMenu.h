@@ -78,6 +78,7 @@ void tM_refresh_live_content(void);
 void tM_rebuild_menu_after_tComm(void);
 
 void tM_refresh(char *text, uint8_t *textPointer, uint8_t line, const char content[6]);
+void tM_build_page(uint32_t id, char *text, uint16_t tab, char *subtext);
 
 void block_diluent_page(void);
 void unblock_diluent_page(void);
