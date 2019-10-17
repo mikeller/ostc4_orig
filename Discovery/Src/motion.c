@@ -27,47 +27,31 @@
 #define SECTOR_SCROLL				7		/* number of sectors used for scroll detection */
 
 static detectionState_t detectionState = DETECT_NOTHING;
-
-uint8_t curSector;
-static uint8_t targetSector;
-static float sectorSize;
-static float sectorwindow;
-static uint8_t sectorCount;
-
-static float sector_upperborder;
-static float sector_lowerborder;
+static SSector sectorDetection;
 
 
 uint8_t GetSectorForPitch(float pitch)
 {
-	static uint8_t lastsector = 0xFF;
+	static uint8_t lastsector = 0;
 	float newPitch;
 	uint8_t sector = 0;
 
-
-	newPitch = pitch + (sectorwindow / 2.0);		/* do not use negativ values */
+	newPitch = pitch + sectorDetection.offset + sectorDetection.center;		/* do not use negative values and consider offset to center position */
 	if (newPitch < 0.0)							/* clip value */
 	{
 		newPitch = 0.0;
 	}
-	if (newPitch > sectorwindow)							/* clip value */
+	if (newPitch > sectorDetection.window)							/* clip value */
 	{
-		newPitch = sectorwindow;
-	}
-
-	if(lastsector == 0xFF)						/* First call of function => make sure a new sector is set */
-	{
-		sector_lowerborder = SECTOR_BORDER;
-		sector_upperborder = SECTOR_BORDER * -1.0;
-
+		newPitch = sectorDetection.window;
 	}
 
 	/* switch to other sector? */
-	if((newPitch > sector_upperborder) || (newPitch <= sector_lowerborder))
+	if((newPitch > sectorDetection.upperborder) || (newPitch <= sectorDetection.lowerborder))
 	{
-		sector = (uint16_t) newPitch / sectorSize;
-		sector_lowerborder = sector * sectorSize - SECTOR_HYSTERY;
-		sector_upperborder = (sector + 1) * sectorSize + SECTOR_HYSTERY;
+		sector = (uint16_t) newPitch / sectorDetection.size;
+		sectorDetection.lowerborder = sector * sectorDetection.size - SECTOR_HYSTERY;
+		sectorDetection.upperborder = (sector + 1) * sectorDetection.size + SECTOR_HYSTERY;
 		lastsector = sector;
 	}
 
@@ -78,40 +62,48 @@ void DefinePitchSectors(float centerPitch,uint8_t numOfSectors)
 {
 	if(numOfSectors == CUSTOMER_DEFINED_VIEWS)
 	{
-		sectorCount =  t7_GetEnabled_customviews();
-		if(sectorCount > 7)
+		sectorDetection.count =  t7_GetEnabled_customviews();
+		if(sectorDetection.count > 7)
 		{
-			sectorCount = 7;	/* more views are hard to manually control */
+			sectorDetection.count = 7;	/* more views are hard to manually control */
 		}
 	}
 	else
 	if(numOfSectors != CUSTOMER_KEEP_LAST_SECTORS)
 	{
-		sectorCount = numOfSectors;
+		sectorDetection.count = numOfSectors;
 	}
 
-	if(sectorCount == SECTOR_MAX)
+	if(sectorDetection.count == SECTOR_MAX)
 	{
-		sectorwindow = 	SECTOR_WINDOW_MAX;
+		sectorDetection.window = SECTOR_WINDOW_MAX;
 	}
 	else
 	{
-		sectorwindow = 	SECTOR_WINDOW;
+		sectorDetection.window = SECTOR_WINDOW;
 	}
 
-	sectorSize = sectorwindow / sectorCount;
+	sectorDetection.offset = (centerPitch - (sectorDetection.window / 2)) * -1.0;
+	sectorDetection.size = sectorDetection.window / sectorDetection.count;
+	sectorDetection.center = 0;
 
+/* reset border values */
+	sectorDetection.lowerborder = SECTOR_BORDER;
+	sectorDetection.upperborder = SECTOR_BORDER * -1.0;
 /* get the current sector */
-	curSector = GetSectorForPitch(stateRealGetPointer()->lifeData.compass_pitch);
-	targetSector = curSector;
+	sectorDetection.current = GetSectorForPitch(stateRealGetPointer()->lifeData.compass_pitch);
+	sectorDetection.target = sectorDetection.current;
+/* do a small adjustment to center pitch to make sure the actual pitch is in the center of the current sector */
+	sectorDetection.center = (sectorDetection.upperborder) - ((sectorDetection.size + 2 *SECTOR_HYSTERY) / 2.0) - (centerPitch + sectorDetection.offset);
+
 }
 
 void InitMotionDetection(void)
 {
-	targetSector = 0;
-	curSector = 0;
-	sectorSize = 0;
-	sectorCount = 0;
+	sectorDetection.target = 0;
+	sectorDetection.current = 0;
+	sectorDetection.size = 0;
+	sectorDetection.count = 0;
 
 	switch(settingsGetPointer()->MotionDetection)
 	{
@@ -138,19 +130,19 @@ detectionState_t detectSectorButtonEvent(float curPitch)
 	newTargetSector = GetSectorForPitch(stateRealGetPointer()->lifeData.compass_pitch);
 	if(lastTargetSector == newTargetSector)
 	{
-		targetSector = newTargetSector;
+		sectorDetection.target = newTargetSector;
 	}
 	lastTargetSector = newTargetSector;
-	if(targetSector != curSector)
+	if(sectorDetection.target != sectorDetection.current)
 	{
-		 if(targetSector > curSector)
+		 if(sectorDetection.target > sectorDetection.current)
 		 {
-			 curSector++;
+			 sectorDetection.current++;
 			PitchEvent = DETECT_POS_PITCH;
 		 }
 		 else
 		 {
-			 curSector--;
+			 sectorDetection.current--;
 			 PitchEvent = DETECT_NEG_PITCH;
 		 }
 	}
@@ -202,6 +194,8 @@ detectionState_t detectPitch(float currentPitch)
 	static uint8_t lastSector = 0;
 	static uint8_t startSector = 0;
 	static uint8_t stableCnt = 0;
+
+	uint8_t curSector;
 
 	if((detectionState == DETECT_NEG_PITCH) || (detectionState == DETECT_POS_PITCH))	/* discard last detection */
 	{
