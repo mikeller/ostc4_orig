@@ -58,6 +58,7 @@ uint8_t t3_selection_customview = 0;
 
 /* Private types -------------------------------------------------------------*/
 #define TEXTSIZE 16
+#define NUMBER_OF_VIEWS 7	/* number of views defined in the array below */
 
 const uint8_t t3_customviewsStandard[] =
 {
@@ -1251,3 +1252,36 @@ void t3_basics_compass(GFX_DrawCfgScreen *tXscreen, uint16_t ActualHeading, uint
     GFX_draw_circle(tXscreen, center, 107, CLUT_Font030);
     GFX_draw_circle(tXscreen, center, 108, CLUT_Font030);
 }
+
+uint8_t t3_GetEnabled_customviews()
+{
+	int8_t i;
+    uint8_t enabledViewCnt = 0;
+    uint32_t cv_config = settingsGetPointer()->cv_configuration;
+
+    i=0;
+   	do
+    {
+        if(cv_changelist[i] == CVIEW_sensors) /* at the moment specific big font view may not be selected. Only sensor setting is taken from t7 configuration */
+        {
+          	 if(!CHECK_BIT_THOME(cv_config, cv_changelist[i]))
+          	 {
+           		 enabledViewCnt = NUMBER_OF_VIEWS - 1;		/* sensor shall not be displayed */
+           	 }
+          	 else
+          	 {
+           		 enabledViewCnt = NUMBER_OF_VIEWS; 			/* enable all possible views */
+           	 }
+             break;
+        }
+        i++;
+    } while(cv_changelist[i] != CVIEW_END);
+    if ((stateUsed->diveSettings.ppo2sensors_deactivated) || (stateUsed->diveSettings.ccrOption == 0))
+    {
+    	enabledViewCnt = NUMBER_OF_VIEWS - 1;		/* sensor shall not be displayed */
+    }
+
+    return enabledViewCnt;
+}
+
+
