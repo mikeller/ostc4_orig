@@ -46,9 +46,6 @@
 /*#define HAVE_DEBUG_VIEW */
 static uint8_t infoPage = 0;
 
-
-static uint8_t infoPage = 0;
-
 /* Private function prototypes -----------------------------------------------*/
 void openEdit_DateTime(void);
 void openEdit_Language(void);

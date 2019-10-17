@@ -895,7 +895,13 @@ static void TriggerButtonAction()
 					settingsGetPointer()->design = 7; // auto switch to 9 if necessary
 				} else if ((status.page == PageDive) && (status.line != 0)) {
 					if (settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT)
+					{
 						settingsGetPointer()->design = 3;
+						if(settingsGetPointer()->MotionDetection == MOTION_DETECT_SECTOR)
+						{
+							DefinePitchSectors(stateRealGetPointer()->lifeData.compass_pitch,CUSTOMER_DEFINED_VIEWS);
+						}
+					}
 					else if (settingsGetPointer()->extraDisplay
 							== EXTRADISPLAY_DECOGAME)
 						settingsGetPointer()->design = 4;

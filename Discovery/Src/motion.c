@@ -12,6 +12,7 @@
 #include "motion.h"
 #include "data_central.h"
 #include "t7.h"
+#include "t3.h"
 #include "settings.h"
 
 #define	STABLE_STATE_COUNT			2	/* number of count to declare a state as stable (at the moment based on 100ms) */
@@ -62,7 +63,14 @@ void DefinePitchSectors(float centerPitch,uint8_t numOfSectors)
 {
 	if(numOfSectors == CUSTOMER_DEFINED_VIEWS)
 	{
-		sectorDetection.count =  t7_GetEnabled_customviews();
+		if(settingsGetPointer()->design == 3)		/* Big font view ? */
+		{
+			sectorDetection.count =  t3_GetEnabled_customviews();
+		}
+		else
+		{
+			sectorDetection.count =  t7_GetEnabled_customviews();
+		}
 		if(sectorDetection.count > 7)
 		{
 			sectorDetection.count = 7;	/* more views are hard to manually control */

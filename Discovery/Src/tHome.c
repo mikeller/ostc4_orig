@@ -148,8 +148,13 @@ void tHomeDiveMenuControl(uint8_t sendAction)
             return;
 
         if(settingsGetPointer()->design == 3)
+        {
             settingsGetPointer()->design = 7;
-
+        	if(settingsGetPointer()->MotionDetection == MOTION_DETECT_SECTOR)
+        	{
+        		DefinePitchSectors(stateRealGetPointer()->lifeData.compass_pitch,CUSTOMER_DEFINED_VIEWS);
+        	}
+        }
         switch(get_globalState())
         {
         case StD:
@@ -239,8 +244,14 @@ void tHomeDiveMenuControl(uint8_t sendAction)
         if(settingsGetPointer()->design == 4)
             return;
 
-        if(settingsGetPointer()->design == 3)
+        if(settingsGetPointer()->design == 3)	/* switch back to t7 (standard) view */
+        {
             settingsGetPointer()->design = 7;
+        	if(settingsGetPointer()->MotionDetection == MOTION_DETECT_SECTOR)
+        	{
+        		DefinePitchSectors(stateRealGetPointer()->lifeData.compass_pitch,CUSTOMER_DEFINED_VIEWS);
+        	}
+        }
 
         switch(get_globalState())
         {
