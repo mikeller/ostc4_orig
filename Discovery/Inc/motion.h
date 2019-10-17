@@ -38,9 +38,21 @@ typedef enum
 
 typedef struct
 {
-    float upperlimit;
-    float lowerlimit;
+    float upperborder;			/* current sector is changed if pitch exceeds these borders */
+    float lowerborder;
+
+    uint8_t current;			/* number of the current visible sector */
+    uint8_t target;				/* used for sector switch => number of the sector which shall be finnaly displayed */
+
+    float offset;				/* offset to adjust minimum pitch value used for detection to zero */
+    float size;					/* delta of upper and lower boarder defining the sector in degree */
+    float window;				/* defines which range of pitch values are used for detection */
+    float center;				/* defines the offset from pitch to middle of active sector (avoid center position is close to the calculated borders) */
+    uint8_t count;				/* number of sectors used for detection */
 } SSector;
+
+
+
 
 void InitMotionDetection(void);
 void DefinePitchSectors(float centerAngle, uint8_t numOfSectors);
