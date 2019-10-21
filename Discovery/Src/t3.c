@@ -260,6 +260,7 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
                 depthChangeRate = 200;
         }
         start.y = tXl1->WindowY0 - 1;
+        startZeroLine.y = start.y;
         for(int i = 0; i<5;i++)
         {
             start.y += 40;
@@ -485,9 +486,10 @@ void t3_basics_battery_low_customview_extra(GFX_DrawCfgWindow* tXc1)
 
 void t3_refresh_customview(float depth)
 {
+#if 0
     if((t3_selection_customview == CVIEW_sensors) &&(stateUsed->diveSettings.ccrOption == 0))
         t3_change_customview();
-
+#endif
     t3_basics_refresh_customview(depth, t3_selection_customview, &t3screen, &t3c1, &t3c2, stateUsedWrite->diveSettings.diveMode);
 }
 
@@ -1060,13 +1062,13 @@ void t3_basics_show_customview_warnings(GFX_DrawCfgWindow* tXc1)
 }
 
 
-void t3_change_customview(void)
+void t3_change_customview(uint8_t action)
 {
-    t3_basics_change_customview(&t3_selection_customview, t3_customviews);
+    t3_basics_change_customview(&t3_selection_customview, t3_customviews, action);
 }
 
 
-void t3_basics_change_customview(uint8_t *tX_selection_customview, const uint8_t *tX_customviews)
+void t3_basics_change_customview(uint8_t *tX_selection_customview, const uint8_t *tX_customviews, uint8_t action)
 {
     const SDecoinfo * pDecoinfo;
     if(stateUsed->diveSettings.deco_type.ub.standard == GF_MODE)
@@ -1074,24 +1076,60 @@ void t3_basics_change_customview(uint8_t *tX_selection_customview, const uint8_t
     else
         pDecoinfo = &stateUsed->decolistVPM;
 
-    const uint8_t *pViews;
+    uint8_t *pViews;
     pViews = tX_customviews;
 
-    while((*pViews != CVIEW_T3_END) && (*pViews != *tX_selection_customview))
-        {pViews++;}
+    uint8_t *pStartView,*pCurView, *pLastView;
+    uint8_t iterate = 0;	/* set to 1 if a view has to be skipped */
 
-    if(*pViews < CVIEW_T3_END)
-        pViews++;
-
-    if((*pViews == CVIEW_T3_TTS) && !pDecoinfo->output_time_to_surface_seconds)
-        pViews++;
-
-    if(*pViews == CVIEW_T3_END)
+    pStartView = pViews;
+    /* set pointer to currently selected view and count number of entries */
+    while((*pViews != CVIEW_T3_END))
     {
-        *tX_selection_customview = tX_customviews[0];
+    	if (*pViews == *tX_selection_customview)
+    	{
+    		pCurView = pViews;
+    	}
+    	pViews++;
     }
-    else
-        *tX_selection_customview = *pViews;
+    pLastView = pViews;
+    pViews = pCurView;
+
+    do
+    {
+    	iterate = 0;
+		if((action == ACTION_BUTTON_ENTER) || (action == ACTION_PITCH_POS))
+		{
+			if(*pViews != CVIEW_T3_END)
+				pViews++;
+
+			if(*pViews == CVIEW_T3_END)
+			{
+				pViews = pStartView;
+			}
+		}
+		else
+		{
+			if(pViews == pStartView)
+			{
+				pViews = pLastView - 1;
+			}
+			else
+			{
+				pViews--;
+			}
+		}
+		if((*pViews == CVIEW_sensors) &&(stateUsed->diveSettings.ccrOption == 0))
+		{
+			iterate = 1;
+		}
+	    if((*pViews == CVIEW_T3_TTS) && !pDecoinfo->output_time_to_surface_seconds)
+	    {
+	    	iterate = 1;
+	    }
+    }while (iterate == 1);
+
+    *tX_selection_customview = *pViews;
 }
 
 

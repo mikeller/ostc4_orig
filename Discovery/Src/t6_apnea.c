@@ -301,18 +301,15 @@ void t6_battery_low_customview_extra(void)
 
 
 
-void t6_change_customview(void)
+void t6_change_customview(uint8_t action)
 {
-    t3_basics_change_customview(&t6_selection_customview, t6_customviews);
+    t3_basics_change_customview(&t6_selection_customview, t6_customviews, action);
 }
 
 
 void t6_refresh_customview(float depth)
 {
     uint8_t customViewLeftSide = CVIEW_T3_MaxDepth;
-
-    if((t6_selection_customview == CVIEW_sensors) &&(stateUsed->diveSettings.ccrOption == 0))
-        t6_change_customview();
 
     if(t6_getCustomView() == CVIEW_T3_ApnoeSurfaceInfo)
         customViewLeftSide = CVIEW_T3_ApnoeSurfaceInfo;

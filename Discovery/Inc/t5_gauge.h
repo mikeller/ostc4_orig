@@ -35,7 +35,7 @@
 /* Exported functions --------------------------------------------------------*/
 void t5_init(void);
 void t5_refresh(void);
-void t5_change_customview(void);
+void t5_change_customview(uint8_t action);
 uint8_t t5_getCustomView(void);
 
 #endif /* T5_H */
