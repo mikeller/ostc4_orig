@@ -134,7 +134,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
 void t3_basics_refresh_apnoeRight(float depth, uint8_t tX_selection_customview, GFX_DrawCfgScreen *tXscreen, GFX_DrawCfgWindow* tXc1, GFX_DrawCfgWindow* tXc2, uint8_t mode);
 //void _findNextStop(const uint16_t *list, uint8_t *depthOut, uint16_t *lengthOut);
 void t3_basics_colorscheme_mod(char *text);
-void t3_basics_change_customview(uint8_t *tX_selection_customview, const uint8_t *tX_customviews);
+void t3_basics_change_customview(uint8_t *tX_selection_customview, const uint8_t *tX_customviews, uint8_t action);
 
 uint8_t tHome_show_lost_connection_count(GFX_DrawCfgScreen *ScreenToWriteOn);
 
