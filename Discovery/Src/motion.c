@@ -20,15 +20,15 @@
 
 #define SECTOR_WINDOW				80.0  	/* Pitch window which is used for custom view projection */
 #define SECTOR_WINDOW_MAX			120.0  	/* Pitch window which will be greater than the divers field of view */
-#define SECTOR_HYSTERY				3		/* Additional offset to avoid fast changing displays */
+#define SECTOR_HYSTERY				2		/* Additional offset to avoid fast changing displays */
 #define SECTOR_BORDER				400.0	/* Define a value which is out of limit to avoid not wanted key events */
 #define SECTOR_FILTER				10		/* Define speed for calculated angle to follow real value */
 
-#define SECTOR_MAX					30		/* maximum number of sectors */
+#define SECTOR_MAX					24		/* maximum number of sectors */
 #define SECTOR_SCROLL				7		/* number of sectors used for scroll detection */
 
-static detectionState_t detectionState = DETECT_NOTHING;
-static SSector sectorDetection;
+detectionState_t detectionState = DETECT_NOTHING;
+SSector sectorDetection;
 
 
 uint8_t GetSectorForPitch(float pitch)
@@ -193,8 +193,6 @@ detectionState_t detectScrollButtonEvent(float curPitch)
 }
 
 
-uint8_t sectorhist[20];
-uint8_t sectorindex = 0;
 /* Detect if user is generating an pitch including return to starting position */
 /* This is done by feeding the past movements value per value into a state machine */
 detectionState_t detectPitch(float currentPitch)
