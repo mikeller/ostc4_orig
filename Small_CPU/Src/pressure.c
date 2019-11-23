@@ -61,11 +61,13 @@
 #define PRESSURE_SURFACE_DETECT_UNSTABLE_CNT	(3u)			/* Event count to detect unstable condition */
 
 
+static uint8_t PRESSURE_ADDRESS = DEVICE_PRESSURE_MS5803;					/* Default Address */
+
 static uint16_t get_ci_by_coef_num(uint8_t coef_num);
 //void pressure_calculation_new(void);
 //void pressure_calculation_old(void);
 static void pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015(void);
-static uint8_t crc4(uint16_t n_prom[]);
+//static uint8_t crc4(uint16_t n_prom[]);
 
 static HAL_StatusTypeDef pressure_sensor_get_data(void);
 static uint32_t get_adc(void);
@@ -74,7 +76,7 @@ uint8_t pressureSensorInitSuccess = 0;
 static uint16_t C[8] = { 1 };
 static uint32_t D1 = 1;
 static uint32_t D2 = 1;
-static uint8_t n_crc;
+//static uint8_t n_crc;
 
 static int64_t C5_x_2p8 = 1;
 static int64_t C2_x_2p16 = 1;
@@ -338,25 +340,49 @@ uint8_t is_init_pressure_done(void)
 uint8_t init_pressure(void)
 {
 	uint8_t buffer[1];
-	buffer[0] = 0x1e;
+	buffer[0] = 0x1E;			// Reset Command
 	uint8_t retValue = 0xFF;
 	
 	pressureSensorInitSuccess = false;
 	init_pressure_history();
 
+/* Probe new sensor first */
+	retValue = I2C_Master_Transmit(  DEVICE_PRESSURE_MS5837, buffer, 1);
+	if(retValue != HAL_OK)
+	{
+		PRESSURE_ADDRESS = DEVICE_PRESSURE_MS5803;			// use old sensor
+		HAL_Delay(100);
+		MX_I2C1_Init();
+		if (global.I2C_SystemStatus != HAL_OK)
+		{
+			if (MX_I2C1_TestAndClear() == GPIO_PIN_RESET) {
+				MX_I2C1_TestAndClear(); // do it a second time
+			}
+			MX_I2C1_Init();
+		}
+	}
+	else
+	{
+		PRESSURE_ADDRESS = DEVICE_PRESSURE_MS5837;			// Success, use new sensor
+	}
+	HAL_Delay(3);		//2.8ms according to datasheet
+
+	buffer[0] = 0x1E;			// Reset Command
+	retValue = 0xFF;
+
 /* Send reset request to pressure sensor */
-	retValue = I2C_Master_Transmit(  DEVICE_PRESSURE, buffer, 1);
+	retValue = I2C_Master_Transmit(  PRESSURE_ADDRESS, buffer, 1);
 	if(retValue != HAL_OK)
 	{
 		return (HAL_StatusTypeDef)retValue;
 	}
-	HAL_Delay(3);
+	HAL_Delay(3);		//2.8ms according to datasheet
 	
-	for(uint8_t i=0;i<8;i++)
+	for(uint8_t i=0;i<7;i++)
 	{
 		C[i] = get_ci_by_coef_num(i);
 	}
-	n_crc = crc4(C); // no evaluation at the moment hw 151026
+	// n_crc = crc4(C); // no evaluation at the moment hw 151026
 
 	C5_x_2p8  = C[5] * 256;
 	C2_x_2p16 = C[2] * 65536;
@@ -379,8 +405,8 @@ static uint32_t get_adc(void)
 	uint32_t answer = 0;
 
 	buffer[0] = 0x00; // Get ADC
-	I2C_Master_Transmit( DEVICE_PRESSURE, buffer, 1);
-	I2C_Master_Receive(  DEVICE_PRESSURE, resivebuf, 4);
+	I2C_Master_Transmit( PRESSURE_ADDRESS, buffer, 1);
+	I2C_Master_Receive(  PRESSURE_ADDRESS, resivebuf, 4);
 	resivebuf[3] = 0;
 	answer = 256*256 *(uint32_t)resivebuf[0]  + 256 * (uint32_t)resivebuf[1] + (uint32_t)resivebuf[2];
 
@@ -393,8 +419,8 @@ static uint16_t get_ci_by_coef_num(uint8_t coef_num)
 	uint8_t resivebuf[2];
 
 	uint8_t cmd = CMD_PROM_RD+coef_num*2; 
-	I2C_Master_Transmit( DEVICE_PRESSURE, &cmd, 1);
-	I2C_Master_Receive(  DEVICE_PRESSURE, resivebuf, 2);
+	I2C_Master_Transmit( PRESSURE_ADDRESS, &cmd, 1);
+	I2C_Master_Receive(  PRESSURE_ADDRESS, resivebuf, 2);
 	return (256*(uint16_t)resivebuf[0]) + (uint16_t)resivebuf[1];
 }
 
@@ -437,7 +463,7 @@ static uint32_t pressure_sensor_get_one_value(uint8_t cmd, HAL_StatusTypeDef *st
 	uint8_t command = CMD_ADC_CONV + cmd;
 	HAL_StatusTypeDef statusReturnTemp = HAL_TIMEOUT;
 	
-	statusReturnTemp = I2C_Master_Transmit( DEVICE_PRESSURE, &command, 1);
+	statusReturnTemp = I2C_Master_Transmit( PRESSURE_ADDRESS, &command, 1);
 
 	if(statusReturn)
 	{
@@ -705,7 +731,7 @@ static void pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015(void)
 /* taken from AN520 by meas-spec.com dated 9. Aug. 2011
  * short and int are both 16bit according to AVR/GCC google results
  */
-static uint8_t crc4(uint16_t n_prom[])
+/*static uint8_t crc4(uint16_t n_prom[])
 {
 uint16_t cnt; // simple counter
 uint16_t n_rem; // crc reminder
@@ -734,7 +760,7 @@ n_rem= (0x000F & (n_rem >> 12)); // // final 4-bit reminder is CRC code
 n_prom[7]=crc_read; // restore the crc_read to its original place
 return (n_rem ^ 0x00);
 }
-/*
+
 void test_calculation(void)
 {
 	C1 = 29112;

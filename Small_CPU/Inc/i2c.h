@@ -3,7 +3,8 @@
 #define I2C_H
 
 /* Pressure Sensor */
-#define DEVICE_PRESSURE        			0xEE 	// 2019 hardware (gen 3) will use 0xEC (MS5837), all other use 0xEE (MS5803)
+#define DEVICE_PRESSURE_MS5803     			0xEE 	// gen 1 and gen 2 use 0xEE (MS5803)
+#define	DEVICE_PRESSURE_MS5837   			0xEC	// end-2019 hardware (gen 3) uses 0xEC (MS5837)
 
 /* Compass/Accelerometer */
 #define DEVICE_ACCELARATOR_MMA8452Q 	0x38	// Hardware gen 1 (Two chip solution with MMA8452Q and HMC5883L)
