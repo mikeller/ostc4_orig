@@ -1030,7 +1030,7 @@ void scheduleSleepMode(void)
 		MX_I2C1_Init();
 		pressure_sensor_get_pressure_raw();
 
-/* check if I2C is not up an running and try to reactivate if necessary. Also do initialization if problem occured during startup */
+/* check if I2C is not up an running and try to reactivate if necessary. Also do initialization if problem occurred during startup */
 		if(global.I2C_SystemStatus != HAL_OK)
 		{
 			MX_I2C1_TestAndClear();
