@@ -109,9 +109,6 @@ float Suuv, Suuw, Svvu, Svvw, Swwu, Swwv;
 #define Q_PI    (18000)
 #define Q_PIO2  (9000)
 
-#define HMC5883L (1)	///< id used with hardwareCompass 
-#define LSM303D  (2)	///< id used with hardwareCompass
-#define COMPASS_NOT_RECOGNIZED  (4)	///< id used with hardwareCompass
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -154,24 +151,12 @@ float compass_pitch;		///< the final result calculated in compass_calc()
 
 uint8_t compass_gain; ///< 7 on start, can be reduced during calibration
 
-uint8_t  hardwareCompass = 0;	///< either  HMC5883L or LSM303D or not defined yet ( = 0 )
+uint8_t  hardwareCompass = 0;	///< either HMC5883L (=1) or LSM303D (=2) or LSM303AGR (=3) or not defined yet (=0)
 
 /// LSM303D variables
 uint8_t magDataBuffer[6];	///< here raw data from LSM303D is stored, can be local
 uint8_t accDataBuffer[6];	///< here raw data from LSM303D is stored, can be local
 
-//uint16_t velMag = 0;
-//uint16_t velAcc = 0;
-
-//uint16_t magODR[] = {31,62,125,250,500,1000,2000};
-//uint16_t accODR[] = {0,31,62,125,250,500,1000,2000,4000,8000,16000};
-//uint8_t fastest = 10; //no sensor is the fastest
-//uint8_t datas1 = 0;
-//uint8_t zoffFlag = 0;
-//uint8_t sendFlag = 0;
-
-
-// all by pixhawk code:
 
 //	struct accel_scale	_accel_scale;
 unsigned		_accel_range_m_s2;
@@ -223,6 +208,11 @@ void compass_sleep_LSM303D(void);
 void compass_read_LSM303D(void);
 void acceleration_read_LSM303D(void);
 
+void compass_init_LSM303AGR(uint8_t fast, uint8_t gain);
+void compass_sleep_LSM303AGR(void);
+void compass_read_LSM303AGR(void);
+void acceleration_read_LSM303AGR(void);
+
 int LSM303D_accel_set_onchip_lowpass_filter_bandwidth(unsigned bandwidth);
 int compass_calib_common(void);
 
@@ -265,10 +255,12 @@ void compass_init(uint8_t fast, uint8_t gain)
 		uint8_t data = WHO_AM_I;
 		I2C_Master_Transmit( DEVICE_COMPASS_303D, &data, 1);
 		I2C_Master_Receive(  DEVICE_COMPASS_303D, &data, 1);
-		if(data == WHOIAM_VALUE)
-			hardwareCompass = LSM303D;
+		if(data == WHOIAM_VALUE_LSM303D)
+			hardwareCompass = compass_generation2;			//LSM303D;
 		else
-			hardwareCompass = HMC5883L;
+			hardwareCompass = compass_generation1;			//HMC5883L
+		if(data == WHOIAM_VALUE_LSM303AGR)
+			hardwareCompass = compass_generation3;			//LSM303AGR;
 	}
 
 /* No compass identified => Retry */
@@ -277,26 +269,28 @@ void compass_init(uint8_t fast, uint8_t gain)
 		uint8_t data = WHO_AM_I;
 		I2C_Master_Transmit( DEVICE_COMPASS_303D, &data, 1);
 		I2C_Master_Receive(  DEVICE_COMPASS_303D, &data, 1);
-		if(data == WHOIAM_VALUE)
-			hardwareCompass = LSM303D;
+		if(data == WHOIAM_VALUE_LSM303D)
+			hardwareCompass = compass_generation2;			//LSM303D;
 		else
-			hardwareCompass = HMC5883L;
+			hardwareCompass = compass_generation1;			//HMC5883L;
+		if(data == WHOIAM_VALUE_LSM303AGR)
+			hardwareCompass = compass_generation3;			//LSM303AGR;
 	}
 
 /* Assume that a HMC5883L is equipped by default if detection still failed */
 	if(hardwareCompass == 0)
-		hardwareCompass = HMC5883L;	
+		hardwareCompass = compass_generation1;				//HMC5883L;
 	
 #ifdef TEST_IF_HMC5883L
 	HAL_StatusTypeDef resultOfOperationHMC_MMA = HAL_TIMEOUT;
 
-	if(hardwareCompass == HMC5883L)
+	if(hardwareCompass == compass_generation1)			// HMC5883L)
 	{
 		uint8_t data = 0x2A; // CTRL_REG1 of DEVICE_ACCELARATOR_MMA8452Q
 		resultOfOperationHMC_MMA = I2C_Master_Transmit( DEVICE_ACCELARATOR_MMA8452Q, &data, 1);
 		if(resultOfOperationHMC_MMA == HAL_OK)
 		{
-			hardwareCompass = HMC5883L; // all fine, keep it
+			hardwareCompass = compass_generation1;			//HMC5883L; // all fine, keep it
 		}
 		else
 		{
@@ -306,18 +300,15 @@ void compass_init(uint8_t fast, uint8_t gain)
 	}
 #endif
 	
-	if(hardwareCompass == LSM303D)
-	{
+	if(hardwareCompass == compass_generation2)			//LSM303D)
 		compass_init_LSM303D(fast, gain);
-	}
-	else
-	if(hardwareCompass == HMC5883L)
-	{
+	if(hardwareCompass == compass_generation3)			//LSM303AGR)
+		compass_init_LSM303AGR(fast, gain);
+	if(hardwareCompass == compass_generation1)			//HMC5883L)
 		compass_init_HMC5883L(fast, gain);
-	}
 	
-		tfull32 dataBlock[4];
-		if(BFA_readLastDataBlock((uint32_t *)dataBlock) == BFA_OK)
+	tfull32 dataBlock[4];
+	if(BFA_readLastDataBlock((uint32_t *)dataBlock) == BFA_OK)
 		{
 			compass_CX_f = dataBlock[0].Word16.low16;
 			compass_CY_f = dataBlock[0].Word16.hi16;
@@ -333,7 +324,7 @@ void compass_init(uint8_t fast, uint8_t gain)
 //  ===============================================================================
 int compass_calib(void)
 {
-	if(hardwareCompass == LSM303D)
+	if(hardwareCompass == compass_generation2)			//LSM303D)
 	{
 		LSM303D_accel_set_onchip_lowpass_filter_bandwidth(773);
 		int out = compass_calib_common();
@@ -341,7 +332,12 @@ int compass_calib(void)
 		return out;
 	}
 	else
-	if(hardwareCompass == HMC5883L)
+	if(hardwareCompass == compass_generation1)			//HMC5883L)
+	{
+		return compass_calib_common();
+	}
+	else
+	if(hardwareCompass == compass_generation3)			//LSM303AGR)
 	{
 		return compass_calib_common();
 	}
@@ -360,12 +356,12 @@ int compass_calib(void)
 //  ===============================================================================
 void compass_sleep(void)
 {
-	if(hardwareCompass == LSM303D)
+	if(hardwareCompass == compass_generation2)			//LSM303D)
 	{
 		compass_sleep_LSM303D();
 	}
 	else
-	if(hardwareCompass == HMC5883L)
+	if(hardwareCompass == compass_generation1)			//HMC5883L)
 	{
 		compass_sleep_HMC5883L();
 	}
@@ -379,15 +375,13 @@ void compass_sleep(void)
 //  ===============================================================================
 void compass_read(void)
 {
-	if(hardwareCompass == LSM303D)
-	{
+	if(hardwareCompass == compass_generation2)			//LSM303D)
 		compass_read_LSM303D();
-	}
-	else
-	if(hardwareCompass == HMC5883L)
-	{
+	if(hardwareCompass == compass_generation1)			//HMC5883L)
 		compass_read_HMC5883L();
-	}
+	if(hardwareCompass == compass_generation3)			//LSM303AGR)
+			compass_read_LSM303AGR();
+
 }
 
 
@@ -397,7 +391,7 @@ void compass_read(void)
 //  ===============================================================================
 void accelerator_init(void)
 {
-	if(hardwareCompass == HMC5883L)
+	if(hardwareCompass == compass_generation1)			//HMC5883L)
 		accelerator_init_MMA8452Q();
 }
 
@@ -408,7 +402,7 @@ void accelerator_init(void)
 //  ===============================================================================
 void accelerator_sleep(void)
 {
-	if(hardwareCompass == HMC5883L)
+	if(hardwareCompass == compass_generation1)			//HMC5883L)
 		accelerator_sleep_MMA8452Q();
 }
 
@@ -419,23 +413,73 @@ void accelerator_sleep(void)
 //  ===============================================================================
 void  acceleration_read(void)
 {
-	if(hardwareCompass == LSM303D)
-	{
+	if(hardwareCompass == compass_generation2)			//LSM303D)
 		acceleration_read_LSM303D();
-	}
-	else
-	if(hardwareCompass == HMC5883L)
-	{
+	if(hardwareCompass == compass_generation1)			//HMC5883L)
 		acceleration_read_MMA8452Q();
-	}
+	if(hardwareCompass == compass_generation3)			//LSM303AGR)
+		acceleration_read_LSM303AGR();
 }
 
 
 /* Private functions ---------------------------------------------------------*/
 
 //  ===============================================================================
+//	LSM303AGR_read_reg
+//  ===============================================================================
+uint8_t LSM303AGR_read_reg(uint8_t addr)
+{
+  uint8_t data;
+
+	I2C_Master_Transmit( DEVICE_COMPASS_303AGR, &addr, 1);
+	I2C_Master_Receive(  DEVICE_COMPASS_303AGR, &data, 1);
+	return data;
+}
+
+
+//  ===============================================================================
+//	LSM303AGR_write_reg
+//  ===============================================================================
+void LSM303AGR_write_reg(uint8_t addr, uint8_t value)
+{
+  uint8_t data[2];
+
+	data[0] = addr;
+	data[1] = value;
+	I2C_Master_Transmit( DEVICE_COMPASS_303AGR, data, 2);
+}
+
+//  ===============================================================================
+//	LSM303AGR_acc_write_reg
+//  ===============================================================================
+void LSM303AGR_acc_write_reg(uint8_t addr, uint8_t value)
+{
+  uint8_t data[2];
+
+	data[0] = addr;
+	data[1] = value;
+	I2C_Master_Transmit( DEVICE_ACCELARATOR_303AGR, data, 2);
+}
+
+
+//  ===============================================================================
+//	LSM303AGR_write_checked_reg
+//  ===============================================================================
+void LSM303AGR_write_checked_reg(uint8_t addr, uint8_t value)
+{
+	LSM303AGR_write_reg(addr, value);
+}
+
+//  ===============================================================================
+//	LSM303AGR_acc_write_checked_reg
+//  ===============================================================================
+void LSM303AGR_acc_write_checked_reg(uint8_t addr, uint8_t value)
+{
+	LSM303AGR_acc_write_reg(addr, value);
+}
+
+//  ===============================================================================
 //	LSM303D_read_reg
-/// @brief	tiny helpers by pixhawk
 //  ===============================================================================
 uint8_t LSM303D_read_reg(uint8_t addr)
 {
@@ -449,7 +493,6 @@ uint8_t LSM303D_read_reg(uint8_t addr)
 
 //  ===============================================================================
 //	LSM303D_write_reg
-/// @brief	tiny helpers by pixhawk
 //  ===============================================================================
 void LSM303D_write_reg(uint8_t addr, uint8_t value)
 {
@@ -464,7 +507,6 @@ void LSM303D_write_reg(uint8_t addr, uint8_t value)
 
 //  ===============================================================================
 //	LSM303D_write_checked_reg
-/// @brief	tiny helpers by pixhawk. This runs unchecked at the moment.
 //  ===============================================================================
 void LSM303D_write_checked_reg(uint8_t addr, uint8_t value)
 {
@@ -474,7 +516,6 @@ void LSM303D_write_checked_reg(uint8_t addr, uint8_t value)
 
 //  ===============================================================================
 //	LSM303D_modify_reg
-/// @brief	tiny helpers by pixhawk
 //  ===============================================================================
 void LSM303D_modify_reg(unsigned reg, uint8_t clearbits, uint8_t setbits)
 {
@@ -486,108 +527,8 @@ void LSM303D_modify_reg(unsigned reg, uint8_t clearbits, uint8_t setbits)
 	LSM303D_write_checked_reg(reg, val);
 }
 
-/*
-//  ===============================================================================
-//	LSM303D_accel_set_range
-/// @brief	tiny helpers by pixhawk
-//  ===============================================================================
-int LSM303D_accel_set_range(unsigned max_g)
-{
-	uint8_t setbits = 0;
-	uint8_t clearbits = REG2_FULL_SCALE_BITS_A;
-	float new_scale_g_digit = 0.0f;
-
-	if (max_g == 0) {
-		max_g = 16;
-	}
-
-	if (max_g <= 2) {
-		_accel_range_m_s2 = 2.0f * LSM303D_ONE_G;
-		setbits |= REG2_FULL_SCALE_2G_A;
-		new_scale_g_digit = 0.061e-3f;
-
-	} else if (max_g <= 4) {
-		_accel_range_m_s2 = 4.0f * LSM303D_ONE_G;
-		setbits |= REG2_FULL_SCALE_4G_A;
-		new_scale_g_digit = 0.122e-3f;
-
-	} else if (max_g <= 6) {
-		_accel_range_m_s2 = 6.0f * LSM303D_ONE_G;
-		setbits |= REG2_FULL_SCALE_6G_A;
-		new_scale_g_digit = 0.183e-3f;
-
-	} else if (max_g <= 8) {
-		_accel_range_m_s2 = 8.0f * LSM303D_ONE_G;
-		setbits |= REG2_FULL_SCALE_8G_A;
-		new_scale_g_digit = 0.244e-3f;
-
-	} else if (max_g <= 16) {
-		_accel_range_m_s2 = 16.0f * LSM303D_ONE_G;
-		setbits |= REG2_FULL_SCALE_16G_A;
-		new_scale_g_digit = 0.732e-3f;
-
-	} else {
-		return -1;
-	}
-
-	_accel_range_scale = new_scale_g_digit * LSM303D_ONE_G;
-
-
-	LSM303D_modify_reg(ADDR_CTRL_REG2, clearbits, setbits);
-
-	return 0;
-}
-*/
-/*
-//  ===============================================================================
-//	LSM303D_mag_set_range
-/// @brief	tiny helpers by pixhawk
-//  ===============================================================================
-int LSM303D_mag_set_range(unsigned max_ga)
-{
-	uint8_t setbits = 0;
-	uint8_t clearbits = REG6_FULL_SCALE_BITS_M;
-	float new_scale_ga_digit = 0.0f;
-
-	if (max_ga == 0) {
-		max_ga = 12;
-	}
-
-	if (max_ga <= 2) {
-		_mag_range_ga = 2;
-		setbits |= REG6_FULL_SCALE_2GA_M;
-		new_scale_ga_digit = 0.080e-3f;
-
-	} else if (max_ga <= 4) {
-		_mag_range_ga = 4;
-		setbits |= REG6_FULL_SCALE_4GA_M;
-		new_scale_ga_digit = 0.160e-3f;
-
-	} else if (max_ga <= 8) {
-		_mag_range_ga = 8;
-		setbits |= REG6_FULL_SCALE_8GA_M;
-		new_scale_ga_digit = 0.320e-3f;
-
-	} else if (max_ga <= 12) {
-		_mag_range_ga = 12;
-		setbits |= REG6_FULL_SCALE_12GA_M;
-		new_scale_ga_digit = 0.479e-3f;
-
-	} else {
-		return -1;
-	}
-
-	_mag_range_scale = new_scale_ga_digit;
-
-	LSM303D_modify_reg(ADDR_CTRL_REG6, clearbits, setbits);
-
-	return 0;
-}
-*/
-
 //  ===============================================================================
 //	LSM303D_accel_set_onchip_lowpass_filter_bandwidth
-/// @brief	tiny helpers by pixhawk
 //  ===============================================================================
 int LSM303D_accel_set_onchip_lowpass_filter_bandwidth(unsigned bandwidth)
 {
@@ -626,7 +567,6 @@ int LSM303D_accel_set_onchip_lowpass_filter_bandwidth(unsigned bandwidth)
 
 //  ===============================================================================
 //	LSM303D_accel_set_driver_lowpass_filter
-/// @brief	tiny helpers by pixhawk. This one is not used at the moment!
 //  ===============================================================================
 int LSM303D_accel_set_driver_lowpass_filter(float samplerate, float bandwidth)
 {
@@ -637,113 +577,6 @@ int LSM303D_accel_set_driver_lowpass_filter(float samplerate, float bandwidth)
 */	
 	return 0;
 }
-
-/* unused 170821
-//  ===============================================================================
-//	LSM303D_accel_set_samplerate
-/// @brief	tiny helpers by pixhawk
-//  ===============================================================================
-int LSM303D_accel_set_samplerate(unsigned frequency)
-{
-	uint8_t setbits = 0;
-	uint8_t clearbits = REG1_RATE_BITS_A;
-
-//	if (frequency == 0 || frequency == ACCEL_SAMPLERATE_DEFAULT) {
-		frequency = 1600;
-//	}
-
-	if (frequency <= 3) {
-		setbits |= REG1_RATE_3_125HZ_A;
-		_accel_samplerate = 3;
-
-	} else if (frequency <= 6) {
-		setbits |= REG1_RATE_6_25HZ_A;
-		_accel_samplerate = 6;
-
-	} else if (frequency <= 12) {
-		setbits |= REG1_RATE_12_5HZ_A;
-		_accel_samplerate = 12;
-
-	} else if (frequency <= 25) {
-		setbits |= REG1_RATE_25HZ_A;
-		_accel_samplerate = 25;
-
-	} else if (frequency <= 50) {
-		setbits |= REG1_RATE_50HZ_A;
-		_accel_samplerate = 50;
-
-	} else if (frequency <= 100) {
-		setbits |= REG1_RATE_100HZ_A;
-		_accel_samplerate = 100;
-
-	} else if (frequency <= 200) {
-		setbits |= REG1_RATE_200HZ_A;
-		_accel_samplerate = 200;
-
-	} else if (frequency <= 400) {
-		setbits |= REG1_RATE_400HZ_A;
-		_accel_samplerate = 400;
-
-	} else if (frequency <= 800) {
-		setbits |= REG1_RATE_800HZ_A;
-		_accel_samplerate = 800;
-
-	} else if (frequency <= 1600) {
-		setbits |= REG1_RATE_1600HZ_A;
-		_accel_samplerate = 1600;
-
-	} else {
-		return -1;
-	}
-
-	LSM303D_modify_reg(ADDR_CTRL_REG1, clearbits, setbits);
-	return 0;
-}
-//  ===============================================================================
-//	LSM303D_mag_set_samplerate
-/// @brief	tiny helpers by pixhawk
-//  ===============================================================================
-int LSM303D_mag_set_samplerate(unsigned frequency)
-{
-	uint8_t setbits = 0;
-	uint8_t clearbits = REG5_RATE_BITS_M;
-
-	if (frequency == 0) {
-		frequency = 100;
-	}
-
-	if (frequency <= 3) {
-		setbits |= REG5_RATE_3_125HZ_M;
-		_mag_samplerate = 25;
-
-	} else if (frequency <= 6) {
-		setbits |= REG5_RATE_6_25HZ_M;
-		_mag_samplerate = 25;
-
-	} else if (frequency <= 12) {
-		setbits |= REG5_RATE_12_5HZ_M;
-		_mag_samplerate = 25;
-
-	} else if (frequency <= 25) {
-		setbits |= REG5_RATE_25HZ_M;
-		_mag_samplerate = 25;
-
-	} else if (frequency <= 50) {
-		setbits |= REG5_RATE_50HZ_M;
-		_mag_samplerate = 50;
-
-	} else if (frequency <= 100) {
-		setbits |= REG5_RATE_100HZ_M;
-		_mag_samplerate = 100;
-
-	} else {
-		return -1;
-	}
-
-	LSM303D_modify_reg(ADDR_CTRL_REG5, clearbits, setbits);
-	return 0;
-}
-*/
 
 
 // rotate_mag_3f: nicht genutzt aber praktisch; rotate_accel_3f wird benutzt
@@ -786,9 +619,7 @@ void rotate_accel_3f(float *x, float *y, float *z)
 
 
 //  ===============================================================================
-//	compass_init_LSM303D by PIXhawk (LSM303D::reset())
-//  https://raw.githubusercontent.com/PX4/Firmware/master/src/drivers/lsm303d/lsm303d.cpp
-/// @brief	The new ST 303D 
+//	compass_init_LSM303D
 ///					This might be called several times with different gain values during calibration
 ///					but gain change is not supported at the moment.
 ///
@@ -799,7 +630,6 @@ void rotate_accel_3f(float *x, float *y, float *z)
 
 void compass_init_LSM303D(uint8_t fast, uint8_t gain)
 {
-// matthias version 160620
 	if(fast == 0)
 	{
 		LSM303D_write_checked_reg(ADDR_CTRL_REG0, 0x00);
@@ -821,61 +651,13 @@ void compass_init_LSM303D(uint8_t fast, uint8_t gain)
 	LSM303D_write_checked_reg(ADDR_CTRL_REG6, 0x00);
 	LSM303D_write_checked_reg(ADDR_CTRL_REG7, 0x00);
 
-	/*
-uint8_t data;
-for(int i=0;i<11;i++)
-{
-	data = ADDR_INT_THS_L_M + i;
-	I2C_Master_Transmit( DEVICE_COMPASS_303D, &data, 1);
-	I2C_Master_Receive(  DEVICE_COMPASS_303D, &testCompassLS303D[i], 1);
-}
-*/	
-	
 	return;
-/*
-	LSM303D_accel_set_range(LSM303D_ACCEL_DEFAULT_RANGE_G); // modifies ADDR_CTRL_REG2
-	LSM303D_accel_set_samplerate(LSM303D_ACCEL_DEFAULT_RATE); // modifies ADDR_CTRL_REG1
-
-	LSM303D_mag_set_range(LSM303D_MAG_DEFAULT_RANGE_GA);
-	LSM303D_mag_set_samplerate(LSM303D_MAG_DEFAULT_RATE);
-*/
-	
-/*
-// my stuff hw
-	// enable accel
-	LSM303D_write_checked_reg(ADDR_CTRL_REG1,
-			  REG1_X_ENABLE_A | REG1_Y_ENABLE_A | REG1_Z_ENABLE_A | REG1_BDU_UPDATE | REG1_RATE_800HZ_A);
-	
-	// enable mag
-	LSM303D_write_checked_reg(ADDR_CTRL_REG7, REG7_CONT_MODE_M);
-	LSM303D_write_checked_reg(ADDR_CTRL_REG5, REG5_RES_HIGH_M | REG5_ENABLE_T);
-	LSM303D_write_checked_reg(ADDR_CTRL_REG3, 0x04); // DRDY on ACCEL on INT1
-	LSM303D_write_checked_reg(ADDR_CTRL_REG4, 0x04); // DRDY on MAG on INT2
-
-	LSM303D_accel_set_range(LSM303D_ACCEL_DEFAULT_RANGE_G);
-	LSM303D_accel_set_samplerate(LSM303D_ACCEL_DEFAULT_RATE);
-	LSM303D_accel_set_driver_lowpass_filter((float)LSM303D_ACCEL_DEFAULT_RATE, (float)LSM303D_ACCEL_DEFAULT_DRIVER_FILTER_FREQ);
-	//LSM303D_accel_set_onchip_lowpass_filter_bandwidth(773); // factory setting	
-	
-	// we setup the anti-alias on-chip filter as 50Hz. We believe
-	// this operates in the analog domain, and is critical for
-	// anti-aliasing. The 2 pole software filter is designed to
-	// operate in conjunction with this on-chip filter
-	if(fast)
-		LSM303D_accel_set_onchip_lowpass_filter_bandwidth(773); // factory setting
-	else
-		LSM303D_accel_set_onchip_lowpass_filter_bandwidth(LSM303D_ACCEL_DEFAULT_ONCHIP_FILTER_FREQ);
-
-
-	LSM303D_mag_set_range(LSM303D_MAG_DEFAULT_RANGE_GA);
-	LSM303D_mag_set_samplerate(LSM303D_MAG_DEFAULT_RATE);
-*/
 }
 
 
 //  ===============================================================================
 //	compass_sleep_LSM303D
-/// @brief	The new compass chip, hopefully this works!
+// 	@brief	Gen 2 chip
 //  ===============================================================================
 void compass_sleep_LSM303D(void)
 {
@@ -886,9 +668,7 @@ void compass_sleep_LSM303D(void)
 
 //  ===============================================================================
 //	acceleration_read_LSM303D
-/// @brief	The new LSM303D, code by pixhawk
-///
-/// output is accel_DX_f, accel_DY_f, accel_DZ_f
+// 	output is accel_DX_f, accel_DY_f, accel_DZ_f
 //  ===============================================================================
 void acceleration_read_LSM303D(void)
 {
@@ -920,66 +700,14 @@ void acceleration_read_LSM303D(void)
 	accel_report_y = yraw_f;
 	accel_report_z = zraw_f;
 
-	// my stuff
-/*	
-	accel_report_x = ((xraw_f * _accel_range_scale) - _accel_scale_x_offset) * _accel_scale_x_scale;
-	accel_report_y = ((yraw_f * _accel_range_scale) - _accel_scale_y_offset) * _accel_scale_y_scale;
-	accel_report_z = ((zraw_f * _accel_range_scale) - _accel_scale_z_offset) * _accel_scale_z_scale;
-*/	
 	accel_DX_f = ((int16_t)(accel_report_x));
 	accel_DY_f = ((int16_t)(accel_report_y));
 	accel_DZ_f = ((int16_t)(accel_report_z));
 }
-/* special code after accel_report_z = ...
- * prior to output
-//	  we have logs where the accelerometers get stuck at a fixed
-//	  large value. We want to detect this and mark the sensor as
-//	  being faulty
-
-	if (fabsf(_last_accel[0] - x_in_new) < 0.001f &&
-	    fabsf(_last_accel[1] - y_in_new) < 0.001f &&
-	    fabsf(_last_accel[2] - z_in_new) < 0.001f &&
-	    fabsf(x_in_new) > 20 &&
-	    fabsf(y_in_new) > 20 &&
-	    fabsf(z_in_new) > 20) {
-		_constant_accel_count += 1;
-
-	} else {
-		_constant_accel_count = 0;
-	}
-
-	if (_constant_accel_count > 100) {
-		// we've had 100 constant accel readings with large
-		// values. The sensor is almost certainly dead. We
-		// will raise the error_count so that the top level
-		// flight code will know to avoid this sensor, but
-		// we'll still give the data so that it can be logged
-		// and viewed
-		perf_count(_bad_values);
-		_constant_accel_count = 0;
-	}
-
-	_last_accel[0] = x_in_new;
-	_last_accel[1] = y_in_new;
-	_last_accel[2] = z_in_new;
-
-	accel_report.x = _accel_filter_x.apply(x_in_new);
-	accel_report.y = _accel_filter_y.apply(y_in_new);
-	accel_report.z = _accel_filter_z.apply(z_in_new);
-
-	math::Vector<3> aval(x_in_new, y_in_new, z_in_new);
-	math::Vector<3> aval_integrated;
-
-	bool accel_notify = _accel_int.put(accel_report.timestamp, aval, aval_integrated, accel_report.integral_dt);
-	accel_report.x_integral = aval_integrated(0);
-	accel_report.y_integral = aval_integrated(1);
-	accel_report.z_integral = aval_integrated(2);
-*/
 
 
 //  ===============================================================================
 //	compass_read_LSM303D
-/// @brief	The new LSM303D, code by pixhawk
 ///
 /// output is compass_DX_f, compass_DY_f, compass_DZ_f
 //  ===============================================================================
@@ -1008,33 +736,129 @@ void compass_read_LSM303D(void)
 	compass_DZ_f = (((int16_t)((magDataBuffer[5] << 8) | (magDataBuffer[4]))));
 	// no rotation
 	return;
-/*	
-	// my stuff
-	compass_DX_f = (((int16_t)((magDataBuffer[1] << 8) | (magDataBuffer[0]))) / 10) - 200;
-	compass_DY_f = (((int16_t)((magDataBuffer[3] << 8) | (magDataBuffer[2]))) / 10) - 200;
-	compass_DZ_f = (((int16_t)((magDataBuffer[5] << 8) | (magDataBuffer[4]))) / 10) - 200;
-*/
-	// old
-	/*	
-	xraw_f = ((float)( (int16_t)((magDataBuffer[1] << 8) | (magDataBuffer[0]))));
-	yraw_f = ((float)( (int16_t)((magDataBuffer[3] << 8) | (magDataBuffer[2]))));
-	zraw_f = ((float)( (int16_t)((magDataBuffer[5] << 8) | (magDataBuffer[4]))));	
+}
 
-	rotate_mag_3f(&xraw_f, &yraw_f, &zraw_f); 
 
-	compass_DX_f = (int16_t)((xraw_f * 0.1f) - 200.0f);
-	compass_DY_f = (int16_t)((yraw_f * 0.1f) - 200.0f);
-	compass_DZ_f = (int16_t)((zraw_f * 0.1f) - 200.0f);
-*/	
-/*	
-	mag_report_x = ((xraw_f * _mag_range_scale) - _mag_scale_x_offset) * _mag_scale_x_scale;
-	mag_report_y = ((yraw_f * _mag_range_scale) - _mag_scale_y_offset) * _mag_scale_y_scale;
-	mag_report_z = ((zraw_f * _mag_range_scale) - _mag_scale_z_offset) * _mag_scale_z_scale;
-	
-	compass_DX_f = (int16_t)(mag_report_x * 1000.0f); // 1000.0 is just a wild guess by hw
-	compass_DY_f = (int16_t)(mag_report_y * 1000.0f);
-	compass_DZ_f = (int16_t)(mag_report_z * 1000.0f);
-*/	
+//  ===============================================================================
+//	compass_init_LSM303AGR
+///					This might be called several times with different gain values during calibration
+///					but gain change is not supported at the moment.
+///
+/// @param 	gain: 7 is max gain and set with here, compass_calib() might reduce it
+//  ===============================================================================
+
+void compass_init_LSM303AGR(uint8_t fast, uint8_t gain)
+{
+	if(fast == 0)
+	{
+		LSM303AGR_write_checked_reg(0x60, 0x80); // 10Hz
+		LSM303AGR_write_checked_reg(0x61, 0x03); // CFG_REG_B_M
+		LSM303AGR_write_checked_reg(0x62, 0x10); // CFG_REG_C_M
+	}
+	else
+	{
+		LSM303AGR_write_checked_reg(0x60, 0x80); // 10Hz
+		LSM303AGR_write_checked_reg(0x61, 0x03); // CFG_REG_B_M
+		LSM303AGR_write_checked_reg(0x62, 0x10); // CFG_REG_C_M
+	}
+	// init accel (Same chip, but different address...)
+	LSM303AGR_acc_write_checked_reg(0x1F, 0x00); // TEMP_CFG_REG_A (Temp sensor off)
+	LSM303AGR_acc_write_checked_reg(0x20, 0x4F); // CTRL_REG1_A (10Hz, x,y,z = ON)
+	LSM303AGR_acc_write_checked_reg(0x21, 0x00); // CTRL_REG2_A
+	LSM303AGR_acc_write_checked_reg(0x22, 0x00); // CTRL_REG3_A
+	LSM303AGR_acc_write_checked_reg(0x23, 0x04); // CTRL_REG4_A
+
+	return;
+}
+
+
+//  ===============================================================================
+//	compass_sleep_LSM303D
+// 	@brief	Gen 2 chip
+//  ===============================================================================
+void compass_sleep_LSM303AGR(void)
+{
+	LSM303AGR_write_checked_reg(0x60, 0x03); //
+	LSM303AGR_write_checked_reg(0x61, 0x04); //
+	LSM303AGR_write_checked_reg(0x62, 0x51); //
+	LSM303AGR_write_checked_reg(0x63, 0x00); //
+
+
+	LSM303AGR_acc_write_checked_reg(0x1F, 0x00); //
+	LSM303AGR_acc_write_checked_reg(0x20, 0x00); //
+}
+
+
+//  ===============================================================================
+//	acceleration_read_LSM303AGR
+// 	output is accel_DX_f, accel_DY_f, accel_DZ_f
+//  ===============================================================================
+void acceleration_read_LSM303AGR(void)
+{
+  uint8_t data;
+	float xraw_f, yraw_f, zraw_f;
+	float accel_report_x, accel_report_y, accel_report_z;
+
+  memset(accDataBuffer,0,6);
+
+	accel_DX_f = 0;
+	accel_DY_f = 0;
+	accel_DZ_f = 0;
+
+	for(int i=0;i<6;i++)
+	{
+		data = ADDR_OUT_X_L_A + i;				// ADDR_OUT_X_L_A is the same as in the LSM303D (luckily)
+		I2C_Master_Transmit( DEVICE_ACCELARATOR_303AGR, &data, 1);
+		I2C_Master_Receive(  DEVICE_ACCELARATOR_303AGR, &accDataBuffer[i], 1);
+	}
+
+	xraw_f = ((float)( (int16_t)((accDataBuffer[1] << 8) | (accDataBuffer[0]))));
+	yraw_f = ((float)( (int16_t)((accDataBuffer[3] << 8) | (accDataBuffer[2]))));
+	zraw_f = ((float)( (int16_t)((accDataBuffer[5] << 8) | (accDataBuffer[4]))));
+
+	rotate_accel_3f(&xraw_f, &yraw_f, &zraw_f);
+
+	// mh
+	accel_report_x = xraw_f;
+	accel_report_y = yraw_f;
+	accel_report_z = zraw_f;
+
+	accel_DX_f = ((int16_t)(accel_report_x));
+	accel_DY_f = ((int16_t)(accel_report_y));
+	accel_DZ_f = ((int16_t)(accel_report_z));
+}
+
+
+//  ===============================================================================
+//	compass_read_LSM303AGR
+///
+/// output is compass_DX_f, compass_DY_f, compass_DZ_f
+//  ===============================================================================
+void compass_read_LSM303AGR(void)
+{
+  uint8_t data;
+//	float xraw_f, yraw_f, zraw_f;
+//	float mag_report_x, mag_report_y, mag_report_z;
+
+  memset(magDataBuffer,0,6);
+
+	compass_DX_f = 0;
+	compass_DY_f = 0;
+	compass_DZ_f = 0;
+
+	for(int i=0;i<6;i++)
+	{
+		data = 0x68 + i;	// OUTX_L_REG_M
+		I2C_Master_Transmit( DEVICE_COMPASS_303AGR, &data, 1);
+		I2C_Master_Receive(  DEVICE_COMPASS_303AGR, &magDataBuffer[i], 1);
+	}
+
+	// mh 160620 flip x and y if flip display
+	compass_DX_f = (((int16_t)((magDataBuffer[1] << 8) | (magDataBuffer[0]))));
+	compass_DY_f = (((int16_t)((magDataBuffer[3] << 8) | (magDataBuffer[2]))));
+	compass_DZ_f = (((int16_t)((magDataBuffer[5] << 8) | (magDataBuffer[4]))));
+	// no rotation
+	return;
 }
 
 
@@ -1340,34 +1164,6 @@ void compass_calc(void)
 }
 
 
-/*
-//  ===============================================================================
-//	compass_calc_mini_during_calibration
-/// @brief	all the fancy stuff first implemented in OSTC3
-///
-/// input is accel_DX_f, accel_DY_f, accel_DZ_f
-/// output is compass_pitch and compass_roll
-//  ===============================================================================
-void compass_calc_mini_during_calibration(void)
-{
-     float	sinPhi, cosPhi;
-		 float Phi, Teta;
-
-    //---- Calculate sine and cosine of roll angle Phi -----------------------
-    //sincos(accel_DZ_f, accel_DY_f, &sin, &cos);
-    Phi= atan2f(accel_DY_f, accel_DZ_f) ;
-		compass_roll = Phi * 180.0f /PI;
-		sinPhi = sinf(Phi);
-		cosPhi = cosf(Phi);
-		
-    //---- calculate sin and cosine of pitch angle Theta ---------------------
-    //sincos(Gz, -accel_DX_f, &sin, &cos);     // NOTE: changed sin sign.
-    Teta = atanf(-(float)accel_DX_f/(accel_DY_f * sinPhi + accel_DZ_f * cosPhi));
-		compass_pitch = Teta * 180.0f /PI;
-}
-*/
-
-
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // // - Calibration - ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1565,7 +1361,7 @@ int compass_calib_common(void)
 				acceleration_read();
 				compass_calc_roll_pitch_only();
 			
-				if((hardwareCompass == HMC5883L)
+				if((hardwareCompass == compass_generation1 )		//HMC5883L)
 				&&((compass_DX_f == -4096) ||
 					 (compass_DY_f == -4096) ||
 					 (compass_DZ_f == -4096) ))
@@ -1606,327 +1402,4 @@ int compass_calib_common(void)
 	
 		return 0;
 }
-
-// //////////////////////////// TEST CODE /////////////////////////////////////
-
-
-
-//#include <QtDebug>
-//#include <stdio.h>
-//#include <math.h>
-/*#include <stdlib.h>
-
-short compass_DX_f, compass_DY_f, compass_DZ_f;
-short compass_CX_f, compass_CY_f, compass_CZ_f;
-
-inline float uniform(void) {
-    return (rand() & 0xFFFF) / 65536.0f;
-}
-inline float sqr(float x) {
-    return x*x;
-}
-
-static const float radius = 0.21f;
-static const float cx = 0.79f, cy = -0.46f, cz = 0.24f;
-// const float cx = 0, cy = 0, cz = 0;
-
-float check_compass_calib(void)
-{
-
-    // Starts with no calibration at all:
-    compass_CX_f = compass_CY_f = compass_CZ_f = 0;
-
-    // Try 10 recalibration passes:
-    for(int p=0; p<10; ++p)
-    {
-        compass_reset_calibration();
-
-        //---- Generates random points on a sphere -------------------------------
-        // of radius,center (cx, cy, cz):
-        for(int i=0; i<100; ++i)
-        {
-            float theta = uniform()*360.0f;
-            float phi   = uniform()*180.0f - 90.0f;
-
-            float x = cx + radius * cosf(phi)*cosf(theta);
-            float y = cy + radius * cosf(phi)*sinf(theta);
-            float z = cz + radius * sinf(phi);
-
-            compass_DX_f = (short)(32768 * x);
-            compass_DY_f = (short)(32768 * y);
-            compass_DZ_f = (short)(32768 * z);
-            compass_add_calibration();
-        }
-
-        compass_solve_calibration();
-        //qDebug() << "Center ="
-//                 << compass_CX_f/32768.0f
-//                 << compass_CY_f/32768.0f
-//                 << compass_CZ_f/32768.0f;
-
-        float r2 = sqr(compass_CX_f/32768.0f - cx)
-                 + sqr(compass_CY_f/32768.0f - cy)
-                 + sqr(compass_CZ_f/32768.0f - cz);
-        if( r2 > 0.01f*0.01f )
-            return sqrtf(r2);
-    }
-		return 0;
-}*/
-
-
-
-/*
-void compass_read_LSM303D_v3(void)
-{
-  uint8_t data;
-	
-  memset(magDataBuffer,0,6);
-
-	compass_DX_f = 0;
-	compass_DY_f = 0;
-	compass_DZ_f = 0;
-	
-	//magnetometer multi read, order xl,xh, yl,yh, zl, zh
-	data = REG_MAG_DATA_ADDR;
-	I2C_Master_Transmit( DEVICE_COMPASS_303D, &data, 1);
-	I2C_Master_Receive(  DEVICE_COMPASS_303D, magDataBuffer, 6);
-
-	compass_DX_f = ((int16_t)( (int16_t)((magDataBuffer[1] << 8) | (magDataBuffer[0]))));
-	compass_DY_f = ((int16_t)( (int16_t)((magDataBuffer[3] << 8) | (magDataBuffer[2]))));
-	compass_DZ_f = ((int16_t)( (int16_t)((magDataBuffer[5] << 8) | (magDataBuffer[4]))));	
-
-//	compass_DX_f = compass_DX_f * stat->sensitivity_mag;
-//	compass_DY_f = compass_DY_f * stat->sensitivity_mag;
-//	compass_DZ_f = compass_DZ_f * stat->sensitivity_mag;
-}
-
-
-//  ===============================================================================
-//	compass_init_LSM303D by STMicroelectronics 2013 V1.0.5 2013/Oct/23
-/// @brief	The new ST 303D 
-///					This might be called several times with different gain values during calibration
-///
-/// @param 	gain: 7 is max gain and set with here, compass_calib() might reduce it
-//  ===============================================================================
-
-void compass_init_LSM303D_v3(uint8_t gain)
-{
-  uint8_t data[10];
-
-	// CNTRL1
-	// 0011 acceleration data rate 0011 = 12.5 Hz (3.125 Hz - 1600 Hz)
-	// 0xxx block data update off
-	// x111 enable all three axes 
-	
-	// CNTRL5
-	// 0xxx xxxx temp sensor off
-	// x00x xxxx magnetic resolution
-	// xxx0 1xxx magentic data rate 01 = 6,25 Hz (3.125 Hz - 50 Hz (100 Hz))
-	// xxxx xx00 latch irq requests off
-	
-	// CNTRL7
-	// 00xx high pass filter mode, 00 normal mode
-	// xx0x filter for acceleration data bypassed
-	// xxx0 temperature sensor mode only off
-	// x0xx magnetic data low-power mode off
-	// xx00 magnetic sensor mode 00 = continous-conversion mode (default 10 power-down)
-	
-	data[0] = CNTRL0;
-	data[1] = 0x00;
-	I2C_Master_Transmit( DEVICE_COMPASS_303D, data, 2);
-
-	// acc
-	data[0] = CNTRL1;
-	data[1] = 0x00;
-	data[2] = 0x0F;
-	data[3] = 0x00;
-	data[4] = 0x00;
-	I2C_Master_Transmit( DEVICE_COMPASS_303D, data, 5);
-
-	// mag
-	data[0] = CNTRL3;
-	data[1] = 0x00;
-	data[2] = 0x00;
-	data[3] = 0x18;
-	data[4] = 0x20;
-	I2C_Master_Transmit( DEVICE_COMPASS_303D, data, 5);
-	
-	data[0] = CNTRL7;
-	data[1] = ((MSMS_MASK & CONTINUOS_CONVERSION) |
-			((~MSMS_MASK) & CNTRL7_RESUME_VALUE));
-	I2C_Master_Transmit( DEVICE_COMPASS_303D, data, 2);
-	
-	HAL_Delay(100);
-}
-
-
-//  ===============================================================================
-//	compass_init_LSM303D by nordevx for arduion
-/// @brief	The new ST 303D 
-///					This might be called several times with different gain values during calibration
-///
-/// @param 	gain: 7 is max gain and set with here, compass_calib() might reduce it
-//  ===============================================================================
-void compass_init_LSM303D_v2(uint8_t gain)
-{
-  uint8_t data[2];
-
-	// CNTRL1
-	// 0011 acceleration data rate 0011 = 12.5 Hz (3.125 Hz - 1600 Hz)
-	// 0xxx block data update off
-	// x111 enable all three axes 
-	
-	// CNTRL5
-	// 0xxx xxxx temp sensor off
-	// x00x xxxx magnetic resolution
-	// xxx0 1xxx magentic data rate 01 = 6,25 Hz (3.125 Hz - 50 Hz (100 Hz))
-	// xxxx xx00 latch irq requests off
-	
-	// CNTRL7
-	// 00xx high pass filter mode, 00 normal mode
-	// xx0x filter for acceleration data bypassed
-	// xxx0 temperature sensor mode only off
-	// x0xx magnetic data low-power mode off
-	// xx00 magnetic sensor mode 00 = continous-conversion mode (default 10 power-down)
-	
-	data[0] = CNTRL1;
-	data[1] = 0x37; //0b 0011 0111 
-	I2C_Master_Transmit( DEVICE_COMPASS_303D, data, 2);
-	
-	data[0] = CNTRL5;
-	data[1] = 0x08; // 0b 0000 1000
-	I2C_Master_Transmit( DEVICE_COMPASS_303D, data, 2);
-	
-	data[0] = CNTRL7;
-	data[1] = 0x00; // 0b 0000 0000
-	I2C_Master_Transmit( DEVICE_COMPASS_303D, data, 2);
-	
-	HAL_Delay(100);
-}
-
-
-//  ===============================================================================
-//	compass_init_LSM303D_v1 by ST lsm303d.c
-/// @brief	The new ST 303D 
-///					This might be called several times with different gain values during calibration
-///
-/// @param 	gain: 7 is max gain and set with here, compass_calib() might reduce it
-//  ===============================================================================
-void compass_init_LSM303D_v1(uint8_t gain)
-{
-  uint8_t data;
-
-	compass_gain = gain;
-
-  memset(magDataBuffer,0,6);
-  memset(accDataBuffer,0,6);
-
-	data = CNTRL5;
-	I2C_Master_Transmit( DEVICE_COMPASS_303D, &data, 1);
-	I2C_Master_Receive(  DEVICE_COMPASS_303D, &data, 1);
-  data = (data & 0x1c) >> 2;  
-  velMag = magODR[data];  
-
-	data = CNTRL1;
-	I2C_Master_Transmit( DEVICE_COMPASS_303D, &data, 1);
-	I2C_Master_Receive(  DEVICE_COMPASS_303D, &data, 1);
-  data = (data & 0xf0) >> 4;  
-  velAcc = accODR[data];
-  
-	data = CNTRL7;
-	I2C_Master_Transmit( DEVICE_COMPASS_303D, &data,   1);
-	I2C_Master_Receive(  DEVICE_COMPASS_303D, &datas1, 1);
-  datas1 = (datas1 & 0x02);
-  
-  //if mag is not pd
-  //mag is bigger than gyro
-  if( (velMag < velAcc) || datas1 != 0 ) {
-	//acc is the biggest
-	fastest = ACC_IS_FASTEST;	
-  }	
-  else {		
-	//acc is the biggest		
-	fastest = MAG_IS_FASTEST;
-  }
-  
-  zoffFlag = 1;
-	
-  if( fastest == MAG_IS_FASTEST)
-	{	
-		data = STATUS_REG_M;
-		I2C_Master_Transmit( DEVICE_COMPASS_303D, &data, 1);
-		I2C_Master_Receive(  DEVICE_COMPASS_303D, &data, 1);
- 
-//    if(ValBit(data, ZYXMDA)) {
-      sendFlag = 1;      
-//    }
-    
-  }  
-  else if(fastest == ACC_IS_FASTEST)
-	{
-		data = STATUS_REG_A;
-		I2C_Master_Transmit( DEVICE_COMPASS_303D, &data, 1);
-		I2C_Master_Receive(  DEVICE_COMPASS_303D, &data, 1);
-//      if(ValBit(data, DATAREADY_BIT)) {
-        sendFlag = 1;
-//      }    
-  }  
-}
-
-//  ===============================================================================
-//	compass_read_LSM303D
-/// @brief	The new LSM303D :-)
-///
-/// output is compass_DX_f, compass_DY_f, compass_DZ_f, accel_DX_f, accel_DY_f, accel_DZ_f
-//  ===============================================================================
-void compass_read_LSM303D_v2(void)
-{
-	  uint8_t data;
-	
-  memset(magDataBuffer,0,6);
-  memset(accDataBuffer,0,6);
-
-	compass_DX_f = 0;
-	compass_DY_f = 0;
-	compass_DZ_f = 0;
-
-	accel_DX_f = 0;
-	accel_DY_f = 0;
-	accel_DZ_f = 0;
-	
-	//Accelerometer multi read, order xl,xh, yl,yh, zl, zh
-	data = REG_ACC_DATA_ADDR;
-	I2C_Master_Transmit( DEVICE_COMPASS_303D, &data, 1);
-	I2C_Master_Receive(  DEVICE_COMPASS_303D, accDataBuffer, 6);
-	
-	//magnetometer multi read, order xl,xh, yl,yh, zl, zh
-	data = OUT_X_L_M;
-	I2C_Master_Transmit( DEVICE_COMPASS_303D, &data, 1);
-	I2C_Master_Receive(  DEVICE_COMPASS_303D, magDataBuffer, 6);
-	
-	accel_DX_f = ((int16_t)( (int16_t)((accDataBuffer[1] << 8) | (accDataBuffer[0]))));
-	accel_DY_f = ((int16_t)( (int16_t)((accDataBuffer[3] << 8) | (accDataBuffer[2]))));
-	accel_DZ_f = ((int16_t)( (int16_t)((accDataBuffer[5] << 8) | (accDataBuffer[4]))));	
-
-//	accel_DX_f = accel_DX_f * stat->sensitivity_acc;
-//	accel_DY_f = accel_DY_f * stat->sensitivity_acc;
-//	accel_DZ_f = accel_DZ_f * stat->sensitivity_acc;
-
-
-	compass_DX_f  = magDataBuffer[1];
-	compass_DX_f *= 256;
-	compass_DX_f += magDataBuffer[0];
-
-	compass_DY_f  = magDataBuffer[3];
-	compass_DY_f *= 256;
-	compass_DY_f += magDataBuffer[2];
-
-	compass_DY_f  = magDataBuffer[5];
-	compass_DY_f *= 256;
-	compass_DY_f += magDataBuffer[4];
-
-}
-
-
-*/
 

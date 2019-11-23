@@ -27,7 +27,7 @@
 /* Exported constants --------------------------------------------------------*/
 
 #define WHO_AM_I						0x0F 		// device identification register - default value
-#define WHOIAM_VALUE				(0x49)	// Who Am I default value
+#define WHOIAM_VALUE_LSM303D	0x49	// Who Am I default value
 
 #define ADDR_OUT_TEMP_L			0x05
 #define ADDR_OUT_TEMP_H			0x06

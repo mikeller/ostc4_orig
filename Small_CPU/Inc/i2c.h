@@ -3,15 +3,25 @@
 #define I2C_H
 
 /* Pressure Sensor */
-#define DEVICE_PRESSURE_MS5803     			0xEE 	// gen 1 and gen 2 use 0xEE (MS5803)
-#define	DEVICE_PRESSURE_MS5837   			0xEC	// end-2019 hardware (gen 3) uses 0xEC (MS5837)
+#define DEVICE_PRESSURE_MS5803     		0xEE 	// gen 1 and gen 2 use 0xEE (MS5803)
+#define	DEVICE_PRESSURE_MS5837   		0xEC	// end-2019 hardware (gen 3) uses 0xEC (MS5837)
 
 /* Compass/Accelerometer */
+#define COMPASS_NOT_RECOGNIZED  		0xAA	///< id used with hardwareCompass
+#define	compass_generation1				0x01	// Hardware gen 1 (Two chip solution with MMA8452Q and HMC5883L)
+#define	compass_generation2				0x02	// Hardware gen 2 (Single chip solution LSM303D)
+#define	compass_generation3				0x03	// Hardware gen 3 (Single chip solution LSM303AGR)
+
 #define DEVICE_ACCELARATOR_MMA8452Q 	0x38	// Hardware gen 1 (Two chip solution with MMA8452Q and HMC5883L)
-#define DEVICE_COMPASS_HMC5883L			0x3C	// Hardware gen 1
+#define DEVICE_COMPASS_HMC5883L			0x3C	// Hardware gen 1 (Two chip solution with MMA8452Q and HMC5883L)
 
 #define DEVICE_COMPASS_303D				0x3C 	// Hardware gen 2 (Single chip solution LSM303D)
+
 #define	DEVICE_COMPASS_303AGR			0x3C	// Hardware gen 3 (Single chip solution LSM303AGR)
+#define	DEVICE_ACCELARATOR_303AGR		0x32	// Hardware gen 3 (Single chip solution LSM303AGR)
+
+// Compass 3 defines (Can move in separate .h file...)
+#define WHOIAM_VALUE_LSM303AGR			0x33
 
 /* Battery Gas Gauge */
 #define DEVICE_BATTERYGAUGE 			0xC8 	// LTC2941 battery gauge
