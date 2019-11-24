@@ -38,12 +38,12 @@
 #include "tMenu.h"
 #include "tMenuEdit.h"
 #include "tMenuSystem.h"
+#include "Motion.h"
 #include "t7.h"
 
-/* uncomment to activate debug view option */
-/*#define HAVE_DEBUG_VIEW */
 
-/* Private variables ---------------------------------------------------------*/
+#define CV_SUBPAGE_MAX		(2u)	/* max number of customer view selection pages */
+/*#define HAVE_DEBUG_VIEW */
 static uint8_t infoPage = 0;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -82,6 +82,7 @@ uint8_t OnAction_CViewStandard (uint32_t editId, uint8_t blockNumber, uint8_t di
 uint8_t OnAction_CornerTimeout (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_CornerStandard(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_ExtraDisplay	 (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+uint8_t OnAction_MotionCtrl	 (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 
 uint8_t OnAction_Exit					(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_Confirm			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
@@ -154,12 +155,38 @@ void openEdit_System(uint8_t line)
 
 void openEdit_CustomviewDivemode(uint8_t line)
 {
+	static uint8_t customviewsSubpage = 0;
 	SSettings *pSettings = settingsGetPointer();
 	extern _Bool WriteSettings;
+	char text[MAX_PAGE_TEXTSIZE];
+	uint16_t tabPosition;
+	uint32_t id;
 
-    pSettings->cv_configuration ^= 1 << (cv_changelist[line-1]);
-    WriteSettings = 1;
-    exitMenuEdit_to_Menu_with_Menu_Update();
+
+	if((line == 6) || (cv_changelist[customviewsSubpage * 5 + line-1] == CVIEW_END))		/* select next set of views */
+	{
+		customviewsSubpage++;
+		if(customviewsSubpage == CV_SUBPAGE_MAX)
+		{
+			customviewsSubpage = 0;
+		}
+		set_CustomsviewsSubpage(customviewsSubpage);
+		/* rebuild the selection page with the next set of customer views */
+		id = tMSystem_refresh(0, text, &tabPosition, NULL);
+		tM_build_page(id, text, tabPosition, NULL);
+		openMenu(0);
+	}
+	else
+	{
+		pSettings->cv_configuration ^= 1 << (cv_changelist[customviewsSubpage * 5 + line-1]);
+		if(t7_GetEnabled_customviews() == 0)
+		{
+			pSettings->cv_configuration ^= (1 << CVIEW_noneOrDebug);
+		}
+		WriteSettings = 1;
+		InitMotionDetection(); /* consider new view setup for view selection by motion */
+		exitMenuEdit_to_Menu_with_Menu_Update();
+	}
 }
 
 
@@ -744,6 +771,7 @@ void openEdit_Customview(void)
     write_field_button(StMSYS4_CornerStandard,		400, 700, ME_Y_LINE4,  &FontT48, "");
 
     write_field_button(StMSYS4_ExtraDisplay,		400, 700, ME_Y_LINE5,  &FontT48, "");
+    write_field_button(StMSYS4_MotionCtrl,			400, 700, ME_Y_LINE6,  &FontT48, "");
 
     setEvent(StMSYS4_CViewTimeout,		(uint32_t)OnAction_CViewTimeout);
     setEvent(StMSYS4_CViewStandard,		(uint32_t)OnAction_CViewStandard);
@@ -752,6 +780,7 @@ void openEdit_Customview(void)
     setEvent(StMSYS4_CornerStandard,	(uint32_t)OnAction_CornerStandard);
 
     setEvent(StMSYS4_ExtraDisplay,		(uint32_t)OnAction_ExtraDisplay);
+    setEvent(StMSYS4_MotionCtrl,		(uint32_t)OnAction_MotionCtrl);
 }
 
 
@@ -913,6 +942,34 @@ void refresh_Customviews(void)
     text[6] = 0;
     write_label_var(  30, 700, ME_Y_LINE5, &FontT48, text);
 
+
+    /* MotionCtrl */
+    text[0] = TXT_2BYTE;
+    text[1] = TXT2BYTE_MotionCtrl;
+    text[2] = ' ';
+    text[3] = ' ';
+    text[4] = TXT_2BYTE;
+    switch(settingsGetPointer()->MotionDetection)
+    {
+		case MOTION_DETECT_OFF:
+			text[5] = TXT2BYTE_MoCtrlNone;
+			break;
+		case MOTION_DETECT_MOVE:
+			text[5] = TXT2BYTE_MoCtrlPitch;
+			break;
+		case MOTION_DETECT_SECTOR:
+			text[5] = TXT2BYTE_MoCtrlSector;
+			break;
+		case MOTION_DETECT_SCROLL:
+			text[5] = TXT2BYTE_MoCtrlScroll;
+					break;
+		default:
+			snprintf(&text[4],2,"%u",settingsGetPointer()->MotionDetection);
+		break;
+    }
+    text[6] = 0;
+    write_label_var(  30, 700, ME_Y_LINE6, &FontT48, text);
+
     write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
 }
 
@@ -1050,6 +1107,32 @@ uint8_t OnAction_ExtraDisplay	 (uint32_t editId, uint8_t blockNumber, uint8_t di
     return UNSPECIFIC_RETURN;
 }
 
+
+uint8_t OnAction_MotionCtrl	 (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+{
+    uint8_t newValue;
+    switch(settingsGetPointer()->MotionDetection)
+    {
+    case MOTION_DETECT_OFF:
+        newValue = MOTION_DETECT_MOVE;
+        break;
+    case MOTION_DETECT_MOVE:
+        newValue = MOTION_DETECT_SECTOR;
+        break;
+    case MOTION_DETECT_SECTOR:
+        newValue = MOTION_DETECT_SCROLL;
+        break;
+    case MOTION_DETECT_SCROLL:
+    	newValue = MOTION_DETECT_OFF;
+    	break;
+    default:
+        newValue = MOTION_DETECT_OFF;
+        break;
+    }
+    settingsGetPointer()->MotionDetection = newValue;
+    InitMotionDetection();
+    return UNSPECIFIC_RETURN;
+}
 
 void openEdit_Information(void)
 {

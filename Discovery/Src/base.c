@@ -229,11 +229,13 @@
 #include "logbook_miniLive.h"
 #include "test_vpm.h"
 #include "tDebug.h"
+#include "motion.h"
 
 #ifdef DEMOMODE
 #include "demo.h"
 static void TIM_DEMO_init(void);
 #endif
+
 
 //#include "lodepng.h"
 //#include <stdlib.h> // for malloc and free
@@ -325,6 +327,14 @@ int fputc(int ch, FILE *f) {
 #define MEASURECNT 60	/* number of measuremets to be stored */
 static uint32_t loopcnt[MEASURECNT];
 #endif
+
+static uint8_t ButtonAction = ACTION_END;
+
+static void StoreButtonAction(uint8_t action)
+{
+	ButtonAction = action;
+}
+
 //  ===============================================================================
 //	main
 /// @brief	This function makes initializations and has the nonIRQ endless loop
@@ -341,6 +351,7 @@ int main(void)
     uint8_t lastsecond = 0xFF;
 #endif
 
+    detectionState_t pitchstate;
     set_globalState( StBoot0 );
     LastButtonPressed = 0;
 
@@ -446,6 +457,7 @@ int main(void)
         setDebugMode();
         openInfo( StIDEBUG );
     }
+    InitMotionDetection();
 
     TIM_init();		/* start cylic 100ms task */
 
@@ -475,6 +487,31 @@ int main(void)
         {
 	        DoDisplayRefresh = 0;
         	RefreshDisplay();
+
+        	if(stateUsed->mode == MODE_DIVE)			/* handle motion events in divemode only */
+        	{
+				switch(settingsGetPointer()->MotionDetection)
+				{
+					case MOTION_DETECT_MOVE: pitchstate = detectPitch(stateRealGetPointer()->lifeData.compass_pitch);
+						break;
+					case MOTION_DETECT_SECTOR: pitchstate = detectSectorButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
+						break;
+					case MOTION_DETECT_SCROLL: pitchstate = detectScrollButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
+						 break;
+					default:
+						pitchstate = DETECT_NOTHING;
+						break;
+				}
+				if(DETECT_NEG_PITCH == pitchstate)
+	           	{
+	            	StoreButtonAction((uint8_t)ACTION_PITCH_NEG);
+	           	}
+	            if(DETECT_POS_PITCH == pitchstate)
+	           	{
+	            	StoreButtonAction((uint8_t)ACTION_PITCH_POS);
+	           	}
+        	}
+
 
 // Enable this to make the simulator write a logbook entry
 // #define SIM_WRITES_LOGBOOK 1
@@ -509,6 +546,9 @@ int main(void)
 
     }
 }
+
+
+
 
 //  ===============================================================================
 //	timer IRQ
@@ -819,12 +859,7 @@ static void RefreshDisplay()
 		break;
 	}
 }
-static uint8_t ButtonAction = ACTION_END;
 
-static void StoreButtonAction(uint8_t action)
-{
-	ButtonAction = action;
-}
 
 static void TriggerButtonAction()
 {
@@ -860,7 +895,13 @@ static void TriggerButtonAction()
 					settingsGetPointer()->design = 7; // auto switch to 9 if necessary
 				} else if ((status.page == PageDive) && (status.line != 0)) {
 					if (settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT)
+					{
 						settingsGetPointer()->design = 3;
+						if(settingsGetPointer()->MotionDetection == MOTION_DETECT_SECTOR)
+						{
+							DefinePitchSectors(stateRealGetPointer()->lifeData.compass_pitch,CUSTOMER_DEFINED_VIEWS);
+						}
+					}
 					else if (settingsGetPointer()->extraDisplay
 							== EXTRADISPLAY_DECOGAME)
 						settingsGetPointer()->design = 4;
@@ -868,14 +909,22 @@ static void TriggerButtonAction()
 					set_globalState(StD);
 				} else
 					tHome_change_field_button_pressed();
-			} else if (action == ACTION_BUTTON_ENTER) {
-				if ((status.page == PageDive) && (status.line == 0))
-					tHome_change_customview_button_pressed();
-				else if (status.page == PageSurface)
-					tHome_change_customview_button_pressed();
-				else
-					tHomeDiveMenuControl(action);
-			}
+			} else if ((action == ACTION_BUTTON_ENTER) || (action == ACTION_PITCH_NEG) || (action == ACTION_PITCH_POS))
+					{
+
+						if ((status.page == PageDive) && (status.line == 0))
+						{
+							tHome_change_customview_button_pressed(action);
+							if((settingsGetPointer()->MotionDetection != MOTION_DETECT_OFF) && (action == ACTION_BUTTON_ENTER))  /* Button pressed while motion detection is active => calibrate to current pitch value */
+							{
+								DefinePitchSectors(stateRealGetPointer()->lifeData.compass_pitch,CUSTOMER_KEEP_LAST_SECTORS);
+							}
+						}
+						else if (status.page == PageSurface)
+							tHome_change_customview_button_pressed(action);
+						else
+							tHomeDiveMenuControl(action);
+					}
 			break;
 
 		case BaseMenu:

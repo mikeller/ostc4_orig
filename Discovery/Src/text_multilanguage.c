@@ -1269,6 +1269,37 @@ static uint8_t text_FR_ExtraNone[] = "non";
 static uint8_t text_IT_ExtraNone[] = "no";
 static uint8_t text_ES_ExtraNone[] = "ninguno";
 
+/* Menu SYS2 - Strings for Motion Control Selection */
+static uint8_t text_EN_MotionCtrl[] = "Motion Control";
+static uint8_t text_DE_MotionCtrl[] = "Bew. Steuerung";
+static uint8_t text_FR_MotionCtrl[] = "Motion Control";
+static uint8_t text_IT_MotionCtrl[] = "Motion Control";
+static uint8_t text_ES_MotionCtrl[] = "Motion Control";
+
+static uint8_t text_EN_MoCtrlNone[] = "Off";
+static uint8_t text_DE_MoCtrlNone[] = "Aus";
+static uint8_t text_FR_MoCtrlNone[] = "Off";
+static uint8_t text_IT_MoCtrlNone[] = "Off";
+static uint8_t text_ES_MoCtrlNone[] = "Off";
+
+static uint8_t text_EN_MoCtrlPitch[] = "Pitch move";
+static uint8_t text_DE_MoCtrlPitch[] = "Nickbewegung";
+static uint8_t text_FR_MoCtrlPitch[] = "Pitch move";
+static uint8_t text_IT_MoCtrlPitch[] = "Pitch move";
+static uint8_t text_ES_MoCtrlPitch[] = "Pitch move";
+
+static uint8_t text_EN_MoCtrlSector[] = "Sector";
+static uint8_t text_DE_MoCtrlSector[] = "Sektoren";
+static uint8_t text_FR_MoCtrlSector[] = "Sector";
+static uint8_t text_IT_MoCtrlSector[] = "Sector";
+static uint8_t text_ES_MoCtrlSector[] = "Sector";
+
+static uint8_t text_EN_MoCtrlScroll[] = "Scroll";
+static uint8_t text_DE_MoCtrlScroll[] = "Karussell";
+static uint8_t text_FR_MoCtrlScroll[] = "Scroll";
+static uint8_t text_IT_MoCtrlScroll[] = "Scroll";
+static uint8_t text_ES_MoCtrlScroll[] = "Scroll";
+
 // Menu SYS2 Reset RTE and Firmware Update During Bluetooth Connection
 static uint8_t text_EN_DecoDataLost[] = "Decompression data will be lost";
 static uint8_t text_DE_DecoDataLost[] = "Dekompressionsdaten verloren!";
@@ -1321,6 +1352,12 @@ static uint8_t text_DE_Summary[] = "Uebersicht"; // T42 hat keine großen Umlaut
 static uint8_t text_FR_Summary[] = "Exposé";
 static uint8_t text_IT_Summary[] = "Tutto schermo";
 static uint8_t text_ES_Summary[] = "Visión general";
+
+static uint8_t text_EN_DispNoneDbg[] = "Debug/None";
+static uint8_t text_DE_DispNoneDbg[] = "Debug/Leer";
+static uint8_t text_FR_DispNoneDbg[] = "Debug/None";
+static uint8_t text_IT_DispNoneDbg[] = "Debug/None";
+static uint8_t text_ES_DispNoneDbg[] = "Debug/None";
 
 static uint8_t text_EN_ApneaTotal[] = "total";
 static uint8_t text_DE_ApneaTotal[] = "gesamt";
@@ -1710,6 +1747,11 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_ExtraBigFont,	{text_EN_ExtraBigFont, text_DE_ExtraBigFont, text_FR_ExtraBigFont, text_IT_ExtraBigFont, text_ES_ExtraBigFont}},
     {(uint8_t)TXT2BYTE_ExtraDecoGame,	{text_EN_ExtraDecoGame, text_DE_ExtraDecoGame, text_FR_ExtraDecoGame, text_IT_ExtraDecoGame, text_ES_ExtraDecoGame}},
     {(uint8_t)TXT2BYTE_ExtraNone,		{text_EN_ExtraNone, text_DE_ExtraNone, text_FR_ExtraNone, text_IT_ExtraNone, text_ES_ExtraNone}},
+	{(uint8_t)TXT2BYTE_MotionCtrl,		{text_EN_MotionCtrl, text_DE_MotionCtrl, text_FR_MotionCtrl, text_IT_MotionCtrl, text_ES_MotionCtrl}},
+	{(uint8_t)TXT2BYTE_MoCtrlNone,		{text_EN_MoCtrlNone, text_DE_MoCtrlNone, text_FR_MoCtrlNone, text_IT_MoCtrlNone, text_ES_MoCtrlNone}},
+	{(uint8_t)TXT2BYTE_MoCtrlPitch,		{text_EN_MoCtrlPitch, text_DE_MoCtrlPitch, text_FR_MoCtrlPitch, text_IT_MoCtrlPitch, text_ES_MoCtrlPitch}},
+	{(uint8_t)TXT2BYTE_MoCtrlSector,	{text_EN_MoCtrlSector, text_DE_MoCtrlSector, text_FR_MoCtrlSector, text_IT_MoCtrlSector, text_ES_MoCtrlSector}},
+	{(uint8_t)TXT2BYTE_MoCtrlScroll,	{text_EN_MoCtrlScroll, text_DE_MoCtrlScroll, text_FR_MoCtrlScroll, text_IT_MoCtrlScroll, text_ES_MoCtrlScroll}},
     {(uint8_t)TXT2BYTE_DecoDataLost,	{text_EN_DecoDataLost, text_DE_DecoDataLost, text_FR_DecoDataLost, text_IT_DecoDataLost, text_ES_DecoDataLost}},
     {(uint8_t)TXT2BYTE_Info,			{text_EN_Info, text_DE_Info, text_FR_Info, text_IT_Info, text_ES_Info}},
     {(uint8_t)TXT2BYTE_Korrekturwerte,  {text_EN_Korrekturwerte, text_DE_Korrekturwerte, text_FR_Korrekturwerte, text_IT_Korrekturwerte, text_ES_Korrekturwerte}},
@@ -1725,6 +1767,7 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_ButtonMitte,		{text_EN_ButtonMitte, text_DE_ButtonMitte, text_FR_ButtonMitte, text_IT_ButtonMitte, text_ES_ButtonMitte}},
     {(uint8_t)TXT2BYTE_ButtonRight,		{text_EN_ButtonRight, text_DE_ButtonRight, text_FR_ButtonRight, text_IT_ButtonRight, text_ES_ButtonRight}},
     {(uint8_t)TXT2BYTE_Summary,			{text_EN_Summary, text_DE_Summary, text_FR_Summary, text_IT_Summary, text_ES_Summary}},
+	{(uint8_t)TXT2BYTE_DispNoneDbg,     {text_EN_DispNoneDbg, text_DE_DispNoneDbg, text_FR_DispNoneDbg, text_IT_DispNoneDbg, text_ES_DispNoneDbg}},
     {(uint8_t)TXT2BYTE_ApneaLast,		{text_EN_ApneaLast, text_DE_ApneaLast, text_FR_ApneaLast, text_IT_ApneaLast, text_ES_ApneaLast}},
     {(uint8_t)TXT2BYTE_ApneaTotal,		{text_EN_ApneaTotal, text_DE_ApneaTotal, text_FR_ApneaTotal, text_IT_ApneaTotal, text_ES_ApneaTotal}},
     {(uint8_t)TXT2BYTE_ApneaSurface,	{text_EN_ApneaSurface, text_DE_ApneaSurface, text_FR_ApneaSurface, text_IT_ApneaSurface, text_ES_ApneaSurface}},
