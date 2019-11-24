@@ -83,7 +83,7 @@ enum CUSTOMVIEWS
 };
 
 // for custom view switch on/off 161122 hw
-extern const uint8_t cv_changelist[6];
+extern const uint8_t cv_changelist[];
 #define CHECK_BIT_THOME(var,pos) (((var)>>(pos)) & 1)
 
 typedef struct
@@ -116,7 +116,7 @@ void tHome_refresh(void);
 void tHome_sleepmode_fun(void);
 void set_globalState_tHome(void);
 void tHome_change_field_button_pressed(void);
-void tHome_change_customview_button_pressed(void);
+void tHome_change_customview_button_pressed(uint8_t action);
 
 void tHome_findNextStop(const uint16_t *list, uint8_t *depthOut, uint16_t *lengthOut);
 void tHomeDiveMenuControl(uint8_t sendAction);
@@ -134,7 +134,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
 void t3_basics_refresh_apnoeRight(float depth, uint8_t tX_selection_customview, GFX_DrawCfgScreen *tXscreen, GFX_DrawCfgWindow* tXc1, GFX_DrawCfgWindow* tXc2, uint8_t mode);
 //void _findNextStop(const uint16_t *list, uint8_t *depthOut, uint16_t *lengthOut);
 void t3_basics_colorscheme_mod(char *text);
-void t3_basics_change_customview(uint8_t *tX_selection_customview, const uint8_t *tX_customviews);
+void t3_basics_change_customview(uint8_t *tX_selection_customview, const uint8_t *tX_customviews, uint8_t action);
 
 uint8_t tHome_show_lost_connection_count(GFX_DrawCfgScreen *ScreenToWriteOn);
 

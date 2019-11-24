@@ -35,6 +35,6 @@
 /* Exported functions --------------------------------------------------------*/
 void t6_init(void);
 void t6_refresh(void);
-void t6_change_customview(void);
+void t6_change_customview(uint8_t action);
 
 #endif /* T6_H */

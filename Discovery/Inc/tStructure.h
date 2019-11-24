@@ -283,8 +283,9 @@
 #define StMSYS4_CViewTimeout		_MB(2,8,4,1,0)
 #define StMSYS4_CViewStandard		_MB(2,8,4,2,0)
 #define StMSYS4_CornerTimeout		_MB(2,8,4,3,0)
-#define StMSYS4_CornerStandard	_MB(2,8,4,4,0)
+#define StMSYS4_CornerStandard		_MB(2,8,4,4,0)
 #define StMSYS4_ExtraDisplay		_MB(2,8,4,5,0)
+#define StMSYS4_MotionCtrl			_MB(2,8,4,6,0)
 
 #define StMSYS5_Info		_MB(2,8,5,1,0)
 

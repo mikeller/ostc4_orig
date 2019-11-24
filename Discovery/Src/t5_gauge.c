@@ -285,16 +285,16 @@ void t5_refresh_divemode(void)
 }
 
 
-void t5_change_customview(void)
+void t5_change_customview(uint8_t action)
 {
-    t3_basics_change_customview(&t5_selection_customview, t5_customviews);
+    t3_basics_change_customview(&t5_selection_customview, t5_customviews, action);
 }
 
 
 void t5_refresh_customview(float depth)
 {
-    if((t5_selection_customview == CVIEW_sensors) &&(stateUsed->diveSettings.ccrOption == 0))
-        t5_change_customview();
+ //   if((t5_selection_customview == CVIEW_sensors) &&(stateUsed->diveSettings.ccrOption == 0))
+ //       t5_change_customview();
 
     t3_basics_refresh_customview(depth, t5_selection_customview, &t5screen, &t5c1, &t5c2, DIVEMODE_Gauge);
 }

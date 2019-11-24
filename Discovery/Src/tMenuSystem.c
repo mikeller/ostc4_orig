@@ -31,14 +31,22 @@
 #include "tMenuSystem.h"
 #include "tHome.h"  // for enum CUSTOMVIEWS and init_t7_compass()
 
+static uint8_t customviewsSubpage = 0;
+
 /* Private function prototypes -----------------------------------------------*/
 char customview_TXT2BYTE_helper(uint8_t customViewId);
+
+void set_CustomsviewsSubpage(uint8_t page)
+{
+	customviewsSubpage = page;
+}
 
 /* Exported functions --------------------------------------------------------*/
 
 uint32_t tMSystem_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext)
 {
     SSettings *data;
+    int i;
     uint8_t textPointer;
     uint8_t dateFormat;
     uint8_t RTEhigh, RTElow;
@@ -56,17 +64,32 @@ uint32_t tMSystem_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext
     {
         uint8_t id;
 
-        for(int i=0; i<6;i++)
+        for(i=0; i<5;i++)		/* fill maximum 5 items and leave last one for sub page selection */
         {
-            id = cv_changelist[i];
-            text[textPointer++] = '\006' - CHECK_BIT_THOME(data->cv_configuration,id);
-            text[textPointer++] = ' ';
-            textPointer += snprintf(&text[textPointer], 60,
-                "%c%c\n\r",
-                TXT_2BYTE, customview_TXT2BYTE_helper(id)
-            );
+        	id = cv_changelist[customviewsSubpage * 5 + i];
+        	if(id == CVIEW_END)		/* last list item? */
+        	{
+        		break;
+        	}
+        	else
+        	{
+				text[textPointer++] = '\006' - CHECK_BIT_THOME(data->cv_configuration,id);
+				text[textPointer++] = ' ';
+				textPointer += snprintf(&text[textPointer], 60,
+					"%c%c\n\r",
+					TXT_2BYTE, customview_TXT2BYTE_helper(id));
+        	}
         }
+        text[textPointer++] = TXT_2BYTE;
+        text[textPointer++] = TXT2BYTE_ButtonNext;
         text[textPointer] = 0;
+
+        for(;i<5;i++)	/* clear empty lines in case menu shows less than 5 entries */
+        {
+        	text[textPointer++]='\n';
+        	text[textPointer++]='\r';
+        	text[textPointer] = 0;
+        }
 
         return StMSYS;
     }
@@ -300,6 +323,7 @@ char customview_TXT2BYTE_helper(uint8_t customViewId)
         text = TXT2BYTE_Summary;
         break;
     case CVIEW_noneOrDebug:
+    	text = TXT2BYTE_DispNoneDbg;
         break;
     default:
         break;
