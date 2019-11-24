@@ -39,9 +39,6 @@
 
 #include "stm32f4xx_hal.h"
 
-#define	TEST_IF_HMC5883L
-//#define COMPASS_DEACTIVATE
-
 /// split byte to bits
 typedef struct{ 
 uint8_t bit0:1; ///< split byte to bits
@@ -233,14 +230,8 @@ void rotate_accel_3f(float *x, float *y, float *z);
 /// @param 	gain: 7 is max gain, compass_calib() might reduce it
 //  ===============================================================================
 
-uint8_t testCompassTypeDebug = 0xFF;
-
 void compass_init(uint8_t fast, uint8_t gain)
 {
-// quick off
-#ifdef COMPASS_DEACTIVATE
-	hardwareCompass = COMPASS_NOT_RECOGNIZED;
-#endif
 
 // don't call again with fast, gain in calib mode etc.
 // if unknown
@@ -257,8 +248,9 @@ void compass_init(uint8_t fast, uint8_t gain)
 		I2C_Master_Receive(  DEVICE_COMPASS_303D, &data, 1);
 		if(data == WHOIAM_VALUE_LSM303D)
 			hardwareCompass = compass_generation2;			//LSM303D;
-		else
-			hardwareCompass = compass_generation1;			//HMC5883L
+		data = WHO_AM_I;
+		I2C_Master_Transmit( DEVICE_ACCELARATOR_303AGR, &data, 1);
+		I2C_Master_Receive(  DEVICE_ACCELARATOR_303AGR, &data, 1);
 		if(data == WHOIAM_VALUE_LSM303AGR)
 			hardwareCompass = compass_generation3;			//LSM303AGR;
 	}
@@ -271,8 +263,9 @@ void compass_init(uint8_t fast, uint8_t gain)
 		I2C_Master_Receive(  DEVICE_COMPASS_303D, &data, 1);
 		if(data == WHOIAM_VALUE_LSM303D)
 			hardwareCompass = compass_generation2;			//LSM303D;
-		else
-			hardwareCompass = compass_generation1;			//HMC5883L;
+		data = WHO_AM_I;
+		I2C_Master_Transmit( DEVICE_ACCELARATOR_303AGR, &data, 1);
+		I2C_Master_Receive(  DEVICE_ACCELARATOR_303AGR, &data, 1);
 		if(data == WHOIAM_VALUE_LSM303AGR)
 			hardwareCompass = compass_generation3;			//LSM303AGR;
 	}
@@ -281,11 +274,13 @@ void compass_init(uint8_t fast, uint8_t gain)
 	if(hardwareCompass == 0)
 		hardwareCompass = compass_generation1;				//HMC5883L;
 	
-#ifdef TEST_IF_HMC5883L
 	HAL_StatusTypeDef resultOfOperationHMC_MMA = HAL_TIMEOUT;
 
+	// test if both chips of the two-chip solution (gen 1) are present
 	if(hardwareCompass == compass_generation1)			// HMC5883L)
 	{
+		HAL_Delay(10);
+		MX_I2C1_Init();
 		uint8_t data = 0x2A; // CTRL_REG1 of DEVICE_ACCELARATOR_MMA8452Q
 		resultOfOperationHMC_MMA = I2C_Master_Transmit( DEVICE_ACCELARATOR_MMA8452Q, &data, 1);
 		if(resultOfOperationHMC_MMA == HAL_OK)
@@ -295,10 +290,8 @@ void compass_init(uint8_t fast, uint8_t gain)
 		else
 		{
 			hardwareCompass = COMPASS_NOT_RECOGNIZED;
-			testCompassTypeDebug = 0xEC;
 		}
 	}
-#endif
 	
 	if(hardwareCompass == compass_generation2)			//LSM303D)
 		compass_init_LSM303D(fast, gain);
@@ -751,22 +744,34 @@ void compass_init_LSM303AGR(uint8_t fast, uint8_t gain)
 {
 	if(fast == 0)
 	{
+		// init compass
 		LSM303AGR_write_checked_reg(0x60, 0x80); // 10Hz
 		LSM303AGR_write_checked_reg(0x61, 0x03); // CFG_REG_B_M
 		LSM303AGR_write_checked_reg(0x62, 0x10); // CFG_REG_C_M
+		LSM303AGR_write_checked_reg(0x63, 0x00); // INT_CTRL_REG_M
+
+		// init accel (Same chip, but different address...)
+		LSM303AGR_acc_write_checked_reg(0x1F, 0x00); // TEMP_CFG_REG_A (Temp sensor off)
+		LSM303AGR_acc_write_checked_reg(0x20, 0x4F); // CTRL_REG1_A (50Hz, x,y,z = ON)
+		LSM303AGR_acc_write_checked_reg(0x21, 0x00); // CTRL_REG2_A
+		LSM303AGR_acc_write_checked_reg(0x22, 0x00); // CTRL_REG3_A
+		LSM303AGR_acc_write_checked_reg(0x23, 0x08); // CTRL_REG4_A, High Resolution Mode enabled
 	}
 	else
 	{
-		LSM303AGR_write_checked_reg(0x60, 0x80); // 10Hz
+		// init compass
+		LSM303AGR_write_checked_reg(0x60, 0x84); // 20Hz
 		LSM303AGR_write_checked_reg(0x61, 0x03); // CFG_REG_B_M
 		LSM303AGR_write_checked_reg(0x62, 0x10); // CFG_REG_C_M
+		LSM303AGR_write_checked_reg(0x63, 0x00); // INT_CTRL_REG_M
+
+		// init accel (Same chip, but different address...)
+		LSM303AGR_acc_write_checked_reg(0x1F, 0x00); // TEMP_CFG_REG_A (Temp sensor off)
+		LSM303AGR_acc_write_checked_reg(0x20, 0x4F); // CTRL_REG1_A (50Hz, x,y,z = ON)
+		LSM303AGR_acc_write_checked_reg(0x21, 0x00); // CTRL_REG2_A
+		LSM303AGR_acc_write_checked_reg(0x22, 0x00); // CTRL_REG3_A
+		LSM303AGR_acc_write_checked_reg(0x23, 0x0); // CTRL_REG4_A, High Resolution Mode enabled
 	}
-	// init accel (Same chip, but different address...)
-	LSM303AGR_acc_write_checked_reg(0x1F, 0x00); // TEMP_CFG_REG_A (Temp sensor off)
-	LSM303AGR_acc_write_checked_reg(0x20, 0x4F); // CTRL_REG1_A (10Hz, x,y,z = ON)
-	LSM303AGR_acc_write_checked_reg(0x21, 0x00); // CTRL_REG2_A
-	LSM303AGR_acc_write_checked_reg(0x22, 0x00); // CTRL_REG3_A
-	LSM303AGR_acc_write_checked_reg(0x23, 0x04); // CTRL_REG4_A
 
 	return;
 }
@@ -807,7 +812,7 @@ void acceleration_read_LSM303AGR(void)
 
 	for(int i=0;i<6;i++)
 	{
-		data = ADDR_OUT_X_L_A + i;				// ADDR_OUT_X_L_A is the same as in the LSM303D (luckily)
+		data = 0x28 + i;			// OUT_X_L_A
 		I2C_Master_Transmit( DEVICE_ACCELARATOR_303AGR, &data, 1);
 		I2C_Master_Receive(  DEVICE_ACCELARATOR_303AGR, &accDataBuffer[i], 1);
 	}
@@ -821,7 +826,7 @@ void acceleration_read_LSM303AGR(void)
 	// mh
 	accel_report_x = xraw_f;
 	accel_report_y = yraw_f;
-	accel_report_z = zraw_f;
+	accel_report_z = -zraw_f;		// flip Z in gen 2 hardware
 
 	accel_DX_f = ((int16_t)(accel_report_x));
 	accel_DY_f = ((int16_t)(accel_report_y));
@@ -857,7 +862,10 @@ void compass_read_LSM303AGR(void)
 	compass_DX_f = (((int16_t)((magDataBuffer[1] << 8) | (magDataBuffer[0]))));
 	compass_DY_f = (((int16_t)((magDataBuffer[3] << 8) | (magDataBuffer[2]))));
 	compass_DZ_f = (((int16_t)((magDataBuffer[5] << 8) | (magDataBuffer[4]))));
-	// no rotation
+
+	// align axis in gen 2 hardware
+	compass_DZ_f *= -1;
+
 	return;
 }
 
