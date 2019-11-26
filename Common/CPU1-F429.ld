@@ -98,6 +98,7 @@ _Min_Stack_Size = 0x08000; 	/* required 32K of stack */
 SECTIONS
 {
   /******************* NVIC reset and interupt vectors **********************/
+ 
   .isr_vector 0x08040000 :
   {
   . = ALIGN(4);
@@ -106,30 +107,12 @@ SECTIONS
   } >ROM
 
 
- /*	PROVIDE( firmware_FirmwareData = . );*/
- .firmware_FirmwareData 0x08050000 : {
- 	KEEP( *(.firmware_firmware_data) )
-  } >ROM
-  
-  .font_firmware_data 0x08132000 : {
-  	KEEP( *(.font_firmware_data) ) 
-  	  
-  } >UPPER
-  
-  .text 0x08054000 :
+ .StdLibs 0x08040200:
   {
-    . = ALIGN(4);
-    *(.text)           /* .text sections (code) */
-    *(.text*)          /* .text* sections (code) */
-    *(.glue_7)         /* glue arm to thumb code */
-    *(.glue_7t)        /* glue thumb to arm code */
-    *(.eh_frame)
-    . = ALIGN(4);
-    _etext = .;        /* define a global symbols at end of code */
+  . = ALIGN(4);
+     *libm.a:*(*)
   } >ROM
- 
 
-  /********************** Constant data into ROM memory *********************/
   .rodata :
   {
     . = ALIGN(4);
@@ -137,6 +120,9 @@ SECTIONS
     *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
     . = ALIGN(4);
   } >ROM
+
+ /********************** Constant data into ROM memory *********************/
+
 
   .ARM.extab   : { 
   	. = ALIGN(4);
@@ -183,6 +169,31 @@ SECTIONS
   
     /************* The program code and other data into ROM memory ************/
 
+
+ .firmware_FirmwareData 0x08050000 : {
+ 	KEEP( *(.firmware_firmware_data) )
+  } >ROM
+  
+  .font_firmware_data 0x08132000 : {
+  	KEEP( *(.font_firmware_data) ) 
+  	  
+  } >UPPER
+  
+  
+  .text 0x08054000 :
+  {
+    . = ALIGN(4);
+    *(.text)           /* .text sections (code) */
+    *(.text*)          /* .text* sections (code) */
+    *(.glue_7)         /* glue arm to thumb code */
+    *(.glue_7t)        /* glue thumb to arm code */
+    *(.eh_frame)
+    . = ALIGN(4);
+    _etext = .;        /* define a global symbols at end of code */
+  } >ROM
+ 
+
+ 
 
   
   
