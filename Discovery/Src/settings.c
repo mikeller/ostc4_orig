@@ -32,7 +32,7 @@
 #include "externLogbookFlash.h" // for SAMPLESTART and SAMPLESTOP
 #include "text_multilanguage.h" // for LANGUAGE_END
 #include "tHome.h" // for CVIEW_END
-#include "Motion.h"
+#include "motion.h"
 
 SSettings Settings;
 

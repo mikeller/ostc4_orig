@@ -38,7 +38,7 @@
 #include "tMenu.h"
 #include "tMenuEdit.h"
 #include "tMenuSystem.h"
-#include "Motion.h"
+#include "motion.h"
 #include "t7.h"
 
 
