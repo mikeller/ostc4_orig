@@ -534,7 +534,7 @@ uint8_t openComm(uint8_t aRxByte)
 
     while((answer == prompt4D4C(receiveStartByteUart)) && (timeoutCounter < UART_TIMEOUT_SECONDS)) 	/* try receive once a second */
     {
-    	if(HAL_UART_Receive(&UartHandle, (uint8_t*)&aRxByte, 1, 1000)!= HAL_OK) 							
+    	if(HAL_UART_Receive(&UartHandle, (uint8_t*)&localRx, 1, 1000)!= HAL_OK) 							
     	{
     		timeoutCounter++;
     		get_globalStateList(&status);
@@ -591,8 +591,11 @@ uint8_t select_mode(uint8_t type)
     count = 0;
 
     // Ignore communication on Text like RING, CONNECT,
-    if(type < 0x60)  return prompt4D4C(receiveStartByteUart);
-
+    if(type == 0xFF) return 0;
+    if(type < 0x60)
+   	{
+    	return prompt4D4C(receiveStartByteUart);
+   	}
     // service mode only commands
     if(receiveStartByteUart == BYTE_SERVICE_MODE)
     {
@@ -632,8 +635,6 @@ uint8_t select_mode(uint8_t type)
         logCopyDataLength.u32bit = 0;
         totalDiveCount.u16bit = 0;
 #endif
-		// Exit communication on 0xFF command
-        if(type == 0xFF) return 0;
 
         // return of command for (almost) all commands
         switch(type)
