@@ -590,12 +590,6 @@ uint8_t select_mode(uint8_t type)
     uint8_t tempHigh, tempLow;
     count = 0;
 
-    // Ignore communication on Text like RING, CONNECT,
-    if(type == 0xFF) return 0;
-    if(type < 0x60)
-   	{
-    	return prompt4D4C(receiveStartByteUart);
-   	}
     // service mode only commands
     if(receiveStartByteUart == BYTE_SERVICE_MODE)
     {
@@ -635,6 +629,10 @@ uint8_t select_mode(uint8_t type)
         logCopyDataLength.u32bit = 0;
         totalDiveCount.u16bit = 0;
 #endif
+
+        // Exit communication on Text like RING, CONNECT, ... or 0xFF command
+        if((type < 0x60) || (type == 0xFF))
+            return 0;
 
         // return of command for (almost) all commands
         switch(type)
