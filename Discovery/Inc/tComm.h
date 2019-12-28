@@ -41,8 +41,8 @@ typedef enum
 		BM_CONFIG_SIGNAL_POLL,
 		BM_CONFIG_BAUD,
 		BM_CONFIG_SILENCE,
-//		BM_CONFIG_DISABLE_EVENT,
-		BM_CONFIG_DONE
+		BM_CONFIG_DONE,
+		BM_CONFIG_RETRY
 } BlueModTmpConfig_t;
 
 /* Exported functions --------------------------------------------------------*/

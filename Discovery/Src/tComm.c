@@ -107,7 +107,9 @@ uint8_t updateSettingsAndMenuOnExit = 0;
 #define BYTE_SERVICE_MODE			(0xAA)
 
 #define UART_TIMEOUT_SECONDS		(120u)		/* Timeout for keeping connection open and waiting for data */
-#define UART_TIMEOUT_LARGE_BLOCK 	(6000u)		/* Timeout (ms) for receiption of an 16K data block (typical RX time ~4,5seconds) */
+#define UART_TIMEOUT_LARGE_BLOCK 	(6000u)		/* Timeout (ms) for reception of an 16K data block (typical RX time ~4,5seconds) */
+
+#define UART_CMD_BUF_SIZE			(20u)		/* size of buffer for command exchange */
 
 const uint8_t id_Region1_firmware = 0xFF;
 const uint8_t id_RTE = 0xFE;
@@ -1917,13 +1919,13 @@ void tComm_RequestBluetoothStrength(void)
 uint8_t tComm_CheckAnswerOK()
 {
     char answerOkay[] = "\r\nOK\r\n";
-    char aRxBuffer[20];
+    char aRxBuffer[UART_CMD_BUF_SIZE];
     uint8_t sizeAnswer = sizeof(answerOkay) -1;
 	uint8_t result = HAL_OK;
 	uint8_t index = 0;
 	uint8_t answer;
 
-	memset(aRxBuffer,0,20);
+	memset(aRxBuffer,0,UART_CMD_BUF_SIZE);
 	if(HAL_UART_Receive(&UartHandle, (uint8_t*)aRxBuffer, sizeAnswer, 1000) == HAL_OK)
 	{
 		do
@@ -1935,7 +1937,10 @@ uint8_t tComm_CheckAnswerOK()
 				do
 				{
 					answer = HAL_UART_Receive(&UartHandle, (uint8_t*)&aRxBuffer[index], 1, 10);
-					if (index < 20) index++;
+					if (index < UART_CMD_BUF_SIZE) 
+					{
+						index++;
+					}
 				}while(answer == HAL_OK);
 				index = sizeAnswer;
 			}
@@ -1952,7 +1957,7 @@ uint8_t tComm_CheckAnswerOK()
 	return result;
 
 }
-char SignalStr[20];
+
 
 void tComm_EvaluateBluetoothStrength(void)
 {
@@ -1962,8 +1967,8 @@ void tComm_EvaluateBluetoothStrength(void)
     uint8_t sizeRequest = sizeof(aTxBufferBarSSI) -1;
 
     uint8_t answer = HAL_OK;
-    char aRxBuffer[20];
-
+    char aRxBuffer[UART_CMD_BUF_SIZE];
+	char SignalStr[UART_CMD_BUF_SIZE];
     uint8_t index = 0;
     uint8_t strindex = 0;
     int8_t sigqual = 0;
@@ -1979,7 +1984,10 @@ void tComm_EvaluateBluetoothStrength(void)
 				do						/* Answer is not the common one. Instead the signal strength is received => read all available bytes one by one*/
 				{
 					answer = HAL_UART_Receive(&UartHandle, (uint8_t*)&aRxBuffer[index], 1, 100);
-					if(index < 20-1) index++;
+					if(index < UART_CMD_BUF_SIZE) 
+					{
+						index++;
+					}
 				}while(answer == HAL_OK);
 
 				if((aRxBuffer[index] != 'E') && (aRxBuffer[index] != 0))		/* E represents the first letter of the string ERROR */
@@ -1989,20 +1997,13 @@ void tComm_EvaluateBluetoothStrength(void)
 					do
 					{
 						SignalStr[strindex++] = aRxBuffer[index++];
-					}while ((index < 20) && (aRxBuffer[index] != '\r'));
+					}while ((index < UART_CMD_BUF_SIZE - 1) && (aRxBuffer[index] != '\r'));
 					SignalStr[strindex] = 0;	/* terminate String */
 					sigqual = strtol(SignalStr,NULL,0);
-#if 0
-					if(sigqual & 0x80)   /* high bit set? */
-					{
-						sigqual = ~sigqual;		/* calc complement of 2 */
-						sigqual++;
-					}
-#endif
 					/* Map db to abstract Bargraph */
 					if(sigqual > 0)
 					{
-						sprintf(SignalStr,"Bluetooth ||||||||||");
+						sprintf(SignalStr,"Bluetooth ||||||||");
 					}
 					else
 					{
@@ -2027,7 +2028,10 @@ void tComm_EvaluateBluetoothStrength(void)
 			do	/* module will answer with current connection state */
 			{
 				answer = HAL_UART_Receive(&UartHandle, (uint8_t*)&aRxBuffer[index], 1, 100);
-				if(index < 20-1) index++;
+				if(index < UART_CMD_BUF_SIZE)
+				{
+					index++;
+				}
 			}while(answer == HAL_OK);
 		}
     }
@@ -2036,25 +2040,28 @@ void tComm_EvaluateBluetoothStrength(void)
 void tComm_StartBlueModConfig()
 {
 	uint8_t answer = HAL_OK;
-	uint8_t RxBuffer[20];
+	uint8_t RxBuffer[UART_CMD_BUF_SIZE];
 	uint8_t index = 0;
 
 	BmTmpConfig = BM_CONFIG_ECHO;
 	do	/* flush RX buffer */
 	{
 		answer = HAL_UART_Receive(&UartHandle, (uint8_t*)&RxBuffer[index], 1, 10);
-		if(index < 20-1) index++;
+		if(index < UART_CMD_BUF_SIZE) index++;
 	}while(answer == HAL_OK);
 }
 
 uint8_t tComm_HandleBlueModConfig()
 {
-	static uint8_t ConfigRetryCnt = 0;
+	static uint8_t RestartModule = 1; 		/* used to do power off / on cycle */
+	static uint8_t ConfigRetryCnt = 0;		/* Retry count without power cycle */
 
-	char TxBuffer[20];
+	char TxBuffer[UART_CMD_BUF_SIZE];
 	uint8_t CmdSize = 0;
 
 	uint8_t result = HAL_OK;
+
+	TxBuffer[0] = 0;
 
 	switch (BmTmpConfig)
 	{
@@ -2068,16 +2075,23 @@ uint8_t tComm_HandleBlueModConfig()
 			break;
 		case BM_CONFIG_BAUD:			sprintf(TxBuffer,"AT%%B22\r");
 			break;
-//		case BM_CONFIG_DISABLE_EVENT: 	sprintf(TxBuffer,"AT+LECPEVENT=0\r");
-//			break;
+		case BM_CONFIG_RETRY:			ConfigRetryCnt--;
+										HAL_Delay(1);
+										if(ConfigRetryCnt == 0)
+										{
+											MX_Bluetooth_PowerOn();
+											tComm_StartBlueModConfig();
+										}
+			break;
 		case BM_CONFIG_DONE:
 		case BM_CONFIG_OFF:
 			ConfigRetryCnt = 0;
+			RestartModule = 1;
 			break;
 		default:
 			break;
 	}
-	if((BmTmpConfig != BM_CONFIG_OFF) && (BmTmpConfig != BM_CONFIG_DONE))
+	if(TxBuffer[0] != 0)		/* forward command to module */
 	{
 		CmdSize = strlen(TxBuffer);
 		if(HAL_UART_Transmit(&UartHandle, (uint8_t*)TxBuffer,CmdSize, 2000) == HAL_OK)
@@ -2112,10 +2126,19 @@ uint8_t tComm_HandleBlueModConfig()
 		ConfigRetryCnt++;
 		if(ConfigRetryCnt > 3)		/* Configuration failed => switch off module */
 		{
-			ConfigRetryCnt = 0;
-			BmTmpConfig = BM_CONFIG_OFF;
-			settingsGetPointer()->bluetoothActive = 0;
 			MX_Bluetooth_PowerOff();
+			if(RestartModule)
+			{
+				RestartModule = 0;      /* only one try */
+				ConfigRetryCnt = 200;	/* used for delay to startup module again */
+				BmTmpConfig = BM_CONFIG_RETRY;
+			}
+			else						/* even restarting module failed => switch bluetooth off */
+			{
+				ConfigRetryCnt = 0;
+				BmTmpConfig = BM_CONFIG_OFF;
+				settingsGetPointer()->bluetoothActive = 0;
+			}
 		}
 	}
 	return result;
