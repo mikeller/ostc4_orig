@@ -37,6 +37,7 @@
 #include "tHome.h"
 #include "tInfo.h"
 #include "tInfoLog.h"
+#include "tComm.h"
 
 extern void tM_build_pages(void);
 
@@ -104,6 +105,7 @@ void openEdit_Bluetooth(void)
     {
         pSettings->bluetoothActive = 1;
         MX_Bluetooth_PowerOn();
+        tComm_StartBlueModConfig();
     }
     else
     {

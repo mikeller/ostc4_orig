@@ -362,6 +362,7 @@ int main(void)
 
     MX_GPIO_Init();
     //  MX_SmallCPU_NO_Reset_Helper();	 //161116 hw
+    MX_Bluetooth_PowerOff();	/* disable module, needed in case of e.g. a reset event to make sure module is configured from scratch */
     MX_SPI_Init();
     MX_UART_Init();
     SDRAM_Config();
@@ -386,12 +387,7 @@ int main(void)
     // new 170508: bluetooth on at start
     settingsGetPointer()->bluetoothActive = 1;
     MX_Bluetooth_PowerOn();
-
-    // Haase Geburtstag:
-    //  settingsGetPointer()->serialHigh = (3012 / 256);
-    //  settingsGetPointer()->serialLow  = (3012 & 0xFF);
-
-    //  settingsGetPointer()->showDebugInfo = 1;
+    tComm_StartBlueModConfig();
 
     /*
     if( (hardwareDataGetPointer()->primarySerial == 20+18)
@@ -483,7 +479,7 @@ int main(void)
         }
         deco_loop();
         TriggerButtonAction();
-        if(DoDisplayRefresh)
+        if(DoDisplayRefresh)							/* set every 100ms by timer interrupt */
         {
 	        DoDisplayRefresh = 0;
         	RefreshDisplay();
@@ -1017,10 +1013,14 @@ static void EvaluateButton()
 		get_globalStateList(&status);
 		if(status.base == BaseComm) /* main loop is not serviced in comm mode => react immediately */
 		{
-			if (action == ACTION_BUTTON_BACK) {
-				settingsGetPointer()->bluetoothActive = 0;
-				MX_Bluetooth_PowerOff();
-				tComm_exit();
+			switch(action)
+			{
+				case ACTION_BUTTON_BACK: tComm_exit();
+					break;
+				case ACTION_BUTTON_NEXT: tComm_RequestBluetoothStrength();
+					break;
+				default:
+					break;
 			}
 		}
 		else
