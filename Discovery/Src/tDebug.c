@@ -34,6 +34,7 @@
 #include "gfx_fonts.h"
 #include "ostc.h"
 #include "tInfo.h"
+#include "tComm.h"
 
 #include "stm32f4xx_hal.h"
 
@@ -78,6 +79,7 @@ uint8_t inDebugMode(void)
 void tDebug_start(void)
 {
     MX_Bluetooth_PowerOn();
+    tComm_StartBlueModConfig();
 
     tD_debugModeActive = 1;
     tD_status = 0;
@@ -102,6 +104,7 @@ void tDebugControl(uint8_t sendAction)
     case ACTION_MODE_CHANGE:
     case ACTION_BUTTON_BACK:
     exitInfo();
+    	break;
     default:
         break;
     case ACTION_IDLE_TICK:

@@ -31,6 +31,20 @@
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
 
+
+/* types */
+typedef enum
+{
+		BM_CONFIG_OFF = 0,
+		BM_CONFIG_ECHO,
+		BM_CONFIG_ESCAPE_DELAY,
+		BM_CONFIG_SIGNAL_POLL,
+		BM_CONFIG_BAUD,
+		BM_CONFIG_SILENCE,
+		BM_CONFIG_DONE,
+		BM_CONFIG_RETRY
+} BlueModTmpConfig_t;
+
 /* Exported functions --------------------------------------------------------*/
 
 void tComm_init(void);
@@ -39,5 +53,7 @@ void tComm_refresh(void);
 void tComm_exit(void);
 void tComm_verlauf(uint8_t percentage_complete);
 uint8_t tComm_Set_Bluetooth_Name(uint8_t force);
+void tComm_StartBlueModConfig(void);
+void tComm_RequestBluetoothStrength(void);
 
 #endif /* TCOMM_H */

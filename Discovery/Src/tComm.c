@@ -84,7 +84,7 @@
 #ifdef SPECIALPROGRAMM
 #	include "firmwareEraseProgram.h"
 #endif
-
+#include <stdlib.h>
 #include <string.h>
 
 
@@ -107,17 +107,25 @@ uint8_t updateSettingsAndMenuOnExit = 0;
 #define BYTE_SERVICE_MODE			(0xAA)
 
 #define UART_TIMEOUT_SECONDS		(120u)		/* Timeout for keeping connection open and waiting for data */
-#define UART_TIMEOUT_LARGE_BLOCK 	(6000u)		/* Timeout (ms) for receiption of an 16K data block (typical RX time ~4,5seconds) */
+#define UART_TIMEOUT_LARGE_BLOCK 	(6000u)		/* Timeout (ms) for reception of an 16K data block (typical RX time ~4,5seconds) */
+
+#define UART_CMD_BUF_SIZE			(20u)		/* size of buffer for command exchange */
 
 const uint8_t id_Region1_firmware = 0xFF;
 const uint8_t id_RTE = 0xFE;
 const uint8_t id_FONT = 0x10;
 const uint8_t id_FONT_OLD = 0x00;
 
+static BlueModTmpConfig_t BmTmpConfig = BM_CONFIG_OFF;	/* Config BlueMod without storing the changes */
+static uint8_t EvaluateBluetoothSignalStrength = 0;
+static uint8_t RequestDisconnection = 0; 				/* Disconnection from remote device requested */
 /* Private function prototypes -----------------------------------------------*/
-
+static void tComm_Disconnect(void);
 static void tComm_Error_Handler(void);
 static uint8_t select_mode(uint8_t aRxByte);
+static uint8_t tComm_CheckAnswerOK(void);
+static uint8_t tComm_HandleBlueModConfig(void);
+static void tComm_EvaluateBluetoothStrength(void);
 uint8_t receive_update_flex(uint8_t isRTEupdateALLOWED);
 uint8_t receive_update_data_flex(uint8_t* pBuffer1, uint8_t* pBuffer2, uint8_t RTEupdateALLOWED);
 uint8_t receive_update_data_mainCPU_firmware(void);
@@ -162,12 +170,6 @@ void tComm_init(void)
     }
 
     StartListeningToUART = 1;
-
-/*	WHY?
-#ifdef 	BLE_NENABLE_PIN
-    HAL_GPIO_WritePin(BLE_NENABLE_GPIO_PORT,BLE_NENABLE_PIN,GPIO_PIN_RESET);
-#endif
-*/
 }
 
 uint8_t tComm_control(void)
@@ -180,40 +182,56 @@ uint8_t tComm_control(void)
     {
         if(bluetoothActiveLastTime)
         {
+        	HAL_UART_AbortReceive_IT(&UartHandle);
             HAL_UART_DeInit(&UartHandle);
             HAL_Delay(1);
+            UartHandle.Init.BaudRate   = 115200;	/* Module will be operating at default baud rate if powered again */
+            BmTmpConfig = BM_CONFIG_OFF;			/* Restart configuration if powered again */
             HAL_UART_Init(&UartHandle);
             HAL_Delay(1);
             UartReady = RESET;
             StartListeningToUART = 1;
             bluetoothActiveLastTime = 0;
             receiveStartByteUart = 0;
+            RequestDisconnection = 0;
         }
         return 0;
     }
     else
     {
         bluetoothActiveLastTime = 1;
+        if(RequestDisconnection)
+        {
+        	RequestDisconnection = 0;
+            tComm_Disconnect();
+        }
     }
 
 #endif
 
+    if(BmTmpConfig != BM_CONFIG_DONE)
+    {
+    	tComm_HandleBlueModConfig();
+    }
+    else
+    {
     /*##-2- Put UART peripheral in reception process ###########################*/
 
-    if((UartReady == RESET) && StartListeningToUART)
-    {
-            StartListeningToUART = 0;
-            if(HAL_UART_Receive_IT(&UartHandle, &receiveStartByteUart, 1) != HAL_OK)
-                    tComm_Error_Handler();
-    }
-    /* Reset transmission flag */
-    if(UartReady == SET)
-    {
-            UartReady = RESET;
-            if((receiveStartByteUart == BYTE_DOWNLOAD_MODE) || (receiveStartByteUart == BYTE_SERVICE_MODE))
-                answer = openComm(receiveStartByteUart);
-            StartListeningToUART = 1;
-            return answer;
+		if((UartReady == RESET) && StartListeningToUART)
+		{
+				StartListeningToUART = 0;
+				if(HAL_UART_Receive_IT(&UartHandle, &receiveStartByteUart, 1) != HAL_OK)
+						tComm_Error_Handler();
+		}
+		/* Reset transmission flag */
+		if(UartReady == SET)
+		{
+				UartReady = RESET;
+				if((receiveStartByteUart == BYTE_DOWNLOAD_MODE) || (receiveStartByteUart == BYTE_SERVICE_MODE))
+					answer = openComm(receiveStartByteUart);
+				StartListeningToUART = 1;
+				return answer;
+		}
     }
     return 0;
 }
@@ -226,6 +244,8 @@ void tComm_refresh(void)
         GFX_hwBackgroundOn();
         tCscreen.FBStartAdress = getFrame(18);
         write_content_simple(&tCscreen, 0, 800, 480-24, &FontT24,"Exit",CLUT_ButtonSurfaceScreen);
+        write_content_simple(&tCscreen, 800 - 70, 800, 480-24, &FontT24,"Signal",CLUT_ButtonSurfaceScreen);
+
         if(receiveStartByteUart == BYTE_SERVICE_MODE)
             GFX_write_string(&FontT48, &tCwindow, "Service mode enabled",2);
         else
@@ -240,6 +260,7 @@ void tComm_refresh(void)
         releaseFrame(18,tCscreen.FBStartAdress);
         tCscreen.FBStartAdress = getFrame(18);
         write_content_simple(&tCscreen, 0, 800, 480-24, &FontT24,"Exit",CLUT_ButtonSurfaceScreen);
+        write_content_simple(&tCscreen, 800 - 70, 800, 480-24, &FontT24,"Signal",CLUT_ButtonSurfaceScreen);
         GFX_write_string(&FontT48, &tCwindow, display_text,2);
         GFX_SetFrameTop(tCscreen.FBStartAdress);
         display_text[0] = 0;
@@ -293,6 +314,7 @@ void tComm_exit(void)
         HAL_Delay(1000);
         MX_Bluetooth_PowerOn();
         tComm_Set_Bluetooth_Name(1);
+        tComm_StartBlueModConfig();
     }
 #ifndef BOOTLOADER_STANDALONE
     if(updateSettingsAndMenuOnExit)
@@ -353,7 +375,7 @@ uint8_t HW_Set_Bluetooth_Name(uint16_t serial, uint8_t withEscapeSequence)
     // limit is 19 chars, with 7 chars shown in BLE advertising mode
     //________________________123456789012345678901
     char aTxBufferName[50] = "AT+BNAME=OSTC4-12345\r";
-    char answerOkay[6] = "\r\nOKr\n";
+    char answerOkay[6] = "\r\nOK\r\n";
 
     gfx_number_to_string(5,1,&aTxBufferName[15],serial);
 
@@ -408,10 +430,57 @@ uint8_t HW_Set_Bluetooth_Name(uint16_t serial, uint8_t withEscapeSequence)
     return answer;
 }
 
+void tComm_Disconnect()
+{
+	uint8_t answer;
+	uint8_t retrycnt = 3;
+	char aTxDisconnect[] ="ATH\r";
+	char aTxBufferEnd[] = "ATO\r";
+	char aTxBufferEscapeSequence[] = "+++";
+
+	uint8_t sizeDisconnect = sizeof(aTxDisconnect) -1;
+
+	HAL_UART_AbortReceive_IT(&UartHandle);
+	do
+	{
+		HAL_Delay(200);
+		if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBufferEscapeSequence, 3, 1000)== HAL_OK)
+		{
+			answer = tComm_CheckAnswerOK();
+		}
+		retrycnt--;
+	}
+	while((answer != HAL_OK) && (retrycnt > 0));
+
+	if(answer == HAL_OK)
+	{
+		answer = HAL_ERROR;
+		if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxDisconnect,sizeDisconnect , 1000)== HAL_OK)
+		{
+			answer = HAL_ERROR;
+			if(tComm_CheckAnswerOK() == HAL_OK)
+			{
+				answer = HAL_ERROR;
+				if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBufferEnd, 4, 1000) == HAL_OK)	/* exit terminal mode */
+				{
+					answer = tComm_CheckAnswerOK();
+				}
+			}
+		}
+	}
+
+	if(answer != HAL_OK)		/* we are somehow not able to do a clean disconnect => fallback to "previous" power off implementation" */
+	{
+		settingsGetPointer()->bluetoothActive = 0;
+		MX_Bluetooth_PowerOff();
+	}
+}
+
 
 uint8_t openComm(uint8_t aRxByte)
 {
 	SStateList status;
+	uint8_t localRx;
 	uint8_t timeoutCounter = 0;
     uint8_t answer = 0;
     uint8_t service_mode_last_three_bytes[3];
@@ -438,6 +507,7 @@ uint8_t openComm(uint8_t aRxByte)
     0xAA 0xAB 0xCD 0xEF
     answer is
     */
+    localRx = aRxByte;
 
     if(aRxByte == BYTE_SERVICE_MODE)
     {
@@ -463,26 +533,26 @@ uint8_t openComm(uint8_t aRxByte)
         else
             answer = prompt4D4C(receiveStartByteUart);
     }
-/*
-uint8_t debug[256] = {0};
-uint8_t dbgptr = 0;
-debug[dbgptr++] = aRxByte;
-*/
-    while((answer == prompt4D4C(receiveStartByteUart)) && (timeoutCounter < UART_TIMEOUT_SECONDS * 2)) 	/* Split 120 seconds timeout into 240 iterations a 500ms */
+
+    while((answer == prompt4D4C(receiveStartByteUart)) && (timeoutCounter < UART_TIMEOUT_SECONDS)) 	/* try receive once a second */
     {
-    	if(HAL_UART_Receive(&UartHandle, (uint8_t*)&aRxByte, 1, 500)!= HAL_OK) 							/* Timeout half a second */
+    	if(HAL_UART_Receive(&UartHandle, (uint8_t*)&localRx, 1, 1000)!= HAL_OK) 							
     	{
     		timeoutCounter++;
     		get_globalStateList(&status);
     		if (status.base != BaseComm)
     		{
-    			timeoutCounter = UART_TIMEOUT_SECONDS * 2; /* Abort action triggered outside main loop => exit */
+    			timeoutCounter = UART_TIMEOUT_SECONDS; /* Abort action triggered outside main loop => exit */
+    		}
+    		if(EvaluateBluetoothSignalStrength)
+    		{
+    			tComm_EvaluateBluetoothStrength();
     		}
     	}
     	else
     	{
-//		debug[dbgptr++] = aRxByte;
-    		answer = select_mode(aRxByte);
+    		answer = select_mode(localRx);
+    		timeoutCounter = 0;
     	}
     }
     set_returnFromComm();
@@ -860,6 +930,7 @@ uint8_t select_mode(uint8_t type)
     case 0x69: // get serial, old version numbering, custom text
     case 0x6A: // get model
     case 0x6B: // get specific firmware version
+    case 0x6C: /* Display Bluetooth signal strength */
     case 0x6D: // get all compact headers (16 byte)
     case 0x6E: // display text
     case 0x70: // read min, default, max setting
@@ -1004,6 +1075,10 @@ uint8_t select_mode(uint8_t type)
         aTxBuffer[count++] = prompt4D4C(receiveStartByteUart);
         break;
 
+    /* Trigger Bluetooth signal strength evaluation */
+    case 0x6C:  tComm_EvaluateBluetoothStrength();
+    			aTxBuffer[count++] = prompt4D4C(receiveStartByteUart);
+    	break;
     // display text
     case 0x6E:
         for(int i=0;i<16;i++)
@@ -1202,32 +1277,34 @@ uint8_t select_mode(uint8_t type)
     return 0;
 }
 
+#define BLOCKSIZE 0x1000
 
 HAL_StatusTypeDef receive_uart_large_size(UART_HandleTypeDef *huart, uint8_t *pData, uint32_t Size)
 {
-    uint16_t length_16k_blocks;
-    uint16_t length_16k_remainder;
+    uint16_t length_4k_blocks;
+    uint16_t length_4k_remainder;
     uint32_t temp;
     HAL_StatusTypeDef result = HAL_OK;
     uint32_t pDataLocal;
 
-    length_16k_blocks = (uint16_t) (Size / 0x3FFF);
-    temp = length_16k_blocks;
-    temp *= 0x3FFF;
-    length_16k_remainder = (uint16_t) ( Size - temp);
+    length_4k_blocks = (uint16_t) (Size / BLOCKSIZE);
+    temp = length_4k_blocks;
+    temp *= BLOCKSIZE;
+    length_4k_remainder = (uint16_t) ( Size - temp);
 
     pDataLocal = (uint32_t)pData;
 
 
-    while((result == HAL_OK) && length_16k_blocks)
+    while((result == HAL_OK) && length_4k_blocks)
     {
-        result = HAL_UART_Receive(&UartHandle, (uint8_t *)pDataLocal, 0x3FFF , UART_TIMEOUT_LARGE_BLOCK);
-        pDataLocal += 0x3FFF;
-        length_16k_blocks--;
+        result = HAL_UART_Receive(&UartHandle, (uint8_t *)pDataLocal, BLOCKSIZE , UART_TIMEOUT_LARGE_BLOCK);
+        pDataLocal += BLOCKSIZE;
+        length_4k_blocks--;
     }
-    if((result == HAL_OK) && length_16k_remainder)
+
+    if((result == HAL_OK) && length_4k_remainder)
     {
-        result = HAL_UART_Receive(&UartHandle, (uint8_t *)pDataLocal, length_16k_remainder , UART_TIMEOUT_LARGE_BLOCK);
+        result = HAL_UART_Receive(&UartHandle, (uint8_t *)pDataLocal, length_4k_remainder , UART_TIMEOUT_LARGE_BLOCK);
     }
     return result;
 }
@@ -1831,6 +1908,240 @@ uint8_t receive_update_data_mainCPU_firmware_subroutine(uint8_t region, uint8_t*
         display_text[255] = 21;
         return 1;
     }
+}
+
+void tComm_RequestBluetoothStrength(void)
+{
+	EvaluateBluetoothSignalStrength = 1;
+}
+
+/* read, validate the modul answer and flush rx que if necessary */
+uint8_t tComm_CheckAnswerOK()
+{
+    char answerOkay[] = "\r\nOK\r\n";
+    char aRxBuffer[UART_CMD_BUF_SIZE];
+    uint8_t sizeAnswer = sizeof(answerOkay) -1;
+	uint8_t result = HAL_OK;
+	uint8_t index = 0;
+	uint8_t answer;
+
+	memset(aRxBuffer,0,UART_CMD_BUF_SIZE);
+	if(HAL_UART_Receive(&UartHandle, (uint8_t*)aRxBuffer, sizeAnswer, 1000) == HAL_OK)
+	{
+		do
+		{
+			if(answerOkay[index] != aRxBuffer[index])
+			{
+				index = sizeAnswer;
+				result = HAL_ERROR;		/* unexpected answer => there might be characters left in RX que => read and discard all rx bytes */
+				do
+				{
+					answer = HAL_UART_Receive(&UartHandle, (uint8_t*)&aRxBuffer[index], 1, 10);
+					if (index < UART_CMD_BUF_SIZE) 
+					{
+						index++;
+					}
+				}while(answer == HAL_OK);
+				index = sizeAnswer;
+			}
+			else
+			{
+				index++;
+			}
+		}while(index < sizeAnswer);
+	}
+	else
+	{
+		result = HAL_ERROR;
+	}
+	return result;
+
+}
+
+
+void tComm_EvaluateBluetoothStrength(void)
+{
+	char aTxBufferBarSSI[] = "AT+BARSSI\r";
+	char aTxBufferEscapeSequence[] = "+++";
+	char aTxBufferEnd[] = "ATO\r";
+    uint8_t sizeRequest = sizeof(aTxBufferBarSSI) -1;
+
+    uint8_t answer = HAL_OK;
+    char aRxBuffer[UART_CMD_BUF_SIZE];
+	char SignalStr[UART_CMD_BUF_SIZE];
+    uint8_t index = 0;
+    uint8_t strindex = 0;
+    int8_t sigqual = 0;
+
+    HAL_Delay(200);
+    if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBufferEscapeSequence, 3, 2000)== HAL_OK)
+    {
+    	if(tComm_CheckAnswerOK() == HAL_OK)
+		{
+			HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBufferBarSSI,sizeRequest , 2000);
+			{
+				index = 0;
+				do						/* Answer is not the common one. Instead the signal strength is received => read all available bytes one by one*/
+				{
+					answer = HAL_UART_Receive(&UartHandle, (uint8_t*)&aRxBuffer[index], 1, 100);
+					if(index < UART_CMD_BUF_SIZE) 
+					{
+						index++;
+					}
+				}while(answer == HAL_OK);
+
+				if((aRxBuffer[index] != 'E') && (aRxBuffer[index] != 0))		/* E represents the first letter of the string ERROR */
+				{
+					index = 0;
+					strindex = 0;
+					do
+					{
+						SignalStr[strindex++] = aRxBuffer[index++];
+					}while ((index < UART_CMD_BUF_SIZE - 1) && (aRxBuffer[index] != '\r'));
+					SignalStr[strindex] = 0;	/* terminate String */
+					sigqual = strtol(SignalStr,NULL,0);
+					/* Map db to abstract Bargraph */
+					if(sigqual > 0)
+					{
+						sprintf(SignalStr,"Bluetooth ||||||||");
+					}
+					else
+					{
+						sprintf(SignalStr,"Bluetooth |");
+						strindex = strlen(SignalStr);
+						sigqual *=-1;
+						sigqual = 100 - sigqual;	/* invert because of negative db value */
+						while(sigqual / 10 > 0 )
+						{
+							SignalStr[strindex++] = '|';
+							sigqual -= 10;
+						}
+						SignalStr[strindex] = 0;
+					}
+					strcpy(display_text,SignalStr);
+					display_text[255] = strlen(SignalStr);
+					EvaluateBluetoothSignalStrength = 0;
+				}
+			}
+			HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBufferEnd, 4, 2000);	/* exit terminal mode */
+			index = 0;
+			do	/* module will answer with current connection state */
+			{
+				answer = HAL_UART_Receive(&UartHandle, (uint8_t*)&aRxBuffer[index], 1, 100);
+				if(index < UART_CMD_BUF_SIZE)
+				{
+					index++;
+				}
+			}while(answer == HAL_OK);
+		}
+    }
+}
+
+void tComm_StartBlueModConfig()
+{
+	uint8_t answer = HAL_OK;
+	uint8_t RxBuffer[UART_CMD_BUF_SIZE];
+	uint8_t index = 0;
+
+	BmTmpConfig = BM_CONFIG_ECHO;
+	do	/* flush RX buffer */
+	{
+		answer = HAL_UART_Receive(&UartHandle, (uint8_t*)&RxBuffer[index], 1, 10);
+		if(index < UART_CMD_BUF_SIZE) index++;
+	}while(answer == HAL_OK);
+}
+
+uint8_t tComm_HandleBlueModConfig()
+{
+	static uint8_t RestartModule = 1; 		/* used to do power off / on cycle */
+	static uint8_t ConfigRetryCnt = 0;		/* Retry count without power cycle */
+
+	char TxBuffer[UART_CMD_BUF_SIZE];
+	uint8_t CmdSize = 0;
+
+	uint8_t result = HAL_OK;
+
+	TxBuffer[0] = 0;
+
+	switch (BmTmpConfig)
+	{
+		case BM_CONFIG_ECHO: 			sprintf(TxBuffer,"ATE0\r");
+			break;
+		case BM_CONFIG_SILENCE:			sprintf(TxBuffer,"ATS30=0\r");
+			break;
+		case BM_CONFIG_ESCAPE_DELAY:	sprintf(TxBuffer,"ATS12=10\r");
+			break;
+		case BM_CONFIG_SIGNAL_POLL:		sprintf(TxBuffer,"AT+BSTPOLL=100\r");
+			break;
+		case BM_CONFIG_BAUD:			sprintf(TxBuffer,"AT%%B22\r");
+			break;
+		case BM_CONFIG_RETRY:			ConfigRetryCnt--;
+										HAL_Delay(1);
+										if(ConfigRetryCnt == 0)
+										{
+											MX_Bluetooth_PowerOn();
+											tComm_StartBlueModConfig();
+										}
+			break;
+		case BM_CONFIG_DONE:
+		case BM_CONFIG_OFF:
+			ConfigRetryCnt = 0;
+			RestartModule = 1;
+			break;
+		default:
+			break;
+	}
+	if(TxBuffer[0] != 0)		/* forward command to module */
+	{
+		CmdSize = strlen(TxBuffer);
+		if(HAL_UART_Transmit(&UartHandle, (uint8_t*)TxBuffer,CmdSize, 2000) == HAL_OK)
+		{
+			if(BmTmpConfig == BM_CONFIG_ECHO)	/* echo is not yet turned off => read and discard echo */
+			{
+				HAL_UART_Receive(&UartHandle, (uint8_t*)TxBuffer, CmdSize, 1000);
+			}
+
+			result = tComm_CheckAnswerOK();
+
+
+			if((BmTmpConfig == BM_CONFIG_BAUD) && (result == HAL_OK) && (UartHandle.Init.BaudRate != 460800)) /* is com already switched to fast speed? */
+			{
+				HAL_UART_DeInit(&UartHandle);
+				HAL_Delay(1);
+				UartHandle.Init.BaudRate   = 460800;
+				HAL_UART_Init(&UartHandle);
+			}
+			if(result == HAL_OK)
+			{
+				BmTmpConfig++;
+			}
+			if(BmTmpConfig == BM_CONFIG_DONE)
+			{
+				ConfigRetryCnt = 0;
+			}
+		}
+	}
+	if(result != HAL_OK)
+	{
+		ConfigRetryCnt++;
+		if(ConfigRetryCnt > 3)		/* Configuration failed => switch off module */
+		{
+			MX_Bluetooth_PowerOff();
+			if(RestartModule)
+			{
+				RestartModule = 0;      /* only one try */
+				ConfigRetryCnt = 200;	/* used for delay to startup module again */
+				BmTmpConfig = BM_CONFIG_RETRY;
+			}
+			else						/* even restarting module failed => switch bluetooth off */
+			{
+				ConfigRetryCnt = 0;
+				BmTmpConfig = BM_CONFIG_OFF;
+				settingsGetPointer()->bluetoothActive = 0;
+			}
+		}
+	}
+	return result;
 }
 
 static void tComm_Error_Handler(void)
