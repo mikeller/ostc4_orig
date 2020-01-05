@@ -2123,7 +2123,7 @@ void t7_refresh_divemode(void)
     GFX_write_string(&FontT105,&t7l2,TextL2,1);
 
     /* ascent rate graph */
-    if(stateUsed->lifeData.ascent_rate_meter_per_min > 0)
+    if(stateUsed->lifeData.ascent_rate_meter_per_min > 1)	/* a value < 1 would cause a bar in negative direction brush rectangle of 12 and step width of 6 */
     {
     	if(!pSettings->FlipDisplay)
     	{
