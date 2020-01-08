@@ -51,7 +51,6 @@
 
 #define PRESSURE_SURFACE_MAX_MBAR			(1030.0f)		/* It is unlikely that pressure at surface is greater than this value => clip to it */
 #define PRESSURE_HISTORY_SIZE				(8u)
-#define PRESSURE_JUMP_VALID_MBAR	    	(500.0f)		/* values are measure several times a second => jumps > 5m very unlikely */
 
 #define PRESSURE_SURFACE_QUE					(30u)			/* history buffer [minutes] for past pressure measurements */
 #define PRESSURE_SURFACE_EVA_WINDOW				(15u)			/* Number of entries evaluated during instability test. Used to avoid detection while dive enters water */
@@ -632,12 +631,9 @@ static uint8_t pressure_plausible(float pressurevalue)
 	}
 	else
 	{
-		if(fabs(pressurevalue - pressure_average) < PRESSURE_JUMP_VALID_MBAR)
-		{
 			pressure_history_mbar[pressurewriteindex++] = pressurevalue;
 			pressurewriteindex &= 0x7;	/* wrap around if necessary */
 			retval = 1;
-		}
 	}
 
 	return retval;
