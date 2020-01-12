@@ -107,7 +107,6 @@ static uint8_t DataEX_check_header_and_footer_devicedata(void);
 static void DataEX_check_DeviceData(void);
 
 /* Exported functions --------------------------------------------------------*/
-
 uint8_t DataEX_was_power_on(void)
 {
 	return wasPowerOn;
@@ -149,6 +148,7 @@ void DataEX_init(void)
 	pStateReal->data_old__lost_connection_to_slave = 0; //initial value
 	data_old__lost_connection_to_slave_counter_temp = 0;
 	data_old__lost_connection_to_slave_counter_total = 0;
+	DeviceDataUpdated = 0;
 
 	memset((void *)&dataOut, 0, sizeof(SDataReceiveFromMaster));
 
@@ -525,7 +525,6 @@ static void DataEX_helper_SetDate(RTC_DateTypeDef inSdatestructure, uint32_t *ou
 }
 
 
-
 static void DataEX_helper_set_Unknown_Date_deviceData(SDeviceLine *lineWrite)
 {	
 	RTC_DateTypeDef sdatestructure;
@@ -671,6 +670,7 @@ static void DataEX_merge_DeviceData_and_store(void)
 		DataEX_helper_copy_deviceData(&DeviceData->hoursOfOperation, &DeviceDataFlash.hoursOfOperation);
 	}
 	
+
 	/* min values */
 	if(DeviceData->temperatureMinimum.value_int32 > DeviceDataFlash.temperatureMinimum.value_int32)
 	{
@@ -692,6 +692,7 @@ static void DataEX_copy_to_DeviceData(void)
 	SDevice * pDeviceState = stateDeviceGetPointerWrite();
 
 	memcpy(pDeviceState, &dataInDevice->DeviceData[dataInDevice->boolDeviceData], sizeof(SDevice));
+	DeviceDataUpdated = 1;	/* indicate new data to be written to flash by background task (at last op hour count will be updated) */
 }
 
 
@@ -790,7 +791,6 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		if(DataEX_check_header_and_footer_devicedata())
 		{
 			DataEX_copy_to_DeviceData();
-			DataEX_merge_DeviceData_and_store();
 			DataEX_copy_to_VpmRepetitiveData();
 			data_old__lost_connection_to_slave_counter_temp = 0;
 			data_old__lost_connection_to_slave_counter_retry = 0;
@@ -1144,3 +1144,13 @@ static uint8_t DataEX_check_header_and_footer_devicedata(void)
 
 	return 1;
 }
+
+void DataEX_merge_devicedata(void)
+{
+	if(DeviceDataUpdated)
+	{
+		DeviceDataUpdated = 0;
+		DataEX_merge_DeviceData_and_store();
+	}
+}
+

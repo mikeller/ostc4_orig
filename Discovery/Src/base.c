@@ -351,6 +351,7 @@ int main(void)
     uint8_t lastsecond = 0xFF;
 #endif
 
+	SStateList status;
     detectionState_t pitchstate;
     set_globalState( StBoot0 );
     LastButtonPressed = 0;
@@ -477,6 +478,16 @@ int main(void)
             updateMenu();
             ext_flash_write_settings();
         }
+
+        /* check if tasks depending on global state are pending */
+        get_globalStateList(&status);
+        if(status.base == BaseHome)
+        {
+            tMenuEdit_writeSettingsToFlash(); // takes 900 ms!!
+        }
+
+        DataEX_merge_devicedata(); 	/* data is exchanged at startup and every 10 minutes => check if something changed */
+
         deco_loop();
         TriggerButtonAction();
         if(DoDisplayRefresh)							/* set every 100ms by timer interrupt */
@@ -624,8 +635,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         base_tempLightLevel = TIM_BACKLIGHT_adjust();
         tCCR_tick();
         tHome_tick();
-        if(status.base == BaseHome)
-            tMenuEdit_writeSettingsToFlash(); // takes 900 ms!!
         break;
     case BaseStop:
         DateEx_copy_to_dataOut();
