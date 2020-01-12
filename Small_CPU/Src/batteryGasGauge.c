@@ -28,7 +28,7 @@
 #include "stm32f4xx_hal.h"
 #include "i2c.h"
 
-static float battery_f_voltage = 0;
+static float battery_f_voltage = 6.0;		/* max assumed voltage */
 static float battery_f_charge_percent = 0;
 
 #define BGG_BATTERY_OFFSET          (26123)  //; 65536-(3,35Ah/0,085mAh)
@@ -117,23 +117,25 @@ void battery_gas_gauge_get_data(void)
 	float battery_f_charge_percent_local;
 	
 	uint8_t bufferReceive[10];
-	I2C_Master_Receive(		DEVICE_BATTERYGAUGE, bufferReceive, 10);
-
-	battery_f_voltage_local =  (float)(bufferReceive[8] * 256);
-	battery_f_voltage_local += (float)(bufferReceive[9]);
-	battery_f_voltage_local *= (float)6 / (float)0xFFFF;
-
-	// max/full: 0.085 mAh * 1 * 65535 = 5570 mAh
-	battery_f_charge_percent_local =  (float)(bufferReceive[2] * 256);
-	battery_f_charge_percent_local += (float)(bufferReceive[3]);
-	battery_f_charge_percent_local -= BGG_BATTERY_OFFSET;
-	battery_f_charge_percent_local /= BGG_BATTERY_DIVIDER;
 	
-	if(battery_f_charge_percent_local < 0)
-		battery_f_charge_percent_local = 0;
+	if(I2C_Master_Receive(DEVICE_BATTERYGAUGE, bufferReceive, 10) == HAL_OK)
+	{
+		battery_f_voltage_local =  (float)(bufferReceive[8] * 256);
+		battery_f_voltage_local += (float)(bufferReceive[9]);
+		battery_f_voltage_local *= (float)6 / (float)0xFFFF;
 	
-	battery_f_voltage = battery_f_voltage_local;
-	battery_f_charge_percent = battery_f_charge_percent_local;
+		// max/full: 0.085 mAh * 1 * 65535 = 5570 mAh
+		battery_f_charge_percent_local =  (float)(bufferReceive[2] * 256);
+		battery_f_charge_percent_local += (float)(bufferReceive[3]);
+		battery_f_charge_percent_local -= BGG_BATTERY_OFFSET;
+		battery_f_charge_percent_local /= BGG_BATTERY_DIVIDER;
+
+		if(battery_f_charge_percent_local < 0)
+			battery_f_charge_percent_local = 0;
+
+		battery_f_voltage = battery_f_voltage_local;
+		battery_f_charge_percent = battery_f_charge_percent_local;
+	}
 }
 
 
