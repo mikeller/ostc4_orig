@@ -39,6 +39,8 @@
 
 #include "stm32f4xx_hal.h"
 
+extern uint32_t time_elapsed_ms(uint32_t ticksstart,uint32_t ticksnow);
+
 /// split byte to bits
 typedef struct{ 
 uint8_t bit0:1; ///< split byte to bits
@@ -1353,61 +1355,51 @@ void compass_solve_calibration(SCompassCalib *g)
 //  ===============================================================================
 int compass_calib_common(void)
 {
-		SCompassCalib g;
+	SCompassCalib g;
 
     // Starts with no calibration at all:
-		compass_reset_calibration(&g);
-	
-		int64_t tickstart = 0;
-		uint32_t ticks = 0; 
-		uint32_t lasttick = 0;
-		tickstart = HAL_GetTick();
-    // Eine Minute kalibrieren
-    while((ticks) < 60 * 1000)
+	compass_reset_calibration(&g);
+	uint32_t tickstart = 0;
+	tickstart = HAL_GetTick();
+    /* run calibration for one minute */
+ 	while(time_elapsed_ms(tickstart,HAL_GetTick()) < 60000)
     {
-				compass_read();
-				acceleration_read();
-				compass_calc_roll_pitch_only();
+		while((SPI_Evaluate_RX_Data() == 0) && (time_elapsed_ms(tickstart,HAL_GetTick()) < 60000))
+		{
+			HAL_Delay(1);
+		}
+		compass_read();
+		acceleration_read();
+		compass_calc_roll_pitch_only();
 			
-				if((hardwareCompass == compass_generation1 )		//HMC5883L)
+		if((hardwareCompass == compass_generation1 )		//HMC5883L)
 				&&((compass_DX_f == -4096) ||
-					 (compass_DY_f == -4096) ||
-					 (compass_DZ_f == -4096) ))
-				{
-					if(compass_gain == 0)
-						return -1;
-					compass_gain--;
-				
-					compass_init(1, compass_gain);
-					compass_reset_calibration(&g);
-					//tickstart = HAL_GetTick();
-					continue;
-				}
+				 (compass_DY_f == -4096) ||
+				 (compass_DZ_f == -4096) ))
+		{
+			if(compass_gain == 0)
+				return -1;
+			compass_gain--;
+			compass_init(1, compass_gain);
+			compass_reset_calibration(&g);
+			continue;
+		}
 
-				copyCompassDataDuringCalibration(compass_DX_f,compass_DY_f,compass_DZ_f);
-				compass_add_calibration(&g);
-				HAL_Delay(1);
-				lasttick = HAL_GetTick();
-				if(lasttick == 0)
-				{
-					 tickstart = -ticks;
-				}	
-				HAL_Delay(1);
-				ticks = lasttick - tickstart;
-				SPI_Evaluate_RX_Data();
+		copyCompassDataDuringCalibration(compass_DX_f,compass_DY_f,compass_DZ_f);
+		compass_add_calibration(&g);
     }
         
     compass_solve_calibration(&g);
 		
-		tfull32 dataBlock[4];
-		dataBlock[0].Word16.low16 = compass_CX_f;
-		dataBlock[0].Word16.hi16 = compass_CY_f;
-		dataBlock[1].Word16.low16 = compass_CZ_f;
-		dataBlock[1].Word16.hi16 = 0xFFFF;
-		dataBlock[2].Full32 = 0x7FFFFFFF;
-		dataBlock[3].Full32 = 0x7FFFFFFF;
-		BFA_writeDataBlock((uint32_t *)dataBlock);
+	tfull32 dataBlock[4];
+	dataBlock[0].Word16.low16 = compass_CX_f;
+	dataBlock[0].Word16.hi16 = compass_CY_f;
+	dataBlock[1].Word16.low16 = compass_CZ_f;
+	dataBlock[1].Word16.hi16 = 0xFFFF;
+	dataBlock[2].Full32 = 0x7FFFFFFF;
+	dataBlock[3].Full32 = 0x7FFFFFFF;
+	BFA_writeDataBlock((uint32_t *)dataBlock);
 	
-		return 0;
+	return 0;
 }
 
