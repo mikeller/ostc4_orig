@@ -64,6 +64,8 @@
 #define LOGBOOK_VERSION (0x30)
 #define LOGBOOK_VERSION_OSTC3 (0x24)
 
+#define DEFAULT_SAMPLES	(100)	/* Number of sample data bytes in case of an broken header information */
+
 typedef struct /* don't forget to adjust void clear_divisor(void) */
 {
 	uint8_t temperature;
@@ -78,7 +80,7 @@ typedef struct /* don't forget to adjust void clear_divisor(void) */
 /* Exported variables --------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-static  SLogbookHeader  header;
+static SLogbookHeader  gheader;
 static SLogbookHeaderOSTC3	headerOSTC3;
 static SLogbookHeaderOSTC3compact headerOSTC3compact;
 static SSmallHeader smallHeader;
@@ -99,7 +101,7 @@ static void logbook_UpdateHeader(const SDiveState * pStateReal);
 
 void logbook_EndDive(void)
 {
-	ext_flash_close_new_dive_log((uint8_t*) &header);
+	ext_flash_close_new_dive_log((uint8_t*) &gheader);
 }
 
 
@@ -136,7 +138,7 @@ uint16_t logbook_lastDive_diveNumber(void)
 */
 SLogbookHeader* logbook_getCurrentHeader(void)
 {
-    return &header;
+    return &gheader;
 }
 
 /**
@@ -198,78 +200,78 @@ void logbook_initNewdiveProfile(const SDiveState* pInfo, SSettings* pSettings)
 
 	for(int i = 0; i < sizeof(SLogbookHeader); i++)
 	{
-		((uint8_t*)(&header))[i] = 0;
+		((uint8_t*)(&gheader))[i] = 0;
 	}
-	header.diveHeaderStart = 0xFAFA;
-	header.diveHeaderEnd = 0xFBFB;
-	header.samplingRate = 2;
+	gheader.diveHeaderStart = 0xFAFA;
+	gheader.diveHeaderEnd = 0xFBFB;
+	gheader.samplingRate = 2;
 	if(pInfo->diveSettings.diveMode == DIVEMODE_OC)
   {
     for(int i = 0; i < 5; i++)
     {
-      header.gasordil[i].oxygen_percentage = pSettings->gas[i+1].oxygen_percentage;
-      header.gasordil[i].helium_percentage = pSettings->gas[i+1].helium_percentage;
-      header.gasordil[i].note.uw = pSettings->gas[i+1].note.uw;
-      header.gasordil[i].depth_meter = pSettings->gas[i+1].depth_meter;
+      gheader.gasordil[i].oxygen_percentage = pSettings->gas[i+1].oxygen_percentage;
+      gheader.gasordil[i].helium_percentage = pSettings->gas[i+1].helium_percentage;
+      gheader.gasordil[i].note.uw = pSettings->gas[i+1].note.uw;
+      gheader.gasordil[i].depth_meter = pSettings->gas[i+1].depth_meter;
     }
   }
   else
   {
     for(int i = 0; i < 5; i++)
     {
-      header.gasordil[i].oxygen_percentage = pSettings->gas[i+6].oxygen_percentage;
-      header.gasordil[i].helium_percentage = pSettings->gas[i+6].helium_percentage;
-      header.gasordil[i].note.uw = pSettings->gas[i+6].note.uw;
-      header.gasordil[i].depth_meter = pSettings->gas[i+6].depth_meter;
+      gheader.gasordil[i].oxygen_percentage = pSettings->gas[i+6].oxygen_percentage;
+      gheader.gasordil[i].helium_percentage = pSettings->gas[i+6].helium_percentage;
+      gheader.gasordil[i].note.uw = pSettings->gas[i+6].note.uw;
+      gheader.gasordil[i].depth_meter = pSettings->gas[i+6].depth_meter;
     }
 
     for(int i = 0; i < 5; i++)
     {
-      header.setpoint[i].setpoint_cbar = pSettings->setpoint[i+1].setpoint_cbar;
-      header.setpoint[i].depth_meter = pSettings->setpoint[i+1].depth_meter;
+      gheader.setpoint[i].setpoint_cbar = pSettings->setpoint[i+1].setpoint_cbar;
+      gheader.setpoint[i].depth_meter = pSettings->setpoint[i+1].depth_meter;
     }
   }
 //	header.gasordil[pInfo->lifeData.actualGas.GasIdInSettings].depth_meter = 0;
 
 	translateDate(pInfo->lifeData.dateBinaryFormat, &Sdate);
 	translateTime(pInfo->lifeData.timeBinaryFormat, &Stime);
-	header.dateYear = Sdate.Year;
-	header.dateMonth = Sdate.Month;
-	header.dateDay = Sdate.Date;
-	header.timeHour = Stime.Hours;
-	header.timeMinute = Stime.Minutes;
-	header.cnsAtBeginning = (uint16_t)pInfo->lifeData.cns;
-	header.surfacePressure_mbar = (uint16_t)(pInfo->lifeData.pressure_surface_bar * 1000);
-	header.firmwareVersionHigh = firmwareVersion_16bit_high();
-	header.firmwareVersionLow = firmwareVersion_16bit_low();
-	header.logbookProfileVersion = LOGBOOK_VERSION;
-	header.salinity = pSettings->salinity;
-	header.diveNumber = pSettings->totalDiveCounter;
-	header.personalDiveCount = pSettings->personalDiveCount;
+	gheader.dateYear = Sdate.Year;
+	gheader.dateMonth = Sdate.Month;
+	gheader.dateDay = Sdate.Date;
+	gheader.timeHour = Stime.Hours;
+	gheader.timeMinute = Stime.Minutes;
+	gheader.cnsAtBeginning = (uint16_t)pInfo->lifeData.cns;
+	gheader.surfacePressure_mbar = (uint16_t)(pInfo->lifeData.pressure_surface_bar * 1000);
+	gheader.firmwareVersionHigh = firmwareVersion_16bit_high();
+	gheader.firmwareVersionLow = firmwareVersion_16bit_low();
+	gheader.logbookProfileVersion = LOGBOOK_VERSION;
+	gheader.salinity = pSettings->salinity;
+	gheader.diveNumber = pSettings->totalDiveCounter;
+	gheader.personalDiveCount = pSettings->personalDiveCount;
 
-	header.diveMode = pInfo->diveSettings.diveMode;
-	header.CCRmode = pInfo->diveSettings.CCR_Mode;
-	header.lastDecostop_m = pSettings->last_stop_depth_meter;
+	gheader.diveMode = pInfo->diveSettings.diveMode;
+	gheader.CCRmode = pInfo->diveSettings.CCR_Mode;
+	gheader.lastDecostop_m = pSettings->last_stop_depth_meter;
 
 	if(pInfo->diveSettings.deco_type.ub.standard == GF_MODE)
 	{
-		header.decoModel = 1;
-		header.gfLow_or_Vpm_conservatism = pInfo->diveSettings.gf_low;
-		header.gfHigh = pInfo->diveSettings.gf_high;
+		gheader.decoModel = 1;
+		gheader.gfLow_or_Vpm_conservatism = pInfo->diveSettings.gf_low;
+		gheader.gfHigh = pInfo->diveSettings.gf_high;
 	}
 	else
 	{
-		header.decoModel = 2;
-		header.gfLow_or_Vpm_conservatism = pInfo->diveSettings.vpm_conservatism;
-		header.gfHigh = 0;
+		gheader.decoModel = 2;
+		gheader.gfLow_or_Vpm_conservatism = pInfo->diveSettings.vpm_conservatism;
+		gheader.gfHigh = 0;
 	}
 
-	memcpy(header.n2Compartments, pInfo->lifeData.tissue_nitrogen_bar, 64);
-	memcpy(header.heCompartments, pInfo->lifeData.tissue_helium_bar, 64);
+	memcpy(gheader.n2Compartments, pInfo->lifeData.tissue_nitrogen_bar, 64);
+	memcpy(gheader.heCompartments, pInfo->lifeData.tissue_helium_bar, 64);
 
 	logbook_SetCompartmentDesaturation(pInfo);
 
-	ext_flash_start_new_dive_log_and_set_actualPointerSample((uint8_t*)&header);
+	ext_flash_start_new_dive_log_and_set_actualPointerSample((uint8_t*)&gheader);
 
 	smallHeader.profileLength[0] = 0xFF;
 	smallHeader.profileLength[1] = 0xFF;
@@ -1176,7 +1178,7 @@ void logbook_InitAndWrite(const SDiveState *pStateReal)
 			tickstart = lasttick;
 			if((bDiveMode == 1) && (pStateReal->lifeData.dive_time_seconds >= pSettings->divetimeToCreateLogbook))
 			{
-				ext_flash_create_new_dive_log((uint8_t*)&header);
+				ext_flash_create_new_dive_log((uint8_t*)&gheader);
 				/** save settings
 					* with new lastDiveLogId and time and day
 					*/
@@ -1201,7 +1203,7 @@ void logbook_InitAndWrite(const SDiveState *pStateReal)
 		logbook_SetMaxCNS(pStateReal->lifeData.cns);
 		logbook_SetCompartmentDesaturation(pStateReal);
 		logbook_SetLastStop(pStateReal->diveSettings.last_stop_depth_bar);
-		header.batteryVoltage = pStateReal->lifeData.battery_voltage * 1000;
+		gheader.batteryVoltage = pStateReal->lifeData.battery_voltage * 1000;
 		logbook_EndDive();
 		bDiveMode = 0;
 	} else
@@ -1242,49 +1244,49 @@ static void logbook_UpdateHeader(const SDiveState *pStateReal)
 	header.timeMinute = Stime.Minutes;
 	*/
 	/// 160315 Quick fix for empty date problem
-	if((!(header.dateYear)) || (!(header.dateMonth)) || (!(header.dateDay)))
+	if((!(gheader.dateYear)) || (!(gheader.dateMonth)) || (!(gheader.dateDay)))
 	{
 		translateDate(pStateReal->lifeData.dateBinaryFormat, &Sdate);
 		translateTime(pStateReal->lifeData.timeBinaryFormat, &Stime);
 
-		header.dateYear = Sdate.Year;
-		header.dateMonth = Sdate.Month;
-		header.dateDay = Sdate.Date;
+		gheader.dateYear = Sdate.Year;
+		gheader.dateMonth = Sdate.Month;
+		gheader.dateDay = Sdate.Date;
 		
-		time1_u32 = (uint32_t)header.timeMinute + (uint32_t)(header.timeHour * 60);
+		time1_u32 = (uint32_t)gheader.timeMinute + (uint32_t)(gheader.timeHour * 60);
 		time2_u32 = (uint32_t)Stime.Minutes + (uint32_t)(Stime.Hours * 60);
 		if(time2_u32 < time1_u32)
 		{
-			if(header.dateDay > 1)
+			if(gheader.dateDay > 1)
 			{
-				header.dateDay -= 1;
+				gheader.dateDay -= 1;
 			}
 			else
 			{
-				header.dateMonth --;
-				if(!header.dateMonth)
+				gheader.dateMonth --;
+				if(!gheader.dateMonth)
 				{
-					header.dateYear--;
-					header.dateMonth = 12;
-					header.dateDay = 31;
+					gheader.dateYear--;
+					gheader.dateMonth = 12;
+					gheader.dateDay = 31;
 				}
 				else
 				{
-					if(header.dateMonth == 2)
-						header.dateDay = 28;
+					if(gheader.dateMonth == 2)
+						gheader.dateDay = 28;
 					else
-					if((header.dateMonth == 4) || (header.dateMonth == 6) || (header.dateMonth == 9) || (header.dateMonth == 11))
-						header.dateDay = 30;
+					if((gheader.dateMonth == 4) || (gheader.dateMonth == 6) || (gheader.dateMonth == 9) || (gheader.dateMonth == 11))
+						gheader.dateDay = 30;
 					else
-						header.dateDay = 31;
+						gheader.dateDay = 31;
 				}
 			}
 		}
 	}
 	
 	/* duration */
-	header.total_diveTime_seconds = pStateReal->lifeData.dive_time_seconds;
-	header.maxDepth = pStateReal->lifeData.max_depth_meter * 100;
+	gheader.total_diveTime_seconds = pStateReal->lifeData.dive_time_seconds;
+	gheader.maxDepth = pStateReal->lifeData.max_depth_meter * 100;
 
 	/* old:
 	
@@ -1295,49 +1297,49 @@ static void logbook_UpdateHeader(const SDiveState *pStateReal)
 	header.diveTimeSeconds = header.total_diveTime_seconds - secondsAtShallow - (header.diveTimeMinutes * 60);
 	*/
 	divetimeHelper = pStateReal->lifeData.dive_time_seconds_without_surface_time;
-	header.diveTimeMinutes = (uint16_t)(divetimeHelper/60);
-	divetimeHelper -= 60 * (uint32_t)header.diveTimeMinutes;
-	header.diveTimeSeconds = (uint16_t)divetimeHelper;
+	gheader.diveTimeMinutes = (uint16_t)(divetimeHelper/60);
+	divetimeHelper -= 60 * (uint32_t)gheader.diveTimeMinutes;
+	gheader.diveTimeSeconds = (uint16_t)divetimeHelper;
 	
 	/* deco algorithm (final) */
 	if(pStateReal->diveSettings.deco_type.ub.standard == GF_MODE)
 	{
-		header.decoModel = 1;
-		header.gfLow_or_Vpm_conservatism = pStateReal->diveSettings.gf_low;
-		header.gfHigh = pStateReal->diveSettings.gf_high;
+		gheader.decoModel = 1;
+		gheader.gfLow_or_Vpm_conservatism = pStateReal->diveSettings.gf_low;
+		gheader.gfHigh = pStateReal->diveSettings.gf_high;
 	}
 	else
 	{
-		header.decoModel = 2;
-		header.gfLow_or_Vpm_conservatism = pStateReal->diveSettings.vpm_conservatism;
-		header.gfHigh = 0;
+		gheader.decoModel = 2;
+		gheader.gfLow_or_Vpm_conservatism = pStateReal->diveSettings.vpm_conservatism;
+		gheader.gfHigh = 0;
 	}
 
 	/* tissue load */
-	memcpy(header.n2Compartments, pStateReal->lifeData.tissue_nitrogen_bar, 64);
-	memcpy(header.heCompartments, pStateReal->lifeData.tissue_helium_bar, 64);
+	memcpy(gheader.n2Compartments, pStateReal->lifeData.tissue_nitrogen_bar, 64);
+	memcpy(gheader.heCompartments, pStateReal->lifeData.tissue_helium_bar, 64);
 
 }
 
 
 static void logbook_SetAverageDepth(float average_depth_meter)
 {
-		header.averageDepth_mbar = (uint16_t)(average_depth_meter * 100);
+		gheader.averageDepth_mbar = (uint16_t)(average_depth_meter * 100);
 }
 
 
 static void logbook_SetMinTemperature(float min_temperature_celsius)
 {
-		header.minTemp = (int16_t)((min_temperature_celsius * 10.0f) + 0.5f);
+		gheader.minTemp = (int16_t)((min_temperature_celsius * 10.0f) + 0.5f);
 }
 
 
 static void logbook_SetMaxCNS(float max_cns_percentage)
 {
 	if(max_cns_percentage < 9999)
-		header.maxCNS = (uint16_t)(max_cns_percentage);
+		gheader.maxCNS = (uint16_t)(max_cns_percentage);
 	else
-		header.maxCNS = 9999;
+		gheader.maxCNS = 9999;
 }
 
 
@@ -1349,26 +1351,25 @@ static void logbook_SetCompartmentDesaturation(const SDiveState * pStateReal)
 	for(int i=0;i<16;i++)
 	{
 		if(secondaryInformation.tissue_nitrogen_desaturation_time_minutes[i] <= (15 * 255))
-			header.n2CompartDesatTime_min[i] = (uint8_t)((secondaryInformation.tissue_nitrogen_desaturation_time_minutes[i] + 14) / 15);
+			gheader.n2CompartDesatTime_min[i] = (uint8_t)((secondaryInformation.tissue_nitrogen_desaturation_time_minutes[i] + 14) / 15);
 		else
-			header.n2CompartDesatTime_min[i] = 255;
+			gheader.n2CompartDesatTime_min[i] = 255;
 		if(secondaryInformation.tissue_helium_desaturation_time_minutes[i] <= (15 * 255))
-			header.heCompartDesatTime_min[i] = (uint8_t)((secondaryInformation.tissue_helium_desaturation_time_minutes[i] + 14 )/ 15);
+			gheader.heCompartDesatTime_min[i] = (uint8_t)((secondaryInformation.tissue_helium_desaturation_time_minutes[i] + 14 )/ 15);
 		else
-			header.heCompartDesatTime_min[i] = 255;
+			gheader.heCompartDesatTime_min[i] = 255;
 	}
 }
 
 static void logbook_SetLastStop(float last_stop_depth_bar)
 {
-	header.lastDecostop_m = (uint8_t)(last_stop_depth_bar / 10.0f);
+	gheader.lastDecostop_m = (uint8_t)(last_stop_depth_bar / 10.0f);
 }
 
 static void logbook_writedata(void * data, int length_byte)
 {
     ext_flash_write_sample(data, length_byte);
 }
-
 
 /********************************************************************************
 	* @brief   logbook_build_ostc3header. /
@@ -1378,17 +1379,40 @@ static void logbook_writedata(void * data, int length_byte)
 *********************************************************************************/
 SLogbookHeaderOSTC3 * logbook_build_ostc3header(SLogbookHeader* pHead)
 {
-	convert_Type data;
+	convert_Type data,data2;
 
 	memcpy(headerOSTC3.diveHeaderStart,			&pHead->diveHeaderStart,					2);
 	memcpy(headerOSTC3.pBeginProfileData,		&pHead->pBeginProfileData,				3);
 	memcpy(headerOSTC3.pEndProfileData,			&pHead->pEndProfileData,					3);
 
-	data.u8bit.byteHigh = 0;
-	data.u8bit.byteLow 			= pHead->profileLength[0];
-	data.u8bit.byteMidLow 	= pHead->profileLength[1];
-	data.u8bit.byteMidHigh 	= pHead->profileLength[2];
 
+	data.u8bit.byteHigh = 0;
+	data.u8bit.byteLow 			= pHead->pBeginProfileData[0];
+	data.u8bit.byteMidLow 	= pHead->pBeginProfileData[1];
+	data.u8bit.byteMidHigh 	= pHead->pBeginProfileData[2];
+
+	data2.u8bit.byteHigh = 0;
+	data2.u8bit.byteLow 			= pHead->pEndProfileData[0];
+	data2.u8bit.byteMidLow 	= pHead->pEndProfileData[1];
+	data2.u8bit.byteMidHigh 	= pHead->pEndProfileData[2];
+
+	/* check if sample address information are corrupted by address range. */
+	/* TODO: Workaround. Better solution would be to check end of ring for 0xFF pattern */
+	if((data.u32bit > data2.u32bit) && (data.u32bit < (SAMPLESTOP - 0x9000)))
+	{
+		data2.u32bit = data.u32bit + DEFAULT_SAMPLES;
+		pHead->pEndProfileData[0] = data2.u8bit.byteLow;
+		pHead->pEndProfileData[1] = data2.u8bit.byteMidLow;
+		pHead->pEndProfileData[2] = data2.u8bit.byteMidHigh;
+		data.u32bit = DEFAULT_SAMPLES;
+	}
+	else
+	{
+		data.u8bit.byteHigh = 0;
+		data.u8bit.byteLow 			= pHead->profileLength[0];
+		data.u8bit.byteMidLow 	= pHead->profileLength[1];
+		data.u8bit.byteMidHigh 	= pHead->profileLength[2];
+	}
 	if(data.u32bit != 0xFFFFFF)
 		data.u32bit += 3;
 
@@ -1502,12 +1526,36 @@ SLogbookHeaderOSTC3 * logbook_build_ostc3header(SLogbookHeader* pHead)
 *********************************************************************************/
 SLogbookHeaderOSTC3compact * logbook_build_ostc3header_compact(SLogbookHeader* pHead)
 {
-	convert_Type data;
+	convert_Type data, data2;
+
 
 	data.u8bit.byteHigh = 0;
-	data.u8bit.byteLow 			= pHead->profileLength[0];
-	data.u8bit.byteMidLow 	= pHead->profileLength[1];
-	data.u8bit.byteMidHigh 	= pHead->profileLength[2];
+	data.u8bit.byteLow 			= pHead->pBeginProfileData[0];
+	data.u8bit.byteMidLow 	= pHead->pBeginProfileData[1];
+	data.u8bit.byteMidHigh 	= pHead->pBeginProfileData[2];
+
+	data2.u8bit.byteHigh = 0;
+	data2.u8bit.byteLow 			= pHead->pEndProfileData[0];
+	data2.u8bit.byteMidLow 	= pHead->pEndProfileData[1];
+	data2.u8bit.byteMidHigh 	= pHead->pEndProfileData[2];
+
+	/* check if sample address information are corrupted by address range. */
+	/* TODO: Workaround. Better solution would be to check end of ring for 0xFF pattern */
+	if((data.u32bit > data2.u32bit) && (data.u32bit < (SAMPLESTOP - 0x9000)))
+	{
+		data2.u32bit = data.u32bit + DEFAULT_SAMPLES;
+		pHead->pEndProfileData[0] = data2.u8bit.byteLow;
+		pHead->pEndProfileData[1] = data2.u8bit.byteMidLow;
+		pHead->pEndProfileData[2] = data2.u8bit.byteMidHigh;
+		data.u32bit = DEFAULT_SAMPLES;
+	}
+	else
+	{
+		data.u8bit.byteHigh = 0;
+		data.u8bit.byteLow 			= pHead->profileLength[0];
+		data.u8bit.byteMidLow 	= pHead->profileLength[1];
+		data.u8bit.byteMidHigh 	= pHead->profileLength[2];
+	}
 
 	if(data.u32bit != 0xFFFFFF)
 	{
