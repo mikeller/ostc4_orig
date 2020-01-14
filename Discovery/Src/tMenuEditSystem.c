@@ -1258,6 +1258,7 @@ void refresh_InformationPage(void)
         text_content[2] = 0;
         write_label_var(  20, 800, ME_Y_LINE4, &FontT42, text_content);
 
+        translateDate(stateDeviceGetPointer()->voltageMinimum.date_rtc_dr, &Sdate);
         voltage = ((float)stateDeviceGetPointer()->voltageMinimum.value_int32) / 1000;
         snprintf(text_content,80,"%0.3fV (%u.%u.20%02u)",voltage, Sdate.Date,Sdate.Month,Sdate.Year);
         write_label_var(  20, 800, ME_Y_LINE5, &FontT42, text_content);

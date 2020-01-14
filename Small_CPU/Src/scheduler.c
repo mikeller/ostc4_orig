@@ -42,6 +42,8 @@
 #include "decom.h"
 #include "tm_stm32f4_otp.h"
 
+/* uncomment to enable restoting of last known date in case of a power loss (RTC looses timing data) */
+/* #define RESTORE_LAST_KNOWN_DATE */
 
 #define INVALID_PREASURE_VALUE 			(100.0f)
 #define START_DIVE_MOUNTAIN_MODE_BAR	(0.88f)
@@ -1200,6 +1202,41 @@ void scheduleCopyDeviceData(SDeviceLine *lineWrite, const SDeviceLine *lineRead)
 }
 
 
+void scheduletranslateDate(uint32_t datetmpreg, RTC_DateTypeDef *sDate)
+{
+  datetmpreg = (uint32_t)(datetmpreg & RTC_DR_RESERVED_MASK);
+
+  /* Fill the structure fields with the read parameters */
+  sDate->Year = (uint8_t)((datetmpreg & (RTC_DR_YT | RTC_DR_YU)) >> 16);
+  sDate->Month = (uint8_t)((datetmpreg & (RTC_DR_MT | RTC_DR_MU)) >> 8);
+  sDate->Date = (uint8_t)(datetmpreg & (RTC_DR_DT | RTC_DR_DU));
+  sDate->WeekDay = (uint8_t)((datetmpreg & (RTC_DR_WDU)) >> 13);
+
+	/* Convert the date structure parameters to Binary format */
+	sDate->Year = (uint8_t)RTC_Bcd2ToByte(sDate->Year);
+	sDate->Month = (uint8_t)RTC_Bcd2ToByte(sDate->Month);
+	sDate->Date = (uint8_t)RTC_Bcd2ToByte(sDate->Date);
+}
+
+void scheduleCheckDate(void)
+{
+	uint32_t localdate;
+	RTC_DateTypeDef sDate;
+	localdate =	(uint32_t)(RTCHandle.Instance->DR & RTC_DR_RESERVED_MASK);
+	scheduletranslateDate(localdate, &sDate);
+
+	/* RTC start in year 2000 in case of a power loss. Use the operation counter time stamp to bring at last date to a more realistic value */
+	if(sDate.Year < 15)
+	{
+		scheduletranslateDate(DeviceDataFlash.hoursOfOperation.date_rtc_dr, &sDate);
+		if(sDate.Year > 16)
+		{
+			RTC_SetDate(sDate);
+		}
+	}
+
+}
+
 void scheduleUpdateDeviceData(void)
 {
 	/* first step, main CPU */
@@ -1207,6 +1244,13 @@ void scheduleUpdateDeviceData(void)
 	if(deviceDataFlashValid)
 	{
 		/* max values */
+		if(global.deviceData.hoursOfOperation.value_int32 < DeviceDataFlash.hoursOfOperation.value_int32)
+		{
+			scheduleCopyDeviceData(&global.deviceData.hoursOfOperation, &DeviceDataFlash.hoursOfOperation);
+#ifdef RESTORE_LAST_KNOWN_DATE
+			scheduleCheckDate();
+#endif
+		}
 		if(global.deviceData.batteryChargeCompleteCycles.value_int32 < DeviceDataFlash.batteryChargeCompleteCycles.value_int32)
 		{
 			scheduleCopyDeviceData(&global.deviceData.batteryChargeCompleteCycles, &DeviceDataFlash.batteryChargeCompleteCycles);
@@ -1226,10 +1270,6 @@ void scheduleUpdateDeviceData(void)
 		if(global.deviceData.diveCycles.value_int32 < DeviceDataFlash.diveCycles.value_int32)
 		{
 			scheduleCopyDeviceData(&global.deviceData.diveCycles, &DeviceDataFlash.diveCycles);
-		}
-		if(global.deviceData.hoursOfOperation.value_int32 < DeviceDataFlash.hoursOfOperation.value_int32)
-		{
-			scheduleCopyDeviceData(&global.deviceData.hoursOfOperation, &DeviceDataFlash.hoursOfOperation);
 		}
 		
 		/* min values */
@@ -1286,6 +1326,7 @@ void scheduleUpdateDeviceData(void)
 			{
 				deviceDataSubSeconds = 0;
 				global.deviceData.hoursOfOperation.value_int32++;
+				scheduleSetDate(&global.deviceData.hoursOfOperation);
 			}
 			break;
 
