@@ -88,6 +88,8 @@ uint8_t t6_getCustomView(void)
 
 void t6_init(void)
 {
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
     t6_selection_customview = t6_customviewsStandard[0];
 
     t6screen.FBStartAdress = 0;
@@ -99,17 +101,35 @@ void t6_init(void)
     t6l1.WindowNumberOfTextLines = 2;
     t6l1.WindowLineSpacing = 19; // Abstand von Y0
     t6l1.WindowTab = 100;
-    t6l1.WindowX0 = 0;
-    t6l1.WindowX1 = BigFontSeperationLeftRight - 5;
-    t6l1.WindowY0 = BigFontSeperationTopBottom + 5;
-    t6l1.WindowY1 = 479;
+    if(!pSettings->FlipDisplay)
+    {
+    	t6l1.WindowX0 = 0;
+    	t6l1.WindowX1 = BigFontSeperationLeftRight - 5;
+    	t6l1.WindowY0 = BigFontSeperationTopBottom + 5;
+    	t6l1.WindowY1 = 479;
+    }
+    else
+    {
+    	t6l1.WindowX0 = 800 - BigFontSeperationLeftRight + 5;
+    	t6l1.WindowX1 = 799;
+    	t6l1.WindowY0 = 0;
+    	t6l1.WindowY1 = 479 - BigFontSeperationTopBottom + 5 ;
+    }
 
     t6r1.Image = &t6screen;
     t6r1.WindowNumberOfTextLines = t6l1.WindowNumberOfTextLines;
     t6r1.WindowLineSpacing = t6l1.WindowLineSpacing;
     t6r1.WindowTab = t6l1.WindowTab;
-    t6r1.WindowX0 = BigFontSeperationLeftRight + 5;
-    t6r1.WindowX1 = 799;
+    if(!pSettings->FlipDisplay)
+    {
+    	t6r1.WindowX0 = BigFontSeperationLeftRight + 5;
+    	t6r1.WindowX1 = 799;
+    }
+    else
+    {
+    	t6r1.WindowX0 = 0;
+    	t6r1.WindowX1 = BigFontSeperationLeftRight - 5;
+    }
     t6r1.WindowY0 = t6l1.WindowY0;
     t6r1.WindowY1 = t6l1.WindowY1;
 
@@ -118,16 +138,36 @@ void t6_init(void)
     t6c1.WindowLineSpacing = t6l1.WindowLineSpacing;
     t6c1.WindowX0 = 0;
     t6c1.WindowX1 = 799;
-    t6c1.WindowY0 = 0;
-    t6c1.WindowY1 = BigFontSeperationTopBottom - 5;
+    if(!pSettings->FlipDisplay)
+    {
+    	t6c1.WindowY0 = 0;
+    	t6c1.WindowY1 = BigFontSeperationTopBottom - 5;
+    }
+	else
+	{
+		t6c1.WindowY0 = 480 - BigFontSeperationTopBottom + 5;
+		t6c1.WindowY1 = 479;
+	   	t6c1.WindowX0 = 0;
+	    t6c1.WindowX1 = BigFontSeperationLeftRight - 5;
+	}
 
     t6c2.Image = &t6screen;
     t6c2.WindowNumberOfTextLines = 3;
     t6c2.WindowLineSpacing = 58;
     t6c2.WindowX0 = 370;
     t6c2.WindowX1 = 799;
-    t6c2.WindowY0 = 0;
-    t6c2.WindowY1 = BigFontSeperationTopBottom - 5;
+
+    if(!pSettings->FlipDisplay)
+    {
+    	t6c2.WindowY0 = 0;
+    	t6c2.WindowY1 = BigFontSeperationTopBottom - 5;
+    }
+	else
+	{
+		t6c2.WindowY0 = 480 - BigFontSeperationTopBottom + 5;
+		t6c2.WindowY1 = 479;
+	}
+
     t6c2.WindowTab = 600;
 
     t6c3.Image = &t6screen;
@@ -136,8 +176,16 @@ void t6_init(void)
     t6c3.WindowTab = 100;
     t6c3.WindowX0 = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
     t6c3.WindowX1 = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_INSIDE_OFFSET;
-    t6c3.WindowY0 = 0;
-    t6c3.WindowY1 = 69;
+    if(!pSettings->FlipDisplay)
+    {
+    	t6c3.WindowY0 = 0;
+    	t6c3.WindowY1 = 69;
+    }
+    else
+    {
+    	t6c3.WindowY0 = 480 - 69;
+    	t6c3.WindowY1 = 479;
+    }
 }
 
 
