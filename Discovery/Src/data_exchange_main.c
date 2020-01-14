@@ -90,7 +90,15 @@ static uint8_t data_old__lost_connection_to_slave_counter_temp = 0;
 static uint8_t data_old__lost_connection_to_slave_counter_retry = 0;
 static uint32_t data_old__lost_connection_to_slave_counter_total = 0;
 
+static uint8_t DeviceDataUpdated = 0;
+
 /* Private types -------------------------------------------------------------*/
+#define UNKNOWN_TIME_HOURS		1
+#define UNKNOWN_TIME_MINUTES	0
+#define UNKNOWN_TIME_SECOND		0
+#define UNKNOWN_DATE_DAY		1
+#define UNKNOWN_DATE_MONTH		1
+#define UNKNOWN_DATE_YEAR		16
 
 /* Private function prototypes -----------------------------------------------*/
 static uint8_t DataEX_check_header_and_footer_ok(void);
@@ -99,7 +107,6 @@ static uint8_t DataEX_check_header_and_footer_devicedata(void);
 static void DataEX_check_DeviceData(void);
 
 /* Exported functions --------------------------------------------------------*/
-
 uint8_t DataEX_was_power_on(void)
 {
 	return wasPowerOn;
@@ -141,6 +148,7 @@ void DataEX_init(void)
 	pStateReal->data_old__lost_connection_to_slave = 0; //initial value
 	data_old__lost_connection_to_slave_counter_temp = 0;
 	data_old__lost_connection_to_slave_counter_total = 0;
+	DeviceDataUpdated = 0;
 
 	memset((void *)&dataOut, 0, sizeof(SDataReceiveFromMaster));
 
@@ -517,19 +525,18 @@ static void DataEX_helper_SetDate(RTC_DateTypeDef inSdatestructure, uint32_t *ou
 }
 
 
-
 static void DataEX_helper_set_Unknown_Date_deviceData(SDeviceLine *lineWrite)
 {	
 	RTC_DateTypeDef sdatestructure;
 	RTC_TimeTypeDef stimestructure;
 
-	stimestructure.Hours = 1;
-	stimestructure.Minutes = 0;
-	stimestructure.Seconds = 0;
+	stimestructure.Hours = UNKNOWN_TIME_HOURS;
+	stimestructure.Minutes = UNKNOWN_TIME_MINUTES;
+	stimestructure.Seconds = UNKNOWN_TIME_SECOND;
 
-	sdatestructure.Date = 1;
-	sdatestructure.Month = 1;
-	sdatestructure.Year = 16;
+	sdatestructure.Date = UNKNOWN_DATE_DAY;
+	sdatestructure.Month = UNKNOWN_DATE_MONTH;
+	sdatestructure.Year = UNKNOWN_DATE_YEAR;
 	setWeekday(&sdatestructure);
 
 	DataEX_helper_SetTime(stimestructure, &lineWrite->time_rtc_tr);
@@ -539,36 +546,63 @@ static void DataEX_helper_set_Unknown_Date_deviceData(SDeviceLine *lineWrite)
 
 static uint8_t DataEX_helper_Check_And_Correct_Date_deviceData(SDeviceLine *lineWrite)
 {
+	uint8_t retval = 0;
 	RTC_DateTypeDef sdatestructure;
 	RTC_TimeTypeDef stimestructure;
 
 	// from lineWrite to structure
 	translateDate(lineWrite->date_rtc_dr, &sdatestructure);
 	translateTime(lineWrite->time_rtc_tr, &stimestructure);
-	
-	if(		(sdatestructure.Year >= 15)
+
+	/* Check if date is out of range */
+	if(!(	(sdatestructure.Year >= 15)
 			&& (sdatestructure.Year <= 30)
-			&& (sdatestructure.Month <= 12))
-		return 0;
-
-
-	DataEX_helper_set_Unknown_Date_deviceData(lineWrite);
-	return 1;
+			&& (sdatestructure.Month <= 12)))
+	{
+		DataEX_helper_set_Unknown_Date_deviceData(lineWrite);
+		retval = 1;
+	}
+	return retval;
 }
 
 
-static uint8_t DataEX_helper_Check_And_Correct_Value_deviceData(SDeviceLine *lineWrite, int32_t from, int32_t to)
+static uint8_t DataEX_helper_Check_And_Correct_Value_deviceData(SDeviceLine *lineWrite, int32_t from, int32_t to, uint8_t defaulttofrom)
 {
-	if(lineWrite->value_int32 >= from && lineWrite->value_int32 <= to)
-		return 0;
+	uint8_t retval = 0;
+	RTC_DateTypeDef sdatestructure;
 
-	if(lineWrite->value_int32 < from)
-		lineWrite->value_int32 = from;
-	else
-		lineWrite->value_int32 = to;
-		
-	DataEX_helper_set_Unknown_Date_deviceData(lineWrite);
-	return 0;
+	/* Is value out of valid range? */
+	if(!(lineWrite->value_int32 >= from && lineWrite->value_int32 <= to))
+	{
+		if(defaulttofrom)
+		{
+			lineWrite->value_int32 = from;
+		}
+		else
+		{
+			lineWrite->value_int32 = to;
+		}
+		DataEX_helper_set_Unknown_Date_deviceData(lineWrite);
+	}
+
+	/* This is just a repair function to restore metric if a corruption occurred in an older fw version */
+	if(((lineWrite->value_int32 == to) && defaulttofrom )
+		|| ((lineWrite->value_int32 == from) && !defaulttofrom ))
+	{
+		translateDate(lineWrite->date_rtc_dr, &sdatestructure);
+		if(sdatestructure.Year == UNKNOWN_DATE_YEAR)
+		{
+			if(defaulttofrom)
+			{
+				lineWrite->value_int32 = from;
+			}
+			else
+			{
+				lineWrite->value_int32 = to;
+			}
+		}
+	}
+	return retval;
 }
 
 
@@ -585,14 +619,14 @@ static void DataEX_check_DeviceData(void)
 	DataEX_helper_Check_And_Correct_Date_deviceData(&DeviceData->temperatureMinimum);
 	DataEX_helper_Check_And_Correct_Date_deviceData(&DeviceData->voltageMinimum);
 
-	DataEX_helper_Check_And_Correct_Value_deviceData(&DeviceData->batteryChargeCompleteCycles, 0, 10000);
-	DataEX_helper_Check_And_Correct_Value_deviceData(&DeviceData->batteryChargeCycles, 0, 20000);
-	DataEX_helper_Check_And_Correct_Value_deviceData(&DeviceData->depthMaximum, 0, (500*100)+1000);
-	DataEX_helper_Check_And_Correct_Value_deviceData(&DeviceData->diveCycles, 0, 20000);
-	DataEX_helper_Check_And_Correct_Value_deviceData(&DeviceData->hoursOfOperation, 0, 1000000);
-	DataEX_helper_Check_And_Correct_Value_deviceData(&DeviceData->temperatureMaximum, -30*100, 150*100);
-	DataEX_helper_Check_And_Correct_Value_deviceData(&DeviceData->temperatureMinimum, -30*100, 150*100);
-	DataEX_helper_Check_And_Correct_Value_deviceData(&DeviceData->voltageMinimum, -1*1000, 6*1000);
+	DataEX_helper_Check_And_Correct_Value_deviceData(&DeviceData->batteryChargeCompleteCycles, 0, 10000,1);
+	DataEX_helper_Check_And_Correct_Value_deviceData(&DeviceData->batteryChargeCycles, 0, 20000,1);
+	DataEX_helper_Check_And_Correct_Value_deviceData(&DeviceData->depthMaximum, 0, (500*100)+1000,1);
+	DataEX_helper_Check_And_Correct_Value_deviceData(&DeviceData->diveCycles, 0, 20000,1);
+	DataEX_helper_Check_And_Correct_Value_deviceData(&DeviceData->hoursOfOperation, 0, 1000000,1);
+	DataEX_helper_Check_And_Correct_Value_deviceData(&DeviceData->temperatureMaximum, -30*100, 150*100,1);
+	DataEX_helper_Check_And_Correct_Value_deviceData(&DeviceData->temperatureMinimum, -30*100, 150*100,0);
+	DataEX_helper_Check_And_Correct_Value_deviceData(&DeviceData->voltageMinimum, 2*1000, 6*1000,0);
 }
 
 
@@ -631,20 +665,21 @@ static void DataEX_merge_DeviceData_and_store(void)
 	{
 		DataEX_helper_copy_deviceData(&DeviceData->diveCycles, &DeviceDataFlash.diveCycles);
 	}
+	if(DeviceData->hoursOfOperation.value_int32 < DeviceDataFlash.hoursOfOperation.value_int32)
+	{
+		DataEX_helper_copy_deviceData(&DeviceData->hoursOfOperation, &DeviceDataFlash.hoursOfOperation);
+	}
 	
+
 	/* min values */
 	if(DeviceData->temperatureMinimum.value_int32 > DeviceDataFlash.temperatureMinimum.value_int32)
 	{
 		DataEX_helper_copy_deviceData(&DeviceData->temperatureMinimum, &DeviceDataFlash.temperatureMinimum);
 	}
-	// Voltage minimum, keep limit to 2.0 Volt; hw 09.09.2015
 	if(DeviceData->voltageMinimum.value_int32 > DeviceDataFlash.voltageMinimum.value_int32)
 	{
-		if(DeviceDataFlash.voltageMinimum.value_int32 > 2000) // do not copy back 2000 and below
 			DataEX_helper_copy_deviceData(&DeviceData->voltageMinimum, &DeviceDataFlash.voltageMinimum);
 	}
-	if(DeviceData->voltageMinimum.value_int32 < 2000)
-		DeviceData->voltageMinimum.value_int32 = 2000;
 	
 	DataEX_check_DeviceData	();
 	ext_flash_write_devicedata();
@@ -657,6 +692,7 @@ static void DataEX_copy_to_DeviceData(void)
 	SDevice * pDeviceState = stateDeviceGetPointerWrite();
 
 	memcpy(pDeviceState, &dataInDevice->DeviceData[dataInDevice->boolDeviceData], sizeof(SDevice));
+	DeviceDataUpdated = 1;	/* indicate new data to be written to flash by background task (at last op hour count will be updated) */
 }
 
 
@@ -755,7 +791,6 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		if(DataEX_check_header_and_footer_devicedata())
 		{
 			DataEX_copy_to_DeviceData();
-			DataEX_merge_DeviceData_and_store();
 			DataEX_copy_to_VpmRepetitiveData();
 			data_old__lost_connection_to_slave_counter_temp = 0;
 			data_old__lost_connection_to_slave_counter_retry = 0;
@@ -1109,3 +1144,13 @@ static uint8_t DataEX_check_header_and_footer_devicedata(void)
 
 	return 1;
 }
+
+void DataEX_merge_devicedata(void)
+{
+	if(DeviceDataUpdated)
+	{
+		DeviceDataUpdated = 0;
+		DataEX_merge_DeviceData_and_store();
+	}
+}
+

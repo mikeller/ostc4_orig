@@ -24,6 +24,8 @@
 #include "global_constants.h"
 #include "spi.h"
 #include "dma.h"
+#include "batteryGasGauge.h"
+#include "pressure.h"
 
 //#include "gpio.h"
 
@@ -298,13 +300,29 @@ void SPI_synchronize_with_Master(void) {
 }
 
 void SPI_Start_single_TxRx_with_Master(void) {
+	static uint8_t DevicedataDelayCnt = 10;
+	static uint8_t DeviceDataPending = 0;
 	uint8_t * pOutput;
 	HAL_StatusTypeDef retval;
 
-	if (global.dataSendToSlave.getDeviceDataNow) {
-		global.dataSendToSlave.getDeviceDataNow = 0;
-		pOutput = (uint8_t*) &(global.deviceDataSendToMaster);
-	} else {
+	if ((global.dataSendToSlave.getDeviceDataNow) || (DeviceDataPending))
+	{
+		if(((DevicedataDelayCnt == 0) || (((get_voltage() != 6.0) && (get_temperature() != 0.0)))))			/* devicedata complete? */
+		{
+			global.dataSendToSlave.getDeviceDataNow = 0;
+			DeviceDataPending = 0;
+			pOutput = (uint8_t*) &(global.deviceDataSendToMaster);
+		}
+		else
+		{
+			DeviceDataPending = 1;
+			DevicedataDelayCnt--;
+			pOutput = (uint8_t*) &(global.dataSendToMaster);
+		}
+
+	}
+	else
+	{
 		pOutput = (uint8_t*) &(global.dataSendToMaster);
 	}
 	retval = HAL_SPI_TransmitReceive_DMA(&hspi1, pOutput,(uint8_t*) &(global.dataSendToSlave), EXCHANGE_BUFFERSIZE);

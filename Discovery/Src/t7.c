@@ -48,6 +48,7 @@ void t7_refresh_divemode(void);
 void t7_refresh_sleep_design_fun(void);
 void t7_refresh_divemode_userselected_left_lower_corner(void);
 void t7_refresh_customview(void);
+uint8_t t7_customview_disabled(uint8_t view);
 
 void draw_frame(_Bool PluginBoxHeader, _Bool LinesOnTheSides, uint8_t colorBox, uint8_t colorLinesOnTheSide);
 
@@ -1491,9 +1492,31 @@ uint8_t t7_GetEnabled_customviews()
     return enabledViewCnt;
 }
 
+uint8_t t7_customview_disabled(uint8_t view)
+{
+	uint8_t i = 0;
+	uint8_t cv_disabled = 0;
+
+   	while(cv_changelist[i] != CVIEW_END)
+    {
+         if((view == cv_changelist[i]) && !CHECK_BIT_THOME(settingsGetPointer()->cv_configuration, cv_changelist[i]))
+         {
+        	 cv_disabled = 1;
+               break;
+         }
+         i++;
+    }
+
+    if (((view == CVIEW_sensors) || (view == CVIEW_sensors_mV)) &&
+       	((stateUsed->diveSettings.ppo2sensors_deactivated) || (stateUsed->diveSettings.ccrOption == 0)))
+    {
+      	cv_disabled = 1;
+    }
+    return cv_disabled;
+}
+
 void t7_change_customview(uint8_t action)
 {
-	int8_t i;
     uint8_t *pViews;
     uint8_t *pStartView,*pCurView, *pLastView;
     _Bool cv_disabled = 0;
@@ -1540,24 +1563,7 @@ void t7_change_customview(uint8_t action)
 
     do
     {
-        cv_disabled = 0;
-        i=0;
-       	while(cv_changelist[i] != CVIEW_END)
-        {
-             if((*pViews == cv_changelist[i]) && !CHECK_BIT_THOME(settingsGetPointer()->cv_configuration, cv_changelist[i]))
-             {
-            	 cv_disabled = 1;
-                   break;
-             }
-             i++;
-        }
-
-        if (((*pViews == CVIEW_sensors) || (*pViews == CVIEW_sensors_mV)) &&
-           	((stateUsed->diveSettings.ppo2sensors_deactivated) || (stateUsed->diveSettings.ccrOption == 0)))
-        {
-	      	cv_disabled = 1;
-        }
-
+    	cv_disabled = t7_customview_disabled(*pViews);
         if(cv_disabled)		/* view is disabled => jump to next view */
         {
           	if((action == ACTION_BUTTON_ENTER) || (action == ACTION_PITCH_POS))
@@ -1598,6 +1604,7 @@ uint8_t t7_get_length_of_customtext(void)
 
 void t7_refresh_customview(void)
 {
+	static uint8_t last_customview = CVIEW_END;
 
     char text[256];
     uint16_t textpointer = 0;
@@ -1614,13 +1621,13 @@ void t7_refresh_customview(void)
 	SSettings* pSettings;
 	pSettings = settingsGetPointer();
 
-    if((selection_customview == CVIEW_sensors) &&(stateUsed->diveSettings.ccrOption == 0))
-        t7_change_customview(ACTION_BUTTON_ENTER);
-    if((selection_customview == CVIEW_sensors_mV) &&(stateUsed->diveSettings.ccrOption == 0))
-        t7_change_customview(ACTION_BUTTON_ENTER);
-    if((selection_customview == CVIEW_sensors) &&(stateUsed->diveSettings.ccrOption == 0))
-        t7_change_customview(ACTION_BUTTON_ENTER);
-
+	if(last_customview != selection_customview)		/* check if current selection is disabled and should be skipped */
+	{
+		if(t7_customview_disabled(selection_customview))
+		{
+			t7_change_customview(ACTION_BUTTON_ENTER);
+		}
+	}
     switch(selection_customview)
     {
     case CVIEW_noneOrDebug:
