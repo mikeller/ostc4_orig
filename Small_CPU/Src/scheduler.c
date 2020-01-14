@@ -42,6 +42,8 @@
 #include "decom.h"
 #include "tm_stm32f4_otp.h"
 
+/* uncomment to enable restoting of last known date in case of a power loss (RTC looses timing data) */
+/* #define RESTORE_LAST_KNOWN_DATE */
 
 #define INVALID_PREASURE_VALUE 			(100.0f)
 #define START_DIVE_MOUNTAIN_MODE_BAR	(0.88f)
@@ -1245,7 +1247,9 @@ void scheduleUpdateDeviceData(void)
 		if(global.deviceData.hoursOfOperation.value_int32 < DeviceDataFlash.hoursOfOperation.value_int32)
 		{
 			scheduleCopyDeviceData(&global.deviceData.hoursOfOperation, &DeviceDataFlash.hoursOfOperation);
+#ifdef RESTORE_LAST_KNOWN_DATE
 			scheduleCheckDate();
+#endif
 		}
 		if(global.deviceData.batteryChargeCompleteCycles.value_int32 < DeviceDataFlash.batteryChargeCompleteCycles.value_int32)
 		{
