@@ -1680,7 +1680,7 @@ static void deco_loop(void)
 
     static CALC_WHAT what = CALC_INVALID;
     static int counter = 0;
-    if((stateUsed->mode != MODE_DIVE) || (stateUsed->diveSettings.diveMode == DIVEMODE_Apnea) || (decoLock != DECO_CALC_ready ))
+    if((stateUsed->mode != MODE_DIVE) || (stateUsed->diveSettings.diveMode == DIVEMODE_Apnea) || (stateUsed->diveSettings.diveMode == DIVEMODE_Gauge) || (decoLock != DECO_CALC_ready ))
         return;
 
     decoLock = DECO_CALC_running;
