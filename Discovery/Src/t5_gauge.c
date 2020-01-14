@@ -95,6 +95,9 @@ uint8_t t5_getCustomView(void)
 
 void t5_init(void)
 {
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
     t5_selection_customview = t5_customviewsStandard[0];
 
     t5screen.FBStartAdress = 0;
@@ -105,18 +108,36 @@ void t5_init(void)
     t5l1.Image = &t5screen;
     t5l1.WindowNumberOfTextLines = 2;
     t5l1.WindowLineSpacing = 19; // Abstand von Y0
-    t5l1.WindowTab = 100;
-    t5l1.WindowX0 = 0;
-    t5l1.WindowX1 = BigFontSeperationLeftRight - 5;
-    t5l1.WindowY0 = BigFontSeperationTopBottom + 5;
-    t5l1.WindowY1 = 479;
+	t5l1.WindowTab = 100;
+    if(!pSettings->FlipDisplay)
+    {
+		t5l1.WindowX0 = 0;
+		t5l1.WindowX1 = BigFontSeperationLeftRight - 5;
+		t5l1.WindowY0 = BigFontSeperationTopBottom + 5;
+		t5l1.WindowY1 = 479;
+    }
+    else
+    {
+		t5l1.WindowX0 = 800 - BigFontSeperationLeftRight + 5;
+		t5l1.WindowX1 = 799;
+		t5l1.WindowY0 = 0;
+		t5l1.WindowY1 = 479 - BigFontSeperationTopBottom + 5 ;
+    }
 
     t5r1.Image = &t5screen;
     t5r1.WindowNumberOfTextLines = t5l1.WindowNumberOfTextLines;
     t5r1.WindowLineSpacing = t5l1.WindowLineSpacing;
     t5r1.WindowTab = t5l1.WindowTab;
-    t5r1.WindowX0 = BigFontSeperationLeftRight + 5;
-    t5r1.WindowX1 = 799;
+    if(!pSettings->FlipDisplay)
+    {
+		t5r1.WindowX0 = BigFontSeperationLeftRight + 5;
+		t5r1.WindowX1 = 799;
+    }
+    else
+    {
+		t5r1.WindowX0 = 0;
+		t5r1.WindowX1 = BigFontSeperationLeftRight - 5;
+    }
     t5r1.WindowY0 = t5l1.WindowY0;
     t5r1.WindowY1 = t5l1.WindowY1;
 
@@ -125,8 +146,16 @@ void t5_init(void)
     t5c1.WindowLineSpacing = t5l1.WindowLineSpacing;
     t5c1.WindowX0 = 0;
     t5c1.WindowX1 = 799;
-    t5c1.WindowY0 = 0;
-    t5c1.WindowY1 = BigFontSeperationTopBottom - 5;
+    if(!pSettings->FlipDisplay)
+    {
+    	t5c1.WindowY0 = 0;
+    	t5c1.WindowY1 = BigFontSeperationTopBottom - 5;
+    }
+	else
+	{
+		t5c1.WindowY0 = 480 - BigFontSeperationTopBottom + 5;
+		t5c1.WindowY1 = 479;
+	}
 
     t5c2.Image = &t5screen;
     t5c2.WindowNumberOfTextLines = 3;
@@ -143,8 +172,16 @@ void t5_init(void)
     t5c3.WindowTab = 100;
     t5c3.WindowX0 = CUSTOMBOX_LINE_LEFT + CUSTOMBOX_INSIDE_OFFSET;
     t5c3.WindowX1 = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_INSIDE_OFFSET;
-    t5c3.WindowY0 = 0;
-    t5c3.WindowY1 = 69;
+    if(!pSettings->FlipDisplay)
+    {
+    	t5c3.WindowY0 = 0;
+    	t5c3.WindowY1 = 69;
+    }
+    else
+    {
+    	t5c3.WindowY0 = 480 - 69;
+    	t5c3.WindowY1 = 479;
+    }
 }
 
 

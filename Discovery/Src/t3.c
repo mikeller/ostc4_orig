@@ -259,13 +259,28 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
             else
                 depthChangeRate = 200;
         }
-        start.y = tXl1->WindowY0 - 1;
+
+        if(!pSettings->FlipDisplay)
+        {
+        	start.y = tXl1->WindowY0 - 1;
+        }
+        else
+        {
+        	start.y = tXl1->WindowY1 + 1;
+        }
         startZeroLine.y = start.y;
         for(int i = 0; i<5;i++)
         {
             start.y += 40;
             stop.y = start.y;
-            start.x = tXl1->WindowX1 - 1;
+            if(!pSettings->FlipDisplay)
+            {
+            	start.x = tXl1->WindowX1 - 1;
+            }
+            else
+            {
+            	start.x = tXr1->WindowX1 - 1;
+            }
             stop.x = start.x - 17;
 
             if(depthChangeRate <= 6)
@@ -290,7 +305,6 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
         if((stateUsed->lifeData.ascent_rate_meter_per_min > 4) || (stateUsed->lifeData.ascent_rate_meter_per_min < -4))
         {
             start.y = startZeroLine.y;
-
             if(depthChangeAscent)
             {
                 color = CLUT_EverythingOkayGreen;
@@ -307,7 +321,16 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
                 if(stop.y <= tXl1->WindowY0)
                     stop.y = tXl1->WindowY0 + 1;
             }
-            stop.x = start.x = tXl1->WindowX1 - 8;
+            if(!pSettings->FlipDisplay)
+            {
+            	start.x = tXl1->WindowX1 - 3 - 5;
+            }
+            else
+            {
+            	start.x = tXr1->WindowX1 - 3 - 5;
+            }
+
+            stop.x = start.x;
             GFX_draw_thick_line(12,tXscreen, start, stop, color);
         }
     }
@@ -501,15 +524,21 @@ void t3_basics_refresh_apnoeRight(float depth, uint8_t tX_selection_customview, 
 
     // CVIEW_T3_Temperature
     float temperature;
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
 
     SDivetime TotalDivetime = {0,0,0,0};
     SDivetime LastDivetime = {0,0,0,0};
 
     uint16_t tempWinX0;
+    uint16_t tempWinX1;
     uint16_t tempWinY0;
+    uint16_t tempWinY1;
 
     tempWinX0 = tXc1->WindowX0;
+    tempWinX1 = tXc1->WindowX1;
     tempWinY0 = tXc1->WindowY0;
+    tempWinY1 = tXc1->WindowY1;
 
     tXc1->WindowX0 = 440; // rechte Seite
 
@@ -542,27 +571,54 @@ void t3_basics_refresh_apnoeRight(float depth, uint8_t tX_selection_customview, 
         LastDivetime.Minutes = LastDivetime.Total / 60;
         LastDivetime.Seconds = LastDivetime.Total - ( LastDivetime.Minutes * 60 );
 
-        tXc1->WindowY0 = 100; // obere Zeile
+   //     tXc1->WindowY0 = 100; // obere Zeile
+        if(!pSettings->FlipDisplay)
+        {
+        	tXc1->WindowY0 = 100;
+        }
+        else
+        {
+        	tXc1->WindowY1 -= 100; /* jump to upper of two lines */
+        }
 
         snprintf(text,TEXTSIZE,"\020\016%u:%02u",LastDivetime.Minutes, LastDivetime.Seconds);
         t3_basics_colorscheme_mod(text);
         GFX_write_string(&FontT105,tXc1,text,0);
 
+        if(pSettings->FlipDisplay)
+        {
+            tXc1->WindowX0 = 0;
+
+        }
         snprintf(text,TEXTSIZE,"\032\002%c%c",TXT_2BYTE, TXT2BYTE_ApneaLast);
         GFX_write_string(&FontT42,tXc1,text,0);
 
-        tXc1->WindowY0 = tempWinY0; // wieder unten
+        if(!pSettings->FlipDisplay)
+        {
+        	tXc1->WindowY0 = tempWinY0;
+        }
+        else
+        {
+            tXc1->WindowX1 = tempWinX1;
+        	tXc1->WindowY1 = tempWinY1; /* jump to upper of two lines */
+        }
 
         snprintf(text,TEXTSIZE,"\020\016%u:%02u",TotalDivetime.Minutes, TotalDivetime.Seconds);
         t3_basics_colorscheme_mod(text);
         GFX_write_string(&FontT105,tXc1,text,0);
 
         snprintf(text,TEXTSIZE,"\032\002%c%c",TXT_2BYTE, TXT2BYTE_ApneaTotal);
+        if(pSettings->FlipDisplay)
+        {
+            tXc1->WindowX0 = 0;
+
+        }
         GFX_write_string(&FontT42,tXc1,text,0);
         break;
     }
 
     tXc1->WindowX0 = tempWinX0;
+    tXc1->WindowX1 = tempWinX1;
     tXc1->WindowY0 = tempWinY0;
 
 }
@@ -609,30 +665,61 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
     uint16_t tempWinY0;
     uint16_t tempWinY1;
     uint16_t tempWinC2X0;
+    uint16_t tempWinC2Y0;
+    uint16_t tempWinC2X1;
+    uint16_t tempWinC2Y1;
     uint16_t tempWinC2Tab;
 
     tempWinX0 = tXc1->WindowX0;
     tempWinY0 = tXc1->WindowY0;
+
     tempWinC2X0  = tXc2->WindowX0;
+    tempWinC2Y0 = tXc2->WindowY0;
+    tempWinC2X1  = tXc2->WindowX1;
+    tempWinC2Y1 = tXc2->WindowY1;
     tempWinC2Tab = tXc2->WindowTab;
 
     switch(tX_selection_customview)
     {
     case CVIEW_T3_ApnoeSurfaceInfo:
         snprintf(text,TEXTSIZE,"\032\f%c",TXT_MaxDepth);
-        GFX_write_string(&FontT42,tXc1,text,0);
 
-        tXc1->WindowY0 = 100; // obere Zeile
+        if(!pSettings->FlipDisplay)
+        {
+	        GFX_write_string(&FontT42,tXc1,text,0);
+        	tXc1->WindowY0 = 100;
+        }
+        else
+        {
+	        GFX_write_string(&FontT42,tXc2,text,0);
+        	tXc2->WindowY1 -= 100; /* jump to upper of two lines */
+        }
 
         snprintf(text,TEXTSIZE,"\020\016%01.1f",unit_depth_float(stateUsed->lifeData.apnea_last_max_depth_meter));
         t3_basics_colorscheme_mod(text);
-        GFX_write_string(&FontT105,tXc1,text,0);
+        
+        if(!pSettings->FlipDisplay)
+        {
+	        GFX_write_string(&FontT105,tXc1,text,0);
+        	tXc1->WindowY0 = tempWinY0;
+        }
+        else
+        {
+	        GFX_write_string(&FontT105,tXc2,text,0);
+        	tXc2->WindowY1 = tempWinC2Y1; /* jump to upper of two lines */
+        }
 
-        tXc1->WindowY0 = tempWinY0; // wieder unten
 
         snprintf(text,TEXTSIZE,"\020\016%01.1f",unit_depth_float(stateUsed->lifeData.apnea_total_max_depth_meter));
         t3_basics_colorscheme_mod(text);
-        GFX_write_string(&FontT105,tXc1,text,0);
+        if(!pSettings->FlipDisplay)
+        {
+		    GFX_write_string(&FontT105,tXc1,text,0);
+        }
+        else
+        {
+	        GFX_write_string(&FontT105,tXc2,text,0);
+        }
         break;
 
     case CVIEW_T3_StopWatch:
@@ -695,9 +782,13 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         textpointer = 0;
         tempWinC2X0 = tXc2->WindowX0;
         tempWinC2Tab = tXc2->WindowTab;
-
         tXc2->WindowX0 = 0;
         tXc2->WindowTab = 800/2;
+
+        if(pSettings->FlipDisplay)
+        {
+        	tXc2->WindowY1 = 0;
+        }
 
         pGasLine = settingsGetPointer()->gas;
         if(actualLeftMaxDepth(stateUsed))
@@ -839,10 +930,38 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
 
     case CVIEW_T3_MaxDepth:
         snprintf(text,TEXTSIZE,"\032\f%c",TXT_MaxDepth);
-        GFX_write_string(&FontT42,tXc1,text,0);
+        if(pSettings->FlipDisplay)
+        {
+        	if(mode == DIVEMODE_Apnea)
+        	{
+        		GFX_write_string(&FontT42,tXc2,text,0);
+        	}
+        	else
+        	{
+        		GFX_write_string(&FontT42,tXc1,text,0);
+        	}
+        }
+        else
+        {
+        	GFX_write_string(&FontT42,tXc1,text,0);
+        }
         snprintf(text,TEXTSIZE,"\020\003\016%01.1f",unit_depth_float(stateUsed->lifeData.max_depth_meter));
         t3_basics_colorscheme_mod(text);
-        GFX_write_string(&FontT105,tXc1,text,1);
+        if(pSettings->FlipDisplay)
+        {
+        	if(mode == DIVEMODE_Apnea)
+        	{
+        		GFX_write_string(&FontT105,tXc2,text,0);
+        	}
+        	else
+        	{
+        		GFX_write_string(&FontT105,tXc1,text,0);
+        	}
+        }
+        else
+        {
+        	GFX_write_string(&FontT105,tXc1,text,1);
+        }
         break;
 
     case CVIEW_T3_TTS:
@@ -881,7 +1000,11 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
     }
     tXc1->WindowX0 = tempWinX0;
     tXc1->WindowY0 = tempWinY0;
+
     tXc2->WindowX0 = tempWinC2X0;
+    tXc2->WindowY0 = tempWinC2Y0;
+    tXc2->WindowX1 = tempWinC2X1;
+    tXc2->WindowY1 = tempWinC2Y1;
     tXc2->WindowTab = tempWinC2Tab;
 }
 
