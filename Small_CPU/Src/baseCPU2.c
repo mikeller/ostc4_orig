@@ -162,7 +162,7 @@ uint8_t hasExternalClock(void) {
 // See CPU2-RTE.ld
 const SFirmwareData cpu2_FirmwareData __attribute__(( section(".firmware_data") ))= {
 		.versionFirst = 2,
-		.versionSecond = 1,
+		.versionSecond = 2,
 		.versionThird = 0,
 		.versionBeta = 0,
 
