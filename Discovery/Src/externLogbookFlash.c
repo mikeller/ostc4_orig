@@ -121,7 +121,8 @@ static uint32_t	entryPoint = 0;
 static uint32_t	actualPointerHeader = 0;
 static uint32_t	actualPointerSample = 0;
 static uint32_t	LengthLeftSampleRead = 0;
-static uint32_t	actualPointerDevicedata = 0;
+static uint32_t	actualPointerDevicedata = DDSTART;
+static uint32_t	actualPointerDevicedata_Read = DDSTART;
 static uint32_t	actualPointerVPM = 0;
 static uint32_t	actualPointerSettings = 0;
 static uint32_t	actualPointerFirmware = 0;
@@ -392,18 +393,24 @@ void ext_flash_read_fixed_16_devicedata_blocks_formated_128byte_total(uint8_t *b
 
 #ifndef BOOTLOADER_STANDALONE
 
-void ext_flash_write_devicedata(void)
+void ext_flash_write_devicedata(uint8_t resetRing)
 {
 	uint8_t *pData;
 	const uint16_t length = sizeof(SDevice);
 	uint8_t length_lo, length_hi;
 	uint8_t dataLength[2] = { 0 };
+	uint32_t tmpBlockStart;
 
 	ext_flash_disable_protection();
 
 	pData = (uint8_t *)stateDeviceGetPointer();
 
-	actualPointerDevicedata = DDSTART;
+	/* Reset the Ring to the start address if requested (e.g. because we write the default block during shutdown) */
+	if((resetRing) || ((actualPointerDevicedata + length) >= DDSTOP))
+	{
+		actualPointerDevicedata = DDSTART;
+	}
+	tmpBlockStart = actualPointerDevicedata;
 
 	length_lo = (uint8_t)(length & 0xFF);
 	length_hi = (uint8_t)(length >> 8);
@@ -412,6 +419,9 @@ void ext_flash_write_devicedata(void)
 
 	ef_write_block(dataLength,2, EF_DEVICEDATA, 0);
 	ef_write_block(pData,length, EF_DEVICEDATA, 0);
+
+	actualPointerDevicedata_Read = tmpBlockStart;
+
 }
 
 
@@ -420,20 +430,37 @@ uint16_t ext_flash_read_devicedata(uint8_t *buffer, uint16_t max_length)
 	uint16_t length;
 	uint8_t length_lo, length_hi;
 
-	actualAddress = DDSTART;
+	actualAddress = actualPointerDevicedata_Read; 
 
+	length = 0;
+	length_lo = 0;
+	length_hi = 0;
 	ext_flash_read_block_start();
+
+
 	ext_flash_read_block(&length_lo, EF_DEVICEDATA);
 	ext_flash_read_block(&length_hi, EF_DEVICEDATA);
 	
-	length = (length_hi * 256) + length_lo;
-	
-	if(length > max_length)
-		return 0;
-	
-	ext_flash_read_block_multi(buffer,length,EF_DEVICEDATA);
+	while ((length_lo != 0xFF) && (length_hi != 0xFF))
+	{
+		length = (length_hi * 256) + length_lo;
+
+		if(length > max_length)
+			return 0;
+
+		ext_flash_read_block_multi(buffer,length,EF_DEVICEDATA);
+
+		ext_flash_read_block(&length_lo, EF_DEVICEDATA);	/* check if another devicedata set is available */
+		ext_flash_read_block(&length_hi, EF_DEVICEDATA);	/* length will be 0xFFFF if a empty memory is read */
+	}
+	ext_flash_decf_address_ring(EF_DEVICEDATA);				/* set pointer back to empty address */
+	ext_flash_decf_address_ring(EF_DEVICEDATA);
 	ext_flash_read_block_stop();
-	
+
+	if(actualAddress > actualPointerDevicedata)				/* the write pointer has not yet been set up probably */
+	{
+		actualPointerDevicedata = actualAddress;
+	}
 	return length;
 }
 
