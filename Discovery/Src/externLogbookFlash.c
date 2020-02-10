@@ -116,6 +116,7 @@ uint8_t uw;
 
 /* Private variables ---------------------------------------------------------*/
 static uint32_t	actualAddress = 0;
+static uint32_t	preparedPageAddress = 0;
 static uint32_t	entryPoint = 0;
 
 static uint32_t	actualPointerHeader = 0;
@@ -753,10 +754,28 @@ void ext_flash_close_new_dive_log(uint8_t *pHeaderPostDive )
 
 void ext_flash_write_sample(uint8_t *pSample, uint16_t length)
 {
+	uint32_t actualAdressBackup = 0;
+
 	ef_write_block(pSample,length, EF_SAMPLE, 0);
 
 	SSettings *settings = settingsGetPointer();
 	settings->logFlashNextSampleStartAddress = actualPointerSample;
+
+	if(0xFFFF - (actualAddress & 0x0000FFFF) < 255)								/* are we close to a sector border? */
+	{
+		if (((actualAddress & 0x0000FFFF) != 0) && (preparedPageAddress == 0))		/* only prepare if not already at start of sector */
+		{
+			actualAdressBackup = actualAddress;
+			actualAddress = (actualAddress & 0xFFFF0000) + 0x00010000;	/* Set to start of next 64k sector */
+			if(actualAddress >= SAMPLESTOP)
+			{
+				actualAddress = SAMPLESTART;
+			}
+			preparedPageAddress = actualAddress;
+			ext_flash_erase64kB();
+			actualAddress = actualAdressBackup;
+		}
+	}
 }
 
 static void ext_flash_overwrite_sample_without_erase(uint8_t *pSample, uint16_t length)
@@ -1605,7 +1624,7 @@ static uint8_t ext_flash_erase_if_on_page_start(void)
 			ext_flash_erase4kB();
 			return 1;
 		}
-	}		
+	}
 	else
 	if(actualAddress < 0x00010000)
 	{
@@ -1615,16 +1634,25 @@ static uint8_t ext_flash_erase_if_on_page_start(void)
 			ext_flash_erase32kB();
 			return 1;
 		}
-	}		
+	}
 	else
 	{
 		/* 64K Byte is 0x10000 */
 		if((actualAddress & 0xFFFF) == 0)
 		{
-			ext_flash_erase64kB();
+			if(preparedPageAddress == actualAddress)	/* has page already been prepared before? (at the moment for samples only) */
+			{
+				preparedPageAddress = 0;
+
+			}
+			else
+			{
+				ext_flash_erase64kB();
+			}
 			return 1;
 		}
-	}		
+	}
+
 	return 0;
 }
 
