@@ -105,7 +105,7 @@ uint16_t u16bit;
 void ext_flash_write_settings(void);
 uint8_t ext_flash_read_settings(void);
 
-void ext_flash_write_devicedata(void);
+void ext_flash_write_devicedata(uint8_t resetRing);
 uint16_t ext_flash_read_devicedata(uint8_t *buffer, uint16_t max_length);
 void ext_flash_read_fixed_16_devicedata_blocks_formated_128byte_total(uint8_t *buffer);
 
