@@ -1633,7 +1633,8 @@ static void ext_flash_read_block_stop(void)
 static void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, uint8_t do_not_erase)
 {
 	uint32_t remaining_page_size, remaining_length, remaining_space_to_ring_end;
-	
+	uint32_t i=0;
+
 	if(!length)
 		return;
 
@@ -1688,7 +1689,7 @@ static void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, ui
 	if(do_not_erase == 0)
 		ext_flash_erase_if_on_page_start();
 	
-	for(uint32_t i=0;i<length;i++)
+	while( i<length)
 	{
 		ef_hw_rough_delay_us(5);
 		wait_chip_not_busy();
@@ -1697,12 +1698,24 @@ static void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, ui
 		write_address(HOLDCS);
 		
 		remaining_length = length - i;
-		remaining_page_size = actualAddress & 0xFF;
+		remaining_page_size = 0xFF - (uint8_t)(actualAddress & 0xFF) +1;
 		remaining_space_to_ring_end = ringStop - actualAddress;
 		
-		if((remaining_page_size == 0) && (remaining_length >= 256) && (remaining_space_to_ring_end >= 256))
+		if(remaining_length >= 256)
 		{
-			for(int j=0; j<255; j++)
+			remaining_length = 255;	/* up to 256 bytes may be written in one burst. Last byte is written with release */
+		}
+		else
+		{
+			remaining_length--;		/* last byte needed for release */
+		}
+		if(remaining_length >= (remaining_page_size) ) /* use 256 byte page and calculate number of bytes left */
+		{
+			remaining_length = remaining_page_size - 1;
+		}
+		if( (remaining_space_to_ring_end >= 256)) 
+		{
+			for(int j=0; j<remaining_length; j++)
 			{
 				write_spi(sendByte[i],HOLDCS);/* write data */
 				actualAddress++;
@@ -1712,8 +1725,11 @@ static void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, ui
 		/* byte with RELEASE */
 		write_spi(sendByte[i],RELEASE);/* write data */
 		actualAddress++;
+		i++;
+
 		if(actualAddress > ringStop)
 			actualAddress = ringStart;
+
 		if(do_not_erase == 0)
 			ext_flash_erase_if_on_page_start();
 	}
