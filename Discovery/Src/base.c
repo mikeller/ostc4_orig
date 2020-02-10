@@ -230,6 +230,7 @@
 #include "test_vpm.h"
 #include "tDebug.h"
 #include "motion.h"
+#include "data_exchange_main.h"
 
 #ifdef DEMOMODE
 #include "demo.h"
@@ -261,6 +262,8 @@ static TIM_HandleTypeDef   TimBacklightHandle;
 #ifdef DEMOMODE
 TIM_HandleTypeDef   TimDemoHandle; /* used in stm32f4xx_it.c too */
 #endif
+
+static uint8_t RequestModeChange = 0;
 
 static uint8_t LastButtonPressed;
 static uint32_t LastButtonPressedTick;
@@ -300,6 +303,8 @@ static void resetToFirmwareUpdate(void);
 static void TriggerButtonAction(void);
 static void EvaluateButton(void);
 static void RefreshDisplay(void);
+static void TimeoutControlRequestModechange(void);
+static void TimeoutControl(void);
 
 /* ITM Trace-------- ---------------------------------------------------------*/
 /*
@@ -495,6 +500,8 @@ int main(void)
 	        DoDisplayRefresh = 0;
         	RefreshDisplay();
 
+        	TimeoutControl();								/* exit menus if needed */
+
         	if(stateUsed->mode == MODE_DIVE)			/* handle motion events in divemode only */
         	{
 				switch(settingsGetPointer()->MotionDetection)
@@ -583,22 +590,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         return;
     }
 #endif
-    static uint8_t last_base;
-
     SStateList status;
-    uint32_t timeout_in_seconds;
-    uint32_t timeout_limit_Surface_in_seconds;
-
+    _Bool modeChange = 0;
 
     BaseTick100ms = HAL_GetTick();	/* store start of 100ms cycle */
-
-    _Bool InDiveMode = 0;
-    _Bool modeChange = 0; // to exit from menu and logbook
-
-    if(stateUsed->mode == MODE_DIVE)
-        InDiveMode = 1;
-    else
-        InDiveMode = 0;
 
     EvaluateButton();
 
@@ -652,132 +647,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         break;
     }
 
-    /* timeout control */
-    if(modeChange) ///< from RTE, set in data_exchange_main.c
-        time_without_button_pressed_deciseconds = (settingsGetPointer()->timeoutSurfacemode / 4) * 3;
-    if(status.base != last_base)
-        time_without_button_pressed_deciseconds = 0;
-    last_base = status.base;
-    timeout_in_seconds = time_without_button_pressed_deciseconds / 10;
-    time_without_button_pressed_deciseconds += 1;
-    if(modeChange || (timeout_in_seconds != time_without_button_pressed_deciseconds / 10))
-    {
-#ifdef NO_TIMEOUT
-        timeout_in_seconds = 0;
-#else
-        timeout_in_seconds += 1;
-#endif
-
-        if(InDiveMode)
-        {
-            switch(status.base)
-            {
-            case BaseHome:
-                if((status.line != 0) && (timeout_in_seconds  >= settingsGetPointer()->timeoutEnterButtonSelectDive))
-                {
-                    set_globalState(StD);
-                    timeout_in_seconds = 0;
-                }
-            break;
-
-            case BaseMenu:
-                if((status.line == 0) && ((timeout_in_seconds  >= settingsGetPointer()->timeoutMenuDive) || modeChange))
-                {
-                    exitMenu();
-                    timeout_in_seconds = 0;
-                }
-                if((status.line != 0) && ((timeout_in_seconds  >= settingsGetPointer()->timeoutMenuEdit) || modeChange))
-                {
-                    exitMenuEdit_to_Home();
-                    timeout_in_seconds = 0;
-                }
-            break;
-            default:
-                break;
-            }
-        }
-        else /* surface mode */
-        {
-            switch(status.base)
-            {
-            case BaseHome:
-                // added hw 161027
-                if(!(stateRealGetPointer()->warnings.lowBattery) && (stateRealGetPointer()->lifeData.battery_charge > 9))
-                {
-                    stateRealGetPointerWrite()->lastKnownBatteryPercentage = stateRealGetPointer()->lifeData.battery_charge;
-                }
-                else if((wasFirmwareUpdateCheckBattery) && (timeout_in_seconds > 3))
-                {
-                    wasFirmwareUpdateCheckBattery = 0;
-                    setButtonResponsiveness(settingsGetPointer()->ButtonResponsiveness); // added 170306
-                    if(	(settingsGetPointer()->lastKnownBatteryPercentage > 0)
-                    && 	(settingsGetPointer()->lastKnownBatteryPercentage <= 100)
-                    && 	(stateRealGetPointer()->warnings.lowBattery))
-                    {
-                        setBatteryPercentage(settingsGetPointer()->lastKnownBatteryPercentage);
-                    }
-                }
-                // stuff before and new @161121 CCR-sensor limit 10 minutes
-                if((settingsGetPointer()->dive_mode == DIVEMODE_CCR) && (settingsGetPointer()->CCR_Mode == CCRMODE_Sensors))
-                {
-                    timeout_limit_Surface_in_seconds = settingsGetPointer()->timeoutSurfacemodeWithSensors;
-                }
-                else
-                {
-                    timeout_limit_Surface_in_seconds = settingsGetPointer()->timeoutSurfacemode;
-                }
-                if(timeout_in_seconds  >= timeout_limit_Surface_in_seconds)
-                {
-                    gotoSleep();
-                }
-                break;
-            case BaseMenu:
-                if((status.line == 0) && ((timeout_in_seconds  >= settingsGetPointer()->timeoutMenuSurface) || modeChange))
-                {
-                    exitMenu();
-                    timeout_in_seconds = 0;
-                }
-                if((status.line != 0) && ((timeout_in_seconds  >= settingsGetPointer()->timeoutMenuEdit) || modeChange))
-                {
-                    if((status.page != (uint8_t)((StMPLAN >> 24) & 0x0F)) || (timeout_in_seconds  >= 10*(settingsGetPointer()->timeoutMenuEdit)))
-                    {
-                        exitMenuEdit_to_Home();
-                        timeout_in_seconds = 0;
-                    }
-                }
-                break;
-
-            case BaseInfo:
-                if((timeout_in_seconds  >= settingsGetPointer()->timeoutInfo) || modeChange)
-                {
-                    if(status.page == InfoPageLogList)
-                    {
-                        exitLog();
-                        timeout_in_seconds = 0;
-                    }
-                    else
-                    if(status.page == InfoPageLogShow)
-                    {
-                        show_logbook_exit();
-                        exitLog();
-                        timeout_in_seconds = 0;
-                    }
-                    else
-                    if(status.page != InfoPageCompass)
-                    {
-                        exitInfo();
-                        timeout_in_seconds = 0;
-                    }
-                }
-                break;
-            default:
-                break;
-            }
-        }
-    }
-
     get_globalStateList(&status);
-
+    if(modeChange)
+    {
+    	TimeoutControlRequestModechange();
+    }
     if(status.base == BaseComm) /* main loop not serviced in com mode */
     {
     	tComm_refresh();
@@ -1045,6 +919,7 @@ static void gotoSleep(void)
     /* not at the moment of testing */
 //	ext_flash_erase_firmware_if_not_empty();
     GFX_logoAutoOff();
+    ext_flash_write_devicedata(true);	/* write data at default position */
     set_globalState(StStop);
 }
 
@@ -1754,6 +1629,155 @@ static void resetToFirmwareUpdate(void)
     HAL_NVIC_SystemReset();
 }
 
+static void TimeoutControlRequestModechange(void)
+{
+	RequestModeChange = 1;
+}
+
+static void TimeoutControl(void)
+{
+    static uint8_t last_base;
+
+    SStateList status;
+    uint32_t timeout_in_seconds;
+    uint32_t timeout_limit_Surface_in_seconds;
+    _Bool InDiveMode = 0;
+
+    get_globalStateList(&status);
+
+    if(stateUsed->mode == MODE_DIVE)
+    {
+        InDiveMode = 1;
+    }
+    else
+    {
+        InDiveMode = 0;
+    }
+	/* timeout control */
+	if(RequestModeChange) ///< from RTE, set in data_exchange_main.c
+		time_without_button_pressed_deciseconds = (settingsGetPointer()->timeoutSurfacemode / 4) * 3;
+	if(status.base != last_base)
+		time_without_button_pressed_deciseconds = 0;
+	last_base = status.base;
+	timeout_in_seconds = time_without_button_pressed_deciseconds / 10;
+	time_without_button_pressed_deciseconds += 1;
+	if(RequestModeChange || (timeout_in_seconds != time_without_button_pressed_deciseconds / 10))
+	{
+	#ifdef NO_TIMEOUT
+		timeout_in_seconds = 0;
+	#else
+		timeout_in_seconds += 1;
+	#endif
+
+		if(InDiveMode)
+		{
+			switch(status.base)
+			{
+			case BaseHome:
+				if((status.line != 0) && (timeout_in_seconds  >= settingsGetPointer()->timeoutEnterButtonSelectDive))
+				{
+					set_globalState(StD);
+					timeout_in_seconds = 0;
+				}
+			break;
+
+			case BaseMenu:
+				if((status.line == 0) && ((timeout_in_seconds  >= settingsGetPointer()->timeoutMenuDive) || RequestModeChange))
+				{
+					exitMenu();
+					timeout_in_seconds = 0;
+				}
+				if((status.line != 0) && ((timeout_in_seconds  >= settingsGetPointer()->timeoutMenuEdit) || RequestModeChange))
+				{
+					exitMenuEdit_to_Home();
+					timeout_in_seconds = 0;
+				}
+			break;
+			default:
+				break;
+			}
+		}
+		else /* surface mode */
+		{
+			switch(status.base)
+			{
+			case BaseHome:
+				// added hw 161027
+				if(!(stateRealGetPointer()->warnings.lowBattery) && (stateRealGetPointer()->lifeData.battery_charge > 9))
+				{
+					stateRealGetPointerWrite()->lastKnownBatteryPercentage = stateRealGetPointer()->lifeData.battery_charge;
+				}
+				else if((wasFirmwareUpdateCheckBattery) && (timeout_in_seconds > 3))
+				{
+					wasFirmwareUpdateCheckBattery = 0;
+					setButtonResponsiveness(settingsGetPointer()->ButtonResponsiveness); // added 170306
+					if(	(settingsGetPointer()->lastKnownBatteryPercentage > 0)
+					&& 	(settingsGetPointer()->lastKnownBatteryPercentage <= 100)
+					&& 	(stateRealGetPointer()->warnings.lowBattery))
+					{
+						setBatteryPercentage(settingsGetPointer()->lastKnownBatteryPercentage);
+					}
+				}
+				// stuff before and new @161121 CCR-sensor limit 10 minutes
+				if((settingsGetPointer()->dive_mode == DIVEMODE_CCR) && (settingsGetPointer()->CCR_Mode == CCRMODE_Sensors))
+				{
+					timeout_limit_Surface_in_seconds = settingsGetPointer()->timeoutSurfacemodeWithSensors;
+				}
+				else
+				{
+					timeout_limit_Surface_in_seconds = settingsGetPointer()->timeoutSurfacemode;
+				}
+				if(timeout_in_seconds  >= timeout_limit_Surface_in_seconds)
+				{
+					gotoSleep();
+				}
+				break;
+			case BaseMenu:
+				if((status.line == 0) && ((timeout_in_seconds  >= settingsGetPointer()->timeoutMenuSurface) || RequestModeChange))
+				{
+					exitMenu();
+					timeout_in_seconds = 0;
+				}
+				if((status.line != 0) && ((timeout_in_seconds  >= settingsGetPointer()->timeoutMenuEdit) || RequestModeChange))
+				{
+					if((status.page != (uint8_t)((StMPLAN >> 24) & 0x0F)) || (timeout_in_seconds  >= 10*(settingsGetPointer()->timeoutMenuEdit)))
+					{
+						exitMenuEdit_to_Home();
+						timeout_in_seconds = 0;
+					}
+				}
+				break;
+
+			case BaseInfo:
+				if((timeout_in_seconds  >= settingsGetPointer()->timeoutInfo) || RequestModeChange)
+				{
+					if(status.page == InfoPageLogList)
+					{
+						exitLog();
+						timeout_in_seconds = 0;
+					}
+					else
+					if(status.page == InfoPageLogShow)
+					{
+						show_logbook_exit();
+						exitLog();
+						timeout_in_seconds = 0;
+					}
+					else
+					if(status.page != InfoPageCompass)
+					{
+						exitInfo();
+						timeout_in_seconds = 0;
+					}
+				}
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	RequestModeChange = 0;
+}
 // debugging by https://blog.feabhas.com/2013/02/developing-a-generic-hard-fault-handler-for-arm-cortex-m3cortex-m4/
 
 /*
