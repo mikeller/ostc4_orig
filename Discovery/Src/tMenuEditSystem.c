@@ -41,6 +41,8 @@
 #include "motion.h"
 #include "t7.h"
 
+/* Uncomment to activate a menu item in reset menu which provide sample ring analysis / repair functionality */
+#define ENABLE_ANALYSE_SAMPLES
 
 #define CV_SUBPAGE_MAX		(2u)	/* max number of customer view selection pages */
 /*#define HAVE_DEBUG_VIEW */
@@ -95,6 +97,7 @@ uint8_t OnAction_Nothing			(uint32_t editId, uint8_t blockNumber, uint8_t digitN
 uint8_t OnAction_LogbookOffset(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_SetFactoryDefaults(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_SetBatteryCharge(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+uint8_t OnAction_RecoverSampleIdx(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 #ifdef SCREENTEST
 uint8_t OnAction_ScreenTest		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 #endif
@@ -1470,10 +1473,19 @@ void openEdit_ResetConfirmation(uint32_t editIdOfCaller)
 
     case StMSYS6_Maintenance:
     case StMSYS6_SetBattCharge:
+    case StMSYS6_SetSampleIndx:
         text[0] = TXT_2BYTE;
         text[1] = TXT2BYTE_SetFactoryDefaults;
         text[2] = 0;
         write_field_button(StMSYS6_SetFactoryBC,			30, 800, ME_Y_LINE2,  &FontT48, text);
+
+#ifdef ENABLE_ANALYSE_SAMPLES
+        text[0] = TXT_2BYTE;
+        text[1] = TXT2BYTE_SetSampleIndex;
+        text[2] = 0;
+        write_field_button(StMSYS6_SetSampleIndx,			30, 800, ME_Y_LINE3,  &FontT48, text);
+#endif
+
 
         if(stateRealGetPointer()->lifeData.battery_charge == 0)
         {
@@ -1481,16 +1493,26 @@ void openEdit_ResetConfirmation(uint32_t editIdOfCaller)
             text[1] = TXT2BYTE_SetBatteryCharge;
             text[2] = 0;
             snprintf(&text[2],10,": %u%%",settingsGetPointer()->lastKnownBatteryPercentage);
+#ifdef ENABLE_ANALYSE_SAMPLES
+            write_field_button(StMSYS6_SetBattCharge,			30, 800, ME_Y_LINE4,  &FontT48, text);
+#else
             write_field_button(StMSYS6_SetBattCharge,			30, 800, ME_Y_LINE3,  &FontT48, text);
+#endif
 
             setEvent(StMSYS6_Exit, (uint32_t)OnAction_Exit);
             setEvent(StMSYS6_SetFactoryBC, (uint32_t)OnAction_SetFactoryDefaults);
+#ifdef ENABLE_ANALYSE_SAMPLES
+            setEvent(StMSYS6_SetSampleIndx, (uint32_t)OnAction_RecoverSampleIdx);
+#endif
             setEvent(StMSYS6_SetBattCharge, (uint32_t)OnAction_SetBatteryCharge);
         }
         else
         {
             setEvent(StMSYS6_Exit, (uint32_t)OnAction_Exit);
             setEvent(StMSYS6_SetFactoryBC, (uint32_t)OnAction_SetFactoryDefaults);
+#ifdef ENABLE_ANALYSE_SAMPLES
+            setEvent(StMSYS6_SetSampleIndx, (uint32_t)OnAction_RecoverSampleIdx);
+#endif
         }
 //		write_field_button(StMSYS6_ScreenTest,			30, 800, ME_Y_LINE3,  &FontT48, "Screen Test");
 //		setEvent(StMSYS6_ScreenTest, (uint32_t)OnAction_ScreenTest);
@@ -1608,6 +1630,18 @@ uint8_t OnAction_SetFactoryDefaults(uint32_t editId, uint8_t blockNumber, uint8_
     return EXIT_TO_MENU;
 }
 
+
+uint8_t OnAction_RecoverSampleIdx(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+{
+	char text[32];
+	char strResult[20];
+
+
+	ext_flash_AnalyseSampleBuffer(strResult);
+    snprintf(&text[0],30,"Ring: %s",strResult); //"Code: %X",settingsGetPointer()->logFlashNextSampleStartAddress); //getLicence());
+    write_label_var(  30, 800, ME_Y_LINE6, &FontT42, text);
+    return UNSPECIFIC_RETURN;
+}
 
 uint8_t OnAction_SetBatteryCharge(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
