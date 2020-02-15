@@ -59,24 +59,30 @@
  */
 #define SETTINGSSTART	0x00010000
 #define SETTINGSSTOP 	0x0001FFFF
-#define VPMSTART			0x00020000
-#define VPMSTOP				0x0002FFFF
+#define VPMSTART		0x00020000
+#define VPMSTOP			0x0002FFFF
 #define unused3START	0x00030000
 #define unused3STOP		0x0007FFFF
 #define HEADERSTART		0x00080000
 #define HEADERSTOP		0x000FFFFF
 #define SAMPLESTART		0x00100000
 #define SAMPLESTOP		0x00CFFFFF
-#define FWSTART				0x00D00000
-#define FWSTOP				0x00DFFFFF
-#define FWSTART2			0x00E00000
-#define FWSTOP2				0x00FFFFFF
+#define FWSTART			0x00D00000
+#define FWSTOP			0x00DFFFFF
+#define FWSTART2		0x00E00000
+#define FWSTOP2			0x00FFFFFF
 /* 16 MB with 4 Byte addressing */
 #define unused4START	0x01000000
 #define unused4STOP		0x01FFFFFF
 
 #define HEADERSIZE sizeof(SLogbookHeader)
 #define HEADERSIZEOSTC3 sizeof(SLogbookHeaderOSTC3)
+
+/* Sample ring buffer sector states derived from the usage at begin and end of a sector */
+#define SECTOR_CLOSED		(0)
+#define SECTOR_NOTUSED		(1)
+#define SECTOR_INUSE		(4)
+#define SECTOR_EMPTY		(5)
 
 /* Exported types ------------------------------------------------------------*/
 typedef struct{
@@ -156,5 +162,8 @@ void ext_flash_write_firmware2(uint32_t offset, uint8_t *pSample1, uint32_t leng
 uint32_t ext_flash_read_firmware2(uint32_t *offset, uint8_t *pSample1, uint32_t max_length1, uint8_t *pSample2, uint32_t max_length2);
 
 uint16_t ext_flash_repair_SPECIAL_dive_numbers_starting_count_with(uint16_t startCount);
+
+uint32_t ext_flash_AnalyseSampleBuffer(char *pstrResult);
+void ext_flash_CloseSector(void);
 
 #endif /* EXTERN_LOGBOOK_FLASH_H */

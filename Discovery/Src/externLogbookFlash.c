@@ -117,6 +117,7 @@ uint8_t uw;
 /* Private variables ---------------------------------------------------------*/
 static uint32_t	actualAddress = 0;
 static uint32_t	preparedPageAddress = 0;
+static uint32_t closeSectorAddress = 0;
 static uint32_t	entryPoint = 0;
 
 static uint32_t	actualPointerHeader = 0;
@@ -1362,16 +1363,16 @@ void ext_flash_repair_dive_log(void)
     ext_flash_read_block(&dataStart.u8bit.byteMidLow, EF_HEADER);
     ext_flash_read_block(&dataStart.u8bit.byteMidHigh, EF_HEADER);
     ext_flash_read_block_stop();
-    if((header1 == 0xFA) && (header2 == 0xFA))
+    if((header1 == 0xFA) && (header2 == 0xFA))						/* Header is indicating the start of a dive */
     {
       actualAddress = HEADERSTART + (0x800 * id) + HEADER2OFFSET;
       ext_flash_read_block_start();
       ext_flash_read_block(&header1, EF_HEADER);
       ext_flash_read_block(&header2, EF_HEADER);
       ext_flash_read_block_stop();
-      if((header1 != 0xFA) || (header2 != 0xFA))
+      if((header1 != 0xFA) || (header2 != 0xFA))					/* Secondary header was not written at the end of a dive */
       {
-        actualPointerSample = dataStart.u32bit;
+        actualPointerSample = dataStart.u32bit;						/* Set datapointer to position stored in header written at beginning of dive */
         actualAddress = actualPointerSample;
         logbook_recover_brokenlog(id);
         SSettings *settings = settingsGetPointer();
@@ -2097,6 +2098,131 @@ static void Error_Handler_extflash(void)
   {
   }
 }
+
+void ext_flash_CloseSector(void)
+{
+	uint32_t actualAddressBackup = actualAddress;
+	int i=0;
+
+	if(closeSectorAddress != 0)
+	{
+	/* write some dummy bytes to the sector which is currently used for storing samples. This is done to "hide" problem if function is calles again */
+		actualAddress = closeSectorAddress;
+
+		wait_chip_not_busy();
+		write_spi(0x06,RELEASE);		/* WREN */
+		write_spi(0x02,HOLDCS);			/* write cmd */
+		write_address(HOLDCS);
+		for(i = 0; i<8; i++)
+		{
+			write_spi(0xA5,HOLDCS);/* write data */
+			actualAddress++;
+		}
+		/* byte with RELEASE */
+		write_spi(0xA5,RELEASE);/* write data */
+		actualAddress = actualAddressBackup;
+		closeSectorAddress = 0;
+	}
+}
+
+uint32_t ext_flash_AnalyseSampleBuffer(char *pstrResult)
+{
+	uint8_t sectorState[16];	/* samples are stored in 16 sector / 64k each */
+	uint32_t curAddress = SAMPLESTART;
+	uint8_t curSector = 0;
+	uint8_t samplebuffer[10];
+	uint32_t actualAddressBackup = actualAddress;
+	uint8_t emptyCellCnt = 0;
+	uint32_t i = 0;
+	uint8_t startedSectors = 0;
+	uint8_t	lastSectorInuse = 0;
+
+/* check if a sector is used till its end */
+	for(curSector = 0; curSector < 16; curSector++)
+	{
+		sectorState[curSector] = 0;
+		emptyCellCnt = 0;
+		curAddress = SAMPLESTART + (curSector * 0x10000);	/* set address to begin of sector and check if it is used */
+		actualAddress = curAddress;
+		ext_flash_read_block_start();
+		for(uint32_t i=0;i<10;i++)
+		{
+			samplebuffer[i] = read_spi(HOLDCS);/* read data */
+			if(samplebuffer[i] == 0xFF)
+			{
+				emptyCellCnt++;
+			}
+		}
+		ext_flash_read_block_stop();
+		if(emptyCellCnt == 10)
+		{
+			sectorState[curSector] = SECTOR_NOTUSED;
+		}
+		emptyCellCnt = 0;
+		curAddress = SAMPLESTART + (curSector * 0x10000) + 0xFFF5;	/* set address to end of sector and check if it is used */
+		actualAddress = curAddress;
+		ext_flash_read_block_start();
+		for(i=0;i<10;i++)
+		{
+			samplebuffer[i] = read_spi(HOLDCS);/* read data */
+			if(samplebuffer[i] == 0xFF)
+			{
+				emptyCellCnt++;
+			}
+		}
+		ext_flash_read_block_stop();
+		if(emptyCellCnt == 10)
+		{
+			sectorState[curSector] |= SECTOR_INUSE;		/* will become SECTOR_EMPTY if start is NOTUSED */
+		}
+	}
+
+	for(i=0;i<16;i++)
+	{
+		if( sectorState[i] == SECTOR_INUSE)
+		{
+			startedSectors++;
+			lastSectorInuse = i;
+		}
+		*(pstrResult+i) = sectorState[i] + 48;
+	}
+
+	if(startedSectors > 1)	/* more than one sector is in used => ring buffer corrupted */
+	{
+		if(startedSectors == 2)			/* only fix issue if only two sectors are in used. Otherwise fixing will cause more worries than help */
+		{
+		/* the logic behind healing of the problem is that the larger address is the oldest one => restore the largest address */
+			curAddress = SAMPLESTART + (lastSectorInuse * 0x10000);
+			emptyCellCnt = 0;
+			actualAddress = curAddress;
+			ext_flash_read_block_start();
+			while((emptyCellCnt < 10) && (actualAddress < curAddress + 0x10000))
+			{
+				samplebuffer[0] = read_spi(HOLDCS);/* read data */
+				if(samplebuffer[0] == 0xFF)
+				{
+					emptyCellCnt++;
+				}
+				else
+				{
+					emptyCellCnt = 0;
+				}
+				actualAddress++;
+			}
+			ext_flash_read_block_stop();
+			actualAddress -= 10;	/* step 10 bytes back to the start of free bytes */
+			actualPointerSample = actualAddress;
+
+			closeSectorAddress = settingsGetPointer()->logFlashNextSampleStartAddress & 0xFFFF0000;
+			closeSectorAddress += 0xFFF5; /* to be used once next time a dive is logged. Needed because NextSampleID is derived at every startup */
+			settingsGetPointer()->logFlashNextSampleStartAddress = actualPointerSample;	/* store new position to be used for next dive */
+		}
+	}
+	actualAddress = actualAddressBackup;
+	*(pstrResult+i) = 0;
+	return startedSectors;
+}
+
 /*
 uint8_t ext_flash_erase_firmware_if_not_empty(void)
 {
