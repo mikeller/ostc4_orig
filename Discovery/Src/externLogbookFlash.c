@@ -126,7 +126,7 @@ static uint32_t	LengthLeftSampleRead = 0;
 static uint32_t	actualPointerDevicedata = DDSTART;
 static uint32_t	actualPointerDevicedata_Read = DDSTART;
 static uint32_t	actualPointerVPM = 0;
-static uint32_t	actualPointerSettings = 0;
+static uint32_t	actualPointerSettings = SETTINGSSTART;
 static uint32_t	actualPointerFirmware = 0;
 static uint32_t	actualPointerFirmware2 = 0;
 
@@ -522,7 +522,7 @@ void ext_flash_write_settings(void)
 	return;
 }
 #else
-void ext_flash_write_settings(void)
+void ext_flash_write_settings(uint8_t resetRing)
 {
 	uint8_t *pData;
 	const uint16_t length = sizeof(SSettings);
@@ -540,7 +540,11 @@ void ext_flash_write_settings(void)
 
 	pData = (uint8_t *)settingsGetPointer();
 
-	actualPointerSettings = SETTINGSSTART;
+	/* Reset the Ring to the start address if requested (e.g. because we write the default block during shutdown) */
+	if((resetRing) || ((actualPointerSettings + length) >= SETTINGSSTOP))
+	{
+		actualPointerSettings = SETTINGSSTART;
+	}
 
 	length_lo = (uint8_t)(length & 0xFF);
 	length_hi = (uint8_t)(length >> 8);
@@ -577,23 +581,36 @@ uint8_t ext_flash_read_settings(void)
 	ext_flash_read_block(&length_lo, EF_SETTINGS);
 	ext_flash_read_block(&length_hi, EF_SETTINGS);
 	
-	lengthOnEEPROM = length_hi * 256;
-	lengthOnEEPROM += length_lo;
-	if(lengthOnEEPROM <= lengthStandardNow)
+	while ((length_lo != 0xFF) && (length_hi != 0xFF))		/* get the latest stored setting block */
 	{
-		ext_flash_read_block_multi(&header, 4, EF_SETTINGS);
-		if((header <= pSettings->header) && (header >= pSettings->updateSettingsAllowedFromHeader))
+		lengthOnEEPROM = length_hi * 256;
+		lengthOnEEPROM += length_lo;
+		if(lengthOnEEPROM <= lengthStandardNow)
 		{
-			returnValue = HAL_OK;
-			pSettings->header = header;
-			pData = (uint8_t *)pSettings + 4; /* header */
-			for(uint16_t i = 0; i < (lengthOnEEPROM-4); i++)
-				ext_flash_read_block(&pData[i], EF_SETTINGS);
+			ext_flash_read_block_multi(&header, 4, EF_SETTINGS);
+			if((header <= pSettings->header) && (header >= pSettings->updateSettingsAllowedFromHeader))
+			{
+				returnValue = HAL_OK;
+				pSettings->header = header;
+				pData = (uint8_t *)pSettings + 4; /* header */
+				for(uint16_t i = 0; i < (lengthOnEEPROM-4); i++)
+					ext_flash_read_block(&pData[i], EF_SETTINGS);
+			}
+			else
+			{
+				returnValue = HAL_ERROR;
+			}
 		}
-		else
-		{
-			returnValue = HAL_ERROR;
-		}
+		ext_flash_read_block(&length_lo, EF_SETTINGS);
+		ext_flash_read_block(&length_hi, EF_SETTINGS);
+	}
+	ext_flash_decf_address_ring(EF_SETTINGS);				/* set pointer back to empty address */
+	ext_flash_decf_address_ring(EF_SETTINGS);
+	ext_flash_read_block_stop();
+
+	if(actualAddress > actualPointerSettings)				/* the write pointer has not yet been set up probably */
+	{
+		actualPointerSettings = actualAddress;
 	}
 	ext_flash_read_block_stop();
 	return returnValue;

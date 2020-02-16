@@ -272,7 +272,7 @@ void tMenuEdit_writeSettingsToFlash(void)
     if(WriteSettings)
     {
         GFX_logoAutoOff();
-        ext_flash_write_settings();
+        ext_flash_write_settings(0);
         WriteSettings = 0;
     }
 }

@@ -455,7 +455,7 @@ int main(void)
     if( settingsGetPointer()->debugModeOnStart )
     {
         settingsGetPointer()->debugModeOnStart = 0;
-        ext_flash_write_settings();
+        ext_flash_write_settings(0);
         setDebugMode();
         openInfo( StIDEBUG );
     }
@@ -481,14 +481,14 @@ int main(void)
         {
             createDiveSettings();
             updateMenu();
-            ext_flash_write_settings();
+            ext_flash_write_settings(0);
         }
 
         /* check if tasks depending on global state are pending */
         get_globalStateList(&status);
         if(status.base == BaseHome)
         {
-            tMenuEdit_writeSettingsToFlash(); // takes 900 ms!!
+            tMenuEdit_writeSettingsToFlash();
         }
 
         DataEX_merge_devicedata(); 	/* data is exchanged at startup and every 10 minutes => check if something changed */
@@ -920,6 +920,7 @@ static void gotoSleep(void)
 //	ext_flash_erase_firmware_if_not_empty();
     GFX_logoAutoOff();
     ext_flash_write_devicedata(true);	/* write data at default position */
+    ext_flash_write_settings(true);		/* write data at default position */
     set_globalState(StStop);
 }
 
