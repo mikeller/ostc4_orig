@@ -108,7 +108,7 @@ uint16_t u16bit;
 } convert16_Type;
 
 /* Exported functions --------------------------------------------------------*/
-void ext_flash_write_settings(void);
+void ext_flash_write_settings(uint8_t resetRing);
 uint8_t ext_flash_read_settings(void);
 
 void ext_flash_write_devicedata(uint8_t resetRing);
