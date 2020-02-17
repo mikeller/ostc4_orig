@@ -660,7 +660,7 @@ void ext_flash_start_new_dive_log_and_set_actualPointerSample(uint8_t *pHeaderPr
 void ext_flash_create_new_dive_log(uint8_t *pHeaderPreDive)
 {
 	SSettings *settings;
-	uint8_t id, id_next;
+	uint8_t id;
 	uint8_t  header1, header2;
 
 	settings = settingsGetPointer();
@@ -668,10 +668,12 @@ void ext_flash_create_new_dive_log(uint8_t *pHeaderPreDive)
 
 	actualAddress = HEADERSTART + (0x800 * id);
 	ext_flash_read_block_start();
-	ext_flash_read_block(&header1, EF_SAMPLE);
-	ext_flash_read_block(&header2, EF_SAMPLE);
+	ext_flash_read_block(&header1, EF_SAMPLE); /* the sample ring is increased instead of header... not sure if that is planned intention */
+	ext_flash_read_block(&header2, EF_SAMPLE); /* does not matter because actual address is reset in write_block call */
 	ext_flash_read_block_stop();
 
+	/* TODO Cleanup_Ref_2: The code below should not be necessary in case of a proper shutdown and startup */
+	/* the implementation fixes an issue which might happen at Cleanup_Ref_1 (in case of more then 254 dives) */
 	if((header1 == 0xFA) && (header2 == 0xFA))
 	{
 		id += 1; /* 0-255, auto rollover */
@@ -690,11 +692,6 @@ void ext_flash_create_new_dive_log(uint8_t *pHeaderPreDive)
 	{
 		id = 0;
 	}
-
-	/* delete next header */
-	id_next = id + 1;
-	actualPointerHeader = HEADERSTART + (0x800 * id_next);
-	ef_write_block(0,0, EF_HEADER, 0);
 
 	settings->lastDiveLogId = id;
 	actualPointerHeader = HEADERSTART + (0x800 * id);
@@ -1407,6 +1404,9 @@ static void ext_flash_find_start(void)
 	uint8_t  header1, header2;
   convert_Type dataStart, dataEnd;
 
+  /* TODO Cleanup_Ref_1: cleanup logFlashNextSampleStartAddress and lastDiveLogId */
+  /* The implementation below would cause problems in case more then 254 dives would be done. */
+  /* This is avoided by Cleanup_Ref2 */
   for(id = 0; id < 255;id++)
   {
     actualAddress = HEADERSTART + (0x800 * id) + HEADER2OFFSET;
