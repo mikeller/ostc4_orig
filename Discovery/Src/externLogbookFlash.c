@@ -116,14 +116,17 @@ uint8_t uw;
 
 /* Private variables ---------------------------------------------------------*/
 static uint32_t	actualAddress = 0;
+static uint32_t	preparedPageAddress = 0;
+static uint32_t closeSectorAddress = 0;
 static uint32_t	entryPoint = 0;
 
 static uint32_t	actualPointerHeader = 0;
 static uint32_t	actualPointerSample = 0;
 static uint32_t	LengthLeftSampleRead = 0;
-static uint32_t	actualPointerDevicedata = 0;
+static uint32_t	actualPointerDevicedata = DDSTART;
+static uint32_t	actualPointerDevicedata_Read = DDSTART;
 static uint32_t	actualPointerVPM = 0;
-static uint32_t	actualPointerSettings = 0;
+static uint32_t	actualPointerSettings = SETTINGSSTART;
 static uint32_t	actualPointerFirmware = 0;
 static uint32_t	actualPointerFirmware2 = 0;
 
@@ -392,18 +395,24 @@ void ext_flash_read_fixed_16_devicedata_blocks_formated_128byte_total(uint8_t *b
 
 #ifndef BOOTLOADER_STANDALONE
 
-void ext_flash_write_devicedata(void)
+void ext_flash_write_devicedata(uint8_t resetRing)
 {
 	uint8_t *pData;
 	const uint16_t length = sizeof(SDevice);
 	uint8_t length_lo, length_hi;
 	uint8_t dataLength[2] = { 0 };
+	uint32_t tmpBlockStart;
 
 	ext_flash_disable_protection();
 
 	pData = (uint8_t *)stateDeviceGetPointer();
 
-	actualPointerDevicedata = DDSTART;
+	/* Reset the Ring to the start address if requested (e.g. because we write the default block during shutdown) */
+	if((resetRing) || ((actualPointerDevicedata + length) >= DDSTOP))
+	{
+		actualPointerDevicedata = DDSTART;
+	}
+	tmpBlockStart = actualPointerDevicedata;
 
 	length_lo = (uint8_t)(length & 0xFF);
 	length_hi = (uint8_t)(length >> 8);
@@ -412,6 +421,9 @@ void ext_flash_write_devicedata(void)
 
 	ef_write_block(dataLength,2, EF_DEVICEDATA, 0);
 	ef_write_block(pData,length, EF_DEVICEDATA, 0);
+
+	actualPointerDevicedata_Read = tmpBlockStart;
+
 }
 
 
@@ -420,20 +432,37 @@ uint16_t ext_flash_read_devicedata(uint8_t *buffer, uint16_t max_length)
 	uint16_t length;
 	uint8_t length_lo, length_hi;
 
-	actualAddress = DDSTART;
+	actualAddress = actualPointerDevicedata_Read; 
 
+	length = 0;
+	length_lo = 0;
+	length_hi = 0;
 	ext_flash_read_block_start();
+
+
 	ext_flash_read_block(&length_lo, EF_DEVICEDATA);
 	ext_flash_read_block(&length_hi, EF_DEVICEDATA);
 	
-	length = (length_hi * 256) + length_lo;
-	
-	if(length > max_length)
-		return 0;
-	
-	ext_flash_read_block_multi(buffer,length,EF_DEVICEDATA);
+	while ((length_lo != 0xFF) && (length_hi != 0xFF))
+	{
+		length = (length_hi * 256) + length_lo;
+
+		if(length > max_length)
+			return 0;
+
+		ext_flash_read_block_multi(buffer,length,EF_DEVICEDATA);
+
+		ext_flash_read_block(&length_lo, EF_DEVICEDATA);	/* check if another devicedata set is available */
+		ext_flash_read_block(&length_hi, EF_DEVICEDATA);	/* length will be 0xFFFF if a empty memory is read */
+	}
+	ext_flash_decf_address_ring(EF_DEVICEDATA);				/* set pointer back to empty address */
+	ext_flash_decf_address_ring(EF_DEVICEDATA);
 	ext_flash_read_block_stop();
-	
+
+	if(actualAddress > actualPointerDevicedata)				/* the write pointer has not yet been set up probably */
+	{
+		actualPointerDevicedata = actualAddress;
+	}
 	return length;
 }
 
@@ -493,7 +522,7 @@ void ext_flash_write_settings(void)
 	return;
 }
 #else
-void ext_flash_write_settings(void)
+void ext_flash_write_settings(uint8_t resetRing)
 {
 	uint8_t *pData;
 	const uint16_t length = sizeof(SSettings);
@@ -511,7 +540,11 @@ void ext_flash_write_settings(void)
 
 	pData = (uint8_t *)settingsGetPointer();
 
-	actualPointerSettings = SETTINGSSTART;
+	/* Reset the Ring to the start address if requested (e.g. because we write the default block during shutdown) */
+	if((resetRing) || ((actualPointerSettings + length) >= SETTINGSSTOP))
+	{
+		actualPointerSettings = SETTINGSSTART;
+	}
 
 	length_lo = (uint8_t)(length & 0xFF);
 	length_hi = (uint8_t)(length >> 8);
@@ -548,23 +581,36 @@ uint8_t ext_flash_read_settings(void)
 	ext_flash_read_block(&length_lo, EF_SETTINGS);
 	ext_flash_read_block(&length_hi, EF_SETTINGS);
 	
-	lengthOnEEPROM = length_hi * 256;
-	lengthOnEEPROM += length_lo;
-	if(lengthOnEEPROM <= lengthStandardNow)
+	while ((length_lo != 0xFF) && (length_hi != 0xFF))		/* get the latest stored setting block */
 	{
-		ext_flash_read_block_multi(&header, 4, EF_SETTINGS);
-		if((header <= pSettings->header) && (header >= pSettings->updateSettingsAllowedFromHeader))
+		lengthOnEEPROM = length_hi * 256;
+		lengthOnEEPROM += length_lo;
+		if(lengthOnEEPROM <= lengthStandardNow)
 		{
-			returnValue = HAL_OK;
-			pSettings->header = header;
-			pData = (uint8_t *)pSettings + 4; /* header */
-			for(uint16_t i = 0; i < (lengthOnEEPROM-4); i++)
-				ext_flash_read_block(&pData[i], EF_SETTINGS);
+			ext_flash_read_block_multi(&header, 4, EF_SETTINGS);
+			if((header <= pSettings->header) && (header >= pSettings->updateSettingsAllowedFromHeader))
+			{
+				returnValue = HAL_OK;
+				pSettings->header = header;
+				pData = (uint8_t *)pSettings + 4; /* header */
+				for(uint16_t i = 0; i < (lengthOnEEPROM-4); i++)
+					ext_flash_read_block(&pData[i], EF_SETTINGS);
+			}
+			else
+			{
+				returnValue = HAL_ERROR;
+			}
 		}
-		else
-		{
-			returnValue = HAL_ERROR;
-		}
+		ext_flash_read_block(&length_lo, EF_SETTINGS);
+		ext_flash_read_block(&length_hi, EF_SETTINGS);
+	}
+	ext_flash_decf_address_ring(EF_SETTINGS);				/* set pointer back to empty address */
+	ext_flash_decf_address_ring(EF_SETTINGS);
+	ext_flash_read_block_stop();
+
+	if(actualAddress > actualPointerSettings)				/* the write pointer has not yet been set up probably */
+	{
+		actualPointerSettings = actualAddress;
 	}
 	ext_flash_read_block_stop();
 	return returnValue;
@@ -614,7 +660,7 @@ void ext_flash_start_new_dive_log_and_set_actualPointerSample(uint8_t *pHeaderPr
 void ext_flash_create_new_dive_log(uint8_t *pHeaderPreDive)
 {
 	SSettings *settings;
-	uint8_t id, id_next;
+	uint8_t id;
 	uint8_t  header1, header2;
 
 	settings = settingsGetPointer();
@@ -622,10 +668,12 @@ void ext_flash_create_new_dive_log(uint8_t *pHeaderPreDive)
 
 	actualAddress = HEADERSTART + (0x800 * id);
 	ext_flash_read_block_start();
-	ext_flash_read_block(&header1, EF_SAMPLE);
-	ext_flash_read_block(&header2, EF_SAMPLE);
+	ext_flash_read_block(&header1, EF_SAMPLE); /* the sample ring is increased instead of header... not sure if that is planned intention */
+	ext_flash_read_block(&header2, EF_SAMPLE); /* does not matter because actual address is reset in write_block call */
 	ext_flash_read_block_stop();
 
+	/* TODO Cleanup_Ref_2: The code below should not be necessary in case of a proper shutdown and startup */
+	/* the implementation fixes an issue which might happen at Cleanup_Ref_1 (in case of more then 254 dives) */
 	if((header1 == 0xFA) && (header2 == 0xFA))
 	{
 		id += 1; /* 0-255, auto rollover */
@@ -644,11 +692,6 @@ void ext_flash_create_new_dive_log(uint8_t *pHeaderPreDive)
 	{
 		id = 0;
 	}
-
-	/* delete next header */
-	id_next = id + 1;
-	actualPointerHeader = HEADERSTART + (0x800 * id_next);
-	ef_write_block(0,0, EF_HEADER, 0);
 
 	settings->lastDiveLogId = id;
 	actualPointerHeader = HEADERSTART + (0x800 * id);
@@ -726,10 +769,28 @@ void ext_flash_close_new_dive_log(uint8_t *pHeaderPostDive )
 
 void ext_flash_write_sample(uint8_t *pSample, uint16_t length)
 {
+	uint32_t actualAdressBackup = 0;
+
 	ef_write_block(pSample,length, EF_SAMPLE, 0);
 
 	SSettings *settings = settingsGetPointer();
 	settings->logFlashNextSampleStartAddress = actualPointerSample;
+
+	if(0xFFFF - (actualAddress & 0x0000FFFF) < 255)								/* are we close to a sector border? */
+	{
+		if (((actualAddress & 0x0000FFFF) != 0) && (preparedPageAddress == 0))		/* only prepare if not already at start of sector */
+		{
+			actualAdressBackup = actualAddress;
+			actualAddress = (actualAddress & 0xFFFF0000) + 0x00010000;	/* Set to start of next 64k sector */
+			if(actualAddress >= SAMPLESTOP)
+			{
+				actualAddress = SAMPLESTART;
+			}
+			preparedPageAddress = actualAddress;
+			ext_flash_erase64kB();
+			actualAddress = actualAdressBackup;
+		}
+	}
 }
 
 static void ext_flash_overwrite_sample_without_erase(uint8_t *pSample, uint16_t length)
@@ -1316,16 +1377,16 @@ void ext_flash_repair_dive_log(void)
     ext_flash_read_block(&dataStart.u8bit.byteMidLow, EF_HEADER);
     ext_flash_read_block(&dataStart.u8bit.byteMidHigh, EF_HEADER);
     ext_flash_read_block_stop();
-    if((header1 == 0xFA) && (header2 == 0xFA))
+    if((header1 == 0xFA) && (header2 == 0xFA))						/* Header is indicating the start of a dive */
     {
       actualAddress = HEADERSTART + (0x800 * id) + HEADER2OFFSET;
       ext_flash_read_block_start();
       ext_flash_read_block(&header1, EF_HEADER);
       ext_flash_read_block(&header2, EF_HEADER);
       ext_flash_read_block_stop();
-      if((header1 != 0xFA) || (header2 != 0xFA))
+      if((header1 != 0xFA) || (header2 != 0xFA))					/* Secondary header was not written at the end of a dive */
       {
-        actualPointerSample = dataStart.u32bit;
+        actualPointerSample = dataStart.u32bit;						/* Set datapointer to position stored in header written at beginning of dive */
         actualAddress = actualPointerSample;
         logbook_recover_brokenlog(id);
         SSettings *settings = settingsGetPointer();
@@ -1343,6 +1404,9 @@ static void ext_flash_find_start(void)
 	uint8_t  header1, header2;
   convert_Type dataStart, dataEnd;
 
+  /* TODO Cleanup_Ref_1: cleanup logFlashNextSampleStartAddress and lastDiveLogId */
+  /* The implementation below would cause problems in case more then 254 dives would be done. */
+  /* This is avoided by Cleanup_Ref2 */
   for(id = 0; id < 255;id++)
   {
     actualAddress = HEADERSTART + (0x800 * id) + HEADER2OFFSET;
@@ -1578,7 +1642,7 @@ static uint8_t ext_flash_erase_if_on_page_start(void)
 			ext_flash_erase4kB();
 			return 1;
 		}
-	}		
+	}
 	else
 	if(actualAddress < 0x00010000)
 	{
@@ -1588,16 +1652,25 @@ static uint8_t ext_flash_erase_if_on_page_start(void)
 			ext_flash_erase32kB();
 			return 1;
 		}
-	}		
+	}
 	else
 	{
 		/* 64K Byte is 0x10000 */
 		if((actualAddress & 0xFFFF) == 0)
 		{
-			ext_flash_erase64kB();
+			if(preparedPageAddress == actualAddress)	/* has page already been prepared before? (at the moment for samples only) */
+			{
+				preparedPageAddress = 0;
+
+			}
+			else
+			{
+				ext_flash_erase64kB();
+			}
 			return 1;
 		}
-	}		
+	}
+
 	return 0;
 }
 
@@ -1633,7 +1706,8 @@ static void ext_flash_read_block_stop(void)
 static void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, uint8_t do_not_erase)
 {
 	uint32_t remaining_page_size, remaining_length, remaining_space_to_ring_end;
-	
+	uint32_t i=0;
+
 	if(!length)
 		return;
 
@@ -1688,7 +1762,7 @@ static void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, ui
 	if(do_not_erase == 0)
 		ext_flash_erase_if_on_page_start();
 	
-	for(uint32_t i=0;i<length;i++)
+	while( i<length)
 	{
 		ef_hw_rough_delay_us(5);
 		wait_chip_not_busy();
@@ -1697,12 +1771,24 @@ static void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, ui
 		write_address(HOLDCS);
 		
 		remaining_length = length - i;
-		remaining_page_size = actualAddress & 0xFF;
+		remaining_page_size = 0xFF - (uint8_t)(actualAddress & 0xFF) +1;
 		remaining_space_to_ring_end = ringStop - actualAddress;
 		
-		if((remaining_page_size == 0) && (remaining_length >= 256) && (remaining_space_to_ring_end >= 256))
+		if(remaining_length >= 256)
 		{
-			for(int j=0; j<255; j++)
+			remaining_length = 255;	/* up to 256 bytes may be written in one burst. Last byte is written with release */
+		}
+		else
+		{
+			remaining_length--;		/* last byte needed for release */
+		}
+		if(remaining_length >= (remaining_page_size) ) /* use 256 byte page and calculate number of bytes left */
+		{
+			remaining_length = remaining_page_size - 1;
+		}
+		if( (remaining_space_to_ring_end >= 256)) 
+		{
+			for(int j=0; j<remaining_length; j++)
 			{
 				write_spi(sendByte[i],HOLDCS);/* write data */
 				actualAddress++;
@@ -1712,8 +1798,11 @@ static void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, ui
 		/* byte with RELEASE */
 		write_spi(sendByte[i],RELEASE);/* write data */
 		actualAddress++;
+		i++;
+
 		if(actualAddress > ringStop)
 			actualAddress = ringStart;
+
 		if(do_not_erase == 0)
 			ext_flash_erase_if_on_page_start();
 	}
@@ -2026,6 +2115,131 @@ static void Error_Handler_extflash(void)
   {
   }
 }
+
+void ext_flash_CloseSector(void)
+{
+	uint32_t actualAddressBackup = actualAddress;
+	int i=0;
+
+	if(closeSectorAddress != 0)
+	{
+	/* write some dummy bytes to the sector which is currently used for storing samples. This is done to "hide" problem if function is calles again */
+		actualAddress = closeSectorAddress;
+
+		wait_chip_not_busy();
+		write_spi(0x06,RELEASE);		/* WREN */
+		write_spi(0x02,HOLDCS);			/* write cmd */
+		write_address(HOLDCS);
+		for(i = 0; i<8; i++)
+		{
+			write_spi(0xA5,HOLDCS);/* write data */
+			actualAddress++;
+		}
+		/* byte with RELEASE */
+		write_spi(0xA5,RELEASE);/* write data */
+		actualAddress = actualAddressBackup;
+		closeSectorAddress = 0;
+	}
+}
+
+uint32_t ext_flash_AnalyseSampleBuffer(char *pstrResult)
+{
+	uint8_t sectorState[16];	/* samples are stored in 16 sector / 64k each */
+	uint32_t curAddress = SAMPLESTART;
+	uint8_t curSector = 0;
+	uint8_t samplebuffer[10];
+	uint32_t actualAddressBackup = actualAddress;
+	uint8_t emptyCellCnt = 0;
+	uint32_t i = 0;
+	uint8_t startedSectors = 0;
+	uint8_t	lastSectorInuse = 0;
+
+/* check if a sector is used till its end */
+	for(curSector = 0; curSector < 16; curSector++)
+	{
+		sectorState[curSector] = 0;
+		emptyCellCnt = 0;
+		curAddress = SAMPLESTART + (curSector * 0x10000);	/* set address to begin of sector and check if it is used */
+		actualAddress = curAddress;
+		ext_flash_read_block_start();
+		for(uint32_t i=0;i<10;i++)
+		{
+			samplebuffer[i] = read_spi(HOLDCS);/* read data */
+			if(samplebuffer[i] == 0xFF)
+			{
+				emptyCellCnt++;
+			}
+		}
+		ext_flash_read_block_stop();
+		if(emptyCellCnt == 10)
+		{
+			sectorState[curSector] = SECTOR_NOTUSED;
+		}
+		emptyCellCnt = 0;
+		curAddress = SAMPLESTART + (curSector * 0x10000) + 0xFFF5;	/* set address to end of sector and check if it is used */
+		actualAddress = curAddress;
+		ext_flash_read_block_start();
+		for(i=0;i<10;i++)
+		{
+			samplebuffer[i] = read_spi(HOLDCS);/* read data */
+			if(samplebuffer[i] == 0xFF)
+			{
+				emptyCellCnt++;
+			}
+		}
+		ext_flash_read_block_stop();
+		if(emptyCellCnt == 10)
+		{
+			sectorState[curSector] |= SECTOR_INUSE;		/* will become SECTOR_EMPTY if start is NOTUSED */
+		}
+	}
+
+	for(i=0;i<16;i++)
+	{
+		if( sectorState[i] == SECTOR_INUSE)
+		{
+			startedSectors++;
+			lastSectorInuse = i;
+		}
+		*(pstrResult+i) = sectorState[i] + 48;
+	}
+
+	if(startedSectors > 1)	/* more than one sector is in used => ring buffer corrupted */
+	{
+		if(startedSectors == 2)			/* only fix issue if only two sectors are in used. Otherwise fixing will cause more worries than help */
+		{
+		/* the logic behind healing of the problem is that the larger address is the oldest one => restore the largest address */
+			curAddress = SAMPLESTART + (lastSectorInuse * 0x10000);
+			emptyCellCnt = 0;
+			actualAddress = curAddress;
+			ext_flash_read_block_start();
+			while((emptyCellCnt < 10) && (actualAddress < curAddress + 0x10000))
+			{
+				samplebuffer[0] = read_spi(HOLDCS);/* read data */
+				if(samplebuffer[0] == 0xFF)
+				{
+					emptyCellCnt++;
+				}
+				else
+				{
+					emptyCellCnt = 0;
+				}
+				actualAddress++;
+			}
+			ext_flash_read_block_stop();
+			actualAddress -= 10;	/* step 10 bytes back to the start of free bytes */
+			actualPointerSample = actualAddress;
+
+			closeSectorAddress = settingsGetPointer()->logFlashNextSampleStartAddress & 0xFFFF0000;
+			closeSectorAddress += 0xFFF5; /* to be used once next time a dive is logged. Needed because NextSampleID is derived at every startup */
+			settingsGetPointer()->logFlashNextSampleStartAddress = actualPointerSample;	/* store new position to be used for next dive */
+		}
+	}
+	actualAddress = actualAddressBackup;
+	*(pstrResult+i) = 0;
+	return startedSectors;
+}
+
 /*
 uint8_t ext_flash_erase_firmware_if_not_empty(void)
 {

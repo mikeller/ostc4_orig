@@ -1187,8 +1187,10 @@ void logbook_InitAndWrite(const SDiveState *pStateReal)
 				{
 					pSettings->logbookOffset++;
 				}
-				ext_flash_write_settings();
+				ext_flash_write_settings(0);
 				ext_flash_disable_protection_for_logbook();
+
+				ext_flash_CloseSector();	/* this is just a repair function which invalidates a not used sector in case a log maintenance was called before dive */
 				bDiveMode = 3;
 			}
 			if(bDiveMode == 3)

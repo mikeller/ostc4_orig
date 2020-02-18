@@ -288,6 +288,7 @@ extern const tText text_array2[];
 		TXT2BYTE_Maintenance,
 		TXT2BYTE_SetBatteryCharge,
 		TXT2BYTE_SetFactoryDefaults,
+		TXT2BYTE_SetSampleIndex,
 		TXT2BYTE_Reboot,
 		TXT2BYTE_ButtonLeft,
 		TXT2BYTE_ButtonMitte,

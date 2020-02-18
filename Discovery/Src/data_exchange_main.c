@@ -640,7 +640,7 @@ static void DataEX_merge_DeviceData_and_store(void)
 
 	if(dataLengthRead == 0)
 	{
-		ext_flash_write_devicedata();
+		ext_flash_write_devicedata(false);
 		return;
 	}
 
@@ -682,7 +682,7 @@ static void DataEX_merge_DeviceData_and_store(void)
 	}
 	
 	DataEX_check_DeviceData	();
-	ext_flash_write_devicedata();
+	ext_flash_write_devicedata(false);
 }
 
 
