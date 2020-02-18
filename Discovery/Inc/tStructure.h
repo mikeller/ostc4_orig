@@ -290,19 +290,19 @@
 #define StMSYS5_Info		_MB(2,8,5,1,0)
 
 
-#define StMSYS6_Exit					_MB(2,8,6,1,0)
+#define StMSYS6_Exit			_MB(2,8,6,1,0)
 #define StMSYS6_LogbookOffset	_MB(2,8,6,7,0)
-#define StMSYS6_ResetAll			_MB(2,8,6,2,0)
-#define StMSYS6_ResetDeco			_MB(2,8,6,3,0)
-#define StMSYS6_Reboot				_MB(2,8,6,4,0)
+#define StMSYS6_ResetAll		_MB(2,8,6,2,0)
+#define StMSYS6_ResetDeco		_MB(2,8,6,3,0)
+#define StMSYS6_Reboot			_MB(2,8,6,4,0)
 #define StMSYS6_Maintenance		_MB(2,8,6,5,0)
 #define StMSYS6_ResetLogbook	_MB(2,8,6,6,0)
 #define StMSYS6_SetBattCharge	_MB(2,8,6,7,0)
-#define StMSYS6_RebootRTE			_MB(2,8,6,8,0)
+#define StMSYS6_RebootRTE		_MB(2,8,6,8,0)
 #define StMSYS6_RebootMainCPU	_MB(2,8,6,9,0)
 #define StMSYS6_ScreenTest		_MB(2,8,6,10,0)
 #define StMSYS6_SetFactoryBC	_MB(2,8,6,11,0)
-
+#define StMSYS6_SetSampleIndx   _MB(2,8,6,12,0)
 
 /* PAGE 9 */
 #define StMPLAN		_MB(2,9,0,0,0)
