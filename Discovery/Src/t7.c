@@ -1089,7 +1089,8 @@ void t7_refresh_surface(void)
             GFX_write_string_color(&Batt24,&t7batt,text,0,CLUT_WarningRed);
             if((stateUsed->lifeData.battery_charge > 0) && (stateUsed->lifeData.battery_charge < 140))
             {
-                snprintf(text,16,"\004\025\f\002%u%%",(uint8_t)stateUsed->lifeData.battery_charge);
+            	// show battery percent and voltage
+                snprintf(text,16,"\f\002%u%% \f%.1fV",(uint8_t)stateUsed->lifeData.battery_charge,stateUsed->lifeData.battery_voltage);
                 if(warning_count_high_time)
                     text[0] = '\a';
                 GFX_write_string(&FontT24,&t7voltage,text,0);
@@ -1106,7 +1107,8 @@ void t7_refresh_surface(void)
 
             if((stateUsed->lifeData.battery_charge > 0) && (stateUsed->lifeData.battery_charge < 140))
             {
-                snprintf(text,16,"\f\002%u%%",(uint8_t)stateUsed->lifeData.battery_charge);
+            	// show battery percent and voltage
+                snprintf(text,16,"\f\002%u%% \f%.1fV",(uint8_t)stateUsed->lifeData.battery_charge,stateUsed->lifeData.battery_voltage);
         //        GFX_write_string(&FontT24,&t7batt,text,0);
                 GFX_write_string(&FontT24,&t7voltage,text,0);
             }
