@@ -64,7 +64,7 @@ void init_battery_gas_gauge(void)
 	buffer[0] = 0x01;
 
 	// F8 = 11111000:
-	// Vbat 3.0V (11)
+	// ADC auto mode (11)
 	// Prescale M = 128 (111)
 	// AL/CC pin disable (0)
 	// Shutdown (0)
@@ -127,8 +127,8 @@ void battery_gas_gauge_get_data(void)
 		// max/full: 0.085 mAh * 1 * 65535 = 5570 mAh
 		battery_f_charge_percent_local =  (float)(bufferReceive[2] * 256);
 		battery_f_charge_percent_local += (float)(bufferReceive[3]);
-		battery_f_charge_percent_local -= BGG_BATTERY_OFFSET;
-		battery_f_charge_percent_local /= BGG_BATTERY_DIVIDER;
+		battery_f_charge_percent_local -= BGG_BATTERY_OFFSET;		/* Because of the prescalar 128 the counter assumes a max value of 5570mAh => normalize to 3350mAh*/
+		battery_f_charge_percent_local /= BGG_BATTERY_DIVIDER;		/* transform to percentage */
 
 		if(battery_f_charge_percent_local < 0)
 			battery_f_charge_percent_local = 0;
