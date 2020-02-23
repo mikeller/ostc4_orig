@@ -106,6 +106,7 @@ uint8_t updateSettingsAndMenuOnExit = 0;
 #define BYTE_DOWNLOAD_MODE			(0xBB)
 #define BYTE_SERVICE_MODE			(0xAA)
 
+#define UART_OPERATION_TIMEOUT		(500u)		/* Timeout for common read / write operations (ms) */
 #define UART_TIMEOUT_SECONDS		(120u)		/* Timeout for keeping connection open and waiting for data */
 #define UART_TIMEOUT_LARGE_BLOCK 	(6000u)		/* Timeout (ms) for reception of an 16K data block (typical RX time ~4,5seconds) */
 
@@ -444,7 +445,7 @@ void tComm_Disconnect()
 	do
 	{
 		HAL_Delay(200);
-		if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBufferEscapeSequence, 3, 1000)== HAL_OK)
+		if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBufferEscapeSequence, 3, UART_OPERATION_TIMEOUT)== HAL_OK)
 		{
 			answer = tComm_CheckAnswerOK();
 		}
@@ -455,13 +456,13 @@ void tComm_Disconnect()
 	if(answer == HAL_OK)
 	{
 		answer = HAL_ERROR;
-		if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxDisconnect,sizeDisconnect , 1000)== HAL_OK)
+		if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxDisconnect,sizeDisconnect , UART_OPERATION_TIMEOUT)== HAL_OK)
 		{
 			answer = HAL_ERROR;
 			if(tComm_CheckAnswerOK() == HAL_OK)
 			{
 				answer = HAL_ERROR;
-				if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBufferEnd, 4, 1000) == HAL_OK)	/* exit terminal mode */
+				if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBufferEnd, 4, UART_OPERATION_TIMEOUT) == HAL_OK)	/* exit terminal mode */
 				{
 					answer = tComm_CheckAnswerOK();
 				}
@@ -536,7 +537,7 @@ uint8_t openComm(uint8_t aRxByte)
 
     while((answer == prompt4D4C(receiveStartByteUart)) && (timeoutCounter < UART_TIMEOUT_SECONDS)) 	/* try receive once a second */
     {
-    	if(HAL_UART_Receive(&UartHandle, (uint8_t*)&localRx, 1, 1000)!= HAL_OK) 							
+    	if(HAL_UART_Receive(&UartHandle, (uint8_t*)&localRx, 1, UART_OPERATION_TIMEOUT)!= HAL_OK)
     	{
     		timeoutCounter++;
     		get_globalStateList(&status);
@@ -666,7 +667,7 @@ uint8_t select_mode(uint8_t type)
 
 #endif
         case 0xC1: // 	Start low-level bootloader
-            if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBuffer, 1, 1000)!= HAL_OK)
+            if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBuffer, 1, UART_OPERATION_TIMEOUT)!= HAL_OK)
                 return 0;
             break;
         default:
@@ -1926,7 +1927,7 @@ uint8_t tComm_CheckAnswerOK()
 	uint8_t answer;
 
 	memset(aRxBuffer,0,UART_CMD_BUF_SIZE);
-	if(HAL_UART_Receive(&UartHandle, (uint8_t*)aRxBuffer, sizeAnswer, 1000) == HAL_OK)
+	if(HAL_UART_Receive(&UartHandle, (uint8_t*)aRxBuffer, sizeAnswer, UART_OPERATION_TIMEOUT) == HAL_OK)
 	{
 		do
 		{
@@ -2098,7 +2099,7 @@ uint8_t tComm_HandleBlueModConfig()
 		{
 			if(BmTmpConfig == BM_CONFIG_ECHO)	/* echo is not yet turned off => read and discard echo */
 			{
-				HAL_UART_Receive(&UartHandle, (uint8_t*)TxBuffer, CmdSize, 1000);
+				HAL_UART_Receive(&UartHandle, (uint8_t*)TxBuffer, CmdSize, UART_OPERATION_TIMEOUT);
 			}
 
 			result = tComm_CheckAnswerOK();
