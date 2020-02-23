@@ -416,14 +416,6 @@ void DateEx_copy_to_dataOut(void)
 		
 		settingsHelperButtonSens_keepPercentageValues(settingsGetPointerStandard()->ButtonResponsiveness[3], settings->ButtonResponsiveness);
 		setButtonResponsiveness(settings->ButtonResponsiveness);
-		
-		// hw 160720 new lastKnownBatteryPercentage
-		if(!wasUpdateNotPowerOn)
-		{
-//			dataOut.data.newBatteryGaugePercentageFloat = settingsGetPointer()->lastKnownBatteryPercentage;
-			dataOut.data.newBatteryGaugePercentageFloat = 0;
-			dataOut.setBatteryGaugeNow = 1;
-		}
 	}
 }
 
