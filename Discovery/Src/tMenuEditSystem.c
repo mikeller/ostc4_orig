@@ -1521,8 +1521,8 @@ void openEdit_ResetConfirmation(uint32_t editIdOfCaller)
         text[1] = TXT2BYTE_WarnBatteryLow;
         text[2] = 0;
         snprintf(&text[2],10,": %01.2fV",stateRealGetPointer()->lifeData.battery_voltage);
-        write_label_var(  30, 800, ME_Y_LINE4, &FontT42, text);
-
+        write_label_var(  30, 800, ME_Y_LINE5, &FontT42, text);
+        
         snprintf(&text[0],30,"Code: %X",getLicence());
         write_label_var(  30, 800, ME_Y_LINE6, &FontT42, text);
         break;
