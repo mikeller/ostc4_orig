@@ -151,6 +151,8 @@
 #include "stm32f4xx_hal.h"
 #include <stdio.h>
 
+uint8_t coldstart __attribute__((section (".noinit")));
+
 uint8_t hasExternalClock(void) {
 	if ((TM_OTP_Read(0, 0) > 0) && (TM_OTP_Read(0, 0) < 0xFF))
 		return 1;
@@ -181,7 +183,9 @@ const SFirmwareData cpu2_FirmwareData __attribute__(( section(".firmware_data") 
 		/* for safety reasons and coming functions */
 		.magic[0] = FIRMWARE_MAGIC_FIRST, .magic[1] = FIRMWARE_MAGIC_SECOND,
 		.magic[2] = FIRMWARE_MAGIC_CPU2_RTE, /* the magic byte for RTE */
-		.magic[3] = FIRMWARE_MAGIC_END };
+		.magic[3] = FIRMWARE_MAGIC_END
+};
+
 
 uint8_t firmwareVersionHigh(void) {
 	return cpu2_FirmwareData.versionFirst;
@@ -339,7 +343,11 @@ int main(void) {
 	init_battery_gas_gauge();
 	HAL_Delay(10);
 	battery_gas_gauge_get_data();
-//	battery_gas_gauge_set(0);
+	if(coldstart != 0xA5)
+	{
+		coldstart = 0xA5;
+		battery_gas_gauge_set(0);
+	}
 
 	global.lifeData.battery_voltage = get_voltage();
 	global.lifeData.battery_charge = get_charge();
