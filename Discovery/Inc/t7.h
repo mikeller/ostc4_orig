@@ -32,6 +32,23 @@
 #include "stm32f4xx_hal.h"
 #include "gfx_engine.h"
 
+
+typedef enum
+{
+		LLC_Empty = 0,
+		LLC_Temperature,
+		LLC_AverageDepth,
+		LLC_ppO2,
+		LLC_Stopwatch,
+		LLC_Ceiling,
+		LLC_FutureTTS,
+		LLC_CNS,
+		LLC_GF,
+		LCC_BottleBar,
+		LLC_END
+
+} customview_llc_t;
+
 /* Exported functions --------------------------------------------------------*/
 void t7_init(void);
 
