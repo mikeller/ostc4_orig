@@ -1407,7 +1407,7 @@ static void ext_flash_find_start(void)
   /* TODO Cleanup_Ref_1: cleanup logFlashNextSampleStartAddress and lastDiveLogId */
   /* The implementation below would cause problems in case more then 254 dives would be done. */
   /* This is avoided by Cleanup_Ref2 */
-  for(id = 0; id < 255;id++)
+  for(id = 0; id <= 255;id++)
   {
     actualAddress = HEADERSTART + (0x800 * id) + HEADER2OFFSET;
     ext_flash_read_block_start();
