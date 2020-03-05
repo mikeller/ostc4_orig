@@ -56,10 +56,9 @@
 #include "data_exchange.h"
 #include "decom.h"
 #include "tHome.h" // for  tHome_findNextStop()
+#include "settings.h"
  
 /* Private types -------------------------------------------------------------*/
-
-#define NUM_GASES 5
 
 #define LOGBOOK_VERSION (0x30)
 #define LOGBOOK_VERSION_OSTC3 (0x24)
