@@ -31,6 +31,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
 #include "gfx_engine.h"
+#include "configuration.h"
 
 
 typedef enum
@@ -44,7 +45,9 @@ typedef enum
 		LLC_FutureTTS,
 		LLC_CNS,
 		LLC_GF,
+#ifdef ENABLE_BOTTLE_SENSOR
 		LCC_BottleBar,
+#endif
 		LLC_END
 
 } customview_llc_t;
