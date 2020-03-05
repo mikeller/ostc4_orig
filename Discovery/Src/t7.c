@@ -2652,11 +2652,13 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
         headerText[2] = TXT_ActualGradient;
         snprintf(text,TEXTSIZE,"\020%.0f\016\016%%\017",100 * pDecoinfoStandard->super_saturation);
         break;
+#ifdef ENABLE_BOTTLE_SENSOR
     case LCC_BottleBar:
         headerText[2] = TXT_AtemGasVorrat;
         tinyHeaderFont = 1;
         snprintf(text,TEXTSIZE,"%d\016\016\017", stateUsed->lifeData.bottle_bar[1]);
         break;
+#endif
     }
     headerText[3] = 0;
 
@@ -2666,7 +2668,10 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
         GFX_write_string(&FontT42,&t7l3,headerText,0);
 
     t7_colorscheme_mod(text);
-    if(selection_custom_field != LCC_BottleBar)
+#ifndef ENABLE_BOTTLE_SENSOR
+   	GFX_write_string(&FontT105,&t7l3,text,line);
+#else
+    if(selection_custom_field != LCC_BottleBar)			/* a changing color set is used for bar display */
     {
     	GFX_write_string(&FontT105,&t7l3,text,line);
     }
@@ -2689,6 +2694,7 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
 
     	GFX_write_string_color(&FontT105,&t7l3,text,line,agedColor);
     }
+#endif
 }
 
 /* Private functions ---------------------------------------------------------*/

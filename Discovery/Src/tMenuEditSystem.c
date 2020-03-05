@@ -906,11 +906,13 @@ void refresh_Customviews(void)
     case LLC_GF:
     	text[4] = TXT_ActualGradient;
     	break;
+#ifdef ENABLE_BOTTLE_SENSOR
     case LCC_BottleBar:
     	text[4] = TXT_AtemGasVorrat;
     	    	break;
+#endif
     /* none */
-    case 0:
+    case LLC_Empty:
         text[4] = '-';
         break;
     default:
