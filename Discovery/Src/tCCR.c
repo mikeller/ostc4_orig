@@ -53,6 +53,8 @@ typedef struct
 #define HUD_RX_START_DELAY_MS		(500u)		/* Delay for start of RX function to avoid start of reception while a transmission is ongoing. */
 												/* Based on an assumed cycle time by the sensor of 1 second. Started at time of last RX */
 
+#define BOTTLE_SENSOR_TIMEOUT		(6000u)     /* signal pressure budget as not received after 10 minutes (6000 * 100ms) */
+
 /* Private variables ---------------------------------------------------------*/
 static SIrLink receiveHUD[2];
 static uint8_t boolHUDdata = 0;
@@ -290,7 +292,15 @@ uint8_t get_ppO2SensorWeightedResult_cbar(void)
 
 void tCCR_init(void)
 {
+	uint8_t loop;
+
     StartListeningToUART_HUD = 1;
+
+    SDiveState* pDiveData = stateRealGetPointerWrite();
+    for(loop=0;loop<(2*NUM_GASES+1);loop++)
+    {
+    	pDiveData->lifeData.bottle_bar_age_MilliSeconds[loop] =  BOTTLE_SENSOR_TIMEOUT;
+    }
 }
 
 
