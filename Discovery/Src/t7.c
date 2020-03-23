@@ -1008,13 +1008,14 @@ void t7_refresh_surface(void)
 
         actualGasID = stateUsed->lifeData.actualGas.GasIdInSettings;
 
+#ifdef ENABLE_BOTTLE_SENSOR
         bottleFirstGas_bar = stateUsed->lifeData.bottle_bar[actualGasID];
         if(bottleFirstGas_bar)
         {
             snprintf(text,255,"%3u\022\016\016 bar",bottleFirstGas_bar);
             GFX_write_string(&FontT48,&t7surfaceL,text,8);
         }
-
+#endif
         // after gas name :-)
         if(actualGasID > gasOffset) // security
         {
@@ -1091,8 +1092,12 @@ void t7_refresh_surface(void)
             GFX_write_string_color(&Batt24,&t7batt,text,0,CLUT_WarningRed);
             if((stateUsed->lifeData.battery_charge > 0) && (stateUsed->lifeData.battery_charge < 140))
             {
+#ifdef ALWAYS_SHOW_VOLTAGE
             	// show battery percent and voltage
                 snprintf(text,16,"\f\002%u%% \f%.1fV",(uint8_t)stateUsed->lifeData.battery_charge,stateUsed->lifeData.battery_voltage);
+#else
+                snprintf(text,16,"\004\025\f\002%u%%",(uint8_t)stateUsed->lifeData.battery_charge);
+#endif
                 if(warning_count_high_time)
                     text[0] = '\a';
                 GFX_write_string(&FontT24,&t7voltage,text,0);
@@ -1109,9 +1114,12 @@ void t7_refresh_surface(void)
 
             if((stateUsed->lifeData.battery_charge > 0) && (stateUsed->lifeData.battery_charge < 140))
             {
+#ifdef ALWAYS_SHOW_VOLTAGE
             	// show battery percent and voltage
                 snprintf(text,16,"\f\002%u%% \f%.1fV",(uint8_t)stateUsed->lifeData.battery_charge,stateUsed->lifeData.battery_voltage);
-        //        GFX_write_string(&FontT24,&t7batt,text,0);
+#else
+                 snprintf(text,16,"\f\002%u%%",(uint8_t)stateUsed->lifeData.battery_charge);
+#endif
                 GFX_write_string(&FontT24,&t7voltage,text,0);
             }
             else
@@ -2656,7 +2664,7 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
     case LCC_BottleBar:
         headerText[2] = TXT_AtemGasVorrat;
         tinyHeaderFont = 1;
-        snprintf(text,TEXTSIZE,"%d\016\016\017", stateUsed->lifeData.bottle_bar[1]);
+        snprintf(text,TEXTSIZE,"%d\016\016\017", stateUsed->lifeData.bottle_bar[stateUsed->lifeData.actualGas.GasIdInSettings]);
         break;
 #endif
     }
@@ -2677,19 +2685,24 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
     }
     else
     {
-    	agedColor = stateUsed->lifeData.bottle_bar_age_MilliSeconds[1];
+    	agedColor = stateUsed->lifeData.bottle_bar_age_MilliSeconds[stateUsed->lifeData.actualGas.GasIdInSettings];
     	if(agedColor > 1200)
     	{
-    		agedColor = 16;
+    		agedColor = CLUT_WarningRed;
     	}
     	else
     	if(agedColor > 600)
+        {
+        	agedColor = CLUT_MenuLineUnselected;
+        }
+        else
+    	if(agedColor > 20)
     	{
-    		agedColor = 9;
+    		agedColor = CLUT_Font031;
     	}
     	else
     	{
-    		agedColor = 0;
+    		agedColor = CLUT_Font020;
     	}
 
     	GFX_write_string_color(&FontT105,&t7l3,text,line,agedColor);
