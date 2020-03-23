@@ -435,9 +435,16 @@ int main(void)
     GFX_logoAutoOff();
     EXTILine_Buttons_Config();
 
+#ifdef TRUST_LOG_CONSISTENCY
+    if(!ext_dive_log_consistent())	/* only repair log if an invalid entry was detected */
+    {
+    	ext_flash_repair_dive_log();
+    }
+
+#else	/* always check and repair log */
     ext_flash_repair_dive_log();
     //ext_flash_repair_SPECIAL_dive_numbers_starting_count_with(1);
-
+#endif
     totalDiveCounterFound = logbook_lastDive_diveNumber();
     if( settingsGetPointer()->totalDiveCounter < totalDiveCounterFound )
             settingsGetPointer()->totalDiveCounter = totalDiveCounterFound;
