@@ -209,11 +209,15 @@ SLogbookHeaderOSTC3compact * logbook_build_ostc3header_compact(SLogbookHeader* p
 
 uint8_t logbook_getNumberOfHeaders(void);
 uint8_t logbook_getHeader(uint8_t StepBackwards,SLogbookHeader* pLogbookHeader);
-uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t* depth, uint8_t*  gasid, int16_t* temperature, uint16_t* ppo2, uint16_t* setpoint, uint16_t* sensor1, uint16_t* sensor2, uint16_t* sensor3, uint16_t* cns, uint8_t* bailout, uint16_t* decostopDepth);
+uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t* depth, uint8_t*  gasid, int16_t* temperature, uint16_t* ppo2,
+							    uint16_t* setpoint, uint16_t* sensor1, uint16_t* sensor2, uint16_t* sensor3, uint16_t* cns, uint8_t* bailout,
+								uint16_t* decostopDepth, uint16_t* tank);
 void logbook_test(void);
 void logbook_InitAndWrite(const SDiveState* pStateReal);
 void logbook_recover_brokenlog(uint8_t headerId);
 
 uint16_t logbook_lastDive_diveNumber(void);
+uint16_t logbook_fillDummySampleBuffer(uint16_t diveMinutes, uint8_t diveSeconds, uint16_t maxDepth, uint8_t lastDecostop_m, int16_t minTemp);
+void logbook_readDummySamples(uint8_t* pTarget, uint16_t length);
 
 #endif /* LOGBOOK_H */
