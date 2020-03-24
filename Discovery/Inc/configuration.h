@@ -32,6 +32,15 @@
 /* #define SIM_WRITES_LOGBOOK 1 */
 
 /* Enable this for support of optical bottle pressure interface */
-#define ENABLE_BOTTLE_SENSOR
+/* #define ENABLE_BOTTLE_SENSOR */
+
+/* Enable this to show voltage in parallel to charge state */
+/* #define ALWAYS_SHOW_VOLTAGE */
+
+/* Enable this to skip coplete scan of dive log during startup */
+/* #define TRUST_LOG_CONSISTENCY */
+
+/* Enable this to reset the profile data by pressing enter within log info menu */
+/* #define ENABLE_PROFILE_RESET */
 
 #endif
