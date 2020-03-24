@@ -57,6 +57,7 @@
 #include "decom.h"
 #include "tHome.h" // for  tHome_findNextStop()
 #include "settings.h"
+#include "configuration.h"
  
 /* Private types -------------------------------------------------------------*/
 
@@ -64,6 +65,7 @@
 #define LOGBOOK_VERSION_OSTC3 (0x24)
 
 #define DEFAULT_SAMPLES	(100)	/* Number of sample data bytes in case of an broken header information */
+#define DUMMY_SAMPLES	(1000)	/* Maximum number of samples profided by a dummy dive profile */
 
 typedef struct /* don't forget to adjust void clear_divisor(void) */
 {
@@ -86,6 +88,12 @@ static SSmallHeader smallHeader;
 static SDivisor divisor;
 static SDivisor divisorBackup;
 
+static SSmallHeader smallDummyHeader;
+static uint16_t	dummyWriteIdx;
+static uint16_t	dummyReadIdx;
+static uint8_t dummyMemoryBuffer[1000*4];
+
+
 /* Private function prototypes -----------------------------------------------*/
 static void clear_divisor(void);
 static void logbook_SetAverageDepth(float average_depth_meter);
@@ -95,6 +103,7 @@ static void logbook_SetCompartmentDesaturation(const SDiveState * pStateReal);
 static void logbook_SetLastStop(float last_stop_depth_bar);
 static void logbook_writedata(void * data, int length_byte);
 static void logbook_UpdateHeader(const SDiveState * pStateReal);
+static void logbook_createDummyProfile(uint16_t maxDepth, uint8_t lastDecostop_m, int16_t minTemp, uint16_t length, uint16_t* depth, int16_t* temperature);
 
 /* Exported functions --------------------------------------------------------*/
 
@@ -307,9 +316,13 @@ void logbook_initNewdiveProfile(const SDiveState* pInfo, SSettings* pSettings)
 	smallHeader.cnsDivisor = 12;
 
 	smallHeader.tankType = 6;
+#ifdef ENABLE_BOTTLE_SENSOR
+	smallHeader.tankLength = 2;
+	smallHeader.tankDivisor = 30;	/* log tank data once a minute */
+#else
 	smallHeader.tankLength = 0;
 	smallHeader.tankDivisor = 0;
-
+#endif
 	logbook_writedata((void *) &smallHeader,sizeof(smallHeader));
 
 	clear_divisor();
@@ -623,6 +636,22 @@ void logbook_writeSample(const SDiveState *state)
         divisor.cns--;
     }
 
+#ifdef ENABLE_BOTTLE_SENSOR
+    if(smallHeader.tankDivisor)
+    {
+      if(divisor.tank == 0)
+      {
+          divisor.tank = smallHeader.tankDivisor - 1;
+  		  addS16(&sample[length], ((state->lifeData.bottle_bar[state->lifeData.actualGas.GasIdInSettings])));
+  		  length += smallHeader.tankLength;
+      }
+      else
+      {
+          divisor.tank--;
+      }
+    }
+#endif
+
     profileByteFlag.uw = length - 3;
     if(eventByte1.uw)
     {
@@ -648,7 +677,8 @@ void logbook_writeSample(const SDiveState *state)
   * @param  int32_t* cns: output Value
   * @return bytes read / 0 = reading Error
   */
-static uint16_t readSample(int32_t* depth, int16_t * gasid, int16_t* setpoint_cbar, int32_t* temperature, int32_t* sensor1, int32_t* sensor2, int32_t* sensor3, int32_t* cns, SManualGas* manualGas, int16_t* bailout, int16_t* decostopDepth)
+static uint16_t readSample(int32_t* depth, int16_t * gasid, int16_t* setpoint_cbar, int32_t* temperature, int32_t* sensor1, int32_t* sensor2,
+						   int32_t* sensor3, int32_t* cns, SManualGas* manualGas, int16_t* bailout, int16_t* decostopDepth, uint16_t* tank)
 {
 	int length = 0;
 	_Bool bEvent = 0;
@@ -677,6 +707,9 @@ static uint16_t readSample(int32_t* depth, int16_t * gasid, int16_t* setpoint_cb
     *setpoint_cbar = -1;
   if(bailout)
     *bailout = -1;
+  if(tank)
+	  *tank = 0;
+
   if(manualGas)
   {
     manualGas->percentageO2 =-1;
@@ -867,6 +900,27 @@ static uint16_t readSample(int32_t* depth, int16_t * gasid, int16_t* setpoint_cb
 			divisor.cns--;
 	}
 
+#ifdef ENABLE_BOTTLE_SENSOR
+	if(smallHeader.tankDivisor)
+	{
+		if(divisor.tank == 0)
+		{
+				divisor.tank = smallHeader.tankDivisor - 1;
+				ext_flash_read_next_sample_part( (uint8_t*)&temp, 2);
+				bytesRead +=2;
+				length -= 2;
+				if(tank)
+				{
+						*tank = (uint16_t)temp;
+				}
+		}
+		else
+		{
+				divisor.tank--;
+		}
+	}
+#endif
+
 	if (length != 0)
 			return 0;
 
@@ -889,7 +943,9 @@ static uint16_t readSample(int32_t* depth, int16_t * gasid, int16_t* setpoint_cb
   * @param  int32_t* cns : output  array
   * @return length of output
   */
-uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t* depth, uint8_t*  gasid, int16_t* temperature, uint16_t* ppo2, uint16_t* setpoint, uint16_t* sensor1, uint16_t* sensor2, uint16_t* sensor3, uint16_t* cns, uint8_t* bailout, uint16_t* decostopDepth)
+uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t* depth, uint8_t*  gasid, int16_t* temperature, uint16_t* ppo2,
+							    uint16_t* setpoint, uint16_t* sensor1, uint16_t* sensor2, uint16_t* sensor3, uint16_t* cns, uint8_t* bailout,
+								uint16_t* decostopDepth, uint16_t* tank)
 {
      //Test read
     //SLogbookHeader header;
@@ -921,13 +977,15 @@ uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t*
     int32_t temperatureLast = 0;
     int32_t temperatureFirst = 0;
     int32_t cnsLast = 0;
-		int16_t decostepDepthVal = 0;
-		int16_t decostepDepthLast = 0;
+	int16_t decostepDepthVal = 0;
+	int16_t decostepDepthLast = 0;
+	int16_t tankVal = 0;
 
      SManualGas manualGasVal;
      SManualGas manualGasLast;
      manualGasLast.percentageO2 = 0;
      manualGasLast.percentageHe = 0;
+     uint16_t numSamples = 0;
 
      float ambiant_pressure_bar = 0;
      float ppO2 = 0;
@@ -945,8 +1003,11 @@ uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t*
     //diveTime_seconds = header.diveTime_seconds ;
     for(compression = 1; compression < 100; compression ++)
     {
-        if((header.total_diveTime_seconds / header.samplingRate)/compression <= length)
-            break;
+    	numSamples = (header.total_diveTime_seconds / header.samplingRate)/compression;
+        if(numSamples <= length)
+        {
+        	break;
+        }
     }
 
 
@@ -970,6 +1031,8 @@ uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t*
             sensor3[i] = 0;
         if(cns)
             cns[i] = 0;
+        if(tank)
+        	tank[i] = 0;
     }
     //We start with fist gasid
     gasidLast = firstgasid;
@@ -987,135 +1050,149 @@ uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t*
     iNum = 0;
     int counter = 0;
 		temperatureLast = -1000;
-    while ((bytesRead < totalNumberOfBytes) && (iNum < length))
-    {
-			ext_flash_set_entry_point();
-			divisorBackup = divisor;
-			retVal = readSample(&depthVal,&gasidVal, &setPointVal, &temperatureVal, &sensor1Val, &sensor2Val, &sensor3Val, &cnsVal, &manualGasVal, &bailoutVal, &decostepDepthVal);
+	if(totalNumberOfBytes > 2)	/* read real data */
+	{
+		while ((bytesRead < totalNumberOfBytes) && (iNum < length))
+		{
+				ext_flash_set_entry_point();
+				divisorBackup = divisor;
+				retVal = readSample(&depthVal,&gasidVal, &setPointVal, &temperatureVal, &sensor1Val, &sensor2Val, &sensor3Val, &cnsVal, &manualGasVal,
+									&bailoutVal, &decostepDepthVal, &tankVal);
 
-			if(retVal == 0)
-			{
-					//Error try to read again!!!
-					ext_flash_reopen_read_sample_at_entry_point();
-					divisor = divisorBackup;
-					retVal = readSample(&depthVal,&gasidVal,&setPointVal, &temperatureVal, &sensor1Val, &sensor2Val, &sensor3Val, &cnsVal, &manualGasVal, &bailoutVal, &decostepDepthVal);
-
-					if(retVal == 0)
-							break;
-			}
-			bytesRead +=retVal;
-
-			//if for some variable no new value is in the sample for (z.B. gasidVal = -1), we take the last value
-			if(depthVal == -1)
-					depthVal = depthLast;
-			else
-					depthLast = depthVal;
-
-			if(gasidVal == -1)
-					gasidVal = gasidLast;
-			else
-					gasidLast = gasidVal;
-
-			if(temperatureVal == -1000)
-					temperatureVal = temperatureLast;
-			else
-			{	
-				if(temperatureLast == -1000)
-					temperatureFirst = temperatureVal;
-				temperatureLast = temperatureVal;
-			}
-
-			if(setPointVal == -1)
-				setPointVal = setPointLast;
-			else
-				setPointLast = setPointVal;
-
-			if(sensor1Val == -1)
-					sensor1Val = sensor1Last;
-			else
-					sensor1Last = sensor1Val;
-
-			if(sensor2Val == -1)
-					sensor2Val = sensor2Last;
-			else
-					sensor2Last = sensor2Val;
-
-			if(sensor3Val == -1)
-					sensor3Val = sensor3Last;
-			else
-					sensor3Last = sensor3Val;
-
-			if(cnsVal == -1)
-					cnsVal = cnsLast;
-			else
-					cnsLast = cnsVal;
-
-			if(manualGasVal.percentageO2 == -1)
-				manualGasVal = manualGasLast;
-			else
-				manualGasLast = manualGasVal;
-
-			if(bailoutVal == -1)
-				bailoutVal = bailoutLast;
-			else
-				bailoutLast = bailoutVal;
-
-			if(decostepDepthVal == -1)
-					decostepDepthVal = decostepDepthLast;
-			else
-					decostepDepthLast = decostepDepthVal;
-			
-			counter++;
-			// Heed compression
-			// Write here to arrays
-			if(counter == compression)
-			{
-				if(depth)
-					depth[iNum] = depthVal;
-				if(gasid)
-					gasid[iNum] = gasidVal;
-				if(temperature)
-					temperature[iNum] = temperatureVal;
-				if(cns)
-					cns[iNum] = cnsVal;
-				if(bailout)
-					bailout[iNum] = bailoutVal;
-				if(decostopDepth)
-					decostopDepth[iNum] = decostepDepthVal;
-					
-				if(ppo2)
+				if(retVal == 0)
 				{
-					//Calc ppo2 - Values
-					SGas gas;
-					gas.setPoint_cbar = setPointVal;
-					if(gasidVal > 0)
-					{
-						gas.helium_percentage = header.gasordil[gasidVal - 1].helium_percentage;
-						gas.nitrogen_percentage = 100 -  gas.helium_percentage - header.gasordil[gasidVal - 1].oxygen_percentage;
-					}
-					else
-					{
-						gas.helium_percentage = manualGasVal.percentageHe;
-						gas.nitrogen_percentage = 100 -  gas.helium_percentage - manualGasVal.percentageO2;
-					}
-					ambiant_pressure_bar =((float)(depthVal + header.surfacePressure_mbar))/1000;
-					ppO2 = decom_calc_ppO2(ambiant_pressure_bar, &gas );
-					ppo2[iNum] = (uint16_t) ( ppO2 * 100);
+						//Error try to read again!!!
+						ext_flash_reopen_read_sample_at_entry_point();
+						divisor = divisorBackup;
+						retVal = readSample(&depthVal,&gasidVal,&setPointVal, &temperatureVal, &sensor1Val, &sensor2Val, &sensor3Val, &cnsVal,
+											&manualGasVal, &bailoutVal, &decostepDepthVal, &tankVal);
+
+						if(retVal == 0)
+								break;
+				}
+				bytesRead +=retVal;
+
+				//if for some variable no new value is in the sample for (z.B. gasidVal = -1), we take the last value
+				if(depthVal == -1)
+						depthVal = depthLast;
+				else
+						depthLast = depthVal;
+
+				if(gasidVal == -1)
+						gasidVal = gasidLast;
+				else
+						gasidLast = gasidVal;
+
+				if(temperatureVal == -1000)
+						temperatureVal = temperatureLast;
+				else
+				{
+					if(temperatureLast == -1000)
+						temperatureFirst = temperatureVal;
+					temperatureLast = temperatureVal;
 				}
 
-				if(setpoint)
-					setpoint[iNum] = setPointVal;
+				if(setPointVal == -1)
+					setPointVal = setPointLast;
+				else
+					setPointLast = setPointVal;
 
-				if(sensor1)
-					sensor1[iNum] = (sensor1Val / 0xFFFF) & 0xFF;
-				if(sensor2)
-					sensor2[iNum] = (sensor2Val / 0xFFFF) & 0xFF;
-				if(sensor3)
-					sensor3[iNum] = (sensor3Val / 0xFFFF) & 0xFF;
-				iNum++;
-				counter = 0;
-			}
-    }
+				if(sensor1Val == -1)
+						sensor1Val = sensor1Last;
+				else
+						sensor1Last = sensor1Val;
+
+				if(sensor2Val == -1)
+						sensor2Val = sensor2Last;
+				else
+						sensor2Last = sensor2Val;
+
+				if(sensor3Val == -1)
+						sensor3Val = sensor3Last;
+				else
+						sensor3Last = sensor3Val;
+
+				if(cnsVal == -1)
+						cnsVal = cnsLast;
+				else
+						cnsLast = cnsVal;
+
+				if(manualGasVal.percentageO2 == -1)
+					manualGasVal = manualGasLast;
+				else
+					manualGasLast = manualGasVal;
+
+				if(bailoutVal == -1)
+					bailoutVal = bailoutLast;
+				else
+					bailoutLast = bailoutVal;
+
+				if(decostepDepthVal == -1)
+						decostepDepthVal = decostepDepthLast;
+				else
+						decostepDepthLast = decostepDepthVal;
+
+				counter++;
+				// Heed compression
+				// Write here to arrays
+				if(counter == compression)
+				{
+					if(depth)
+						depth[iNum] = depthVal;
+					if(gasid)
+						gasid[iNum] = gasidVal;
+					if(temperature)
+						temperature[iNum] = temperatureVal;
+					if(cns)
+						cns[iNum] = cnsVal;
+					if(bailout)
+						bailout[iNum] = bailoutVal;
+					if(decostopDepth)
+						decostopDepth[iNum] = decostepDepthVal;
+
+					if(ppo2)
+					{
+						//Calc ppo2 - Values
+						SGas gas;
+						gas.setPoint_cbar = setPointVal;
+						if(gasidVal > 0)
+						{
+							gas.helium_percentage = header.gasordil[gasidVal - 1].helium_percentage;
+							gas.nitrogen_percentage = 100 -  gas.helium_percentage - header.gasordil[gasidVal - 1].oxygen_percentage;
+						}
+						else
+						{
+							gas.helium_percentage = manualGasVal.percentageHe;
+							gas.nitrogen_percentage = 100 -  gas.helium_percentage - manualGasVal.percentageO2;
+						}
+						ambiant_pressure_bar =((float)(depthVal + header.surfacePressure_mbar))/1000;
+						ppO2 = decom_calc_ppO2(ambiant_pressure_bar, &gas );
+						ppo2[iNum] = (uint16_t) ( ppO2 * 100);
+					}
+
+					if(tank)
+					{
+						tank[iNum] = tankVal;
+					}
+					if(setpoint)
+						setpoint[iNum] = setPointVal;
+
+					if(sensor1)
+						sensor1[iNum] = (sensor1Val / 0xFFFF) & 0xFF;
+					if(sensor2)
+						sensor2[iNum] = (sensor2Val / 0xFFFF) & 0xFF;
+					if(sensor3)
+						sensor3[iNum] = (sensor3Val / 0xFFFF) & 0xFF;
+					iNum++;
+					counter = 0;
+				}
+		}
+	}
+	else
+	{
+		logbook_createDummyProfile(header.maxDepth, header.lastDecostop_m, header.minTemp, numSamples, depth, temperature);
+		iNum = numSamples;
+	}
 		
 		// Fix first Temperature Entries 150930 hw
 		if(temperature)
@@ -1381,6 +1458,7 @@ static void logbook_writedata(void * data, int length_byte)
 SLogbookHeaderOSTC3 * logbook_build_ostc3header(SLogbookHeader* pHead)
 {
 	convert_Type data,data2;
+	uint16_t dummyLength = 0;
 
 	memcpy(headerOSTC3.diveHeaderStart,			&pHead->diveHeaderStart,					2);
 	memcpy(headerOSTC3.pBeginProfileData,		&pHead->pBeginProfileData,				3);
@@ -1397,22 +1475,35 @@ SLogbookHeaderOSTC3 * logbook_build_ostc3header(SLogbookHeader* pHead)
 	data2.u8bit.byteMidLow 	= pHead->pEndProfileData[1];
 	data2.u8bit.byteMidHigh 	= pHead->pEndProfileData[2];
 
-	/* check if sample address information are corrupted by address range. */
-	/* TODO: Workaround. Better solution would be to check end of ring for 0xFF pattern */
-	if((data.u32bit > data2.u32bit) && (data.u32bit < (SAMPLESTOP - 0x9000)))
+	if( (pHead->pBeginProfileData[0] == 0)			/* no sample data available => use dummy */
+		&&(pHead->pBeginProfileData[1] == 0)
+		&&(pHead->pBeginProfileData[2] == 0))
 	{
-		data2.u32bit = data.u32bit + DEFAULT_SAMPLES;
-		pHead->pEndProfileData[0] = data2.u8bit.byteLow;
-		pHead->pEndProfileData[1] = data2.u8bit.byteMidLow;
-		pHead->pEndProfileData[2] = data2.u8bit.byteMidHigh;
-		data.u32bit = DEFAULT_SAMPLES;
+		dummyLength = logbook_fillDummySampleBuffer(pHead->diveTimeMinutes, pHead->diveTimeSeconds,pHead->maxDepth
+													,pHead->lastDecostop_m, pHead->minTemp);
+
+		data2.u32bit = data.u32bit + dummyLength;	/* calc new end address (which is equal to dummyLength) */
+		data.u32bit = data2.u32bit;				    /* data is used below to represent the length */
 	}
 	else
 	{
-		data.u8bit.byteHigh = 0;
-		data.u8bit.byteLow 			= pHead->profileLength[0];
-		data.u8bit.byteMidLow 	= pHead->profileLength[1];
-		data.u8bit.byteMidHigh 	= pHead->profileLength[2];
+		/* check if sample address information are corrupted by address range. */
+		/* TODO: Workaround. Better solution would be to check end of ring for 0xFF pattern */
+		if((data.u32bit > data2.u32bit) && (data.u32bit < (SAMPLESTOP - 0x9000)))
+		{
+			data2.u32bit = data.u32bit + DEFAULT_SAMPLES;
+			pHead->pEndProfileData[0] = data2.u8bit.byteLow;
+			pHead->pEndProfileData[1] = data2.u8bit.byteMidLow;
+			pHead->pEndProfileData[2] = data2.u8bit.byteMidHigh;
+			data.u32bit = DEFAULT_SAMPLES;
+		}
+		else
+		{
+			data.u8bit.byteHigh = 0;
+			data.u8bit.byteLow 			= pHead->profileLength[0];
+			data.u8bit.byteMidLow 	= pHead->profileLength[1];
+			data.u8bit.byteMidHigh 	= pHead->profileLength[2];
+		}
 	}
 	if(data.u32bit != 0xFFFFFF)
 		data.u32bit += 3;
@@ -1528,6 +1619,7 @@ SLogbookHeaderOSTC3 * logbook_build_ostc3header(SLogbookHeader* pHead)
 SLogbookHeaderOSTC3compact * logbook_build_ostc3header_compact(SLogbookHeader* pHead)
 {
 	convert_Type data, data2;
+	uint32_t dummyLength = 0;
 
 
 	data.u8bit.byteHigh = 0;
@@ -1540,24 +1632,36 @@ SLogbookHeaderOSTC3compact * logbook_build_ostc3header_compact(SLogbookHeader* p
 	data2.u8bit.byteMidLow 	= pHead->pEndProfileData[1];
 	data2.u8bit.byteMidHigh 	= pHead->pEndProfileData[2];
 
-	/* check if sample address information are corrupted by address range. */
-	/* TODO: Workaround. Better solution would be to check end of ring for 0xFF pattern */
-	if((data.u32bit > data2.u32bit) && (data.u32bit < (SAMPLESTOP - 0x9000)))
+	if( (pHead->pBeginProfileData[0] == 0)			/* no sample data available => use dummy */
+		&&(pHead->pBeginProfileData[1] == 0)
+		&&(pHead->pBeginProfileData[2] == 0))
 	{
-		data2.u32bit = data.u32bit + DEFAULT_SAMPLES;
-		pHead->pEndProfileData[0] = data2.u8bit.byteLow;
-		pHead->pEndProfileData[1] = data2.u8bit.byteMidLow;
-		pHead->pEndProfileData[2] = data2.u8bit.byteMidHigh;
-		data.u32bit = DEFAULT_SAMPLES;
+		dummyLength = logbook_fillDummySampleBuffer(pHead->diveTimeMinutes, pHead->diveTimeSeconds,pHead->maxDepth
+													,pHead->lastDecostop_m, pHead->minTemp);
+
+		data2.u32bit = data.u32bit + dummyLength;	/* calc new end address (which is equal to dummyLength) */
+		data.u32bit = data2.u32bit;				    /* data is used below to represent the length */
 	}
 	else
 	{
-		data.u8bit.byteHigh = 0;
-		data.u8bit.byteLow 			= pHead->profileLength[0];
-		data.u8bit.byteMidLow 	= pHead->profileLength[1];
-		data.u8bit.byteMidHigh 	= pHead->profileLength[2];
+		/* check if sample address information are corrupted by address range. */
+		/* TODO: Workaround. Better solution would be to check end of ring for 0xFF pattern */
+		if((data.u32bit > data2.u32bit) && (data.u32bit < (SAMPLESTOP - 0x9000)))
+		{
+			data2.u32bit = data.u32bit + DEFAULT_SAMPLES;
+			pHead->pEndProfileData[0] = data2.u8bit.byteLow;
+			pHead->pEndProfileData[1] = data2.u8bit.byteMidLow;
+			pHead->pEndProfileData[2] = data2.u8bit.byteMidHigh;
+			data.u32bit = DEFAULT_SAMPLES;
+		}
+		else
+		{
+			data.u8bit.byteHigh = 0;
+			data.u8bit.byteLow 		= pHead->profileLength[0];
+			data.u8bit.byteMidLow 	= pHead->profileLength[1];
+			data.u8bit.byteMidHigh 	= pHead->profileLength[2];
+		}
 	}
-
 	if(data.u32bit != 0xFFFFFF)
 	{
 		data.u32bit += 3;
@@ -1639,20 +1743,20 @@ void logbook_recover_brokenlog(uint8_t headerId)
 
         ext_flash_set_entry_point();
         divisorBackup = divisor;
-				retVal = readSample(&depthVal,&gasidVal, &setPointVal, &temperatureVal, &sensor1Val, &sensor2Val, &sensor3Val, &cnsVal, &manualGasVal, &bailoutVal, NULL);
+				retVal = readSample(&depthVal,&gasidVal, &setPointVal, &temperatureVal, &sensor1Val, &sensor2Val, &sensor3Val, &cnsVal, &manualGasVal, &bailoutVal, NULL, NULL);
         if(retVal == 0)
         {
           //Error try to read again!!!
           ext_flash_reopen_read_sample_at_entry_point();
           divisor = divisorBackup;
-					retVal = readSample(&depthVal,&gasidVal, &setPointVal, &temperatureVal, &sensor1Val, &sensor2Val, &sensor3Val, &cnsVal, &manualGasVal, &bailoutVal, NULL);
+					retVal = readSample(&depthVal,&gasidVal, &setPointVal, &temperatureVal, &sensor1Val, &sensor2Val, &sensor3Val, &cnsVal, &manualGasVal, &bailoutVal, NULL, NULL);
 
           if(retVal == 0)
           {
               //Error try to read again!!!
               ext_flash_reopen_read_sample_at_entry_point();
               divisor = divisorBackup;
-							retVal = readSample(&depthVal,&gasidVal, &setPointVal, &temperatureVal, &sensor1Val, &sensor2Val, &sensor3Val, &cnsVal, &manualGasVal, &bailoutVal, NULL);
+							retVal = readSample(&depthVal,&gasidVal, &setPointVal, &temperatureVal, &sensor1Val, &sensor2Val, &sensor3Val, &cnsVal, &manualGasVal, &bailoutVal, NULL, NULL);
 
               if(retVal == 0)
               {
@@ -1682,5 +1786,173 @@ void logbook_recover_brokenlog(uint8_t headerId)
     settings->lastDiveLogId = headerId;
     ext_flash_close_new_dive_log((uint8_t *)&header);
 }
+
+void logbook_createDummyProfile(uint16_t maxDepth, uint8_t lastDecostop_m, int16_t minTemp, uint16_t length, uint16_t* depth, int16_t* temperature)
+{
+	uint8_t	 drawDeco = 1;
+	uint16_t index = 0;
+	uint16_t indexDescenStop = 0;
+	uint16_t indexAscendStart = 0;
+	uint16_t simDecentDepth = 0;
+	uint16_t simDecentStep = 0;
+	uint16_t simAcentDepth = 0;
+	uint16_t simAcentStep = 0;
+
+	simDecentStep = maxDepth / (length / 6);						/* first 1/6 for descend */
+	simAcentStep = maxDepth / (length / 3);							/* first 1/3 for ascend */
+
+	while((index < length) && (simDecentDepth < maxDepth))				/* draw decent */
+	{
+		depth[index] = simDecentDepth;
+		temperature[index] = minTemp;
+		index++;
+		simDecentDepth += simDecentStep;
+	}
+	indexDescenStop = index;
+	index = length -1;
+	while((index > indexDescenStop) && (simAcentDepth < maxDepth))				/* draw ascend including max deco stop */
+	{
+		depth[index] = simAcentDepth;
+		temperature[index] = minTemp;
+		if((drawDeco) && (simAcentDepth < lastDecostop_m))						/* draw deco step */
+		{
+			drawDeco = length / 10;
+			while (drawDeco)
+			{
+				index--;
+				depth[index] = simAcentDepth;
+				temperature[index] = minTemp;
+			}
+		}
+		index--;
+		simAcentDepth += simAcentStep;
+	}
+	indexAscendStart = index;
+	index = indexDescenStop;
+	while(index <= indexAscendStart)												/* draw isobar dive phase */
+	{
+		depth[index] = maxDepth;
+		temperature[index] = minTemp;
+		index++;
+	}
+}
+
+void logbook_resetDummy()
+{
+	dummyWriteIdx = 0;
+	dummyReadIdx = 0;
+}
+
+void logbook_writeDummy(void* data, uint16_t length)
+{
+	memcpy(&dummyMemoryBuffer[dummyWriteIdx],(uint8_t *)data, length);
+	dummyWriteIdx += length;
+}
+void logbook_writeDummySample(uint16_t depth, int16_t temperature)
+{
+    uint8_t sample[10];
+    int length = 0;
+
+    int i = 0;
+    for(i = 0; i <10 ;i++)  sample[i] = 0;
+    addU16(sample, depth);
+    length += 2;
+    sample[2] = 0;
+    length++;
+
+    if(divisor.temperature == 0)
+    {
+			divisor.temperature = smallHeader.tempDivisor - 1;
+			addS16(&sample[length], temperature);
+			length += 2;
+    }
+    else
+    {
+        divisor.temperature--;
+    }
+
+    logbook_writeDummy((void *) &smallDummyHeader,sizeof(smallDummyHeader));
+}
+
+
+uint16_t logbook_fillDummySampleBuffer(uint16_t diveMinutes, uint8_t diveSeconds, uint16_t maxDepth, uint8_t lastDecostop_m, int16_t minTemp)
+{
+	uint16_t depthArray[DUMMY_SAMPLES];
+	int16_t temperatureArray[DUMMY_SAMPLES];
+
+	uint16_t index = 0;
+	uint16_t dummyBufferSize = 0;
+	uint16_t dummyProfileLength = 0;
+	uint32_t overallSecond = diveMinutes * 60 + diveSeconds;
+
+	logbook_resetDummy();
+	clear_divisor();
+
+	smallDummyHeader.profileLength[0] = 0xFF;
+	smallDummyHeader.profileLength[1] = 0xFF;
+	smallDummyHeader.profileLength[2] = 0xFF;
+	smallDummyHeader.samplingRate_seconds = 2;
+	smallDummyHeader.numDivisors = 7;
+
+	smallDummyHeader.tempType = 0;
+	smallDummyHeader.tempLength = 2;
+	smallDummyHeader.tempDivisor = 6;
+
+	smallDummyHeader.deco_ndlType = 1;
+	smallDummyHeader.deco_ndlLength = 2;
+	smallDummyHeader.deco_ndlDivisor = 0;
+
+	/* GF in % at actual position */
+	smallDummyHeader.gfType =  2;
+	smallDummyHeader.gfLength = 1;
+	smallDummyHeader.gfDivisor = 0;
+
+	/* 3 Sensors: 8bit ppO2 in 0.01bar, 16bit voltage in 0,1mV */
+	smallDummyHeader.ppo2Type = 3;
+	smallDummyHeader.ppo2Length = 9;
+	smallDummyHeader.ppo2Divisor = 0;
+
+	/* last 15 stops in minutes (last, second_to_last, ... */
+	/* last stop depth is defined in header */
+	smallDummyHeader.decoplanType = 4;
+	smallDummyHeader.decoplanLength = 15;
+	smallDummyHeader.decoplanDivisor = 0;
+
+	smallDummyHeader.cnsType = 5;
+	smallDummyHeader.cnsLength = 2;
+	smallDummyHeader.cnsDivisor = 0;
+
+	smallDummyHeader.tankType = 6;
+	smallDummyHeader.tankLength = 2;
+	smallDummyHeader.tankDivisor = 0;
+
+	if((overallSecond / smallDummyHeader.samplingRate_seconds) > DUMMY_SAMPLES)		/* reduce sample interval to keep buffer size */
+	{
+		smallDummyHeader.samplingRate_seconds = overallSecond / DUMMY_SAMPLES;
+		dummyProfileLength = DUMMY_SAMPLES;
+	}
+	else
+	{
+		dummyProfileLength = overallSecond / smallDummyHeader.samplingRate_seconds;
+	}
+	logbook_writeDummy((void *) &smallDummyHeader,sizeof(smallDummyHeader));
+	logbook_createDummyProfile(maxDepth, lastDecostop_m, minTemp, dummyProfileLength, depthArray, temperatureArray);
+
+	for (index = 0; index < dummyProfileLength; index++)
+	{
+		logbook_writeDummySample(depthArray[index], temperatureArray[index]);
+	}
+
+	dummyBufferSize = dummyWriteIdx;
+
+	return dummyBufferSize;		/* return size of dummy buffer */
+}
+
+void logbook_readDummySamples(uint8_t* pTarget, uint16_t length)
+{
+	memcpy(pTarget,&dummyMemoryBuffer[dummyReadIdx],length);
+	dummyReadIdx += length;
+}
+
 
 /************************ (C) COPYRIGHT heinrichs weikamp *****END OF FILE****/
