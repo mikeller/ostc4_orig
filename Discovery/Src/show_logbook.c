@@ -458,7 +458,7 @@ static void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t 
         if(logNumber > 9999)
             logNumber = 9999;
 
-        snprintf(text,20,"#%i",logNumber);
+        snprintf(text,20,"#%ld",logNumber);
         Gfx_write_label_var(hgfx, 300, 590,10, &FontT42,CLUT_GasSensor1,text);
     }
 
