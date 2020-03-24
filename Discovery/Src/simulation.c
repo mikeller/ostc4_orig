@@ -44,6 +44,8 @@
 #include "buehlmann.h"
 #include "logbook_miniLive.h"
 
+#include "configuration.h"
+
 //Private state variables
 static float sim_aim_depth_meter;
 static _Bool sim_heed_decostops = 1;
