@@ -1182,21 +1182,43 @@ uint8_t select_mode(uint8_t type)
         plogbookHeaderOSTC3 = logbook_build_ostc3header(&logbookHeader);
         if(HAL_UART_Transmit(&UartHandle, (uint8_t*)plogbookHeaderOSTC3, 256,5000)!= HAL_OK)
             return 0;
-        ext_flash_open_read_sample(255 - aRxBuffer[0], &sampleTotalLength);
-        while(sampleTotalLength >= 128)
+
+        if(logbookHeader.pBeginProfileData[0]==0)	/* no sample information */
         {
-            ext_flash_read_next_sample_part(aTxBuffer,128);
-            sampleTotalLength -= 128;
-            if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBuffer, 128,5000)!= HAL_OK)
-                return 0;
+        	sampleTotalLength = logbook_fillDummySampleBuffer(logbookHeader.diveTimeMinutes, logbookHeader.diveTimeSeconds, logbookHeader.maxDepth, logbookHeader.lastDecostop_m, logbookHeader.minTemp);
+			while(sampleTotalLength >= 128)
+			{
+				logbook_readDummySamples(aTxBuffer,128);
+				sampleTotalLength -= 128;
+				if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBuffer, 128,5000)!= HAL_OK)
+					return 0;
+			}
+			if(sampleTotalLength)
+			{
+				logbook_readDummySamples(aTxBuffer,sampleTotalLength);
+				if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBuffer, sampleTotalLength,5000)!= HAL_OK)
+					return 0;
+			}
+
         }
-        if(sampleTotalLength)
+        else
         {
-            ext_flash_read_next_sample_part(aTxBuffer,sampleTotalLength);
-            if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBuffer, sampleTotalLength,5000)!= HAL_OK)
-                return 0;
+			ext_flash_open_read_sample(255 - aRxBuffer[0], &sampleTotalLength);
+			while(sampleTotalLength >= 128)
+			{
+				ext_flash_read_next_sample_part(aTxBuffer,128);
+				sampleTotalLength -= 128;
+				if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBuffer, 128,5000)!= HAL_OK)
+					return 0;
+			}
+			if(sampleTotalLength)
+			{
+				ext_flash_read_next_sample_part(aTxBuffer,sampleTotalLength);
+				if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBuffer, sampleTotalLength,5000)!= HAL_OK)
+					return 0;
+			}
         }
-        aTxBuffer[count++] = prompt4D4C(receiveStartByteUart);
+		aTxBuffer[count++] = prompt4D4C(receiveStartByteUart);
         break;
 
         // read min,default,max setting
