@@ -362,8 +362,9 @@ void tCCR_restart(void)
 void tCCR_control(void)
 {
 	uint16_t checksum = 0;
+#ifdef ENABLE_BOTTLE_SENSOR
 	SDiveState *pLivedata = stateRealGetPointerWrite();
-
+#endif
 
 	if((UartReadyHUD == RESET) && StartListeningToUART_HUD && (time_elapsed_ms(LastReceivedTick_HUD, HAL_GetTick()) > HUD_RX_START_DELAY_MS))
 	{

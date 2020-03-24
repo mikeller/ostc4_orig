@@ -979,7 +979,7 @@ uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t*
     int32_t cnsLast = 0;
 	int16_t decostepDepthVal = 0;
 	int16_t decostepDepthLast = 0;
-	int16_t tankVal = 0;
+	uint16_t tankVal = 0;
 
      SManualGas manualGasVal;
      SManualGas manualGasLast;

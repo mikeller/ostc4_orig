@@ -684,7 +684,9 @@ void t7_refresh_surface(void)
     uint8_t dateNotSet = 0;
 
     uint8_t oxygen_percentage, gasOffset, actualGasID;
+#ifdef ENABLE_BOTTLE_SENSOR
 	uint16_t bottleFirstGas_bar;
+#endif
     point_t start, stop;//, other;
 
 	SSettings* pSettings;
@@ -2555,7 +2557,9 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
     uint8_t textpointer = 0;
     _Bool tinyHeaderFont = 0;
     uint8_t line = 0;
+#ifdef ENABLE_BOTTLE_SENSOR
     uint16_t agedColor = 0;
+#endif
 
     SDivetime Stopwatch = {0,0,0,0};
     float fAverageDepth, fAverageDepthAbsolute;

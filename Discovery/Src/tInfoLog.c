@@ -66,7 +66,9 @@ void showNextLogPage(void);
 void stepBackInfo(void);
 void stepForwardInfo(void);
 void showLogExit(void);
+#ifdef ENABLE_PROFILE_RESET
 void resetDiveProfile(void);
+#endif
 
 /* Exported functions --------------------------------------------------------*/
 void tInfoLog_init(void)
