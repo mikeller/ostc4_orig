@@ -779,9 +779,9 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		}
 	}
 #else
-   	if(stateRealGetPointer()->lifeData.bottle_bar_age_MilliSeconds[1] < 6000)  /* max age after ten minutes */
+   	if(stateRealGetPointer()->lifeData.bottle_bar_age_MilliSeconds[stateRealGetPointer()->lifeData.actualGas.GasIdInSettings] < 6000)  /* max age after ten minutes */
    	{
-   		stateRealGetPointerWrite()->lifeData.bottle_bar_age_MilliSeconds[1]++;
+   		stateRealGetPointerWrite()->lifeData.bottle_bar_age_MilliSeconds[stateRealGetPointer()->lifeData.actualGas.GasIdInSettings]++;
    	}
 #endif
 	if(!DataEX_check_header_and_footer_ok())
