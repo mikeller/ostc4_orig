@@ -583,7 +583,6 @@ uint8_t select_mode(uint8_t type)
 #else
     uint8_t dummyForBootloader[256] = {0};
 #endif
-
     uint8_t count;
     uint8_t aTxBuffer[128];
     uint8_t aRxBuffer[68];
@@ -1183,9 +1182,11 @@ uint8_t select_mode(uint8_t type)
         if(HAL_UART_Transmit(&UartHandle, (uint8_t*)plogbookHeaderOSTC3, 256,5000)!= HAL_OK)
             return 0;
 
-        if(logbookHeader.pBeginProfileData[0]==0)	/* no sample information */
+        if((logbookHeader.pBeginProfileData[0]==0)	/* no sample information */
+        	&& (logbookHeader.pBeginProfileData[1]==0)
+			&& (logbookHeader.pBeginProfileData[2]==0))
         {
-        	sampleTotalLength = logbook_fillDummySampleBuffer(logbookHeader.diveTimeMinutes, logbookHeader.diveTimeSeconds, logbookHeader.maxDepth, logbookHeader.lastDecostop_m, logbookHeader.minTemp);
+        	sampleTotalLength = logbook_fillDummySampleBuffer(&logbookHeader);
 			while(sampleTotalLength >= 128)
 			{
 				logbook_readDummySamples(aTxBuffer,128);

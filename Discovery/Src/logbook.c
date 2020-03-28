@@ -103,7 +103,7 @@ static void logbook_SetCompartmentDesaturation(const SDiveState * pStateReal);
 static void logbook_SetLastStop(float last_stop_depth_bar);
 static void logbook_writedata(void * data, int length_byte);
 static void logbook_UpdateHeader(const SDiveState * pStateReal);
-static void logbook_createDummyProfile(uint16_t maxDepth, uint8_t lastDecostop_m, int16_t minTemp, uint16_t length, uint16_t* depth, int16_t* temperature);
+static void logbook_createDummyProfile(SLogbookHeader* pHeader, uint16_t length, uint16_t* depth, int16_t* temperature, uint16_t* ppo2);
 
 /* Exported functions --------------------------------------------------------*/
 
@@ -528,6 +528,7 @@ void logbook_writeSample(const SDiveState *state)
 					length += 1;
 					sample[length] = 0;
 					length += 1;
+					pDecoinfo = &stateUsed->decolistBuehlmann;	/* use GF per default if something went wrong */
 				}
 					
 				if(pDecoinfo->output_ndl_seconds > 0)
@@ -952,11 +953,11 @@ uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t*
 
     //logbook_getHeader(&header);
     SLogbookHeader header;
-    int iNum;
-    int firstgasid = 0;
-    int retVal = 0;
-    int compression = 0;
-     int i;
+    int16_t iNum;
+    int16_t firstgasid = 0;
+    uint16_t retVal = 0;
+    int16_t compression = 0;
+    int16_t i;
    // uint32_t diveTime_seconds;
     int32_t depthVal = 0;
     int16_t  gasidVal = 0;
@@ -1190,7 +1191,7 @@ uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t*
 	}
 	else
 	{
-		logbook_createDummyProfile(header.maxDepth, header.lastDecostop_m, header.minTemp, numSamples, depth, temperature);
+		logbook_createDummyProfile(&header, numSamples, depth, temperature, ppo2);
 		iNum = numSamples;
 	}
 		
@@ -1479,8 +1480,7 @@ SLogbookHeaderOSTC3 * logbook_build_ostc3header(SLogbookHeader* pHead)
 		&&(pHead->pBeginProfileData[1] == 0)
 		&&(pHead->pBeginProfileData[2] == 0))
 	{
-		dummyLength = logbook_fillDummySampleBuffer(pHead->diveTimeMinutes, pHead->diveTimeSeconds,pHead->maxDepth
-													,pHead->lastDecostop_m, pHead->minTemp);
+		dummyLength = logbook_fillDummySampleBuffer(pHead);
 
 		data2.u32bit = data.u32bit + dummyLength;	/* calc new end address (which is equal to dummyLength) */
 		data.u32bit = data2.u32bit;				    /* data is used below to represent the length */
@@ -1636,8 +1636,7 @@ SLogbookHeaderOSTC3compact * logbook_build_ostc3header_compact(SLogbookHeader* p
 		&&(pHead->pBeginProfileData[1] == 0)
 		&&(pHead->pBeginProfileData[2] == 0))
 	{
-		dummyLength = logbook_fillDummySampleBuffer(pHead->diveTimeMinutes, pHead->diveTimeSeconds,pHead->maxDepth
-													,pHead->lastDecostop_m, pHead->minTemp);
+		dummyLength = logbook_fillDummySampleBuffer(pHead);
 
 		data2.u32bit = data.u32bit + dummyLength;	/* calc new end address (which is equal to dummyLength) */
 		data.u32bit = data2.u32bit;				    /* data is used below to represent the length */
@@ -1787,7 +1786,7 @@ void logbook_recover_brokenlog(uint8_t headerId)
     ext_flash_close_new_dive_log((uint8_t *)&header);
 }
 
-void logbook_createDummyProfile(uint16_t maxDepth, uint8_t lastDecostop_m, int16_t minTemp, uint16_t length, uint16_t* depth, int16_t* temperature)
+void logbook_createDummyProfile(SLogbookHeader* pHeader, uint16_t length, uint16_t* depth, int16_t* temperature, uint16_t* ppo2)
 {
 	uint8_t	 drawDeco = 1;
 	uint16_t index = 0;
@@ -1797,31 +1796,66 @@ void logbook_createDummyProfile(uint16_t maxDepth, uint8_t lastDecostop_m, int16
 	uint16_t simDecentStep = 0;
 	uint16_t simAcentDepth = 0;
 	uint16_t simAcentStep = 0;
+	float ambiant_pressure_bar = 0;
 
-	simDecentStep = maxDepth / (length / 6);						/* first 1/6 for descend */
-	simAcentStep = maxDepth / (length / 3);							/* first 1/3 for ascend */
+	simDecentStep = pHeader->maxDepth / (length / 6);							/* first 1/6 for descend */
+	simAcentStep = pHeader->maxDepth / (length / 3);							/* first 1/3 for ascend */
 
-	while((index < length) && (simDecentDepth < maxDepth))				/* draw decent */
+	SGas gas;
+
+
+	if(ppo2)
+	{
+		/* find first gas ID */
+		for(index = 0; index < NUM_GAS; index++)
+		{
+			if(pHeader->gasordil[index].note.ub.first)
+				break;
+		}
+		if(index != NUM_GAS)
+		{
+			gas.helium_percentage = pHeader->gasordil[index].helium_percentage;
+			gas.nitrogen_percentage = 100 -  gas.helium_percentage - pHeader->gasordil[index].oxygen_percentage;
+		}
+	}
+
+	while((index < length) && (simDecentDepth < pHeader->maxDepth))			/* draw decent */
 	{
 		depth[index] = simDecentDepth;
-		temperature[index] = minTemp;
+		temperature[index] = pHeader->minTemp;
+		if(ppo2)
+		{
+			ambiant_pressure_bar =((float)(depth[index] + pHeader->surfacePressure_mbar))/1000;
+			ppo2[index] = (uint16_t) ((decom_calc_ppO2(ambiant_pressure_bar, &gas )) * 100);
+		}
 		index++;
 		simDecentDepth += simDecentStep;
 	}
 	indexDescenStop = index;
 	index = length -1;
-	while((index > indexDescenStop) && (simAcentDepth < maxDepth))				/* draw ascend including max deco stop */
+	while((index > indexDescenStop) && (simAcentDepth < pHeader->maxDepth))				/* draw ascend including max deco stop */
 	{
 		depth[index] = simAcentDepth;
-		temperature[index] = minTemp;
-		if((drawDeco) && (simAcentDepth < lastDecostop_m))						/* draw deco step */
+		temperature[index] = pHeader->minTemp;
+		if(ppo2)
+		{
+			ambiant_pressure_bar =((float)(depth[index] + pHeader->surfacePressure_mbar))/1000;
+			ppo2[index] = (uint16_t) ((decom_calc_ppO2(ambiant_pressure_bar, &gas )) * 100);
+		}
+		if((drawDeco) && (simAcentDepth < pHeader->lastDecostop_m))						/* draw deco step */
 		{
 			drawDeco = length / 10;
-			while (drawDeco)
+			while(drawDeco)
 			{
 				index--;
 				depth[index] = simAcentDepth;
-				temperature[index] = minTemp;
+				temperature[index] = pHeader->minTemp;
+				if(ppo2)
+				{
+					ambiant_pressure_bar =((float)(depth[index] + pHeader->surfacePressure_mbar))/1000;
+					ppo2[index] = (uint16_t) ((decom_calc_ppO2(ambiant_pressure_bar, &gas )) * 100);
+				}
+				drawDeco--;
 			}
 		}
 		index--;
@@ -1831,8 +1865,13 @@ void logbook_createDummyProfile(uint16_t maxDepth, uint8_t lastDecostop_m, int16
 	index = indexDescenStop;
 	while(index <= indexAscendStart)												/* draw isobar dive phase */
 	{
-		depth[index] = maxDepth;
-		temperature[index] = minTemp;
+		depth[index] = pHeader->maxDepth;
+		temperature[index] = pHeader->minTemp;
+		if(ppo2)
+		{
+			ambiant_pressure_bar =((float)(depth[index] + pHeader->surfacePressure_mbar))/1000;
+			ppo2[index] = (uint16_t) ((decom_calc_ppO2(ambiant_pressure_bar, &gas )) * 100);
+		}
 		index++;
 	}
 }
@@ -1875,15 +1914,16 @@ void logbook_writeDummySample(uint16_t depth, int16_t temperature)
 }
 
 
-uint16_t logbook_fillDummySampleBuffer(uint16_t diveMinutes, uint8_t diveSeconds, uint16_t maxDepth, uint8_t lastDecostop_m, int16_t minTemp)
+uint16_t logbook_fillDummySampleBuffer(SLogbookHeader* pHeader)
 {
 	uint16_t depthArray[DUMMY_SAMPLES];
 	int16_t temperatureArray[DUMMY_SAMPLES];
+	uint16_t ppo2Array[DUMMY_SAMPLES];
 
 	uint16_t index = 0;
 	uint16_t dummyBufferSize = 0;
 	uint16_t dummyProfileLength = 0;
-	uint32_t overallSecond = diveMinutes * 60 + diveSeconds;
+	uint32_t overallSecond = pHeader->diveTimeMinutes * 60 + pHeader->diveTimeSeconds;
 
 	logbook_resetDummy();
 	clear_divisor();
@@ -1936,7 +1976,7 @@ uint16_t logbook_fillDummySampleBuffer(uint16_t diveMinutes, uint8_t diveSeconds
 		dummyProfileLength = overallSecond / smallDummyHeader.samplingRate_seconds;
 	}
 	logbook_writeDummy((void *) &smallDummyHeader,sizeof(smallDummyHeader));
-	logbook_createDummyProfile(maxDepth, lastDecostop_m, minTemp, dummyProfileLength, depthArray, temperatureArray);
+	logbook_createDummyProfile(pHeader,dummyProfileLength, depthArray, temperatureArray, ppo2Array );
 
 	for (index = 0; index < dummyProfileLength; index++)
 	{
