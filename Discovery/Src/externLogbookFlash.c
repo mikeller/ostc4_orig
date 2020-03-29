@@ -787,6 +787,7 @@ void ext_flash_write_sample(uint8_t *pSample, uint16_t length)
 				actualAddress = SAMPLESTART;
 			}
 			preparedPageAddress = actualAddress;
+			ext_flash_invalidate_sample_index(preparedPageAddress);
 			ext_flash_erase64kB();
 			actualAddress = actualAdressBackup;
 		}
@@ -1795,7 +1796,12 @@ static void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, ui
 		actualAddress = ringStart;
 
 	if(do_not_erase == 0)
-		ext_flash_erase_if_on_page_start();
+	{
+		if((ext_flash_erase_if_on_page_start()) && (type == EF_SAMPLE))		/* invalidate header sample information if needed */
+		{
+			ext_flash_invalidate_sample_index(actualAddress);
+		}
+	}
 	
 	while( i<length)
 	{
@@ -2316,22 +2322,10 @@ void ext_flash_invalidate_sample_index(uint32_t sectorStart)
 				  actualPointerHeader = actualAddress;
 				  ef_write_block(emptySamples,9,EF_HEADER,1);			/* clear start, stop and length data */
 				  actualPointerHeader = HeaderAddrBackup;
-			  }
-#if 0
-			  else														/* no sample part within erased sector => stop search */
-			  {
-				  break;
-			  }
-#endif
-		  }
-#if 0
-		  else															/* ID not in use => stop search */
-		  {
-			  break;
-		  }
-#endif
-		  diveidx++;
-	  }
+			}
+	   }
+	   diveidx++;
+	}
 }
 
 
