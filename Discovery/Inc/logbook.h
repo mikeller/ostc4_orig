@@ -30,6 +30,8 @@
 #include "data_central.h"
 #include "settings.h"
 
+#define NUM_GAS		(5)	/* number of selectable gases */
+
 typedef struct
 {
     uint8_t setpoint_cbar;
@@ -65,7 +67,7 @@ typedef struct
     int16_t  minTemp;
     uint16_t surfacePressure_mbar;
     uint16_t desaturationTime;
-    SGasListLog gasordil[5];
+    SGasListLog gasordil[NUM_GAS];
     uint8_t  firmwareVersionLow;
     uint8_t  firmwareVersionHigh;
     uint16_t batteryVoltage;
@@ -73,7 +75,7 @@ typedef struct
     uint8_t  gfAtBeginning;
     uint8_t  gfAtEnd;
     uint16_t personalDiveCount;
-    SSetpointLog setpoint[5];
+    SSetpointLog setpoint[NUM_GAS];
     uint16_t maxCNS;
     uint16_t averageDepth_mbar;
     uint16_t total_diveTime_seconds;
@@ -114,7 +116,7 @@ typedef struct
     uint8_t minTemp[2];
     uint8_t surfacePressure_mbar[2];
     uint8_t desaturationTime[2];
-    uint8_t gasordil[5*4];
+    uint8_t gasordil[NUM_GAS*4];
     uint8_t firmwareVersionLow;
     uint8_t firmwareVersionHigh;
     uint8_t batteryVoltage[2];
@@ -209,11 +211,15 @@ SLogbookHeaderOSTC3compact * logbook_build_ostc3header_compact(SLogbookHeader* p
 
 uint8_t logbook_getNumberOfHeaders(void);
 uint8_t logbook_getHeader(uint8_t StepBackwards,SLogbookHeader* pLogbookHeader);
-uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t* depth, uint8_t*  gasid, int16_t* temperature, uint16_t* ppo2, uint16_t* setpoint, uint16_t* sensor1, uint16_t* sensor2, uint16_t* sensor3, uint16_t* cns, uint8_t* bailout, uint16_t* decostopDepth);
+uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t* depth, uint8_t*  gasid, int16_t* temperature, uint16_t* ppo2,
+							    uint16_t* setpoint, uint16_t* sensor1, uint16_t* sensor2, uint16_t* sensor3, uint16_t* cns, uint8_t* bailout,
+								uint16_t* decostopDepth, uint16_t* tank);
 void logbook_test(void);
 void logbook_InitAndWrite(const SDiveState* pStateReal);
 void logbook_recover_brokenlog(uint8_t headerId);
 
 uint16_t logbook_lastDive_diveNumber(void);
+uint16_t logbook_fillDummySampleBuffer(SLogbookHeader* pHeader);
+void logbook_readDummySamples(uint8_t* pTarget, uint16_t length);
 
 #endif /* LOGBOOK_H */

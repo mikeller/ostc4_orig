@@ -33,6 +33,7 @@
 #include "gfx_fonts.h"
 #include "show_logbook.h"
 #include "unit.h"
+#include "configuration.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -425,9 +426,16 @@ static void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t 
     uint16_t depthdata[1000] = { 0 };
     uint8_t  gasdata[1000] = { 0 };
     int16_t tempdata[1000] = { 0 };
+    uint16_t tankdata[1000] = { 0 };
+
+#ifdef ENABLE_BOTTLE_SENSOR
+    uint16_t bottlePressureStart = 0;
+    uint16_t bottlePressureEnd = 0;
+    uint16_t loop = 0;
+#endif
 
     uint16_t dataLength = 0;
-    dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, tempdata, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, tempdata, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, tankdata);
 
     //Print Date
     uint8_t year = logbookHeader.dateYear;
@@ -450,7 +458,7 @@ static void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t 
         if(logNumber > 9999)
             logNumber = 9999;
 
-        snprintf(text,20,"#%i",logNumber);
+        snprintf(text,20,"#%ld",logNumber);
         Gfx_write_label_var(hgfx, 300, 590,10, &FontT42,CLUT_GasSensor1,text);
     }
 
@@ -620,7 +628,25 @@ static void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t 
     snprintf(text,40,"%i\016\016 hPa\017",logbookHeader.surfacePressure_mbar);
     Gfx_write_label_var(hgfx,320,600,440, &FontT42,CLUT_GasSensor1,text);
 
-
+/* Show tank info */
+#ifdef ENABLE_BOTTLE_SENSOR
+    for(loop = 0; loop < dataLength; loop++)
+    {
+    	if((bottlePressureStart == 0) && (tankdata[loop] != 0))	/* find first pressure value */
+    	{
+    		bottlePressureStart = tankdata[loop];
+    	}
+    	if((tankdata[loop] != 0))								/* store last pressure value */
+    	{
+    		bottlePressureEnd = tankdata[loop];
+    	}
+    }
+    if(bottlePressureStart != 0)
+    {
+    	snprintf(text,40,"%i | %i\016\016 Bar\017",bottlePressureStart,bottlePressureEnd);
+        Gfx_write_label_var(hgfx,600,800,440, &FontT42,CLUT_GasSensor1,text);
+    }
+#endif
     //--- print coordinate system & depth graph with gaschanges ---
     wintemp.left 	= 330;
     wintemp.top	=  160;
@@ -651,7 +677,7 @@ static void show_logbook_logbook_show_log_page2(GFX_DrawCfgScreen *hgfx, uint8_t
     uint16_t decoDepthdata[1000];
     uint16_t *pDecoDepthData = 0;
 
-    dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, tempdata, NULL, NULL, NULL, NULL, NULL, NULL, NULL, decoDepthdata);
+    dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, tempdata, NULL, NULL, NULL, NULL, NULL, NULL, NULL, decoDepthdata, NULL);
 
         for(int i = 0; i<dataLength; i++)
         {
@@ -802,7 +828,7 @@ static void show_logbook_logbook_show_log_page3(GFX_DrawCfgScreen *hgfx, uint8_t
     uint16_t dataLength = 0;
     uint16_t depthdata[1000];
     uint8_t  gasdata[1000];
-    dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
     //--- print coordinate system & depth graph with gaschanges ---
     show_logbook_draw_depth_graph(hgfx, StepBackwards, &wintemp, 1, dataLength, depthdata, gasdata, NULL);
@@ -860,13 +886,13 @@ static void show_logbook_logbook_show_log_page4(GFX_DrawCfgScreen *hgfx, uint8_t
 
 
         if(logbookHeader.diveMode != DIVEMODE_CCR)
-            dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, NULL, ppO2data, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+            dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, NULL, ppO2data, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
         else
         {
             if(logbookHeader.CCRmode == CCRMODE_FixedSetpoint)
-                dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata, gasdata, NULL, NULL, setpoint, NULL, NULL, NULL, NULL, NULL, NULL);
+                dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata, gasdata, NULL, NULL, setpoint, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
             else
-                dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata, gasdata, NULL, NULL, NULL, sensor1, sensor2, sensor3, NULL, NULL, NULL);
+                dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata, gasdata, NULL, NULL, NULL, sensor1, sensor2, sensor3, NULL, NULL, NULL, NULL);
         }
 
 

@@ -44,6 +44,8 @@
 #include "buehlmann.h"
 #include "logbook_miniLive.h"
 
+#include "configuration.h"
+
 //Private state variables
 static float sim_aim_depth_meter;
 static _Bool sim_heed_decostops = 1;
@@ -128,7 +130,10 @@ void simulation_UpdateLifeData( _Bool checkOncePerSecond)
         pDiveState->lifeData.temperature_celsius = stateRealGetPointer()->lifeData.temperature_celsius;
         pDiveState->lifeData.compass_heading = stateRealGetPointer()->lifeData.compass_heading;
         pDiveState->lifeData.battery_charge = stateRealGetPointer()->lifeData.battery_charge;
-
+#ifdef ENABLE_BOTTLE_SENSOR
+        pDiveState->lifeData.bottle_bar[pDiveState->lifeData.actualGas.GasIdInSettings] = stateRealGetPointer()->lifeData.bottle_bar[stateRealGetPointer()->lifeData.actualGas.GasIdInSettings];
+        pDiveState->lifeData.bottle_bar_age_MilliSeconds[pDiveState->lifeData.actualGas.GasIdInSettings] = stateRealGetPointer()->lifeData.bottle_bar_age_MilliSeconds[stateRealGetPointer()->lifeData.actualGas.GasIdInSettings];
+#endif
         int now =  current_second();
         if( last_second == now)
                 return;

@@ -91,8 +91,7 @@ GFX_DrawCfgWindow	t7cH, t7cC, t7cW, t7cY0free;
 GFX_DrawCfgWindow	t7pCompass;
 GFX_DrawCfgWindow	t7surfaceL, t7surfaceR;
 
-uint8_t selection_custom_field = 1;
-uint8_t selection_customview = 1;
+uint8_t selection_customview = LLC_Temperature;
 
 uint8_t updateNecessary = 0;
 
@@ -139,6 +138,9 @@ const uint8_t customviewsSurfaceStandard[] =
     CVIEW_END
 };
 
+
+static uint8_t selection_custom_field = LLC_Temperature;
+
 const uint8_t *customviewsDive		= customviewsDiveStandard;
 const uint8_t *customviewsSurface	= customviewsSurfaceStandard;
 
@@ -171,7 +173,7 @@ void t7_init(void)
 	SSettings* pSettings;
 	pSettings = settingsGetPointer();
 
-    selection_custom_field = 1;
+    selection_custom_field = LLC_Temperature;
     selection_customview = customviewsSurface[0];
 
     t7screen.FBStartAdress = 0;
@@ -682,7 +684,9 @@ void t7_refresh_surface(void)
     uint8_t dateNotSet = 0;
 
     uint8_t oxygen_percentage, gasOffset, actualGasID;
-//	uint16_t bottleFirstGas_bar;
+#ifdef ENABLE_BOTTLE_SENSOR
+	uint16_t bottleFirstGas_bar;
+#endif
     point_t start, stop;//, other;
 
 	SSettings* pSettings;
@@ -1005,14 +1009,15 @@ void t7_refresh_surface(void)
         GFX_write_string(&FontT48,&t7surfaceL,text,7);
 
         actualGasID = stateUsed->lifeData.actualGas.GasIdInSettings;
-    /*
+
+#ifdef ENABLE_BOTTLE_SENSOR
         bottleFirstGas_bar = stateUsed->lifeData.bottle_bar[actualGasID];
         if(bottleFirstGas_bar)
         {
             snprintf(text,255,"%3u\022\016\016 bar",bottleFirstGas_bar);
             GFX_write_string(&FontT48,&t7surfaceL,text,8);
         }
-    */
+#endif
         // after gas name :-)
         if(actualGasID > gasOffset) // security
         {
@@ -1089,8 +1094,12 @@ void t7_refresh_surface(void)
             GFX_write_string_color(&Batt24,&t7batt,text,0,CLUT_WarningRed);
             if((stateUsed->lifeData.battery_charge > 0) && (stateUsed->lifeData.battery_charge < 140))
             {
+#ifdef ALWAYS_SHOW_VOLTAGE
             	// show battery percent and voltage
                 snprintf(text,16,"\f\002%u%% \f%.1fV",(uint8_t)stateUsed->lifeData.battery_charge,stateUsed->lifeData.battery_voltage);
+#else
+                snprintf(text,16,"\004\025\f\002%u%%",(uint8_t)stateUsed->lifeData.battery_charge);
+#endif
                 if(warning_count_high_time)
                     text[0] = '\a';
                 GFX_write_string(&FontT24,&t7voltage,text,0);
@@ -1107,9 +1116,12 @@ void t7_refresh_surface(void)
 
             if((stateUsed->lifeData.battery_charge > 0) && (stateUsed->lifeData.battery_charge < 140))
             {
+#ifdef ALWAYS_SHOW_VOLTAGE
             	// show battery percent and voltage
                 snprintf(text,16,"\f\002%u%% \f%.1fV",(uint8_t)stateUsed->lifeData.battery_charge,stateUsed->lifeData.battery_voltage);
-        //        GFX_write_string(&FontT24,&t7batt,text,0);
+#else
+                 snprintf(text,16,"\f\002%u%%",(uint8_t)stateUsed->lifeData.battery_charge);
+#endif
                 GFX_write_string(&FontT24,&t7voltage,text,0);
             }
             else
@@ -2521,18 +2533,17 @@ void t7_set_field_to_primary(void)
 
 void t7_change_field(void)
 {
-    const uint8_t minVal = 0;
-    const uint8_t maxValGF 	= 8;
-    const uint8_t maxValVPM = 7;
-    uint8_t maxNow = maxValGF;
-
     selection_custom_field++;
 
-    if(stateUsed->diveSettings.deco_type.ub.standard == VPM_MODE)
-        maxNow = maxValVPM;
+    if((stateUsed->diveSettings.deco_type.ub.standard == VPM_MODE) && (selection_custom_field == LLC_GF)) /* no GF if in VPM mode */
+    {
+    	selection_custom_field++;
+    }
 
-    if(selection_custom_field > maxNow)
-        selection_custom_field = minVal;
+    if(selection_custom_field >= LLC_END)
+    {
+        selection_custom_field = LLC_Empty;
+    }
 }
 
 
@@ -2546,6 +2557,9 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
     uint8_t textpointer = 0;
     _Bool tinyHeaderFont = 0;
     uint8_t line = 0;
+#ifdef ENABLE_BOTTLE_SENSOR
+    uint16_t agedColor = 0;
+#endif
 
     SDivetime Stopwatch = {0,0,0,0};
     float fAverageDepth, fAverageDepthAbsolute;
@@ -2577,7 +2591,7 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
     switch(selection_custom_field)
     {
     /* Temperature */
-    case 1:
+    case LLC_Temperature:
     default:
     	temperature = unit_temperature_float(stateUsed->lifeData.temperature_celsius);
         headerText[2] = TXT_Temperature;
@@ -2591,7 +2605,7 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
         break;
 
     /* Average Depth */
-    case 2:
+    case LLC_AverageDepth:
         headerText[2] = TXT_AvgDepth;
         if(settingsGetPointer()->nonMetricalSystem)
             snprintf(text,TEXTSIZE,"\020%01.0f",unit_depth_float(fAverageDepthAbsolute));
@@ -2600,13 +2614,13 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
         break;
 
     /* ppO2 */
-    case 3:
+    case LLC_ppO2:
         headerText[2] = TXT_ppO2;
         snprintf(text,TEXTSIZE,"\020%01.2f",stateUsed->lifeData.ppO2);
         break;
 
     /* Stop Uhr */
-    case 4:
+    case LLC_Stopwatch:
         headerText[2] = TXT_Stopwatch;
         if(settingsGetPointer()->nonMetricalSystem)
             snprintf(text,TEXTSIZE,"\020\016\016%u:%02u\n\r%01.0f",Stopwatch.Minutes, Stopwatch.Seconds,unit_depth_float(fAverageDepth));
@@ -2617,7 +2631,7 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
         break;
 
     /* Ceiling */
-    case 5:
+    case LLC_Ceiling:
         headerText[2] = TXT_Ceiling;
         if((pDecoinfoStandard->output_ceiling_meter > 99.9f) || (settingsGetPointer()->nonMetricalSystem))
             snprintf(text,TEXTSIZE,"\020%01.0f",unit_depth_float(pDecoinfoStandard->output_ceiling_meter));
@@ -2626,7 +2640,7 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
         break;
 
     /* Future TTS */
-    case 6:
+    case LLC_FutureTTS:
         headerText[2] = TXT_FutureTTS;
         if (pDecoinfoFuture->output_time_to_surface_seconds < 1000 * 60)
         	snprintf(text,TEXTSIZE,"\020\016\016@+%u'\n\r" "%i' TTS",settingsGetPointer()->future_TTS, (pDecoinfoFuture->output_time_to_surface_seconds + 59) / 60);
@@ -2637,7 +2651,7 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
         break;
 
     /* CNS */
-    case 7:
+    case LLC_CNS:
         headerText[2] = TXT_CNS;
         fCNS = stateUsed->lifeData .cns;
         if(fCNS > 999)
@@ -2646,10 +2660,17 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
         break;
 
     /* actual GF */
-    case 8:
+    case LLC_GF:
         headerText[2] = TXT_ActualGradient;
         snprintf(text,TEXTSIZE,"\020%.0f\016\016%%\017",100 * pDecoinfoStandard->super_saturation);
         break;
+#ifdef ENABLE_BOTTLE_SENSOR
+    case LCC_BottleBar:
+        headerText[2] = TXT_AtemGasVorrat;
+        tinyHeaderFont = 1;
+        snprintf(text,TEXTSIZE,"%d\016\016\017", stateUsed->lifeData.bottle_bar[stateUsed->lifeData.actualGas.GasIdInSettings]);
+        break;
+#endif
     }
     headerText[3] = 0;
 
@@ -2659,7 +2680,38 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
         GFX_write_string(&FontT42,&t7l3,headerText,0);
 
     t7_colorscheme_mod(text);
-    GFX_write_string(&FontT105,&t7l3,text,line);
+#ifndef ENABLE_BOTTLE_SENSOR
+   	GFX_write_string(&FontT105,&t7l3,text,line);
+#else
+    if(selection_custom_field != LCC_BottleBar)			/* a changing color set is used for bar display */
+    {
+    	GFX_write_string(&FontT105,&t7l3,text,line);
+    }
+    else
+    {
+    	agedColor = stateUsed->lifeData.bottle_bar_age_MilliSeconds[stateUsed->lifeData.actualGas.GasIdInSettings];
+    	if(agedColor > 1200)
+    	{
+    		agedColor = CLUT_WarningRed;
+    	}
+    	else
+    	if(agedColor > 600)
+        {
+        	agedColor = CLUT_MenuLineUnselected;
+        }
+        else
+    	if(agedColor > 20)
+    	{
+    		agedColor = CLUT_Font031;
+    	}
+    	else
+    	{
+    		agedColor = CLUT_Font020;
+    	}
+
+    	GFX_write_string_color(&FontT105,&t7l3,text,line,agedColor);
+    }
+#endif
 }
 
 /* Private functions ---------------------------------------------------------*/
