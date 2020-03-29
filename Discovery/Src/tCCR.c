@@ -33,6 +33,7 @@
 #include "data_central.h"
 #include "data_exchange.h"
 #include "check_warning.h"
+#include "configuration.h"
 
 /* Private types -------------------------------------------------------------*/
 typedef struct
@@ -51,6 +52,8 @@ typedef struct
 #define HUD_RX_FRAME_BREAK_MS		(100u)		/* Time used to detect a gap between two byte receptions => frame start */
 #define HUD_RX_START_DELAY_MS		(500u)		/* Delay for start of RX function to avoid start of reception while a transmission is ongoing. */
 												/* Based on an assumed cycle time by the sensor of 1 second. Started at time of last RX */
+
+#define BOTTLE_SENSOR_TIMEOUT		(6000u)     /* signal pressure budget as not received after 10 minutes (6000 * 100ms) */
 
 /* Private variables ---------------------------------------------------------*/
 static SIrLink receiveHUD[2];
@@ -289,7 +292,15 @@ uint8_t get_ppO2SensorWeightedResult_cbar(void)
 
 void tCCR_init(void)
 {
+	uint8_t loop;
+
     StartListeningToUART_HUD = 1;
+
+    SDiveState* pDiveData = stateRealGetPointerWrite();
+    for(loop=0;loop<(2*NUM_GASES+1);loop++)
+    {
+    	pDiveData->lifeData.bottle_bar_age_MilliSeconds[loop] =  BOTTLE_SENSOR_TIMEOUT;
+    }
 }
 
 
@@ -350,6 +361,10 @@ void tCCR_restart(void)
 
 void tCCR_control(void)
 {
+	uint16_t checksum = 0;
+#ifdef ENABLE_BOTTLE_SENSOR
+	SDiveState *pLivedata = stateRealGetPointerWrite();
+#endif
 
 	if((UartReadyHUD == RESET) && StartListeningToUART_HUD && (time_elapsed_ms(LastReceivedTick_HUD, HAL_GetTick()) > HUD_RX_START_DELAY_MS))
 	{
@@ -362,31 +377,41 @@ void tCCR_control(void)
             UartReadyHUD = RESET;
             StartListeningToUART_HUD = 1;
 
-            memcpy(&receiveHUD[!boolHUDdata], receiveHUDraw, 11);
-            receiveHUD[!boolHUDdata].battery_voltage_mV = receiveHUDraw[11] + (256 * receiveHUDraw[12]);
-            receiveHUD[!boolHUDdata].checksum = receiveHUDraw[13] + (256 * receiveHUDraw[14]);
+    /* check if received package is valid */
+			for(int i=0;i<13;i++)
+			{
+				checksum += receiveHUDraw[i];
+			}
+			receiveHUD[!boolHUDdata].checksum = receiveHUDraw[13] + (256 * receiveHUDraw[14]);
+			if(checksum == receiveHUD[!boolHUDdata].checksum)
+			{
+#ifdef ENABLE_BOTTLE_SENSOR
+		        if(receiveHUDraw[0] == 0xA5)				/* code for pressure sensor */
+		        {
+		        	pLivedata->lifeData.bottle_bar[pLivedata->lifeData.actualGas.GasIdInSettings] = receiveHUDraw[10];
+		        	pLivedata->lifeData.bottle_bar_age_MilliSeconds[pLivedata->lifeData.actualGas.GasIdInSettings] = 0;
+		        }
+		        else
+#endif
+		        											/* handle O2 sensor data */
+		        {
+		        	memcpy(&receiveHUD[!boolHUDdata], receiveHUDraw, 11);
+					receiveHUD[!boolHUDdata].battery_voltage_mV = receiveHUDraw[11] + (256 * receiveHUDraw[12]);
+		        }
 
-            uint16_t checksum = 0;
-
-            for(int i=0;i<13;i++)
-            {
-                checksum += receiveHUDraw[i];
-            }
-            if(checksum == receiveHUD[!boolHUDdata].checksum)
-            {
-                boolHUDdata = !boolHUDdata;
-                HUDTimeoutCount = 0;
-                data_old__lost_connection_to_HUD = 0;
-            }
-            else
-            {
-            	if(data_old__lost_connection_to_HUD)	/* we lost connection, maybe due to RX shift => start single byte read to resynchronize */
-            	{
-            		HAL_UART_Receive_IT(&UartIR_HUD_Handle, receiveHUDraw, 1);
-            		StartListeningToUART_HUD = 0;
-            	}
-            }
-            memset(receiveHUDraw,0,sizeof(receiveHUDraw));
+				boolHUDdata = !boolHUDdata;
+				HUDTimeoutCount = 0;
+				data_old__lost_connection_to_HUD = 0;
+			}
+			else
+			{
+				if(data_old__lost_connection_to_HUD)	/* we lost connection, maybe due to RX shift => start single byte read to resynchronize */
+				{
+					HAL_UART_Receive_IT(&UartIR_HUD_Handle, receiveHUDraw, 1);
+					StartListeningToUART_HUD = 0;
+				}
+			}
+			memset(receiveHUDraw,0,sizeof(receiveHUDraw));
     }
 }
 

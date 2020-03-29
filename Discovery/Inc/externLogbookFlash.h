@@ -149,7 +149,7 @@ void ext_flash_disable_protection_for_logbook(void);
 void ext_flash_enable_protection(void);
 
 void ext_flash_read_block_start(void);
-
+uint8_t ext_dive_log_consistent(void);
 void ext_flash_repair_dive_log(void);
 
 uint8_t ext_flash_erase_firmware_if_not_empty(void);
@@ -165,5 +165,6 @@ uint16_t ext_flash_repair_SPECIAL_dive_numbers_starting_count_with(uint16_t star
 
 uint32_t ext_flash_AnalyseSampleBuffer(char *pstrResult);
 void ext_flash_CloseSector(void);
+void ext_flash_invalidate_sample_index(uint32_t sectorStart);
 
 #endif /* EXTERN_LOGBOOK_FLASH_H */

@@ -764,6 +764,7 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 
 	
 	// wireless - �ltere daten aufr�umen
+#if 0
 	for(int i=0;i<(2*NUM_GASES+1);i++)
 	{
 		if(pStateReal->lifeData.bottle_bar[i])
@@ -777,7 +778,12 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 				pStateReal->lifeData.bottle_bar_age_MilliSeconds[i] +=  100;
 		}
 	}
-	
+#else
+   	if(stateRealGetPointer()->lifeData.bottle_bar_age_MilliSeconds[stateRealGetPointer()->lifeData.actualGas.GasIdInSettings] < 6000)  /* max age after ten minutes */
+   	{
+   		stateRealGetPointerWrite()->lifeData.bottle_bar_age_MilliSeconds[stateRealGetPointer()->lifeData.actualGas.GasIdInSettings]++;
+   	}
+#endif
 	if(!DataEX_check_header_and_footer_ok())
 	{
 		if(DataEX_check_header_and_footer_devicedata())
