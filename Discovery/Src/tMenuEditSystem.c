@@ -876,38 +876,43 @@ void refresh_Customviews(void)
     switch(settingsGetPointer()->tX_userselectedLeftLowerCornerPrimary)
     {
     /* Temperature */
-    case 1:
+    case LLC_Temperature:
         text[4] = TXT_Temperature;
         break;
     /* Average Depth */
-    case 2:
+    case LLC_AverageDepth:
         text[4] = TXT_AvgDepth;
         break;
     /* ppO2 */
-    case 3:
+    case LLC_ppO2:
         text[4] = TXT_ppO2;
         break;
     /* Stop Uhr */
-    case 4:
+    case LLC_Stopwatch:
         text[4] = TXT_Stopwatch;
         break;
     /* Ceiling */
-    case 5:
+    case LLC_Ceiling:
         text[4] = TXT_Ceiling;
         break;
     /* Future TTS */
-    case 6:
+    case LLC_FutureTTS:
         text[4] = TXT_FutureTTS;
         break;
     /* CNS */
-    case 7:
+    case LLC_CNS:
         text[4] = TXT_CNS;
         break;
-    case 8:
+    case LLC_GF:
     	text[4] = TXT_ActualGradient;
     	break;
+#ifdef ENABLE_BOTTLE_SENSOR
+    case LCC_BottleBar:
+    	text[4] = TXT_AtemGasVorrat;
+    	    	break;
+#endif
     /* none */
-    case 0:
+    case LLC_Empty:
         text[4] = '-';
         break;
     default:
@@ -1080,7 +1085,7 @@ uint8_t OnAction_CornerStandard(uint32_t editId, uint8_t blockNumber, uint8_t di
 
     value += 1;
 
-    if(value > 8)
+    if(value >= LLC_END)
         value = 0;
 
     settingsGetPointer()->tX_userselectedLeftLowerCornerPrimary = value;

@@ -199,6 +199,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stdio.h"
 #include <string.h> // for memcopy
+#include "configuration.h"
 
 #include "stm32f4xx_hal.h"
 #include "ostc.h"
@@ -327,12 +328,6 @@ int fputc(int ch, FILE *f) {
     return(ch);
 }
 */
-/* #define DEBUG_RUNTIME TRUE */
-#ifdef DEBUG_RUNTIME
-#define MEASURECNT 60	/* number of measuremets to be stored */
-static uint32_t loopcnt[MEASURECNT];
-#endif
-
 static uint8_t ButtonAction = ACTION_END;
 
 static void StoreButtonAction(uint8_t action)
@@ -350,11 +345,6 @@ int main(void)
 {
     uint32_t pLayerInvisible;
     uint16_t totalDiveCounterFound;
-#ifdef DEBUG_RUNTIME
-    RTC_TimeTypeDef Stime;
-    uint8_t measurementindex = 0;
-    uint8_t lastsecond = 0xFF;
-#endif
 
 	SStateList status;
     detectionState_t pitchstate;
@@ -445,9 +435,16 @@ int main(void)
     GFX_logoAutoOff();
     EXTILine_Buttons_Config();
 
+#ifdef TRUST_LOG_CONSISTENCY
+    if(!ext_dive_log_consistent())	/* only repair log if an invalid entry was detected */
+    {
+    	ext_flash_repair_dive_log();
+    }
+
+#else	/* always check and repair log */
     ext_flash_repair_dive_log();
     //ext_flash_repair_SPECIAL_dive_numbers_starting_count_with(1);
-
+#endif
     totalDiveCounterFound = logbook_lastDive_diveNumber();
     if( settingsGetPointer()->totalDiveCounter < totalDiveCounterFound )
             settingsGetPointer()->totalDiveCounter = totalDiveCounterFound;
@@ -527,9 +524,6 @@ int main(void)
         	}
 
 
-// Enable this to make the simulator write a logbook entry
-// #define SIM_WRITES_LOGBOOK 1
-
 #ifdef SIM_WRITES_LOGBOOK
         if(stateUsed == stateSimGetPointer())
             logbook_InitAndWrite(stateUsed);
@@ -537,27 +531,6 @@ int main(void)
         	if(stateUsed == stateRealGetPointer())	/* Handle log entries while in dive mode*/
                 logbook_InitAndWrite(stateUsed);
         }
-
-#ifdef DEBUG_RUNTIME
-        translateTime(stateUsed->lifeData.timeBinaryFormat, &Stime);
-        if(lastsecond == 0xFF)
-        {
-        	measurementindex = 0;
-        	loopcnt[measurementindex] = 0;
-        	lastsecond = Stime.Seconds;
-        }
-        loopcnt[measurementindex]++;
-
-        if(lastsecond != Stime.Seconds)
-        {
-        	measurementindex++;
-        	if (measurementindex == MEASURECNT) measurementindex = 0;
-        	loopcnt[measurementindex] = 0;
-        	lastsecond = Stime.Seconds;
-        	if(measurementindex +1 < MEASURECNT) loopcnt[measurementindex +1] = 0xffff;	/* helps to identify the latest value */
-        }
-#endif
-
     }
 }
 

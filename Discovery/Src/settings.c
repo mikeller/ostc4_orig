@@ -33,6 +33,7 @@
 #include "text_multilanguage.h" // for LANGUAGE_END
 #include "tHome.h" // for CVIEW_END
 #include "motion.h"
+#include "t7.h"
 
 SSettings Settings;
 
@@ -275,7 +276,7 @@ const SSettings SettingsStandard = {
     .scooterSPARE2[0] = 0,
     .ppo2sensors_deactivated = 0,
     .tX_colorscheme  = 0,
-    .tX_userselectedLeftLowerCornerPrimary = 1,
+    .tX_userselectedLeftLowerCornerPrimary = LLC_Temperature,
     .tX_userselectedLeftLowerCornerTimeout = 0,
     .tX_customViewPrimary = 1,
     .tX_customViewTimeout = 0,
@@ -1161,9 +1162,9 @@ uint8_t check_and_correct_settings(void)
 
 /*	uint8_t tX_userselectedLeftLowerCornerPrimary;
  */
-    if(Settings.tX_userselectedLeftLowerCornerPrimary > 8)
+    if(Settings.tX_userselectedLeftLowerCornerPrimary >= LLC_END)
     {
-        Settings.tX_userselectedLeftLowerCornerPrimary = 1;
+        Settings.tX_userselectedLeftLowerCornerPrimary = LLC_Temperature;
         corrections++;
     }
 

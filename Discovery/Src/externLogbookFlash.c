@@ -787,6 +787,7 @@ void ext_flash_write_sample(uint8_t *pSample, uint16_t length)
 				actualAddress = SAMPLESTART;
 			}
 			preparedPageAddress = actualAddress;
+			ext_flash_invalidate_sample_index(preparedPageAddress);
 			ext_flash_erase64kB();
 			actualAddress = actualAdressBackup;
 		}
@@ -1353,6 +1354,40 @@ void OLD_ext_flash_repair_SPECIAL_dive_numbers_starting_count_with(uint16_t star
 }
 */
 
+uint8_t ext_dive_log_consistent(void)
+{
+	uint8_t ret = 0;
+	uint8_t  header1, header2;
+	uint8_t id;
+	convert_Type dataStart;
+
+	SSettings *settings = settingsGetPointer();
+	id = settings->lastDiveLogId;
+
+    actualAddress = HEADERSTART + (0x800 * id);
+    ext_flash_read_block_start();
+    ext_flash_read_block(&header1, EF_HEADER);
+    ext_flash_read_block(&header2, EF_HEADER);
+    dataStart.u8bit.byteHigh = 0;
+    ext_flash_read_block(&dataStart.u8bit.byteLow, EF_HEADER);
+    ext_flash_read_block(&dataStart.u8bit.byteMidLow, EF_HEADER);
+    ext_flash_read_block(&dataStart.u8bit.byteMidHigh, EF_HEADER);
+    ext_flash_read_block_stop();
+    if((header1 == 0xFA) && (header2 == 0xFA))						/* Header is indicating the start of a dive */
+    {
+      actualAddress = HEADERSTART + (0x800 * id) + HEADER2OFFSET;
+      ext_flash_read_block_start();
+      ext_flash_read_block(&header1, EF_HEADER);
+      ext_flash_read_block(&header2, EF_HEADER);
+      ext_flash_read_block_stop();
+      if((header1 == 0xFA) && (header2 == 0xFA))					/* Secondary header was written at the end of a dive */
+      {
+    	  ret = 1;													/* => lastDiveLogID points to a valid dive entry */
+      }
+    }
+    return ret;
+}
+
 //  ===============================================================================
 //	ext_flash_repair_dive_log
 /// @brief	This function 
@@ -1361,6 +1396,7 @@ void OLD_ext_flash_repair_SPECIAL_dive_numbers_starting_count_with(uint16_t star
 ///					and
 ///						lastDiveLogId
 ///
+
 void ext_flash_repair_dive_log(void)
 {
 	uint8_t  header1, header2;
@@ -1760,7 +1796,12 @@ static void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, ui
 		actualAddress = ringStart;
 
 	if(do_not_erase == 0)
-		ext_flash_erase_if_on_page_start();
+	{
+		if((ext_flash_erase_if_on_page_start()) && (type == EF_SAMPLE))		/* invalidate header sample information if needed */
+		{
+			ext_flash_invalidate_sample_index(actualAddress);
+		}
+	}
 	
 	while( i<length)
 	{
@@ -2239,6 +2280,55 @@ uint32_t ext_flash_AnalyseSampleBuffer(char *pstrResult)
 	*(pstrResult+i) = 0;
 	return startedSectors;
 }
+
+/* In case of a sample ring overrun the headers of the dive which will no longer have sample data needs to be updated */
+void ext_flash_invalidate_sample_index(uint32_t sectorStart)
+{
+	uint8_t emptySamples[] = {0,0,0, 0,0,0, 0,0,0};	/* entry of start, stop and length */
+	uint8_t diveidx;
+
+	uint8_t  header1, header2;
+
+  	SSettings *settings = settingsGetPointer();
+  	diveidx = settings->lastDiveLogId + 1;
+  	convert_Type dataStart, dataEnd;
+
+  	uint32_t HeaderAddrBackup = actualPointerHeader;
+
+	while(diveidx != settings->lastDiveLogId)
+	{
+		actualAddress = HEADERSTART + (0x800 * diveidx) + HEADER2OFFSET;
+		ext_flash_read_block_start();
+		ext_flash_read_block(&header1, EF_HEADER);
+		ext_flash_read_block(&header2, EF_HEADER);
+		dataStart.u8bit.byteHigh = 0;
+		ext_flash_read_block(&dataStart.u8bit.byteLow, EF_HEADER);
+		ext_flash_read_block(&dataStart.u8bit.byteMidLow, EF_HEADER);
+		ext_flash_read_block(&dataStart.u8bit.byteMidHigh, EF_HEADER);
+		dataEnd.u8bit.byteHigh = 0;
+		ext_flash_read_block(&dataEnd.u8bit.byteLow, EF_HEADER);
+		ext_flash_read_block(&dataEnd.u8bit.byteMidLow, EF_HEADER);
+		ext_flash_read_block(&dataEnd.u8bit.byteMidHigh, EF_HEADER);
+		ext_flash_read_block_stop();
+
+		if((header1 == 0xFA) && (header2 == 0xFA))					/* Dive ID is in use */
+		{
+			if(((dataStart.u32bit >= sectorStart) && (dataStart.u32bit <= sectorStart+0xFFFF))	/* Sample start is within erased sector */
+			  || ((dataEnd.u32bit >= sectorStart) && (dataEnd.u32bit <= sectorStart+0xFFFF))) /* End of sample data is within erased sector */
+			{
+				  actualAddress = HEADERSTART + (0x800 * diveidx) + HEADER2OFFSET;
+				  ext_flash_incf_address(EF_HEADER);					/* skip header bytes */
+				  ext_flash_incf_address(EF_HEADER);
+				  actualPointerHeader = actualAddress;
+				  ef_write_block(emptySamples,9,EF_HEADER,1);			/* clear start, stop and length data */
+				  actualPointerHeader = HeaderAddrBackup;
+			}
+	   }
+	   diveidx++;
+	}
+}
+
+
 
 /*
 uint8_t ext_flash_erase_firmware_if_not_empty(void)
