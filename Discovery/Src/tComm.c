@@ -335,6 +335,8 @@ void tComm_exit(void)
     set_globalState_Base();
 #endif
     }
+    settingsGetPointer()->bluetoothActive = 0;
+    MX_Bluetooth_PowerOff();						// Power down Bluetooth on the way out
 }
 
 
