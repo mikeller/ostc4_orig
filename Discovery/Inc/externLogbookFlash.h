@@ -141,6 +141,9 @@ uint32_t ext_flash_read_dive_raw_with_double_header_1K(uint8_t *data, uint32_t m
 void ext_flash_read_header_memory(uint8_t *data);
 void ext_flash_write_header_memory(uint8_t *data);
 
+void ext_flash_read_sample_memory(uint8_t *data,uint16_t blockId);
+void ext_flash_write_sample_memory(uint8_t *data,uint16_t blockId);
+
 void ext_flash_erase_logbook(void);
 void ext_flash_erase_chip(void);
 void ext_flash_erase_firmware(void);
