@@ -972,7 +972,7 @@ void ext_flash_read_header_memory(uint8_t *data)
 
 
 //  ===============================================================================
-//  ext_flash_read_header_memory
+//  ext_flash_write_header_memory
 /// @brief		This function erases and overwrites the entire logbook header block
 ///	@date			04-April-2016
 ///
@@ -983,6 +983,24 @@ void ext_flash_write_header_memory(uint8_t *data)
 	actualAddress = HEADERSTART;
 	actualPointerHeader = actualAddress;
 	ef_write_block(data, 0x40000, EF_HEADER, 0);
+}
+
+void ext_flash_read_sample_memory(uint8_t *data,uint16_t blockId)
+{
+	actualAddress = SAMPLESTART;
+	actualAddress += blockId * 0x8000;	/* add 32k Block offset */
+	actualPointerSample = actualAddress;
+	ext_flash_read_block_start();
+	ext_flash_read_block_multi(data, 0x8000, EF_SAMPLE);
+	ext_flash_read_block_stop();
+}
+
+void ext_flash_write_sample_memory(uint8_t *data,uint16_t blockId)
+{
+	actualAddress = SAMPLESTART;
+	actualAddress += blockId * 0x8000;	/* add 32k Block offset */
+	actualPointerSample = actualAddress;
+	ef_write_block(data, 0x8000, EF_SAMPLE,0);
 }
 
 
@@ -1743,6 +1761,7 @@ static void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, ui
 {
 	uint32_t remaining_page_size, remaining_length, remaining_space_to_ring_end;
 	uint32_t i=0;
+	uint32_t actualAddrBackup = 0;
 
 	if(!length)
 		return;
@@ -1797,9 +1816,11 @@ static void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, ui
 
 	if(do_not_erase == 0)
 	{
+		actualAddrBackup = actualAddress;
 		if((ext_flash_erase_if_on_page_start()) && (type == EF_SAMPLE))		/* invalidate header sample information if needed */
 		{
 			ext_flash_invalidate_sample_index(actualAddress);
+			actualAddress = actualAddrBackup;
 		}
 	}
 	
@@ -2286,6 +2307,7 @@ void ext_flash_invalidate_sample_index(uint32_t sectorStart)
 {
 	uint8_t emptySamples[] = {0,0,0, 0,0,0, 0,0,0};	/* entry of start, stop and length */
 	uint8_t diveidx;
+	uint8_t index;
 
 	uint8_t  header1, header2;
 
@@ -2320,7 +2342,19 @@ void ext_flash_invalidate_sample_index(uint32_t sectorStart)
 				  ext_flash_incf_address(EF_HEADER);					/* skip header bytes */
 				  ext_flash_incf_address(EF_HEADER);
 				  actualPointerHeader = actualAddress;
-				  ef_write_block(emptySamples,9,EF_HEADER,1);			/* clear start, stop and length data */
+
+				  ef_hw_rough_delay_us(5);
+				  wait_chip_not_busy();
+				  write_spi(0x06,RELEASE);		/* WREN */
+				  write_spi(0x02,HOLDCS);			/* write cmd */
+				  write_address(HOLDCS);
+				  for(index=0; index<8; index++)
+				  {
+					  write_spi(emptySamples[index],HOLDCS);/* write data */
+					  actualAddress++;
+				  }
+				  /* byte with RELEASE */
+				  write_spi(emptySamples[index],RELEASE);/* write data */
 				  actualPointerHeader = HeaderAddrBackup;
 			}
 	   }
