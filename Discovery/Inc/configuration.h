@@ -43,4 +43,7 @@
 /* Enable this to reset the profile data by pressing enter within log info menu */
 /* #define ENABLE_PROFILE_RESET */
 
+/* Enable this to transfer additional data list last dive ID and last sample index during raw data requests */
+/* define SEND_DATA_DETAILS */
+
 #endif
