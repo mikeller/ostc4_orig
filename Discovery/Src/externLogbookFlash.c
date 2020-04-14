@@ -787,7 +787,6 @@ void ext_flash_write_sample(uint8_t *pSample, uint16_t length)
 				actualAddress = SAMPLESTART;
 			}
 			preparedPageAddress = actualAddress;
-			ext_flash_invalidate_sample_index(preparedPageAddress);
 			ext_flash_erase64kB();
 			actualAddress = actualAdressBackup;
 		}
@@ -1761,7 +1760,6 @@ static void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, ui
 {
 	uint32_t remaining_page_size, remaining_length, remaining_space_to_ring_end;
 	uint32_t i=0;
-	uint32_t actualAddrBackup = 0;
 
 	if(!length)
 		return;
@@ -1816,12 +1814,7 @@ static void ef_write_block(uint8_t * sendByte, uint32_t length, uint8_t type, ui
 
 	if(do_not_erase == 0)
 	{
-		actualAddrBackup = actualAddress;
-		if((ext_flash_erase_if_on_page_start()) && (type == EF_SAMPLE))		/* invalidate header sample information if needed */
-		{
-			ext_flash_invalidate_sample_index(actualAddress);
-			actualAddress = actualAddrBackup;
-		}
+		ext_flash_erase_if_on_page_start();
 	}
 	
 	while( i<length)
@@ -2204,6 +2197,37 @@ void ext_flash_CloseSector(void)
 	}
 }
 
+/* This function validates a potential jump of sample address by checking the last sector for empty memory cells */
+uint8_t ext_flash_SampleOverrunValid(void)
+{
+	uint8_t jumpvalid = 1;
+	uint32_t curAddress, actualaddrbackup;
+	uint8_t tmpBuffer;
+	uint8_t emptyCellCnt = 0;
+
+	actualaddrbackup = actualAddress;
+	curAddress = SAMPLESTOP - 20;	/* check the last 10 bytes of the last sample sector */
+	actualAddress = curAddress;
+	ext_flash_read_block_start();
+	while(actualAddress < SAMPLESTOP)
+	{
+		tmpBuffer = read_spi(HOLDCS);/* read data */
+		if(tmpBuffer == 0xFF)
+		{
+			emptyCellCnt++;
+		}
+		actualAddress++;
+	}
+	ext_flash_read_block_stop();
+
+	if(emptyCellCnt == 20)
+	{
+		jumpvalid = 0;
+	}
+	actualAddress = actualaddrbackup;
+	return jumpvalid;
+}
+
 uint32_t ext_flash_AnalyseSampleBuffer(char *pstrResult)
 {
 	uint8_t sectorState[16];	/* samples are stored in 16 sector / 64k each */
@@ -2302,66 +2326,16 @@ uint32_t ext_flash_AnalyseSampleBuffer(char *pstrResult)
 	return startedSectors;
 }
 
-/* In case of a sample ring overrun the headers of the dive which will no longer have sample data needs to be updated */
-void ext_flash_invalidate_sample_index(uint32_t sectorStart)
+uint32_t ext_flash_read_profilelength_small_header(uint32_t smallHeaderAddr)
 {
-	uint8_t emptySamples[] = {0,0,0, 0,0,0, 0,0,0};	/* entry of start, stop and length */
-	uint8_t diveidx;
-	uint8_t index;
-
-	uint8_t  header1, header2;
-
-  	SSettings *settings = settingsGetPointer();
-  	diveidx = settings->lastDiveLogId + 1;
-  	convert_Type dataStart, dataEnd;
-
-  	uint32_t HeaderAddrBackup = actualPointerHeader;
-
-	while(diveidx != settings->lastDiveLogId)
-	{
-		actualAddress = HEADERSTART + (0x800 * diveidx) + HEADER2OFFSET;
-		ext_flash_read_block_start();
-		ext_flash_read_block(&header1, EF_HEADER);
-		ext_flash_read_block(&header2, EF_HEADER);
-		dataStart.u8bit.byteHigh = 0;
-		ext_flash_read_block(&dataStart.u8bit.byteLow, EF_HEADER);
-		ext_flash_read_block(&dataStart.u8bit.byteMidLow, EF_HEADER);
-		ext_flash_read_block(&dataStart.u8bit.byteMidHigh, EF_HEADER);
-		dataEnd.u8bit.byteHigh = 0;
-		ext_flash_read_block(&dataEnd.u8bit.byteLow, EF_HEADER);
-		ext_flash_read_block(&dataEnd.u8bit.byteMidLow, EF_HEADER);
-		ext_flash_read_block(&dataEnd.u8bit.byteMidHigh, EF_HEADER);
-		ext_flash_read_block_stop();
-
-		if((header1 == 0xFA) && (header2 == 0xFA))					/* Dive ID is in use */
-		{
-			if(((dataStart.u32bit >= sectorStart) && (dataStart.u32bit <= sectorStart+0xFFFF))	/* Sample start is within erased sector */
-			  || ((dataEnd.u32bit >= sectorStart) && (dataEnd.u32bit <= sectorStart+0xFFFF))) /* End of sample data is within erased sector */
-			{
-				  actualAddress = HEADERSTART + (0x800 * diveidx) + HEADER2OFFSET;
-				  ext_flash_incf_address(EF_HEADER);					/* skip header bytes */
-				  ext_flash_incf_address(EF_HEADER);
-				  actualPointerHeader = actualAddress;
-
-				  ef_hw_rough_delay_us(5);
-				  wait_chip_not_busy();
-				  write_spi(0x06,RELEASE);		/* WREN */
-				  write_spi(0x02,HOLDCS);			/* write cmd */
-				  write_address(HOLDCS);
-				  for(index=0; index<8; index++)
-				  {
-					  write_spi(emptySamples[index],HOLDCS);/* write data */
-					  actualAddress++;
-				  }
-				  /* byte with RELEASE */
-				  write_spi(emptySamples[index],RELEASE);/* write data */
-				  actualPointerHeader = HeaderAddrBackup;
-			}
-	   }
-	   diveidx++;
-	}
+	uint32_t profileLength = 0;
+	actualPointerSample = smallHeaderAddr;
+	actualAddress = actualPointerSample;
+	ext_flash_read_block_start();
+	ext_flash_read_next_sample_part((uint8_t*)&profileLength,  3);
+	ext_flash_close_read_sample();
+	return profileLength;
 }
-
 
 
 /*
