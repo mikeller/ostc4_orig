@@ -590,6 +590,7 @@ uint8_t select_mode(uint8_t type)
     uint8_t aRxBuffer[68];
     uint8_t answer;
     uint16_t index;
+    uint32_t header_profileLength, OSTC3_profileLength;
     aTxBuffer[0] = type;
     aTxBuffer[1] = prompt4D4C(receiveStartByteUart);
     uint8_t tempHigh, tempLow;
@@ -1231,9 +1232,11 @@ uint8_t select_mode(uint8_t type)
         if(HAL_UART_Transmit(&UartHandle, (uint8_t*)plogbookHeaderOSTC3, 256,5000)!= HAL_OK)
             return 0;
 
-        if((logbookHeader.pBeginProfileData[0]==0)	/* no sample information */
-        	&& (logbookHeader.pBeginProfileData[1]==0)
-			&& (logbookHeader.pBeginProfileData[2]==0))
+        OSTC3_profileLength = (plogbookHeaderOSTC3->profileLength[2] << 16) + (plogbookHeaderOSTC3->profileLength[1] << 8)
+                								    + plogbookHeaderOSTC3->profileLength[0] -3;
+        header_profileLength = (logbookHeader.profileLength[2] << 16) + (logbookHeader.profileLength[1] << 8) + logbookHeader.profileLength[0];
+       
+        if(OSTC3_profileLength != header_profileLength)			/* has headerdata been changed to dummy data? */
         {
         	sampleTotalLength = logbook_fillDummySampleBuffer(&logbookHeader);
 			while(sampleTotalLength >= 128)
@@ -1249,7 +1252,6 @@ uint8_t select_mode(uint8_t type)
 				if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBuffer, sampleTotalLength,5000)!= HAL_OK)
 					return 0;
 			}
-
         }
         else
         {
