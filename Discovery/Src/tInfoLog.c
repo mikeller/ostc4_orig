@@ -66,9 +66,6 @@ void showNextLogPage(void);
 void stepBackInfo(void);
 void stepForwardInfo(void);
 void showLogExit(void);
-#ifdef ENABLE_PROFILE_RESET
-void resetDiveProfile(void);
-#endif
 
 /* Exported functions --------------------------------------------------------*/
 void tInfoLog_init(void)
@@ -181,9 +178,6 @@ void sendActionToInfoLogShow(uint8_t sendAction)
     switch(sendAction)
     {
     case ACTION_BUTTON_ENTER:
-#ifdef ENABLE_PROFILE_RESET
-    	resetDiveProfile();
-#endif
         break;
     case ACTION_BUTTON_NEXT:
         showNextLogPage();
@@ -437,21 +431,3 @@ void showNextLogPage(void)
     show_logbook_test(0, stepBack);
 }
 
-#ifdef ENABLE_PROFILE_RESET
-void resetDiveProfile()
-{
-	uint8_t stepBack;
-	SLogbookHeader logbookHeader;
-	convert_Type dataStart;
-	stepBack = (6 * (infolog.page - 1)) + infolog.line - 1; /* calculate current dive ID */
-	logbook_getHeader(stepBack ,&logbookHeader);
-
-    dataStart.u8bit.byteHigh = 0;
-    dataStart.u8bit.byteLow = logbookHeader.pBeginProfileData[0];
-    dataStart.u8bit.byteMidLow = logbookHeader.pBeginProfileData[1];
-    dataStart.u8bit.byteMidHigh = logbookHeader.pBeginProfileData[2];
-
-    dataStart.u32bit &= 0xFFFF0000;		/* set to sector start */
-	ext_flash_invalidate_sample_index(dataStart.u32bit);
-}
-#endif
