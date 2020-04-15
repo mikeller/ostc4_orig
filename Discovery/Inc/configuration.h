@@ -40,7 +40,10 @@
 /* Enable this to skip coplete scan of dive log during startup */
 /* #define TRUST_LOG_CONSISTENCY */
 
-/* Enable this to reset the profile data by pressing enter within log info menu */
-/* #define ENABLE_PROFILE_RESET */
+/* Enable this to transfer additional data list last dive ID and last sample index during raw data requests */
+/* define SEND_DATA_DETAILS */
+
+/* Enable to activate a menu item in reset menu which provide sample ring analysis / repair functionality */
+/* #define ENABLE_ANALYSE_SAMPLES */
 
 #endif

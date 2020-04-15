@@ -589,6 +589,8 @@ uint8_t select_mode(uint8_t type)
     uint8_t aTxBuffer[128];
     uint8_t aRxBuffer[68];
     uint8_t answer;
+    uint16_t index;
+    uint32_t header_profileLength, OSTC3_profileLength;
     aTxBuffer[0] = type;
     aTxBuffer[1] = prompt4D4C(receiveStartByteUart);
     uint8_t tempHigh, tempLow;
@@ -665,6 +667,8 @@ uint8_t select_mode(uint8_t type)
         case 0x85: // hw read entire logbook memory
         case 0x86: // hw overwrite entire logbook memory
         case 0x87: // hw ext_flash_repair_SPECIAL_dive_numbers_starting_count_with memory(x)
+        case 0x88: /* read entire sample memory  */
+        case 0x89: /* write entire sample memory */
 
 #endif
         case 0xC1: // 	Start low-level bootloader
@@ -885,14 +889,25 @@ uint8_t select_mode(uint8_t type)
             for(int i=0;i<8;i++)
                 HAL_UART_Transmit(&UartHandle, (uint8_t *)(logCopyDataPtr + (0x8000 * i)), (uint16_t)0x8000,60000);
             releaseFrame(98,logCopyDataPtr);
+#ifdef SEND_DATA_DETAILS
+            HAL_UART_Transmit(&UartHandle, (uint8_t*)&pSettings->lastDiveLogId, 1,60000);
+#endif
             break;
 
         case 0x86:
             aTxBuffer[count++] = prompt4D4C(receiveStartByteUart);
             logCopyDataPtr = getFrame(98);
             for(int i=0;i<8;i++)
+            {
                 HAL_UART_Receive(&UartHandle, (uint8_t *)(logCopyDataPtr + (0x8000 * i)), (uint16_t)0x8000,60000);
+            }
             ext_flash_write_header_memory((uint8_t *)logCopyDataPtr);
+#ifdef SEND_DATA_DETAILS
+            if(HAL_UART_Receive(&UartHandle, (uint8_t *)(logCopyDataPtr + (0x8000 * 8)), (uint16_t)0x01,60000) == HAL_OK)	/* receive lastlogID */
+            {
+            	pSettings->lastDiveLogId = *(uint8_t*)(logCopyDataPtr + (0x40000));
+            }
+#endif
             releaseFrame(98,logCopyDataPtr);
             break;
 
@@ -906,6 +921,39 @@ uint8_t select_mode(uint8_t type)
             ext_flash_repair_SPECIAL_dive_numbers_starting_count_with(totalDiveCount.u16bit);
             aTxBuffer[count++] = prompt4D4C(receiveStartByteUart);
             break;
+        case 0x88:
+             aTxBuffer[count++] = prompt4D4C(receiveStartByteUart);
+             logCopyDataPtr = getFrame(98);
+
+             for(index = 0; index <384; index++)		/* transmit in 32k blocks */
+             {
+            	 ext_flash_read_sample_memory((uint8_t *)logCopyDataPtr, index);
+                 if(HAL_UART_Transmit(&UartHandle, (uint8_t *)(logCopyDataPtr), (uint16_t)0x8000,60000) != HAL_OK)
+                 {
+                	 break;
+                 }
+             }
+             releaseFrame(98,logCopyDataPtr);
+             HAL_UART_Transmit(&UartHandle, (uint8_t*)&pSettings->logFlashNextSampleStartAddress, 4,60000);	/* send next sample pos */
+        	break;
+        case 0x89:
+             aTxBuffer[count++] = prompt4D4C(receiveStartByteUart);
+             logCopyDataPtr = getFrame(98);
+
+             for(index = 0; index <384; index++)		/* transmit in 32k blocks  384*/
+             {
+
+                 if(HAL_UART_Receive(&UartHandle, (uint8_t *)(logCopyDataPtr), (uint16_t)0x8000,60000) != HAL_OK)
+                 {
+                	 break;
+                 }
+                 ext_flash_write_sample_memory((uint8_t *)logCopyDataPtr, index);
+             }
+
+             releaseFrame(98,logCopyDataPtr);
+             HAL_UART_Receive(&UartHandle, (uint8_t*)&pSettings->logFlashNextSampleStartAddress, 4,60000);	/* send next sample pos */
+        	break;
+
 #endif
         }
 
@@ -1184,9 +1232,11 @@ uint8_t select_mode(uint8_t type)
         if(HAL_UART_Transmit(&UartHandle, (uint8_t*)plogbookHeaderOSTC3, 256,5000)!= HAL_OK)
             return 0;
 
-        if((logbookHeader.pBeginProfileData[0]==0)	/* no sample information */
-        	&& (logbookHeader.pBeginProfileData[1]==0)
-			&& (logbookHeader.pBeginProfileData[2]==0))
+        OSTC3_profileLength = (plogbookHeaderOSTC3->profileLength[2] << 16) + (plogbookHeaderOSTC3->profileLength[1] << 8)
+                								    + plogbookHeaderOSTC3->profileLength[0] -3;
+        header_profileLength = (logbookHeader.profileLength[2] << 16) + (logbookHeader.profileLength[1] << 8) + logbookHeader.profileLength[0];
+       
+        if(OSTC3_profileLength != header_profileLength)			/* has headerdata been changed to dummy data? */
         {
         	sampleTotalLength = logbook_fillDummySampleBuffer(&logbookHeader);
 			while(sampleTotalLength >= 128)
@@ -1202,7 +1252,6 @@ uint8_t select_mode(uint8_t type)
 				if(HAL_UART_Transmit(&UartHandle, (uint8_t*)aTxBuffer, sampleTotalLength,5000)!= HAL_OK)
 					return 0;
 			}
-
         }
         else
         {
