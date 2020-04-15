@@ -41,9 +41,6 @@
 #include "motion.h"
 #include "t7.h"
 
-/* Uncomment to activate a menu item in reset menu which provide sample ring analysis / repair functionality */
-#define ENABLE_ANALYSE_SAMPLES
-
 #define CV_SUBPAGE_MAX		(2u)	/* max number of customer view selection pages */
 /*#define HAVE_DEBUG_VIEW */
 static uint8_t infoPage = 0;
@@ -97,7 +94,9 @@ uint8_t OnAction_Nothing			(uint32_t editId, uint8_t blockNumber, uint8_t digitN
 uint8_t OnAction_LogbookOffset(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_SetFactoryDefaults(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_SetBatteryCharge(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+#ifdef ENABLE_ANALYSE_SAMPLES
 uint8_t OnAction_RecoverSampleIdx(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+#endif
 #ifdef SCREENTEST
 uint8_t OnAction_ScreenTest		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 #endif
@@ -1635,18 +1634,18 @@ uint8_t OnAction_SetFactoryDefaults(uint32_t editId, uint8_t blockNumber, uint8_
     return EXIT_TO_MENU;
 }
 
-
+#ifdef ENABLE_ANALYSE_SAMPLES
 uint8_t OnAction_RecoverSampleIdx(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
 	char text[32];
 	char strResult[20];
-
 
 	ext_flash_AnalyseSampleBuffer(strResult);
     snprintf(&text[0],30,"Ring: %s",strResult); //"Code: %X",settingsGetPointer()->logFlashNextSampleStartAddress); //getLicence());
     write_label_var(  30, 800, ME_Y_LINE6, &FontT42, text);
     return UNSPECIFIC_RETURN;
 }
+#endif
 
 uint8_t OnAction_SetBatteryCharge(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {

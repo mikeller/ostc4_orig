@@ -91,7 +91,7 @@ static SDivisor divisorBackup;
 static SSmallHeader smallDummyHeader;
 static uint16_t	dummyWriteIdx;
 static uint16_t	dummyReadIdx;
-static uint8_t dummyMemoryBuffer[1000*4];
+static uint8_t dummyMemoryBuffer[5000];
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -981,6 +981,7 @@ uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t*
 	int16_t decostepDepthVal = 0;
 	int16_t decostepDepthLast = 0;
 	uint16_t tankVal = 0;
+	uint32_t small_profileLength = 0;
 
      SManualGas manualGasVal;
      SManualGas manualGasLast;
@@ -1040,8 +1041,8 @@ uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t*
 
 
 		//uint16_t* ppo2, uint16_t* cns#
-     uint32_t totalNumberOfBytes = 0;
-     uint32_t bytesRead = 0;
+    uint32_t totalNumberOfBytes = 0;
+    uint32_t bytesRead = 0;
     ext_flash_open_read_sample( StepBackwards,&totalNumberOfBytes);
     ext_flash_read_next_sample_part((uint8_t*)&smallHeader,  sizeof(SSmallHeader));
     bytesRead += sizeof(SSmallHeader);
@@ -1051,7 +1052,10 @@ uint16_t logbook_readSampleData(uint8_t StepBackwards, uint16_t length,uint16_t*
     iNum = 0;
     int counter = 0;
 		temperatureLast = -1000;
-	if(totalNumberOfBytes > 2)	/* read real data */
+
+	small_profileLength = (smallHeader.profileLength[2] << 16) + (smallHeader.profileLength[1] << 8) + smallHeader.profileLength[0];
+
+	if(totalNumberOfBytes == small_profileLength)	/* sizes provided by header and small header are the same => real data */
 	{
 		while ((bytesRead < totalNumberOfBytes) && (iNum < length))
 		{
@@ -1460,151 +1464,173 @@ SLogbookHeaderOSTC3 * logbook_build_ostc3header(SLogbookHeader* pHead)
 {
 	convert_Type data,data2;
 	uint16_t dummyLength = 0;
+	uint8_t returnEmptyHeader = 0;
 
-	memcpy(headerOSTC3.diveHeaderStart,			&pHead->diveHeaderStart,					2);
-	memcpy(headerOSTC3.pBeginProfileData,		&pHead->pBeginProfileData,				3);
-	memcpy(headerOSTC3.pEndProfileData,			&pHead->pEndProfileData,					3);
+	uint32_t headerProfileLength, sampleProfileLength, sampleProfileStart;
 
 
-	data.u8bit.byteHigh = 0;
-	data.u8bit.byteLow 			= pHead->pBeginProfileData[0];
-	data.u8bit.byteMidLow 	= pHead->pBeginProfileData[1];
-	data.u8bit.byteMidHigh 	= pHead->pBeginProfileData[2];
-
-	data2.u8bit.byteHigh = 0;
-	data2.u8bit.byteLow 			= pHead->pEndProfileData[0];
-	data2.u8bit.byteMidLow 	= pHead->pEndProfileData[1];
-	data2.u8bit.byteMidHigh 	= pHead->pEndProfileData[2];
-
-	if( (pHead->pBeginProfileData[0] == 0)			/* no sample data available => use dummy */
-		&&(pHead->pBeginProfileData[1] == 0)
-		&&(pHead->pBeginProfileData[2] == 0))
+	if(pHead->diveHeaderStart != 0xFAFA)
 	{
-		dummyLength = logbook_fillDummySampleBuffer(pHead);
-
-		data2.u32bit = data.u32bit + dummyLength;	/* calc new end address (which is equal to dummyLength) */
-		data.u32bit = data2.u32bit;				    /* data is used below to represent the length */
+		returnEmptyHeader = 1;
 	}
 	else
 	{
-		/* check if sample address information are corrupted by address range. */
-		/* TODO: Workaround. Better solution would be to check end of ring for 0xFF pattern */
-		if((data.u32bit > data2.u32bit) && (data.u32bit < (SAMPLESTOP - 0x9000)))
+		memcpy(headerOSTC3.diveHeaderStart,			&pHead->diveHeaderStart,					2);
+		memcpy(headerOSTC3.pBeginProfileData,		&pHead->pBeginProfileData,				3);
+		memcpy(headerOSTC3.pEndProfileData,			&pHead->pEndProfileData,					3);
+
+		data.u8bit.byteHigh = 0;
+		data.u8bit.byteLow 		= pHead->pBeginProfileData[0];
+		data.u8bit.byteMidLow 	= pHead->pBeginProfileData[1];
+		data.u8bit.byteMidHigh 	= pHead->pBeginProfileData[2];
+
+		sampleProfileStart = data.u32bit;
+
+		data2.u8bit.byteHigh = 0;
+		data2.u8bit.byteLow 			= pHead->pEndProfileData[0];
+		data2.u8bit.byteMidLow 	= pHead->pEndProfileData[1];
+		data2.u8bit.byteMidHigh 	= pHead->pEndProfileData[2];
+
+		data.u8bit.byteHigh = 0;
+		data.u8bit.byteLow 			= pHead->profileLength[0];
+		data.u8bit.byteMidLow 	= pHead->profileLength[1];
+		data.u8bit.byteMidHigh 	= pHead->profileLength[2];
+
+		if(data.u32bit != 0xFFFFFF)		/* if the profile in use ? */
 		{
-			data2.u32bit = data.u32bit + DEFAULT_SAMPLES;
-			pHead->pEndProfileData[0] = data2.u8bit.byteLow;
-			pHead->pEndProfileData[1] = data2.u8bit.byteMidLow;
-			pHead->pEndProfileData[2] = data2.u8bit.byteMidHigh;
-			data.u32bit = DEFAULT_SAMPLES;
+			if(data2.u32bit < sampleProfileStart)		/* Wrap around of sample ring detected */
+			{
+				if(ext_flash_SampleOverrunValid() == 0)	/* Wrap around does not seem to be valid => fallback */
+				{
+					sampleProfileStart = 0;
+				}
+			}
+			if( sampleProfileStart == 0)				/* should never happen unless OSTC with older debug version is in use (or invalid overrun) */
+			{
+				sampleProfileLength = 1;
+				headerProfileLength = 2;
+			}
+			else
+			{
+				headerProfileLength = (pHead->profileLength[2] << 16) + (pHead->profileLength[1] << 8) + pHead->profileLength[0];
+				sampleProfileLength = ext_flash_read_profilelength_small_header(sampleProfileStart);
+			}
+
+			if(sampleProfileLength != headerProfileLength)
+			{
+				dummyLength = logbook_fillDummySampleBuffer(pHead);
+
+				data2.u32bit = sampleProfileStart + dummyLength;	/* calc new end address (which is equal to dummyLength) */
+				data.u32bit = dummyLength;				    /* data is used below to represent the length */
+			}
+
+			data.u32bit += 3;
+			headerOSTC3.profileLength[0] = data.u8bit.byteLow;
+			headerOSTC3.profileLength[1] = data.u8bit.byteMidLow;
+			headerOSTC3.profileLength[2] = data.u8bit.byteMidHigh;
+
+			memcpy(headerOSTC3.gasordil, pHead->gasordil, 20);
+
+			if(pHead->logbookProfileVersion == LOGBOOK_VERSION)
+			{
+				headerOSTC3.logbookProfileVersion = LOGBOOK_VERSION_OSTC3;
+				memcpy(headerOSTC3.personalDiveCount, &pHead->personalDiveCount, 2);
+				headerOSTC3.safetyDistance_10cm = 0;
+
+				for(int i=0;i<5;i++)
+				{
+					if(!pHead->gasordil[i].note.ub.active)
+						headerOSTC3.gasordil[3 + (i*4)] = 0;
+					else if(pHead->gasordil[i].note.ub.first)
+					{
+				/* depth = 0, note = 1 */
+						headerOSTC3.gasordil[2 + (i*4)] = 0;
+				headerOSTC3.gasordil[3 + (i*4)] = 1;
+					}
+					else if( pHead->gasordil[i].depth_meter)
+					{
+				/* note = 3 */
+						headerOSTC3.gasordil[3 + (i*4)] = 3;
+					}
+				}
+			}
+			else
+			{
+				headerOSTC3.logbookProfileVersion = 0xFF;
+				headerOSTC3.personalDiveCount[0] = 0xFF;
+				headerOSTC3.personalDiveCount[1] = 0xFF;
+				headerOSTC3.safetyDistance_10cm = 0xFF;
+			}
+
+			headerOSTC3.dateYear = pHead->dateYear;
+			headerOSTC3.dateMonth = pHead->dateMonth;
+			headerOSTC3.dateDay = pHead->dateDay;
+			headerOSTC3.timeHour = pHead->timeHour;
+			headerOSTC3.timeMinute = pHead->timeMinute;
+
+			memcpy(headerOSTC3.maxDepth, &pHead->maxDepth, 2);
+			memcpy(headerOSTC3.diveTimeMinutes,	&pHead->diveTimeMinutes, 2);
+
+			headerOSTC3.diveTimeSeconds = pHead->diveTimeSeconds;
+
+			memcpy(headerOSTC3.minTemp,	&pHead->minTemp, 2);
+			memcpy(headerOSTC3.surfacePressure_mbar,&pHead->surfacePressure_mbar, 2);
+			memcpy(headerOSTC3.desaturationTime, &pHead->desaturationTime, 2);
+
+			headerOSTC3.firmwareVersionHigh = pHead->firmwareVersionHigh;
+			headerOSTC3.firmwareVersionLow =	pHead->firmwareVersionLow;
+
+			memcpy(headerOSTC3.batteryVoltage, &pHead->batteryVoltage, 2);
+
+			headerOSTC3.samplingRate = pHead->samplingRate;
+
+			memcpy(headerOSTC3.cnsAtBeginning, &pHead->cnsAtBeginning, 2);
+
+			headerOSTC3.gfAtBeginning = pHead->gfAtBeginning;
+			headerOSTC3.gfAtEnd = pHead->gfAtEnd;
+
+			memcpy(headerOSTC3.setpoint, pHead->setpoint, 10);
+
+			headerOSTC3.salinity = pHead->salinity;
+
+			memcpy(headerOSTC3.maxCNS, &pHead->maxCNS, 2);
+			memcpy(headerOSTC3.averageDepth_mbar, &pHead->averageDepth_mbar, 2);
+			memcpy(headerOSTC3.total_diveTime_seconds, &pHead->total_diveTime_seconds, 2);
+
+			headerOSTC3.gfLow_or_Vpm_conservatism = pHead->gfLow_or_Vpm_conservatism;
+			headerOSTC3.gfHigh = pHead->gfHigh;
+			headerOSTC3.decoModel = pHead->decoModel;
+
+			memcpy(headerOSTC3.diveNumber, &pHead->diveNumber, 2);
+
+			headerOSTC3.diveMode = pHead->diveMode;
+			headerOSTC3.CCRmode = pHead->CCRmode;
+
+			memcpy(headerOSTC3.n2CompartDesatTime_min,pHead->n2CompartDesatTime_min, 16);
+			memcpy(headerOSTC3.n2Compartments, pHead->n2Compartments, 64);
+			memcpy(headerOSTC3.heCompartDesatTime_min,pHead->heCompartDesatTime_min, 16);
+			memcpy(headerOSTC3.heCompartments, pHead->heCompartments, 64);
+
+			headerOSTC3.lastDecostop_m = pHead->lastDecostop_m;
+
+			memcpy(headerOSTC3.hwHudBattery_mV,	&pHead->hwHudBattery_mV, 2);
+
+			headerOSTC3.hwHudLastStatus = pHead->hwHudLastStatus;
+
+			memcpy(headerOSTC3.batteryGaugeRegisters,&pHead->batteryGaugeRegisters,	6);
+
+
+			memcpy(headerOSTC3.diveHeaderEnd, &pHead->diveHeaderEnd, 2);
 		}
 		else
 		{
-			data.u8bit.byteHigh = 0;
-			data.u8bit.byteLow 			= pHead->profileLength[0];
-			data.u8bit.byteMidLow 	= pHead->profileLength[1];
-			data.u8bit.byteMidHigh 	= pHead->profileLength[2];
+			returnEmptyHeader = 1;
 		}
 	}
-	if(data.u32bit != 0xFFFFFF)
-		data.u32bit += 3;
-
-	headerOSTC3.profileLength[0] = data.u8bit.byteLow;
-	headerOSTC3.profileLength[1] = data.u8bit.byteMidLow;
-	headerOSTC3.profileLength[2] = data.u8bit.byteMidHigh;
-
-	memcpy(headerOSTC3.gasordil,						pHead->gasordil,								 20);
-
-	if(pHead->logbookProfileVersion == LOGBOOK_VERSION)
+	if(returnEmptyHeader)			/* profile not in use => return array full of 0xFF */
 	{
-		headerOSTC3.logbookProfileVersion = LOGBOOK_VERSION_OSTC3;
-		memcpy(headerOSTC3.personalDiveCount,	&pHead->personalDiveCount,				2);
-		headerOSTC3.safetyDistance_10cm = 0;
-
-		for(int i=0;i<5;i++)
-		{
-			if(!pHead->gasordil[i].note.ub.active)
-				headerOSTC3.gasordil[3 + (i*4)] = 0;
-			else if(pHead->gasordil[i].note.ub.first)
-			{
-        /* depth = 0, note = 1 */
-				headerOSTC3.gasordil[2 + (i*4)] = 0;
-        headerOSTC3.gasordil[3 + (i*4)] = 1;
-			}
-			else if( pHead->gasordil[i].depth_meter)
-			{
-        /* note = 3 */
-				headerOSTC3.gasordil[3 + (i*4)] = 3;
-			}
-		}
+		memset(&headerOSTC3, 0xFF, sizeof(headerOSTC3));
 	}
-	else
-	{
-		headerOSTC3.logbookProfileVersion = 0xFF;
-		headerOSTC3.personalDiveCount[0] = 0xFF;
-		headerOSTC3.personalDiveCount[1] = 0xFF;
-		headerOSTC3.safetyDistance_10cm = 0xFF;
-	}
-
-	headerOSTC3.dateYear = pHead->dateYear;
-	headerOSTC3.dateMonth = pHead->dateMonth;
-	headerOSTC3.dateDay = pHead->dateDay;
-	headerOSTC3.timeHour = pHead->timeHour;
-	headerOSTC3.timeMinute = pHead->timeMinute;
-
-
-	memcpy(headerOSTC3.maxDepth,						&pHead->maxDepth,									2);
-	memcpy(headerOSTC3.diveTimeMinutes,			&pHead->diveTimeMinutes,					2);
-
-	headerOSTC3.diveTimeSeconds = pHead->diveTimeSeconds;
-
-	memcpy(headerOSTC3.minTemp,							&pHead->minTemp,									2);
-	memcpy(headerOSTC3.surfacePressure_mbar,&pHead->surfacePressure_mbar,			2);
-	memcpy(headerOSTC3.desaturationTime,		&pHead->desaturationTime,					2);
-
-	headerOSTC3.firmwareVersionHigh = pHead->firmwareVersionHigh;
-	headerOSTC3.firmwareVersionLow =	pHead->firmwareVersionLow;
-
-	memcpy(headerOSTC3.batteryVoltage,			&pHead->batteryVoltage,						2);
-
-	headerOSTC3.samplingRate = pHead->samplingRate;
-
-	memcpy(headerOSTC3.cnsAtBeginning,			&pHead->cnsAtBeginning,						2);
-
-	headerOSTC3.gfAtBeginning = pHead->gfAtBeginning;
-	headerOSTC3.gfAtEnd = pHead->gfAtEnd;
-
-	memcpy(headerOSTC3.setpoint,						pHead->setpoint,								 10);
-
-	headerOSTC3.salinity = pHead->salinity;
-
-	memcpy(headerOSTC3.maxCNS,							&pHead->maxCNS,										2);
-	memcpy(headerOSTC3.averageDepth_mbar,		&pHead->averageDepth_mbar,				2);
-	memcpy(headerOSTC3.total_diveTime_seconds,&pHead->total_diveTime_seconds,	2);
-
-	headerOSTC3.gfLow_or_Vpm_conservatism = pHead->gfLow_or_Vpm_conservatism;
-	headerOSTC3.gfHigh = pHead->gfHigh;
-	headerOSTC3.decoModel = pHead->decoModel;
-
-	memcpy(headerOSTC3.diveNumber,					&pHead->diveNumber,								2);
-
-	headerOSTC3.diveMode = pHead->diveMode;
-	headerOSTC3.CCRmode = pHead->CCRmode;
-
-	memcpy(headerOSTC3.n2CompartDesatTime_min,pHead->n2CompartDesatTime_min, 16);
-	memcpy(headerOSTC3.n2Compartments,			pHead->n2Compartments,					 64);
-	memcpy(headerOSTC3.heCompartDesatTime_min,pHead->heCompartDesatTime_min, 16);
-	memcpy(headerOSTC3.heCompartments,			pHead->heCompartments,					 64);
-
-	headerOSTC3.lastDecostop_m = pHead->lastDecostop_m;
-
-	memcpy(headerOSTC3.hwHudBattery_mV,		&pHead->hwHudBattery_mV,						2);
-
-	headerOSTC3.hwHudLastStatus = pHead->hwHudLastStatus;
-
-	memcpy(headerOSTC3.batteryGaugeRegisters,&pHead->batteryGaugeRegisters,		6);
-
-
-	memcpy(headerOSTC3.diveHeaderEnd,			&pHead->diveHeaderEnd,							2);
 
 	return &headerOSTC3;
 }
@@ -1618,74 +1644,86 @@ SLogbookHeaderOSTC3 * logbook_build_ostc3header(SLogbookHeader* pHead)
 *********************************************************************************/
 SLogbookHeaderOSTC3compact * logbook_build_ostc3header_compact(SLogbookHeader* pHead)
 {
+	uint8_t returnEmptyHeader = 0;
 	convert_Type data, data2;
 	uint32_t dummyLength = 0;
+	uint32_t headerProfileLength, sampleProfileLength, sampleProfileStart;
 
-
-	data.u8bit.byteHigh = 0;
-	data.u8bit.byteLow 			= pHead->pBeginProfileData[0];
-	data.u8bit.byteMidLow 	= pHead->pBeginProfileData[1];
-	data.u8bit.byteMidHigh 	= pHead->pBeginProfileData[2];
-
-	data2.u8bit.byteHigh = 0;
-	data2.u8bit.byteLow 			= pHead->pEndProfileData[0];
-	data2.u8bit.byteMidLow 	= pHead->pEndProfileData[1];
-	data2.u8bit.byteMidHigh 	= pHead->pEndProfileData[2];
-
-	if( (pHead->pBeginProfileData[0] == 0)			/* no sample data available => use dummy */
-		&&(pHead->pBeginProfileData[1] == 0)
-		&&(pHead->pBeginProfileData[2] == 0))
+	if(pHead->diveHeaderStart != 0xFAFA)
 	{
-		dummyLength = logbook_fillDummySampleBuffer(pHead);
-
-		data2.u32bit = data.u32bit + dummyLength;	/* calc new end address (which is equal to dummyLength) */
-		data.u32bit = data2.u32bit;				    /* data is used below to represent the length */
+		returnEmptyHeader = 1;
 	}
 	else
 	{
-		/* check if sample address information are corrupted by address range. */
-		/* TODO: Workaround. Better solution would be to check end of ring for 0xFF pattern */
-		if((data.u32bit > data2.u32bit) && (data.u32bit < (SAMPLESTOP - 0x9000)))
+		data.u8bit.byteHigh = 0;
+		data.u8bit.byteLow 		= pHead->pBeginProfileData[0];
+		data.u8bit.byteMidLow 	= pHead->pBeginProfileData[1];
+		data.u8bit.byteMidHigh 	= pHead->pBeginProfileData[2];
+
+		sampleProfileStart = data.u32bit;
+
+		data2.u8bit.byteHigh = 0;
+		data2.u8bit.byteLow 	= pHead->pEndProfileData[0];
+		data2.u8bit.byteMidLow 	= pHead->pEndProfileData[1];
+		data2.u8bit.byteMidHigh = pHead->pEndProfileData[2];
+
+		data.u8bit.byteHigh = 0;
+		data.u8bit.byteLow 		= pHead->profileLength[0];
+		data.u8bit.byteMidLow 	= pHead->profileLength[1];
+		data.u8bit.byteMidHigh 	= pHead->profileLength[2];
+
+		if(data.u32bit != 0xFFFFFF)
 		{
-			data2.u32bit = data.u32bit + DEFAULT_SAMPLES;
-			pHead->pEndProfileData[0] = data2.u8bit.byteLow;
-			pHead->pEndProfileData[1] = data2.u8bit.byteMidLow;
-			pHead->pEndProfileData[2] = data2.u8bit.byteMidHigh;
-			data.u32bit = DEFAULT_SAMPLES;
+			if(data2.u32bit < sampleProfileStart)		/* Wrap around of sample ring detected */
+			{
+				if(ext_flash_SampleOverrunValid() == 0)	/* Wrap around does not seem to be valid => fallback */
+				{
+					sampleProfileStart = 0;
+				}
+			}
+
+			if( sampleProfileStart == 0)			/* no sample data available => use dummy */
+			{
+				sampleProfileLength = 1;
+				headerProfileLength = 2;
+			}
+			else
+			{
+				headerProfileLength = (pHead->profileLength[2] << 16) + (pHead->profileLength[1] << 8) + pHead->profileLength[0];
+				sampleProfileLength = ext_flash_read_profilelength_small_header(sampleProfileStart);
+			}
+			if(sampleProfileLength != headerProfileLength)
+			{
+				dummyLength = logbook_fillDummySampleBuffer(pHead);
+
+				data2.u32bit = sampleProfileStart + dummyLength;	/* calc new end address (which is equal to dummyLength) */
+				data.u32bit = dummyLength;				   			/* data is used below to represent the length */
+			}
+			data.u32bit += 3;
+			headerOSTC3compact.profileLength[0] = data.u8bit.byteLow;
+			headerOSTC3compact.profileLength[1] = data.u8bit.byteMidLow;
+			headerOSTC3compact.profileLength[2] = data.u8bit.byteMidHigh;
+
+			headerOSTC3compact.dateYear = pHead->dateYear;
+			headerOSTC3compact.dateMonth = pHead->dateMonth;
+			headerOSTC3compact.dateDay = pHead->dateDay;
+			headerOSTC3compact.timeHour = pHead->timeHour;
+			headerOSTC3compact.timeMinute = pHead->timeMinute;
+
+			memcpy(headerOSTC3compact.maxDepth, &pHead->maxDepth, 2);
+			memcpy(headerOSTC3compact.diveTimeMinutes,	&pHead->diveTimeMinutes, 2);
+
+			headerOSTC3compact.diveTimeSeconds = pHead->diveTimeSeconds;
+			headerOSTC3compact.totalDiveNumberLow = pHead->diveNumber & 0xFF;
+			headerOSTC3compact.totalDiveNumberHigh = (uint8_t)(pHead->diveNumber/256);
+			headerOSTC3compact.profileVersion = 0x24; // Logbook-Profile version, 0x24 = date and time is start not end
 		}
 		else
 		{
-			data.u8bit.byteHigh = 0;
-			data.u8bit.byteLow 		= pHead->profileLength[0];
-			data.u8bit.byteMidLow 	= pHead->profileLength[1];
-			data.u8bit.byteMidHigh 	= pHead->profileLength[2];
+			returnEmptyHeader = 1;
 		}
 	}
-	if(data.u32bit != 0xFFFFFF)
-	{
-		data.u32bit += 3;
-
-		headerOSTC3compact.profileLength[0] = data.u8bit.byteLow;
-		headerOSTC3compact.profileLength[1] = data.u8bit.byteMidLow;
-		headerOSTC3compact.profileLength[2] = data.u8bit.byteMidHigh;
-
-		headerOSTC3compact.dateYear = pHead->dateYear;
-		headerOSTC3compact.dateMonth = pHead->dateMonth;
-		headerOSTC3compact.dateDay = pHead->dateDay;
-		headerOSTC3compact.timeHour = pHead->timeHour;
-		headerOSTC3compact.timeMinute = pHead->timeMinute;
-
-		memcpy(headerOSTC3compact.maxDepth,					&pHead->maxDepth,									2);
-		memcpy(headerOSTC3compact.diveTimeMinutes,	&pHead->diveTimeMinutes,					2);
-
-		headerOSTC3compact.diveTimeSeconds = pHead->diveTimeSeconds;
-
-
-		headerOSTC3compact.totalDiveNumberLow = pHead->diveNumber & 0xFF;
-		headerOSTC3compact.totalDiveNumberHigh = (uint8_t)(pHead->diveNumber/256);
-		headerOSTC3compact.profileVersion = 0x24; // Logbook-Profile version, 0x24 = date and time is start not end
-	}
-	else		
+	if(returnEmptyHeader)
 	{
 		memset(&headerOSTC3compact, 0xFF, sizeof(SLogbookHeaderOSTC3compact));
 	}
@@ -1910,7 +1948,7 @@ void logbook_writeDummySample(uint16_t depth, int16_t temperature)
         divisor.temperature--;
     }
 
-    logbook_writeDummy((void *) &smallDummyHeader,sizeof(smallDummyHeader));
+    logbook_writeDummy((void *) sample,length);
 }
 
 

@@ -141,6 +141,9 @@ uint32_t ext_flash_read_dive_raw_with_double_header_1K(uint8_t *data, uint32_t m
 void ext_flash_read_header_memory(uint8_t *data);
 void ext_flash_write_header_memory(uint8_t *data);
 
+void ext_flash_read_sample_memory(uint8_t *data,uint16_t blockId);
+void ext_flash_write_sample_memory(uint8_t *data,uint16_t blockId);
+
 void ext_flash_erase_logbook(void);
 void ext_flash_erase_chip(void);
 void ext_flash_erase_firmware(void);
@@ -165,6 +168,9 @@ uint16_t ext_flash_repair_SPECIAL_dive_numbers_starting_count_with(uint16_t star
 
 uint32_t ext_flash_AnalyseSampleBuffer(char *pstrResult);
 void ext_flash_CloseSector(void);
-void ext_flash_invalidate_sample_index(uint32_t sectorStart);
+
+uint32_t ext_flash_read_profilelength_small_header(uint32_t smallHeaderAddr);
+uint8_t ext_flash_SampleOverrunValid(void);
+
 
 #endif /* EXTERN_LOGBOOK_FLASH_H */
