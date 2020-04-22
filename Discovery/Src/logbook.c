@@ -1287,6 +1287,7 @@ void logbook_InitAndWrite(const SDiveState *pStateReal)
 		logbook_SetCompartmentDesaturation(pStateReal);
 		logbook_SetLastStop(pStateReal->diveSettings.last_stop_depth_bar);
 		gheader.batteryVoltage = pStateReal->lifeData.battery_voltage * 1000;
+		gheader.batteryCharge = pStateReal->lifeData.battery_charge;
 		logbook_EndDive();
 		bDiveMode = 0;
 	} else
@@ -1604,7 +1605,7 @@ SLogbookHeaderOSTC3 * logbook_build_ostc3header(SLogbookHeader* pHead)
 			memcpy(headerOSTC3.diveNumber, &pHead->diveNumber, 2);
 
 			headerOSTC3.diveMode = pHead->diveMode;
-			headerOSTC3.CCRmode = pHead->CCRmode;
+			headerOSTC3.batteryCharge = pHead->batteryCharge;
 
 			memcpy(headerOSTC3.n2CompartDesatTime_min,pHead->n2CompartDesatTime_min, 16);
 			memcpy(headerOSTC3.n2Compartments, pHead->n2Compartments, 64);
