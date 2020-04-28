@@ -75,6 +75,7 @@ typedef struct
     uint8_t  gfAtBeginning;
     uint8_t  gfAtEnd;
     uint16_t personalDiveCount;
+    uint8_t  batteryCharge;
     SSetpointLog setpoint[NUM_GAS];
     uint16_t maxCNS;
     uint16_t averageDepth_mbar;
@@ -125,7 +126,7 @@ typedef struct
     uint8_t gfAtBeginning;
     uint8_t gfAtEnd;
     uint8_t personalDiveCount[2];
-    uint8_t CCRmode;
+    uint8_t batteryCharge;
     uint8_t setpoint[5*2];
     uint8_t salinity;
     uint8_t maxCNS[2];
