@@ -426,6 +426,7 @@ int main(void)
     tInfoLog_init();
     tComm_init();
     DataEX_init();
+    settingsHelperButtonSens_keepPercentageValues(settingsGetPointer()->ButtonResponsiveness[3], settingsGetPointer()->ButtonResponsiveness);
     setButtonResponsiveness( settingsGetPointer()->ButtonResponsiveness );
     set_globalState_tHome();
 
