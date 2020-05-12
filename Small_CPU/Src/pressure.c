@@ -391,7 +391,6 @@ uint8_t init_pressure(void)
 	{
 		pressureSensorInitSuccess = 1;
 		retValue = pressure_update();
-
 	}
 	return retValue;
 }
@@ -401,14 +400,17 @@ static uint32_t get_adc(void)
 {
 	uint8_t buffer[1];
 	uint8_t resivebuf[4];
-	uint32_t answer = 0;
+	uint32_t answer = 0xFFFFFFFF;
 
 	buffer[0] = 0x00; // Get ADC
-	I2C_Master_Transmit( PRESSURE_ADDRESS, buffer, 1);
-	I2C_Master_Receive(  PRESSURE_ADDRESS, resivebuf, 4);
-	resivebuf[3] = 0;
-	answer = 256*256 *(uint32_t)resivebuf[0]  + 256 * (uint32_t)resivebuf[1] + (uint32_t)resivebuf[2];
-
+	if(I2C_Master_Transmit( PRESSURE_ADDRESS, buffer, 1) == HAL_OK)
+	{
+		if(I2C_Master_Receive(  PRESSURE_ADDRESS, resivebuf, 4) == HAL_OK)
+		{
+			resivebuf[3] = 0;
+			answer = 256*256 *(uint32_t)resivebuf[0]  + 256 * (uint32_t)resivebuf[1] + (uint32_t)resivebuf[2];
+		}
+	}
 	return answer;
 }
 
@@ -460,6 +462,7 @@ void pressure_update_alternating(void)
 static uint32_t pressure_sensor_get_one_value(uint8_t cmd, HAL_StatusTypeDef *statusReturn)
 {
 	uint8_t command = CMD_ADC_CONV + cmd;
+	uint32_t adcValue = 0;
 	HAL_StatusTypeDef statusReturnTemp = HAL_TIMEOUT;
 	
 	statusReturnTemp = I2C_Master_Transmit( PRESSURE_ADDRESS, &command, 1);
@@ -468,16 +471,25 @@ static uint32_t pressure_sensor_get_one_value(uint8_t cmd, HAL_StatusTypeDef *st
 	{
 		*statusReturn = statusReturnTemp;
 	}
-	
-	switch (cmd & 0x0f) // wait necessary conversion time
+	else
 	{
-	case CMD_ADC_256 : HAL_Delay(1); break;
-	case CMD_ADC_512 : HAL_Delay(3); break;
-	case CMD_ADC_1024: HAL_Delay(4); break;
-	case CMD_ADC_2048: HAL_Delay(6); break;
-	case CMD_ADC_4096: HAL_Delay(10); break;
-	}	
-	return get_adc();
+		switch (cmd & 0x0f) // wait necessary conversion time
+		{
+			case CMD_ADC_256 : HAL_Delay(1); break;
+			case CMD_ADC_512 : HAL_Delay(3); break;
+			case CMD_ADC_1024: HAL_Delay(4); break;
+			case CMD_ADC_2048: HAL_Delay(6); break;
+			case CMD_ADC_4096: HAL_Delay(10); break;
+			default:
+				break;
+		}
+		adcValue = get_adc();
+		if(adcValue == 0xFFFFFFFF)
+		{
+			*statusReturn = HAL_ERROR;
+		}
+	}
+	return adcValue;
 }
 
 
