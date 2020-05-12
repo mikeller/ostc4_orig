@@ -248,6 +248,9 @@ typedef struct
 	int8_t betterGas;
 	int8_t fallback;
 	int8_t betterSetpoint;
+#ifdef ENABLE_BOTTLE_SENSOR
+	int8_t newPressure;
+#endif
 } SWarnings;
 
 
