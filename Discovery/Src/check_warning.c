@@ -54,7 +54,9 @@ static int8_t check_aGF(SDiveState * pDiveState);
 static int8_t check_BetterGas(SDiveState * pDiveState);
 static int8_t check_BetterSetpoint(SDiveState * pDiveState);
 static int8_t check_Battery(SDiveState * pDiveState);
-
+#ifdef ENABLE_BOTTLE_SENSOR
+static int8_t check_pressureSensor(SDiveState * pDiveState);
+#endif
 static int8_t check_helper_same_oxygen_and_helium_content(SGasLine * gas1, SGasLine * gas2);
 
 /* Exported functions --------------------------------------------------------*/
@@ -79,6 +81,9 @@ void check_warning2(SDiveState * pDiveState)
 	pDiveState->warnings.numWarnings += check_BetterSetpoint(pDiveState);
 	pDiveState->warnings.numWarnings += check_Battery(pDiveState);
 	pDiveState->warnings.numWarnings += check_fallback(pDiveState);
+#ifdef ENABLE_BOTTLE_SENSOR
+	pDiveState->warnings.numWarnings += check_pressureSensor(pDiveState);
+#endif
 }
 
 
@@ -406,5 +411,21 @@ static int8_t check_aGF(SDiveState * pDiveState)
   return pDiveState->warnings.aGf;
 }
 
+#ifdef ENABLE_BOTTLE_SENSOR
+static int8_t check_pressureSensor(SDiveState * pDiveState)
+{
+	int8_t ret = 0;
+	if(pDiveState->lifeData.bottle_bar_age_MilliSeconds[pDiveState->lifeData.actualGas.GasIdInSettings] < 50)	/* we received a new value */
+	{
+		pDiveState->warnings.newPressure = stateUsed->lifeData.bottle_bar[stateUsed->lifeData.actualGas.GasIdInSettings];
+		ret = 1;
+	}
+	else
+	{
+		pDiveState->warnings.newPressure = 0;
+	}
+	return ret;
+}
+#endif
 /************************ (C) COPYRIGHT heinrichs weikamp *****END OF FILE****/
 
