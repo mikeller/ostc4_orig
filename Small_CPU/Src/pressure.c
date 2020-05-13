@@ -220,8 +220,6 @@ void evaluate_surface_pressure()
 }
 void update_surface_pressure(uint8_t call_rhythm_seconds)
 {
-
-
 	if(is_init_pressure_done())
 	{
 		runningAvg = (runningAvg * avgCount + ambient_pressure_mbar) / (avgCount +1);
@@ -471,20 +469,21 @@ static uint32_t pressure_sensor_get_one_value(uint8_t cmd, HAL_StatusTypeDef *st
 	{
 		*statusReturn = statusReturnTemp;
 	}
-	else
+
+	switch (cmd & 0x0f) // wait necessary conversion time
 	{
-		switch (cmd & 0x0f) // wait necessary conversion time
-		{
-			case CMD_ADC_256 : HAL_Delay(1); break;
-			case CMD_ADC_512 : HAL_Delay(3); break;
-			case CMD_ADC_1024: HAL_Delay(4); break;
-			case CMD_ADC_2048: HAL_Delay(6); break;
-			case CMD_ADC_4096: HAL_Delay(10); break;
-			default:
-				break;
-		}
-		adcValue = get_adc();
-		if(adcValue == 0xFFFFFFFF)
+		case CMD_ADC_256 : HAL_Delay(1); break;
+		case CMD_ADC_512 : HAL_Delay(3); break;
+		case CMD_ADC_1024: HAL_Delay(4); break;
+		case CMD_ADC_2048: HAL_Delay(6); break;
+		case CMD_ADC_4096: HAL_Delay(10); break;
+		default:
+			break;
+	}
+	adcValue = get_adc();
+	if(adcValue == 0xFFFFFFFF)
+	{
+		if(statusReturn)
 		{
 			*statusReturn = HAL_ERROR;
 		}
