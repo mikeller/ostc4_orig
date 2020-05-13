@@ -50,7 +50,6 @@
 /* #define SIMULATE_PRESSURE */
 
 #define PRESSURE_SURFACE_MAX_MBAR			(1030.0f)		/* It is unlikely that pressure at surface is greater than this value => clip to it */
-#define PRESSURE_HISTORY_SIZE				(8u)
 
 #define PRESSURE_SURFACE_QUE					(30u)			/* history buffer [minutes] for past pressure measurements */
 #define PRESSURE_SURFACE_EVA_WINDOW				(15u)			/* Number of entries evaluated during instability test. Used to avoid detection while dive enters water */
@@ -100,8 +99,6 @@ static uint8_t surface_pressure_writeIndex = 0;
 static float surface_pressure_stable_value = 0;
 static uint8_t surface_pressure_stable = 0;
 
-static float pressure_history_mbar[PRESSURE_HISTORY_SIZE];
-
 static uint8_t secondCounterSurfaceRing = 0;
 static uint8_t avgCount = 0;
 static float runningAvg = 0;
@@ -134,14 +131,6 @@ void init_surface_ring(uint8_t force)
 			surface_ring_mbar[i] = ambient_pressure_mbar;
 		surface_pressure_mbar = ambient_pressure_mbar;
 		surface_pressure_writeIndex = 0;			/* index of the oldest value in the ring buffer */
-	}
-}
-
-void init_pressure_history(void)
-{
-	for(int i=0; i<PRESSURE_HISTORY_SIZE; i++)
-	{
-		pressure_history_mbar[i] = 1000.0;
 	}
 }
 
@@ -341,7 +330,6 @@ uint8_t init_pressure(void)
 	uint8_t retValue = 0xFF;
 	
 	pressureSensorInitSuccess = false;
-	init_pressure_history();
 
 /* Probe new sensor first */
 	retValue = I2C_Master_Transmit(  DEVICE_PRESSURE_MS5837, buffer, 1);
@@ -617,39 +605,6 @@ void pressure_calculation(void)
 #endif
 }
 
-static uint8_t pressure_plausible(float pressurevalue)
-{
-	static uint8_t pressurewriteindex = 0;
-	uint8_t retval = 0;
-	uint8_t index;
-	float pressure_average = 0;
-
-	for(index = 0; index < PRESSURE_HISTORY_SIZE; index++)
-	{
-		pressure_average += pressure_history_mbar[index];
-	}
-	pressure_average /= PRESSURE_HISTORY_SIZE;
-	if(pressure_average == 1000.0) /* first pressure calculation */
-	{
-		if(fabs(pressurevalue - pressure_average) < 11000.0)  /* just in case a reset occur during dive assume value equal < 100m as valid */
-		{
-			for(index = 0; index < PRESSURE_HISTORY_SIZE; index++)
-			{
-				pressure_history_mbar[index] = pressurevalue;	/* set history to current value */
-				retval = 1;
-			}
-		}
-	}
-	else
-	{
-			pressure_history_mbar[pressurewriteindex++] = pressurevalue;
-			pressurewriteindex &= 0x7;	/* wrap around if necessary */
-			retval = 1;
-	}
-
-	return retval;
-}
-
 static void pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015(void)
 {
 	static float runningAvg = 0;
@@ -723,15 +678,12 @@ static void pressure_calculation_AN520_004_mod_MS5803_30BA__09_2015(void)
 	calc_pressure = ((float)local_Px10) / 10;
 	calc_pressure += pressure_offset;
 
-	if(pressure_plausible(calc_pressure))
-	{
-		runningAvg = (avgCnt * runningAvg + calc_pressure) / (avgCnt + 1);
-		if (avgCnt < 10)	/* build an average considering the last measurements to have a weight "1 of 10" */
-		{					/* Main reason for this is the jitter of up to +-10 HPa in surface mode which is caused */
-			avgCnt++;		/* by the measurement range of the sensor which is focused on under water pressure measurement */
-		}
-		ambient_pressure_mbar = runningAvg;
+	runningAvg = (avgCnt * runningAvg + calc_pressure) / (avgCnt + 1);
+	if (avgCnt < 10)	/* build an average considering the last measurements to have a weight "1 of 10" */
+	{					/* Main reason for this is the jitter of up to +-10 HPa in surface mode which is caused */
+		avgCnt++;		/* by the measurement range of the sensor which is focused on under water pressure measurement */
 	}
+	ambient_pressure_mbar = runningAvg;
 }
 
 
