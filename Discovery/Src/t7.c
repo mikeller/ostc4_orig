@@ -789,16 +789,18 @@ void t7_refresh_surface(void)
     {
         text[0] = '\001';
         text[1] = '\004';
-        text[2] = TXT_2BYTE;
-        text[3] = TXT2BYTE_Sunday;
-        text[4] = 0;
+        text[2] = '\016';
+        text[3] = '\016';
+        text[4] = TXT_2BYTE;
+        text[5] = TXT2BYTE_Sunday;
+        text[6] = 0;
         if(Sdate.WeekDay != RTC_WEEKDAY_SUNDAY)
-            text[3] += Sdate.WeekDay;
+            text[5] += Sdate.WeekDay;
 
         if(!(Stime.Seconds % 2) && (dateNotSet == 1))
             text[1] = '\021';
 
-        GFX_write_string(&FontT24,&t7surfaceR,text,4);
+        GFX_write_string(&FontT48,&t7surfaceR,text,4);
     }
 
     /* DEBUG uTick Pressure and Compass */
