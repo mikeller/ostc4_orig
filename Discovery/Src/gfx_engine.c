@@ -3085,6 +3085,8 @@ static uint32_t GFX_write__Modify_Xdelta__Centered(GFX_CfgWriteString* cfg, GFX_
 	uint8_t gfx_selected_language;
 	uint32_t pText;
 	uint16_t decodeUTF8;
+	uint8_t tinyState = 0;		/* used to identify the usage of tiny font */
+	tFont* ptargetFont;
 
 #ifndef BOOTLOADER_STANDALONE
 	SSettings *pSettings;
@@ -3102,6 +3104,22 @@ static uint32_t GFX_write__Modify_Xdelta__Centered(GFX_CfgWriteString* cfg, GFX_
 	j = 0;
 	while (*(char*)pText != 0)// und fehlend: Abfrage window / image size
 	{
+		if(*(char*)pText == '\016')	/* request font change */
+		{
+			tinyState++;
+		}
+		if(*(char*)pText == '\017')	/* request font reset */
+		{
+			tinyState = 0;
+		}
+		if(tinyState > 1)
+		{
+			ptargetFont = (tFont *)cfg->TinyFont;
+		}
+		else
+		{
+			ptargetFont = (tFont *)cfg->font;
+		}
 		if((*(char*)pText) & 0x80) /* Identify a UNICODE character other than standard ASCII using the highest bit */
 		{
 			decodeUTF8 = ((*(char*)pText) & 0x1F) << 6; /* use 5bits of first byte for upper part of unicode */
@@ -3113,20 +3131,20 @@ static uint32_t GFX_write__Modify_Xdelta__Centered(GFX_CfgWriteString* cfg, GFX_
 			decodeUTF8 = *(char*)pText; /* place ASCII char */
 		}
 
-		for(i=0;i<((tFont *)cfg->font)->length;i++)
+		for(i=0;i<ptargetFont->length;i++)
 		{
-			if(((tFont *)cfg->font)->chars[i].code == decodeUTF8)
+			if(ptargetFont->chars[i].code == decodeUTF8)
 			{
-				Xsum += ((tFont *)cfg->font)->chars[i].image->width;
+				Xsum += ptargetFont->chars[i].image->width;
 				break;
 			}
 		}
 		pText++;
 		j++;
-		if(((tFont *)cfg->font == &FontT144) && (*(char*)pText != 0))
+		if((ptargetFont == &FontT144) && (*(char*)pText != 0))
 			Xsum += 3;
 		else
-		if(((tFont *)cfg->font == &FontT105) && (*(char*)pText != 0))
+		if((ptargetFont == &FontT105) && (*(char*)pText != 0))
 			Xsum += 2;
 	}
 	pText -= j;
