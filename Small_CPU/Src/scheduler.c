@@ -45,7 +45,7 @@
 /* uncomment to enable restoting of last known date in case of a power loss (RTC looses timing data) */
 /* #define RESTORE_LAST_KNOWN_DATE */
 
-#define INVALID_PREASURE_VALUE 			(100.0f)
+#define INVALID_PREASURE_VALUE 			(0.0f)
 #define START_DIVE_MOUNTAIN_MODE_BAR	(0.88f)
 #define START_DIVE_IMMEDIATLY_BAR		(1.16f)
 
@@ -110,7 +110,7 @@ void initGlobals(void)
 	global.aktualGas[0] = Air;
 	global.lifeData.actualGas = global.aktualGas[0];
 
-	const uint8_t button_standard_sensitivity = 85;
+	const uint8_t button_standard_sensitivity = 51;		/* 51 equals a percentage of 85% which was the default value before */
 	global.ButtonResponsiveness[0] = button_standard_sensitivity;
 	global.ButtonResponsiveness[1] = button_standard_sensitivity;
 	global.ButtonResponsiveness[2] = button_standard_sensitivity;
@@ -138,7 +138,7 @@ void initGlobals(void)
 	global.dataSendToMaster.RTE_VERSION_low = firmwareVersionLow();//RTE_VERSION_LOW;;
 	global.dataSendToMaster.chargeStatus = 0;
 	
-	global.dataSendToMaster.power_on_reset = 1;
+	global.dataSendToMaster.power_on_reset = 0;
 	global.dataSendToMaster.header.checkCode[0] = 0xA1;
 	global.dataSendToMaster.header.checkCode[1] = SPI_RX_STATE_OFFLINE;
 	global.dataSendToMaster.header.checkCode[2] = 0xA3;
@@ -156,7 +156,7 @@ void initGlobals(void)
 	global.deviceDataSendToMaster.RTE_VERSION_low = firmwareVersionLow();//RTE_VERSION_LOW;
 	global.deviceDataSendToMaster.chargeStatus = 0;
 
-	global.deviceDataSendToMaster.power_on_reset = 1;
+	global.deviceDataSendToMaster.power_on_reset = 0;
 	global.deviceDataSendToMaster.header.checkCode[0] = 0xDF;
 	global.deviceDataSendToMaster.header.checkCode[1] = 0xDE;
 	global.deviceDataSendToMaster.header.checkCode[2] = 0xDD;
@@ -1032,12 +1032,13 @@ void scheduleSleepMode(void)
 		MX_I2C1_Init();
 		pressure_sensor_get_pressure_raw();
 
-/* check if I2C is not up an running and try to reactivate if necessary. Also do initialization if problem occurred during startup */
+/* check if I2C is not up and running and try to reactivate if necessary. Also do initialization if problem occurred during startup */
 		if(global.I2C_SystemStatus != HAL_OK)
 		{
 			MX_I2C1_TestAndClear();
 			MX_I2C1_Init();
-			if(global.I2C_SystemStatus == HAL_OK)
+
+			if((global.I2C_SystemStatus == HAL_OK) && (!is_init_pressure_done()))
 			{
 				init_pressure();
 			}

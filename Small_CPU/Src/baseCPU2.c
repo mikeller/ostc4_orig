@@ -343,28 +343,31 @@ int main(void) {
 	init_battery_gas_gauge();
 	HAL_Delay(10);
 	battery_gas_gauge_get_data();
-	if(coldstart != 0xA5)
+
+	MX_SPI3_Init();
+
+	if(coldstart != 0xA5)	/* Not reading a 0xA5 means the memory cells has not been initialized before => cold start */
 	{
 		coldstart = 0xA5;
 		battery_gas_gauge_set(0);
+		global.dataSendToMaster.power_on_reset = 1;
+		global.deviceDataSendToMaster.power_on_reset = 1;
+
+		if (!scheduleSetButtonResponsiveness())
+		{
+			HAL_Delay(1);
+			if (!scheduleSetButtonResponsiveness()) // send again, if problem it's not my problem here.
+			{
+				HAL_Delay(1);
+				scheduleSetButtonResponsiveness(); // init
+				HAL_Delay(1);
+			}
+		}
 	}
 
 	global.lifeData.battery_voltage = get_voltage();
 	global.lifeData.battery_charge = get_charge();
 	copyBatteryData();
-
-	MX_SPI3_Init();
-	if (!scheduleSetButtonResponsiveness()) {
-		HAL_Delay(1);
-		scheduleSetButtonResponsiveness(); // init
-		HAL_Delay(1);
-		if (!scheduleSetButtonResponsiveness()) // send again, if problem it's not my problem here.
-		{
-			HAL_Delay(1);
-			scheduleSetButtonResponsiveness(); // init
-			HAL_Delay(1);
-		}
-	}
 
 	ADCx_Init();
 	GPIO_Power_MainCPU_Init();

@@ -789,16 +789,18 @@ void t7_refresh_surface(void)
     {
         text[0] = '\001';
         text[1] = '\004';
-        text[2] = TXT_2BYTE;
-        text[3] = TXT2BYTE_Sunday;
-        text[4] = 0;
+        text[2] = '\016';
+        text[3] = '\016';
+        text[4] = TXT_2BYTE;
+        text[5] = TXT2BYTE_Sunday;
+        text[6] = 0;
         if(Sdate.WeekDay != RTC_WEEKDAY_SUNDAY)
-            text[3] += Sdate.WeekDay;
+            text[5] += Sdate.WeekDay;
 
         if(!(Stime.Seconds % 2) && (dateNotSet == 1))
             text[1] = '\021';
 
-        GFX_write_string(&FontT24,&t7surfaceR,text,4);
+        GFX_write_string(&FontT48,&t7surfaceR,text,4);
     }
 
     /* DEBUG uTick Pressure and Compass */
@@ -828,8 +830,7 @@ void t7_refresh_surface(void)
 */
 
     /* noFlyTime or DesaturationTime */
-
-    if((!display_count_high_time) && (stateUsed->lifeData.no_fly_time_minutes))
+    if((stateUsed->lifeData.no_fly_time_minutes) && ((!display_count_high_time) || (stateUsed->lifeData.desaturation_time_minutes == 0)))
     {
         SSurfacetime NoFlyTime = {0,0,0,0};
         t7_fill_surfacetime_helper(&NoFlyTime,stateUsed->lifeData.no_fly_time_minutes, 0);
@@ -1321,6 +1322,12 @@ uint8_t t7_test_customview_warnings(void)
     //count += stateUsed->warnings.lowBattery;
     count += stateUsed->warnings.sensorLinkLost;
     count += stateUsed->warnings.fallback;
+#ifdef ENABLE_BOTTLE_SENSOR
+    if(stateUsed->warnings.newPressure)
+    {
+    	count++;
+    }
+#endif
     return count;
 }
 
@@ -1331,6 +1338,12 @@ uint8_t t7_test_customview_warnings_surface_mode(void)
     count = 0;
     count += stateUsed->cnsHigh_at_the_end_of_dive;
     count += stateUsed->decoMissed_at_the_end_of_dive;
+#ifdef ENABLE_BOTTLE_SENSOR
+    if(stateUsed->warnings.newPressure)
+    {
+    	count++;
+    }
+#endif
     return count;
 }
 
@@ -1369,6 +1382,14 @@ void t7_show_customview_warnings_surface_mode(void)
         text[textpointer] = 0;
         lineFree--;
     }
+#ifdef ENABLE_BOTTLE_SENSOR
+    if(stateUsed->warnings.newPressure)
+    {
+    	sprintf(&text[textpointer] ,"  %u Bar\n", stateUsed->warnings.newPressure);
+    	textpointer++;
+        lineFree--;
+    }
+#endif
     if(textpointer != 0)
         GFX_write_string(&FontT48,&t7cW,text,1);
 }
@@ -1438,6 +1459,14 @@ void t7_show_customview_warnings(void)
         text[textpointer] = 0;
         lineFree--;
     }
+#ifdef ENABLE_BOTTLE_SENSOR
+    if(stateUsed->warnings.newPressure)
+    {
+    	sprintf(&text[textpointer],"  %u Bar\n", stateUsed->warnings.newPressure);
+    	textpointer++;
+        lineFree--;
+    }
+#endif
 /*
     if(lineFree && stateUsed->warnings.lowBattery)
     {
