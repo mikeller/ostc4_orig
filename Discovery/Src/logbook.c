@@ -901,7 +901,6 @@ static uint16_t readSample(int32_t* depth, int16_t * gasid, int16_t* setpoint_cb
 			divisor.cns--;
 	}
 
-#ifdef ENABLE_BOTTLE_SENSOR
 	if(smallHeader.tankDivisor)
 	{
 		if(divisor.tank == 0)
@@ -920,7 +919,6 @@ static uint16_t readSample(int32_t* depth, int16_t * gasid, int16_t* setpoint_cb
 				divisor.tank--;
 		}
 	}
-#endif
 
 	if (length != 0)
 			return 0;
@@ -1618,8 +1616,7 @@ SLogbookHeaderOSTC3 * logbook_build_ostc3header(SLogbookHeader* pHead)
 
 			headerOSTC3.hwHudLastStatus = pHead->hwHudLastStatus;
 
-			memcpy(headerOSTC3.batteryGaugeRegisters,&pHead->batteryGaugeRegisters,	6);
-
+			memset(headerOSTC3.batteryGaugeRegisters, 0x00, 6);  /* The battery registers are not evaluated => Set to zero */
 
 			memcpy(headerOSTC3.diveHeaderEnd, &pHead->diveHeaderEnd, 2);
 		}
