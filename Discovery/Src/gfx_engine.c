@@ -3175,6 +3175,7 @@ static uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GF
 	uint32_t pText;
 	uint8_t setToTinyFont = 0;
 	uint16_t decodeUTF8;
+	uint8_t tinyState = 0;		/* used to identify the usage of tiny font */
 
 #ifndef BOOTLOADER_STANDALONE
 	SSettings *pSettings;
@@ -3197,6 +3198,24 @@ static uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GF
 
 	while (*(char*)pText != 0)// und fehlend: Abfrage window / image size
 	{
+		if(*(char*)pText == '\016')	/* request font change */
+		{
+			tinyState++;
+		}
+		if(*(char*)pText == '\017')	/* request font reset */
+		{
+			tinyState = 0;
+		}
+		if(tinyState > 1)
+		{
+			font = (tFont *)cfg->TinyFont;
+		}
+		else
+		{
+			font = (tFont *)cfg->font;
+		}
+
+
 		if((font == &FontT144) && (*(char*)pText == '.'))
 		{
 			font = (tFont *)&FontT84;
