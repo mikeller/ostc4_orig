@@ -75,7 +75,6 @@ typedef struct
     uint8_t  gfAtBeginning;
     uint8_t  gfAtEnd;
     uint16_t personalDiveCount;
-    uint8_t  batteryCharge;
     SSetpointLog setpoint[NUM_GAS];
     uint16_t maxCNS;
     uint16_t averageDepth_mbar;
@@ -94,7 +93,8 @@ typedef struct
     uint8_t  diveMode;
     uint8_t  hwHudLastStatus; /* from here on identical to OSTC3 again */
     uint16_t hwHudBattery_mV;
-    uint8_t batteryGaugeRegisters[6];
+    uint8_t batteryGaugeRegisters[5];	/* former batteryGaugeRegisters (6 Bytes) which were not used => use as reserve to keep memory layout */
+    uint8_t batteryCharge;				/* first reuse byte */
     uint16_t diveHeaderEnd;
 } SLogbookHeader;
 
