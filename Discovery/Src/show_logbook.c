@@ -39,6 +39,8 @@
 #include <stdio.h>
 #include <stdlib.h> // for abs()
 
+#define LOG_BORDER_OFFSET	(50u)		/* text offset from left / right display to text start/end */
+
 /* Private variables ---------------------------------------------------------*/
 
 static GFX_DrawCfgScreen	tLOGscreen;
@@ -415,9 +417,9 @@ static void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t 
 {
     SWindowGimpStyle wintemp;
     SWindowGimpStyle winsmal;
-    wintemp.left = 50;
+    wintemp.left = LOG_BORDER_OFFSET;
     wintemp.right = 799 - wintemp.left;
-    wintemp.top = 50;
+    wintemp.top = LOG_BORDER_OFFSET;
     wintemp.bottom = 479 - 40;
 
     SLogbookHeader logbookHeader;
@@ -465,8 +467,8 @@ static void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t 
     //Print time
     uint8_t hour = logbookHeader.timeHour;
     uint8_t minute = logbookHeader.timeMinute;
-    snprintf(text,20,"%02i:%02i",hour,minute);
-    Gfx_write_label_var(hgfx, 600, 749,10, &FontT42,CLUT_GasSensor1,text);
+    snprintf(text,20,"\002%02i:%02i",hour,minute);
+    Gfx_write_label_var(hgfx, 600, wintemp.right,10, &FontT42,CLUT_GasSensor1,text);
 
     //Print Dive Mode (OC/CCR/...)
     switch(logbookHeader.diveMode)
@@ -493,12 +495,15 @@ static void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t 
         {
         case GF_MODE:
                 snprintf(text,20,"\002GF%u/%u",logbookHeader.gfLow_or_Vpm_conservatism,logbookHeader.gfHigh);
-                break;
+            break;
         case VPM_MODE:
                 snprintf(text,20,"\002VPM +%u",logbookHeader.gfLow_or_Vpm_conservatism);
-                break;
+            break;
+        default:
+        		snprintf(text,20," ");		/* no information to be displayed */
+        	break;
         }
-        Gfx_write_label_var(hgfx, 600, 729,60, &FontT42,CLUT_GasSensor1,text);
+        Gfx_write_label_var(hgfx, 500, wintemp.right,60, &FontT42,CLUT_GasSensor1,text);
     }
 
     //Write Dive Time
@@ -643,8 +648,8 @@ static void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t 
     }
     if(bottlePressureStart != 0)
     {
-    	snprintf(text,40,"%i | %i\016\016 Bar\017",bottlePressureStart,bottlePressureEnd);
-        Gfx_write_label_var(hgfx,600,800,440, &FontT42,CLUT_GasSensor1,text);
+    	snprintf(text,40,"\002%i | %i\016\016 Bar\017",bottlePressureStart,bottlePressureEnd);
+        Gfx_write_label_var(hgfx,450,wintemp.right,440, &FontT42,CLUT_GasSensor1,text);
     }
 #endif
     //--- print coordinate system & depth graph with gaschanges ---
