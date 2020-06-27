@@ -337,14 +337,10 @@ uint8_t init_pressure(void)
 	{
 		PRESSURE_ADDRESS = DEVICE_PRESSURE_MS5803;			// use old sensor
 		HAL_Delay(100);
+		I2C_DeInit();
+		HAL_Delay(100);
 		MX_I2C1_Init();
-		if (global.I2C_SystemStatus != HAL_OK)
-		{
-			if (MX_I2C1_TestAndClear() == GPIO_PIN_RESET) {
-				MX_I2C1_TestAndClear(); // do it a second time
-			}
-			MX_I2C1_Init();
-		}
+		HAL_Delay(100);
 	}
 	else
 	{
@@ -460,22 +456,23 @@ static uint32_t pressure_sensor_get_one_value(uint8_t cmd, HAL_StatusTypeDef *st
 
 	switch (cmd & 0x0f) // wait necessary conversion time
 	{
-		case CMD_ADC_256 : HAL_Delay(1); break;
-		case CMD_ADC_512 : HAL_Delay(3); break;
-		case CMD_ADC_1024: HAL_Delay(4); break;
-		case CMD_ADC_2048: HAL_Delay(6); break;
-		case CMD_ADC_4096: HAL_Delay(10); break;
+		case CMD_ADC_256 : HAL_Delay(2); break;
+		case CMD_ADC_512 : HAL_Delay(4); break;
+		case CMD_ADC_1024: HAL_Delay(5); break;
+		case CMD_ADC_2048: HAL_Delay(7); break;
+		case CMD_ADC_4096: HAL_Delay(11); break;
 		default:
 			break;
 	}
 	adcValue = get_adc();
-	if(adcValue == 0xFFFFFFFF)
+/*	if(adcValue == 0xFFFFFFFF)
 	{
 		if(statusReturn)
 		{
 			*statusReturn = HAL_ERROR;
 		}
-	}
+	}*/
+
 	return adcValue;
 }
 
@@ -488,13 +485,13 @@ static HAL_StatusTypeDef pressure_sensor_get_data(void)
 	
 
 
-	requestedValue = pressure_sensor_get_one_value(CMD_ADC_D2 + CMD_ADC_1024, &statusReturn2);
+	requestedValue = pressure_sensor_get_one_value(CMD_ADC_D2 + CMD_ADC_4096, &statusReturn2);
 	if (statusReturn2 == HAL_OK)
 	{
 		D2 = requestedValue;
 	}
 
-	requestedValue = pressure_sensor_get_one_value(CMD_ADC_D1 + CMD_ADC_1024, &statusReturn1);
+	requestedValue = pressure_sensor_get_one_value(CMD_ADC_D1 + CMD_ADC_4096, &statusReturn1);
 	if (statusReturn1 == HAL_OK)
 	{
 		D1 = requestedValue;
@@ -511,7 +508,7 @@ HAL_StatusTypeDef  pressure_sensor_get_pressure_raw(void)
 	uint32_t requestedValue = 0;
 	HAL_StatusTypeDef statusReturn = HAL_TIMEOUT;
 
-	requestedValue = pressure_sensor_get_one_value(CMD_ADC_D1 + CMD_ADC_1024, &statusReturn);
+	requestedValue = pressure_sensor_get_one_value(CMD_ADC_D1 + CMD_ADC_4096, &statusReturn);
 	if (statusReturn == HAL_OK)
 	{
 		D1 = requestedValue;
@@ -526,7 +523,7 @@ HAL_StatusTypeDef  pressure_sensor_get_temperature_raw(void)
 	uint32_t requestedValue = 0;
 	HAL_StatusTypeDef statusReturn = HAL_TIMEOUT;
 
-	requestedValue = pressure_sensor_get_one_value(CMD_ADC_D2 + CMD_ADC_1024, &statusReturn);
+	requestedValue = pressure_sensor_get_one_value(CMD_ADC_D2 + CMD_ADC_4096, &statusReturn);
 	if (statusReturn == HAL_OK)
 	{
 		D2 = requestedValue;
