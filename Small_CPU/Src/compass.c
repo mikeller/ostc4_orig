@@ -281,8 +281,11 @@ void compass_init(uint8_t fast, uint8_t gain)
 	// test if both chips of the two-chip solution (gen 1) are present
 	if(hardwareCompass == compass_generation1)			// HMC5883L)
 	{
-		HAL_Delay(10);
+		HAL_Delay(100);
+		I2C_DeInit();
+		HAL_Delay(100);
 		MX_I2C1_Init();
+		HAL_Delay(100);
 		uint8_t data = 0x2A; // CTRL_REG1 of DEVICE_ACCELARATOR_MMA8452Q
 		resultOfOperationHMC_MMA = I2C_Master_Transmit( DEVICE_ACCELARATOR_MMA8452Q, &data, 1);
 		if(resultOfOperationHMC_MMA == HAL_OK)

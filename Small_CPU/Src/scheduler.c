@@ -640,7 +640,12 @@ void scheduleDiveMode(void)
 			if(global.I2C_SystemStatus != HAL_OK)
 			{
 				MX_I2C1_TestAndClear();
+				HAL_Delay(100);
+				I2C_DeInit();
+				HAL_Delay(100);
 				MX_I2C1_Init();
+				HAL_Delay(100);
+
 				init_pressure();
 			}
 		}
@@ -876,7 +881,12 @@ void scheduleSurfaceMode(void)
 			if(global.I2C_SystemStatus != HAL_OK)
 			{
 				MX_I2C1_TestAndClear();
+				HAL_Delay(100);
+				I2C_DeInit();
+				HAL_Delay(100);
 				MX_I2C1_Init();
+				HAL_Delay(100);
+
 				if(global.I2C_SystemStatus == HAL_OK)
 				{
 					init_pressure();
@@ -1036,7 +1046,12 @@ void scheduleSleepMode(void)
 		if(global.I2C_SystemStatus != HAL_OK)
 		{
 			MX_I2C1_TestAndClear();
+			HAL_Delay(100);
+			I2C_DeInit();
+			HAL_Delay(100);
 			MX_I2C1_Init();
+			HAL_Delay(100);
+
 
 			if((global.I2C_SystemStatus == HAL_OK) && (!is_init_pressure_done()))
 			{

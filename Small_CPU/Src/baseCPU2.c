@@ -164,7 +164,7 @@ uint8_t hasExternalClock(void) {
 // See CPU2-RTE.ld
 const SFirmwareData cpu2_FirmwareData __attribute__(( section(".firmware_data") ))= {
 		.versionFirst = 2,
-		.versionSecond = 3,
+		.versionSecond = 4,
 		.versionThird = 0,
 		.versionBeta = 0,
 
@@ -172,8 +172,8 @@ const SFirmwareData cpu2_FirmwareData __attribute__(( section(".firmware_data") 
 		.signature = "mh",
 
 		.release_year = 20,
-		.release_month = 2,
-		.release_day = 26,
+		.release_month = 6,
+		.release_day = 30,
 		.release_sub = 0,
 
 		/* max 48 with trailing 0 */
@@ -314,7 +314,11 @@ int main(void) {
 		if (MX_I2C1_TestAndClear() == GPIO_PIN_RESET) {
 			MX_I2C1_TestAndClear(); // do it a second time
 		}
+		HAL_Delay(100);
+		I2C_DeInit();
+		HAL_Delay(100);
 		MX_I2C1_Init();
+		HAL_Delay(100);
 	}
 
 
@@ -328,7 +332,11 @@ int main(void) {
 		if (MX_I2C1_TestAndClear() == GPIO_PIN_RESET) {
 			MX_I2C1_TestAndClear(); // do it a second time
 		}
+		HAL_Delay(100);
+		I2C_DeInit();
+		HAL_Delay(100);
 		MX_I2C1_Init();
+		HAL_Delay(100);
 		global.sensorError[SENSOR_PRESSURE_ID] = init_pressure();
 		global.I2C_SystemStatus = global.sensorError[SENSOR_PRESSURE_ID];
 	}
