@@ -1051,11 +1051,16 @@ uint8_t check_and_correct_settings(void)
 
 /*	uint8_t showDebugInfo;
  */
+
+#ifdef HAVE_DEBUG_VIEW
     if(Settings.showDebugInfo > 1)
     {
         Settings.showDebugInfo = 0;
         corrections++;
     }
+#else
+    Settings.showDebugInfo = 0;
+#endif
 
 /*	uint8_t ButtonResponsiveness[4];
  */
