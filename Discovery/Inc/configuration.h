@@ -46,4 +46,7 @@
 /* Enable to activate a menu item in reset menu which provide sample ring analysis / repair functionality */
 /* #define ENABLE_ANALYSE_SAMPLES */
 
+/* Enable to have access to the debug view options (turn on / off via menu instead of compile switch) */
+/* #define HAVE_DEBUG_VIEW */
+
 #endif
