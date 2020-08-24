@@ -747,7 +747,11 @@ static void TriggerButtonAction()
 						&& (settingsGetPointer()->design < 7)) {
 					settingsGetPointer()->design = 7; // auto switch to 9 if necessary
 				} else if ((status.page == PageDive) && (status.line != 0)) {
-					if (settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT)
+					if ((settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT)
+#ifdef ENABLE_BIGFONT_VX
+							|| (settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT2)
+#endif
+					)
 					{
 						settingsGetPointer()->design = 3;
 						if(settingsGetPointer()->MotionDetection == MOTION_DETECT_SECTOR)

@@ -33,6 +33,7 @@
 
 #include <stdint.h>
 #include "text_multilanguage.h"
+#include "configuration.h"
 
 /* Text ----------------------------------------------------------------------*/
 
@@ -1257,11 +1258,26 @@ static uint8_t text_IT_ExtraDisplay[] = "Caratteri grandi";
 static uint8_t text_ES_ExtraDisplay[] = "Letras grandes";
 
 // Menu SYS2
+#ifdef ENABLE_BIGFONT_VX
+static uint8_t text_EN_ExtraBigFont[] = "classic";
+static uint8_t text_DE_ExtraBigFont[] = "klassisch";
+static uint8_t text_FR_ExtraBigFont[] = "classic";
+static uint8_t text_IT_ExtraBigFont[] = "classic";
+static uint8_t text_ES_ExtraBigFont[] = "classic";
+
+static uint8_t text_EN_ExtraBigFontV2[] = "V2";
+static uint8_t text_DE_ExtraBigFontV2[] = "V2";
+static uint8_t text_FR_ExtraBigFontV2[] = "V2";
+static uint8_t text_IT_ExtraBigFontV2[] = "V2";
+static uint8_t text_ES_ExtraBigFontV2[] = "V2";
+
+#else
 static uint8_t text_EN_ExtraBigFont[] = "yes";
 static uint8_t text_DE_ExtraBigFont[] = "ja";
 static uint8_t text_FR_ExtraBigFont[] = "si";
 static uint8_t text_IT_ExtraBigFont[] = "si";
 static uint8_t text_ES_ExtraBigFont[] = "si";
+#endif
 
 // Menu SYS2 (future feature)
 static uint8_t text_EN_ExtraDecoGame[] = "Deco game";
@@ -1753,6 +1769,9 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_DiveResetAvgQ,	{text_EN_DiveResetAvgQ, text_DE_DiveResetAvgQ, text_FR_DiveResetAvgQ, text_IT_DiveResetAvgQ, text_ES_DiveResetAvgQ}},
     {(uint8_t)TXT2BYTE_ExtraDisplay,	{text_EN_ExtraDisplay, text_DE_ExtraDisplay, text_FR_ExtraDisplay, text_IT_ExtraDisplay, text_ES_ExtraDisplay}},
     {(uint8_t)TXT2BYTE_ExtraBigFont,	{text_EN_ExtraBigFont, text_DE_ExtraBigFont, text_FR_ExtraBigFont, text_IT_ExtraBigFont, text_ES_ExtraBigFont}},
+#ifdef ENABLE_BIGFONT_VX
+	{(uint8_t)TXT2BYTE_ExtraBigFontV2,	{text_EN_ExtraBigFontV2, text_DE_ExtraBigFontV2, text_FR_ExtraBigFontV2, text_IT_ExtraBigFontV2, text_ES_ExtraBigFontV2}},
+#endif
     {(uint8_t)TXT2BYTE_ExtraDecoGame,	{text_EN_ExtraDecoGame, text_DE_ExtraDecoGame, text_FR_ExtraDecoGame, text_IT_ExtraDecoGame, text_ES_ExtraDecoGame}},
     {(uint8_t)TXT2BYTE_ExtraNone,		{text_EN_ExtraNone, text_DE_ExtraNone, text_FR_ExtraNone, text_IT_ExtraNone, text_ES_ExtraNone}},
 	{(uint8_t)TXT2BYTE_MotionCtrl,		{text_EN_MotionCtrl, text_DE_MotionCtrl, text_FR_MotionCtrl, text_IT_MotionCtrl, text_ES_MotionCtrl}},
