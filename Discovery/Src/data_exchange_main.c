@@ -732,6 +732,17 @@ static float getSampleDepth(SDataExchangeSlaveToMaster *d, SDiveState *ds)
 	surface = d->data[d->boolPressureData].surface_mbar / 1000.0f;
 	density = ((float)( 100 + settingsGetPointer()->salinity)) / 100.0f;
 
+#ifdef TESTBENCH
+	/* do plausibility check (typically only needed at debug hardware) */
+	if(ambient < 0)
+	{
+		ambient = 1.0;
+	}
+	if(surface < 0)
+	{
+		surface = 1.0;
+	}
+#endif
 	ds->lifeData.pressure_ambient_bar = ambient;
 	ds->lifeData.pressure_surface_bar = surface;
 	depth = (ambient - surface) / (0.09807f * density);
@@ -745,6 +756,13 @@ static float getTemperature(SDataExchangeSlaveToMaster *d)
 	float temp = 0;
 	temp = d->data[d->boolPressureData].temperature;
 
+#ifdef TESTBENCH
+	/* do plausibility check (typically only needed at debug hardware */
+	if(temp < -40.0)
+	{
+		temp = 20.0;
+	}
+#endif
 	return temp;
 }
 
