@@ -270,6 +270,7 @@ extern const tText text_array2[];
 		/* */
 		TXT2BYTE_ExtraDisplay,
 		TXT2BYTE_ExtraBigFont,
+		TXT2BYTE_ExtraBigFontV2,
 		TXT2BYTE_ExtraDecoGame,
 		TXT2BYTE_ExtraNone,
 		/* */
