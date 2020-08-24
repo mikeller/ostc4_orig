@@ -49,4 +49,6 @@
 /* Enable to have access to the debug view options (turn on / off via menu instead of compile switch) */
 /* #define HAVE_DEBUG_VIEW */
 
+/* Enable to add new BIG font layout to option menu */
+#define ENABLE_BIGFONT_VX
 #endif
