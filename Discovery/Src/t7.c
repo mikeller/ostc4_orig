@@ -575,6 +575,7 @@ void t7_refresh(void)
             else
                 selection_customview = settingsGetPointer()->tX_customViewPrimary;
 
+            t7_change_customview(ACTION_END);
             InitMotionDetection();
         }
 
@@ -1582,53 +1583,38 @@ void t7_change_customview(uint8_t action)
     pLastView = pViews;
     pViews = pCurView;
 
-    if((action == ACTION_BUTTON_ENTER) || (action == ACTION_PITCH_POS))
-    {
-		if(*pViews < CVIEW_END)
-			pViews++;
-
-		if(*pViews == CVIEW_END)
-		{
-			pViews = pStartView;
-		}
-    }
-    else
-    {
-		if(pViews == pStartView)
-		{
-			pViews = pLastView - 1;
-		}
-		else
-		{
-			pViews--;
-		}
-    }
-
     do
     {
-    	cv_disabled = t7_customview_disabled(*pViews);
-        if(cv_disabled)		/* view is disabled => jump to next view */
-        {
-          	if((action == ACTION_BUTTON_ENTER) || (action == ACTION_PITCH_POS))
-          	{
-           		pViews++;
-				if(*pViews == CVIEW_END)
+		switch(action)
+		{
+			case ACTION_BUTTON_ENTER:
+			case ACTION_PITCH_POS:
+						if(*pViews != CVIEW_T3_END)
+					pViews++;
+						if(*pViews == CVIEW_T3_END)
 				{
 					pViews = pStartView;
 				}
-           	}
-           	else
-           	{
-           		if(pViews == pStartView)
-           		{
-           			pViews = pLastView - 1;
-           		}
-           		else
-           		{
-           			pViews--;
-           		}
-           	}
-        }
+				break;
+			case ACTION_PITCH_NEG:
+				if(pViews == pStartView)
+				{
+					pViews = pLastView - 1;
+				}
+				else
+				{
+					pViews--;
+				}
+				break;
+			default:
+				break;
+		}
+
+		cv_disabled = t7_customview_disabled(*pViews);
+		if((cv_disabled) && (action == ACTION_END))
+		{
+			action = ACTION_BUTTON_ENTER;
+		}
     } while(cv_disabled);
 
     selection_customview = *pViews;
