@@ -58,6 +58,11 @@ static uint16_t tHome_tick_count_cview;
 static uint16_t tHome_tick_count_field;
 
 const uint8_t cv_changelist[] = {CVIEW_Compass, CVIEW_SummaryOfLeftCorner, CVIEW_Tissues, CVIEW_Profile, CVIEW_EADTime, CVIEW_Gaslist, CVIEW_noneOrDebug, CVIEW_Decolist,CVIEW_sensors,CVIEW_sensors_mV, CVIEW_END};
+const uint8_t cv_changelist_BS[] = {CVIEW_T3_Decostop, CVIEW_sensors, CVIEW_Compass, CVIEW_T3_MaxDepth,CVIEW_T3_StopWatch, CVIEW_T3_TTS, CVIEW_T3_ppO2andGas, CVIEW_noneOrDebug, CVIEW_T3_END};
+
+#ifdef ENABLE_BIGFONT_VX
+const uint8_t cv_changelist_BSV2[] = {CVIEW_T3_Decostop, CVIEW_sensors, CVIEW_T3_Navigation, CVIEW_T3_DepthData, CVIEW_T3_TTS, CVIEW_T3_ppO2andGas, CVIEW_noneOrDebug, CVIEW_T3_END};
+#endif
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -431,7 +436,7 @@ uint8_t tHome_show_lost_connection_count(GFX_DrawCfgScreen *ScreenToWriteOn)
     SDataExchangeSlaveToMaster* dataIn=get_dataInPointer();
     SDataReceiveFromMaster* pDataOut = dataOutGetPointer();
 
-    snprintf(text,32,"spi err:\002 %i/%i",DataEX_lost_connection_count(),get_num_SPI_CALLBACKS());
+    snprintf(text,32,"spi err:\002 %ld/%ld",DataEX_lost_connection_count(),get_num_SPI_CALLBACKS());
     Gfx_write_label_var(ScreenToWriteOn,  100,300, 0,&FontT24,CLUT_ButtonSymbols,text);
 
 //    snprintf(text,32,"header:\002%X%X%X%X",dataIn->header.checkCode[0],dataIn->header.checkCode[1],dataIn->header.checkCode[2],dataIn->header.checkCode[3]);
