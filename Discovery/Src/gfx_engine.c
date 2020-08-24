@@ -3219,6 +3219,7 @@ static uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GF
 		if((font == &FontT144) && (*(char*)pText == '.'))
 		{
 			font = (tFont *)&FontT84;
+			tinyState = 2;
 		}
 		else
 		if((font == &FontT105) && (*(char*)pText == '\16')) // two times to start tiny font
@@ -3229,9 +3230,10 @@ static uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GF
 				font = (tFont *)&FontT54;
 		}
 		else
-		if((font == &FontT105) && cfg->dualFont && ((*(char*)pText == '.') || (*(char*)pText == ':')))
+		if((font == &FontT105) && cfg->dualFont && ((*(char*)pText == '.') || (*(char*)pText == ':')))		/* Display character after '.' or ':' using smaller font */
 		{
 			font = (tFont *)&FontT54;
+			tinyState = 2;
 		}
 
 		if(*(char*)pText == ' ')
@@ -3250,7 +3252,7 @@ static uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GF
 			{
 				decodeUTF8 = *(char*)pText;
 			}
-			for(i=0;i<font->length;i++)
+			for(i=0;i<font->length;i++)						/* lookup character and add width */
 			{
 				if(font->chars[i].code == decodeUTF8)
 				{
