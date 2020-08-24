@@ -72,15 +72,25 @@ const uint8_t t3_customviewsStandard[] =
     CVIEW_T3_END
 };
 
-
-const uint8_t *t3_customviews = t3_customviewsStandard;
+#ifdef ENABLE_BIGFONT_VX
+const uint8_t t3_customviewsV2[] =
+{
+    CVIEW_T3_Decostop,
+    CVIEW_sensors,
+    CVIEW_T3_Navigation,
+    CVIEW_T3_DepthData,
+    CVIEW_T3_TTS,
+    CVIEW_T3_ppO2andGas,
+    CVIEW_T3_END
+};
+#endif
 
 /* Private function prototypes -----------------------------------------------*/
 void t3_refresh_divemode(void);
 
 uint8_t t3_test_customview_warnings(void);
 void t3_refresh_customview(float depth);
-void t3_basics_compass(GFX_DrawCfgScreen *tXscreen, uint16_t ActualHeading, uint16_t UserSetHeading);
+void t3_basics_compass(GFX_DrawCfgScreen *tXscreen, point_t center, uint16_t ActualHeading, uint16_t UserSetHeading);
 
 /* Exported functions --------------------------------------------------------*/
 
@@ -89,7 +99,7 @@ void t3_init(void)
 	SSettings* pSettings;
 	pSettings = settingsGetPointer();
 
-    t3_selection_customview = t3_customviews[0];
+    t3_selection_customview = t3_customviewsStandard[0];
 
     t3screen.FBStartAdress = 0;
     t3screen.ImageHeight = 480;
@@ -163,6 +173,8 @@ void t3_init(void)
 
 void t3_refresh(void)
 {
+	static uint8_t last_mode = MODE_SURFACE;
+
     SStateList status;
     get_globalStateList(&status);
 
@@ -175,10 +187,23 @@ void t3_refresh(void)
     if(status.base != BaseHome)
         return;
 
+    if(last_mode != MODE_DIVE)			/* Select customview */
+    {
+    	if((settingsGetPointer()->tX_customViewTimeout == 0) && (settingsGetPointer()->showDebugInfo))
+    	{
+    		t3_selection_customview = CVIEW_noneOrDebug;
+    	}
+    	else
+    	{
+    		t3_selection_customview = settingsGetPointer()->tX_customViewPrimary;
+    	}
+    	t3_change_customview(ACTION_END);
+    }
     t3screen.FBStartAdress = getFrame(24);
     t3_refresh_divemode();
     GFX_SetFramesTopBottom(t3screen.FBStartAdress, 0,480);
     releaseAllFramesExcept(24,t3screen.FBStartAdress);
+    last_mode = stateUsed->mode;
 }
 
 
@@ -474,7 +499,7 @@ void t3_refresh_divemode(void)
         t3_refresh_customview(depth_meter);
 
     if(stateUsed->warnings.lowBattery)
-        t3_basics_battery_low_customview_extra(&t3c1);
+        t3_basics_battery_low_customview_extra(&t3r1); //t3c1);
 }
 
 
@@ -482,7 +507,7 @@ void t3_basics_battery_low_customview_extra(GFX_DrawCfgWindow* tXc1)
 {
     char TextC1[256];
 
-    TextC1[0] = '\002';
+    TextC1[0] = ' ';//'\002';
     TextC1[1] = '\f';
     TextC1[2] = '\025';
     TextC1[3] = '3';
@@ -656,6 +681,9 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
     uint8_t oxygen, helium;
     uint8_t lineNumber;
 
+    /* compass position */
+    point_t center;
+
     // CVIEW_T3_StopWatch
     SDivetime Stopwatch = {0,0,0,0};
     float fAverageDepth, fAverageDepthAbsolute;
@@ -672,6 +700,8 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
 
     tempWinX0 = tXc1->WindowX0;
     tempWinY0 = tXc1->WindowY0;
+    tempWinX1 = tXc1->WindowX1;
+    tempWinY1 = tXc1->WindowY1;
 
     tempWinC2X0  = tXc2->WindowX0;
     tempWinC2Y0 = tXc2->WindowY0;
@@ -724,11 +754,6 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
 
     case CVIEW_T3_StopWatch:
 
-        tempWinX0 = tXc1->WindowX0;
-        tempWinY0 = tXc1->WindowY0;
-        tempWinX1 = tXc1->WindowX1;
-        tempWinY1 = tXc1->WindowY1;
-
         Stopwatch.Total = timer_Stopwatch_GetTime();
         Stopwatch.Minutes = Stopwatch.Total / 60;
         Stopwatch.Seconds = Stopwatch.Total - ( Stopwatch.Minutes * 60 );
@@ -739,8 +764,6 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         GFX_write_string(&FontT42,tXc1,text,0);
         snprintf(text,TEXTSIZE,"\030\003\016%01.1f",unit_depth_float(fAverageDepthAbsolute));
         GFX_write_string(&FontT105,tXc1,text,0);
-
-
 
         if(!pSettings->FlipDisplay)
         {
@@ -769,19 +792,13 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         snprintf(text,TEXTSIZE,"\030%u:\016\016%02u",Stopwatch.Minutes, Stopwatch.Seconds);
         GFX_write_string(&FontT105,tXc1,text,0);
 
-        tXc1->WindowX0 = tempWinX0;
-        tXc1->WindowY0 = tempWinY0;
-        tXc1->WindowX1 = tempWinX1;
-        tXc1->WindowY1 = tempWinY1;
-        break;
+       break;
 
     case CVIEW_T3_GasList:
         snprintf(text,TEXTSIZE,"\032\f%c%c",TXT_2BYTE, TXT2BYTE_Gaslist);
         GFX_write_string(&FontT42,tXc1,text,0);
 
         textpointer = 0;
-        tempWinC2X0 = tXc2->WindowX0;
-        tempWinC2Tab = tXc2->WindowTab;
         tXc2->WindowX0 = 0;
         tXc2->WindowTab = 800/2;
 
@@ -836,11 +853,13 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         break;
 
     case CVIEW_Compass:
+        center.x = 600;
+        center.y = 116;
         snprintf(text,TEXTSIZE,"\032\f%c%c",TXT_2BYTE, TXT2BYTE_Compass);
         GFX_write_string(&FontT42,tXc1,text,0);
         snprintf(text,100,"\030\003%03i`",(uint16_t)stateUsed->lifeData.compass_heading);
         GFX_write_string(&FontT105,tXc1,text,0);
-        t3_basics_compass(tXscreen, (uint16_t)stateUsed->lifeData.compass_heading, stateUsed->diveSettings.compassHeading);
+        t3_basics_compass(tXscreen, center, (uint16_t)stateUsed->lifeData.compass_heading, stateUsed->diveSettings.compassHeading);
         break;
 
     case CVIEW_T3_Decostop:
@@ -873,7 +892,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
             , (nextstopLengthSeconds+59)/60);
 //	old without feet hw 170703			snprintf(&text[textpointer],TEXTSIZE,"\020\003%um %u'",nextstopDepthMeter,(nextstopLengthSeconds+59)/60);
             t3_basics_colorscheme_mod(text);
-            GFX_write_string(&FontT105,tXc1,text,1);
+            GFX_write_string(&FontT105,tXc1,text,0);
         }
         else if(SafetyStopTime.Total && (depth > timer_Safetystop_GetDepthUpperLimit()))
         {
@@ -884,7 +903,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
             textpointer = 0;
             snprintf(&text[textpointer],TEXTSIZE,"\020\003\016%u:%02u",SafetyStopTime.Minutes,SafetyStopTime.Seconds);
             t3_basics_colorscheme_mod(text);
-            GFX_write_string(&FontT105,tXc1,text,1);
+            GFX_write_string(&FontT105,tXc1,text,0);
         }
         else if(pDecoinfo->output_ndl_seconds) // NDL
         {
@@ -895,7 +914,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
             else
                 snprintf(text,TEXTSIZE,"\020\003%ih",pDecoinfo->output_ndl_seconds/3600);
             t3_basics_colorscheme_mod(text);
-            GFX_write_string(&FontT105,tXc1,text,1);
+            GFX_write_string(&FontT105,tXc1,text,0);
         }
         break;
 
@@ -924,7 +943,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
                     text[textpointer++] = '\025';
                 textpointer += snprintf(&text[textpointer],TEXTSIZE,"%.1f",stateUsed->lifeData.ppO2Sensor_bar[i]);
             }
-            GFX_write_string(&FontT144,tXc1,text,1);
+            GFX_write_string(&FontT144,tXc1,text,0);
         }
         break;
 
@@ -960,7 +979,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         }
         else
         {
-        	GFX_write_string(&FontT105,tXc1,text,1);
+        	GFX_write_string(&FontT105,tXc1,text,0);
         }
         break;
 
@@ -974,7 +993,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
             else
                 snprintf(text,TEXTSIZE,"\020\003\002%ih",(pDecoinfo->output_time_to_surface_seconds + 59)/ 3600);
             t3_basics_colorscheme_mod(text);
-            GFX_write_string(&FontT105,tXc1,text,1);
+            GFX_write_string(&FontT105,tXc1,text,0);
         }
         break;
 
@@ -983,7 +1002,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         GFX_write_string(&FontT42,tXc1,text,0);
         snprintf(text,TEXTSIZE,"\020\003%01.2f",stateUsed->lifeData.ppO2);
         t3_basics_colorscheme_mod(text);
-        GFX_write_string(&FontT105,tXc1,text,1);
+        GFX_write_string(&FontT105,tXc1,text,0);
 
         textpointer = 0;
         text[textpointer++] = '\020';
@@ -995,11 +1014,105 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         tHome_gas_writer(oxygen_percentage,stateUsed->lifeData.actualGas.helium_percentage,&text[textpointer]);
         //textpointer = snprintf(&text[textpointer],TEXTSIZE,"\020\002%02u/%02u",oxygen_percentage, stateUsed->lifeData.actualGas.helium_percentage);
         t3_basics_colorscheme_mod(text);
-        GFX_write_string(&FontT48,tXc1,text,1);
+        GFX_write_string(&FontT48,tXc1,text,0);
         break;
+
+#ifdef ENABLE_BIGFONT_VX
+    case CVIEW_T3_Navigation:
+        Stopwatch.Total = timer_Stopwatch_GetTime();
+        Stopwatch.Minutes = Stopwatch.Total / 60;
+        Stopwatch.Seconds = Stopwatch.Total - ( Stopwatch.Minutes * 60 );
+        fAverageDepth = timer_Stopwatch_GetAvarageDepth_Meter();
+
+         if(!pSettings->FlipDisplay)
+        {
+        	tXc2->WindowX0 = 550;
+        }
+        else
+        {
+        	tXc2->WindowX1 = 800;
+        	tXc2->WindowY0 = t3c2.WindowY0; /* select customer window */
+        }
+
+        snprintf(text,TEXTSIZE,"\032\002\f%c", TXT_Stopwatch);
+        GFX_write_string(&FontT42,tXc2,text,0);
+        snprintf(text,TEXTSIZE,"\030\016\002%01.1f",unit_depth_float(fAverageDepth));
+        GFX_write_string(&FontT105,tXc2,text,0);
+        if(!pSettings->FlipDisplay)
+        {
+        	tXc2->WindowY0 = 100;
+        }
+        else
+        {
+        	tXc2->WindowY1 -= 100; /* jump to upper of two lines */
+        }
+
+        snprintf(text,TEXTSIZE,"\030\002%u:\016\016%02u",Stopwatch.Minutes, Stopwatch.Seconds);
+        GFX_write_string(&FontT105,tXc2,text,0);
+
+
+        center.x = 400;
+        center.y = 116;
+
+        snprintf(text,TEXTSIZE,"\032\f%c%c",TXT_2BYTE, TXT2BYTE_Compass);
+        GFX_write_string(&FontT42,tXc1,text,0);
+        //snprintf(text,100,"\030\003%03i`",(uint16_t)stateUsed->lifeData.compass_heading);
+        snprintf(text,100,"\030%03i`",(uint16_t)stateUsed->lifeData.compass_heading);
+        GFX_write_string(&FontT144,tXc1,text,0);
+        t3_basics_compass(tXscreen, center, (uint16_t)stateUsed->lifeData.compass_heading, stateUsed->diveSettings.compassHeading);
+
+    	break;
+
+    case CVIEW_T3_DepthData:
+        snprintf(text,TEXTSIZE,"\032\f%c",TXT_MaxDepth);
+        if(pSettings->FlipDisplay)
+        {
+        	if(mode == DIVEMODE_Apnea)
+        	{
+        		GFX_write_string(&FontT42,tXc2,text,0);
+        	}
+        	else
+        	{
+        		GFX_write_string(&FontT42,tXc1,text,0);
+        	}
+        }
+        else
+        {
+        	GFX_write_string(&FontT42,tXc1,text,0);
+        }
+        snprintf(text,TEXTSIZE,"\020\003\016%01.1f",unit_depth_float(stateUsed->lifeData.max_depth_meter));
+        t3_basics_colorscheme_mod(text);
+        if(pSettings->FlipDisplay)
+        {
+        	if(mode == DIVEMODE_Apnea)
+        	{
+        		GFX_write_string(&FontT105,tXc2,text,0);
+        	}
+        	else
+        	{
+        		GFX_write_string(&FontT105,tXc1,text,0);
+        	}
+        }
+        else
+        {
+        	GFX_write_string(&FontT105,tXc1,text,0);
+        }
+        fAverageDepthAbsolute = stateUsed->lifeData.average_depth_meter;
+        snprintf(text,TEXTSIZE,"\032\002\f%c",TXT_AvgDepth);
+        GFX_write_string(&FontT42,tXc2,text,0);
+
+        snprintf(text,TEXTSIZE,"\020\003\016\002\%01.1f",unit_depth_float(fAverageDepthAbsolute));
+        GFX_write_string(&FontT105,tXc2,text,0);
+        break;
+#endif
     }
+
+
+
     tXc1->WindowX0 = tempWinX0;
     tXc1->WindowY0 = tempWinY0;
+    tXc1->WindowX1 = tempWinX1;
+    tXc1->WindowY1 = tempWinY1;
 
     tXc2->WindowX0 = tempWinC2X0;
     tXc2->WindowY0 = tempWinC2Y0;
@@ -1184,14 +1297,61 @@ void t3_basics_show_customview_warnings(GFX_DrawCfgWindow* tXc1)
     }
 }
 
+uint8_t t3_customview_disabled(uint8_t view)
+{
+	uint8_t i = 0;
+	uint8_t cv_disabled = 0;
+	const uint8_t *pcv_changelist;
+    uint32_t cv_config = settingsGetPointer()->cv_config_BigScreen;
+
+#ifdef ENABLE_BIGFONT_VX
+    if(settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT2)
+    {
+        pcv_changelist = cv_changelist_BSV2;
+    }
+    else
+#endif
+    {
+        pcv_changelist = cv_changelist_BS;
+    }
+
+  	while(pcv_changelist[i] != CVIEW_T3_END)
+    {
+         if((view == pcv_changelist[i]) && !CHECK_BIT_THOME(cv_config, pcv_changelist[i]))
+         {
+        	 cv_disabled = 1;
+               break;
+         }
+         i++;
+    }
+
+    if (((view == CVIEW_sensors) || (view == CVIEW_sensors_mV)) &&
+       	((stateUsed->diveSettings.ppo2sensors_deactivated) || (stateUsed->diveSettings.ccrOption == 0)))
+    {
+      	cv_disabled = 1;
+    }
+
+    return cv_disabled;
+}
 
 void t3_change_customview(uint8_t action)
 {
-    t3_basics_change_customview(&t3_selection_customview, t3_customviews, action);
+#ifdef ENABLE_BIGFONT_VX
+    if(settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT2)
+    {
+    	t3_basics_change_customview(&t3_selection_customview, t3_customviewsV2, action);
+    }
+    else
+    {
+    	t3_basics_change_customview(&t3_selection_customview, t3_customviewsStandard, action);
+    }
+#else
+    t3_basics_change_customview(&t3_selection_customview, t3_customviewsStandard, action);
+#endif
 }
 
 
-void t3_basics_change_customview(uint8_t *tX_selection_customview, const uint8_t *tX_customviews, uint8_t action)
+void t3_basics_change_customview(uint8_t *tX_selection_customview, uint8_t *tX_customviews, uint8_t action)
 {
     const SDecoinfo * pDecoinfo;
     if(stateUsed->diveSettings.deco_type.ub.standard == GF_MODE)
@@ -1199,6 +1359,7 @@ void t3_basics_change_customview(uint8_t *tX_selection_customview, const uint8_t
     else
         pDecoinfo = &stateUsed->decolistVPM;
 
+    uint8_t curView;
     uint8_t *pViews;
     pViews = tX_customviews;
 
@@ -1206,14 +1367,21 @@ void t3_basics_change_customview(uint8_t *tX_selection_customview, const uint8_t
     uint8_t iterate = 0;	/* set to 1 if a view has to be skipped */
 
     pStartView = pViews;
+    curView = CVIEW_T3_END;
     /* set pointer to currently selected view and count number of entries */
     while((*pViews != CVIEW_T3_END))
     {
     	if (*pViews == *tX_selection_customview)
     	{
     		pCurView = pViews;
+    		curView = *pViews;
     	}
     	pViews++;
+    }
+    if(curView == CVIEW_T3_END)		/* called with unknown view */
+    {
+    	*tX_selection_customview = CVIEW_T3_Decostop;
+    	pCurView = pStartView;
     }
     pLastView = pViews;
     pViews = pCurView;
@@ -1221,34 +1389,44 @@ void t3_basics_change_customview(uint8_t *tX_selection_customview, const uint8_t
     do
     {
     	iterate = 0;
-		if((action == ACTION_BUTTON_ENTER) || (action == ACTION_PITCH_POS))
-		{
-			if(*pViews != CVIEW_T3_END)
-				pViews++;
+    	switch(action)
+    	{
+    		case ACTION_BUTTON_ENTER:
+    		case ACTION_PITCH_POS:
 
-			if(*pViews == CVIEW_T3_END)
-			{
-				pViews = pStartView;
-			}
+				if(*pViews != CVIEW_T3_END)
+					pViews++;
+
+				if(*pViews == CVIEW_T3_END)
+				{
+					pViews = pStartView;
+				}
+				break;
+    		case ACTION_PITCH_NEG:
+    			if(pViews == pStartView)
+    			{
+    				pViews = pLastView - 1;
+    			}
+    			else
+    			{
+    				pViews--;
+    			}
+    			break;
+    		default:
+    			break;
 		}
-		else
-		{
-			if(pViews == pStartView)
-			{
-				pViews = pLastView - 1;
-			}
-			else
-			{
-				pViews--;
-			}
-		}
-		if((*pViews == CVIEW_sensors) &&(stateUsed->diveSettings.ccrOption == 0))
+
+		if(t3_customview_disabled(*pViews))
 		{
 			iterate = 1;
 		}
 	    if((*pViews == CVIEW_T3_TTS) && !pDecoinfo->output_time_to_surface_seconds)
 	    {
 	    	iterate = 1;
+	    }
+	    if((iterate) && (action == ACTION_END))
+	    {
+	    	action = ACTION_BUTTON_ENTER;
 	    }
     }while (iterate == 1);
 
@@ -1265,17 +1443,16 @@ void t3_basics_colorscheme_mod(char *text)
 }
 
 
-point_t t3_compass_circle(uint8_t id, uint16_t degree)
+point_t t3_compass_circle(uint8_t id, uint16_t degree, point_t center)
 {
     float fCos, fSin;
     const float piMult =  ((2 * 3.14159) / 360);
 //	const int radius[4] = {95,105,115,60};
     const int radius[4] = {85,95,105,90};
-    const point_t offset = {.x = 600, .y = 116};
-
+    static point_t forcenter = {.x = 900, .y = 500};	/* used to identify change of circle position */
     static point_t r[4][360] = { 0 };
 
-    if(r[0][0].y == 0)
+    if((r[0][0].y == 0) || (forcenter.x != center.x) || (forcenter.y != center.y))	/* calculate values only once during first call or if center position changed */
     {
         for(int i=0;i<360;i++)
         {
@@ -1283,10 +1460,12 @@ point_t t3_compass_circle(uint8_t id, uint16_t degree)
             fSin = sin(i * piMult);
             for(int j=0;j<4;j++)
             {
-                r[j][i].x = offset.x + (int)(fSin * radius[j]);
-                r[j][i].y = offset.y + (int)(fCos * radius[j]);
+                r[j][i].x = center.x + (int)(fSin * radius[j]);
+                r[j][i].y = center.y + (int)(fCos * radius[j]);
             }
         }
+        forcenter.x = center.x;
+        forcenter.y = center.y;
     }
     if(id > 3) id = 0;
     if(degree > 359) degree = 0;
@@ -1294,10 +1473,11 @@ point_t t3_compass_circle(uint8_t id, uint16_t degree)
 }
 
 
-void t3_basics_compass(GFX_DrawCfgScreen *tXscreen, uint16_t ActualHeading, uint16_t UserSetHeading)
+void t3_basics_compass(GFX_DrawCfgScreen *tXscreen, point_t center, uint16_t ActualHeading, uint16_t UserSetHeading)
 {
+	uint8_t loop = 0;
     uint16_t LineHeading;
-    point_t center;
+
     static int32_t LastHeading = 0;
     int32_t newHeading = 0;
     int32_t diff = 0;
@@ -1343,72 +1523,48 @@ void t3_basics_compass(GFX_DrawCfgScreen *tXscreen, uint16_t ActualHeading, uint
     while(ActualHeading > 359) ActualHeading -= 360;
 
     LineHeading = 360 - ActualHeading;
-    GFX_draw_thick_line(9,tXscreen, t3_compass_circle(0,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_Font030); // North
+
+    GFX_draw_thick_line(9,tXscreen, t3_compass_circle(0,LineHeading, center),  t3_compass_circle(2,LineHeading, center), CLUT_Font030); // North
     LineHeading += 90;
-    if(LineHeading > 359) LineHeading -= 360;
-    GFX_draw_thick_line(9,tXscreen, t3_compass_circle(1,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_Font031); // Maintick
-    LineHeading += 90;
-    if(LineHeading > 359) LineHeading -= 360;
-    GFX_draw_thick_line(9,tXscreen, t3_compass_circle(1,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_Font031);
-    LineHeading += 90;
-    if(LineHeading > 359) LineHeading -= 360;
-    GFX_draw_thick_line(9,tXscreen, t3_compass_circle(1,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_Font031);
+
+    for (loop = 0; loop < 3; loop++)
+    {
+    	if(LineHeading > 359) LineHeading -= 360;
+		GFX_draw_thick_line(9,tXscreen, t3_compass_circle(0,LineHeading, center),  t3_compass_circle(2,LineHeading, center), CLUT_Font031); // Main Ticks
+		LineHeading += 90;
+    }
 
     LineHeading = 360 - ActualHeading;
     LineHeading += 45;
-    if(LineHeading > 359) LineHeading -= 360;
-    GFX_draw_thick_line(5,tXscreen, t3_compass_circle(1,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_Font031); // Subtick
-    LineHeading += 90;
-    if(LineHeading > 359) LineHeading -= 360;
-    GFX_draw_thick_line(5,tXscreen, t3_compass_circle(1,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_Font031);
-    LineHeading += 90;
-    if(LineHeading > 359) LineHeading -= 360;
-    GFX_draw_thick_line(5,tXscreen, t3_compass_circle(1,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_Font031);
-    LineHeading += 90;
-    if(LineHeading > 359) LineHeading -= 360;
-    GFX_draw_thick_line(5,tXscreen, t3_compass_circle(1,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_Font031);
+
+    for (loop = 0; loop < 4; loop++)
+    {
+		if(LineHeading > 359) LineHeading -= 360;
+		GFX_draw_thick_line(5,tXscreen, t3_compass_circle(1,LineHeading, center),  t3_compass_circle(2,LineHeading, center), CLUT_Font031); // Subtick
+		LineHeading += 90;
+    }
 
     LineHeading = 360 - ActualHeading;
     LineHeading += 22;
-    if(LineHeading > 359) LineHeading -= 360;
-    GFX_draw_thick_line(3,tXscreen, t3_compass_circle(1,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_Font031); // Subtick
-    LineHeading += 45;
-    if(LineHeading > 359) LineHeading -= 360;
-    GFX_draw_thick_line(3,tXscreen, t3_compass_circle(1,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_Font031);
-    LineHeading += 45;
-    if(LineHeading > 359) LineHeading -= 360;
-    GFX_draw_thick_line(3,tXscreen, t3_compass_circle(1,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_Font031);
-    LineHeading += 45;
-    if(LineHeading > 359) LineHeading -= 360;
-    GFX_draw_thick_line(3,tXscreen, t3_compass_circle(1,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_Font031);
-    LineHeading += 45;
-    if(LineHeading > 359) LineHeading -= 360;
-    GFX_draw_thick_line(3,tXscreen, t3_compass_circle(1,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_Font031); // Subtick
-    LineHeading += 45;
-    if(LineHeading > 359) LineHeading -= 360;
-    GFX_draw_thick_line(3,tXscreen, t3_compass_circle(1,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_Font031);
-    LineHeading += 45;
-    if(LineHeading > 359) LineHeading -= 360;
-    GFX_draw_thick_line(3,tXscreen, t3_compass_circle(1,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_Font031);
-    LineHeading += 45;
-    if(LineHeading > 359) LineHeading -= 360;
-    GFX_draw_thick_line(3,tXscreen, t3_compass_circle(1,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_Font031);
-
+    for (loop = 0; loop < 8; loop++)
+    {
+       if(LineHeading > 359) LineHeading -= 360;
+       GFX_draw_thick_line(3,tXscreen, t3_compass_circle(1,LineHeading, center),  t3_compass_circle(2,LineHeading, center), CLUT_Font031); // Subtick
+       LineHeading += 45;
+    }
     if(UserSetHeading)
     {
         LineHeading = UserSetHeading + 360 - ActualHeading;
         if(LineHeading > 359) LineHeading -= 360;
-        GFX_draw_thick_line(9,tXscreen, t3_compass_circle(3,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_CompassUserHeadingTick);
+        GFX_draw_thick_line(9,tXscreen, t3_compass_circle(3,LineHeading, center),  t3_compass_circle(2,LineHeading, center), CLUT_CompassUserHeadingTick);
 
         // Rï¿½ckpeilung, User Back Heading
         LineHeading = UserSetHeading + 360 + 180 - ActualHeading;
         if(LineHeading > 359) LineHeading -= 360;
         if(LineHeading > 359) LineHeading -= 360;
-        GFX_draw_thick_line(9,tXscreen, t3_compass_circle(3,LineHeading),  t3_compass_circle(2,LineHeading), CLUT_CompassUserBackHeadingTick);
+        GFX_draw_thick_line(9,tXscreen, t3_compass_circle(3,LineHeading, center),  t3_compass_circle(2,LineHeading, center), CLUT_CompassUserBackHeadingTick);
     }
 
-    center.x = 600;
-    center.y = 116;
     GFX_draw_circle(tXscreen, center, 106, CLUT_Font030);
     GFX_draw_circle(tXscreen, center, 107, CLUT_Font030);
     GFX_draw_circle(tXscreen, center, 108, CLUT_Font030);
@@ -1416,16 +1572,41 @@ void t3_basics_compass(GFX_DrawCfgScreen *tXscreen, uint16_t ActualHeading, uint
 
 uint8_t t3_GetEnabled_customviews()
 {
-	int8_t i;
+	uint8_t *pViews;
+	uint8_t increment = 1;
     uint8_t enabledViewCnt = 0;
-    uint32_t cv_config = settingsGetPointer()->cv_configuration;
 
-    i=0;
+#ifdef ENABLE_BIGFONT_VX
+    if(settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT2)
+    {
+        pViews = (uint8_t*)t3_customviewsV2;
+    }
+    else
+    {
+        pViews = (uint8_t*)t3_customviewsStandard;
+    }
+
+    while((*pViews != CVIEW_T3_END))
+    {
+    	increment = 1;
+    /* check if view is enabled */
+    	if(t3_customview_disabled(*pViews))
+    	{
+    		increment = 0;
+    	}
+    	pViews++;
+    	enabledViewCnt += increment;
+    }
+#else
+
+    uint8_t i=0;
+    uint32_t cv_config = settingsGetPointer()->cv_config_BigScreen;
+    pcv_changelist = cv_changelist_BS;
    	do
     {
-        if(cv_changelist[i] == CVIEW_sensors) /* at the moment specific big font view may not be selected. Only sensor setting is taken from t7 configuration */
+        if(pcv_changelist[i] == CVIEW_sensors) /* at the moment specific big font view may not be selected. Only sensor setting is taken from t7 configuration */
         {
-          	 if(!CHECK_BIT_THOME(cv_config, cv_changelist[i]))
+          	 if(!CHECK_BIT_THOME(cv_config, pcv_changelist[i]))
           	 {
            		 enabledViewCnt = NUMBER_OF_VIEWS - 1;		/* sensor shall not be displayed */
            	 }
@@ -1436,12 +1617,12 @@ uint8_t t3_GetEnabled_customviews()
              break;
         }
         i++;
-    } while(cv_changelist[i] != CVIEW_END);
+    } while(pcv_changelist[i] != CVIEW_T3_END);
     if ((stateUsed->diveSettings.ppo2sensors_deactivated) || (stateUsed->diveSettings.ccrOption == 0))
     {
     	enabledViewCnt = NUMBER_OF_VIEWS - 1;		/* sensor shall not be displayed */
     }
-
+#endif
     return enabledViewCnt;
 }
 
