@@ -310,6 +310,8 @@ const SSettings SettingsStandard = {
 	.FlipDisplay = 0,
 	.cv_configuration = 0xFFFFFFFF,
 	.MotionDetection = MOTION_DETECT_OFF,
+	.cv_config_BigScreen = 0xFFFFFFFF,
+	.cv_config_BigScreenV2 = 0xFFFFFFFF,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -457,6 +459,10 @@ void set_new_settings_missing_in_ext_flash(void)
     case 0xFFFF0019:
     	pSettings->MotionDetection = MOTION_DETECT_OFF;
     	// no break
+    case 0xFFFF001A:
+        pSettings->cv_config_BigScreen = 0xFFFFFFFF;
+        pSettings->cv_config_BigScreenV2 = 0xFFFFFFFF;
+        // no break
     default:
         pSettings->header = pStandard->header;
         break; // no break before!!
