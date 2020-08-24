@@ -41,6 +41,7 @@
 #include "motion.h"
 #include "t7.h"
 
+
 #define CV_SUBPAGE_MAX		(2u)	/* max number of customer view selection pages */
 /*#define HAVE_DEBUG_VIEW */
 static uint8_t infoPage = 0;
@@ -942,6 +943,11 @@ void refresh_Customviews(void)
     case EXTRADISPLAY_none:
         text[5] = TXT2BYTE_ExtraNone;
         break;
+#ifdef ENABLE_BIGFONT_VX
+    case EXTRADISPLAY_BIGFONT2:
+        text[5] = TXT2BYTE_ExtraBigFontV2;
+        break;
+#endif
     default:
         snprintf(&text[4],2,"%u",settingsGetPointer()->extraDisplay);
     break;
@@ -1095,20 +1101,15 @@ uint8_t OnAction_CornerStandard(uint32_t editId, uint8_t blockNumber, uint8_t di
 uint8_t OnAction_ExtraDisplay	 (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     uint8_t newValue;
-    switch(settingsGetPointer()->extraDisplay)
+
+    newValue = settingsGetPointer()->extraDisplay + 1;
+    if(newValue == EXTRADISPLAY_DECOGAME)  /* Decogame not yet implemented */
     {
-    case EXTRADISPLAY_BIGFONT:
-        newValue = EXTRADISPLAY_none;
-        break;
-    case EXTRADISPLAY_DECOGAME:
-        newValue = EXTRADISPLAY_BIGFONT;
-        break;
-    case EXTRADISPLAY_none:
-        newValue = EXTRADISPLAY_BIGFONT;
-        break;
-    default:
-        newValue = EXTRADISPLAY_BIGFONT;
-        break;
+    	newValue++;
+    }
+    if(newValue >= EXTRADISPLAY_END)
+    {
+    	newValue = EXTRADISPLAY_none;
     }
     settingsGetPointer()->extraDisplay = newValue;
     return UNSPECIFIC_RETURN;

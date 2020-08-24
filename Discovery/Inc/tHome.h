@@ -42,6 +42,7 @@
 #include "data_central.h"
 #include "data_exchange.h"
 #include "check_warning.h"
+#include "configuration.h"
 
 extern const uint16_t BigFontSeperationLeftRight; // in t3.c
 extern const uint16_t BigFontSeperationTopBottom; // in t3.c
@@ -53,6 +54,9 @@ enum EXTRADISPLAYS
 		EXTRADISPLAY_none = 0,
 		EXTRADISPLAY_BIGFONT,
 		EXTRADISPLAY_DECOGAME,
+#ifdef ENABLE_BIGFONT_VX
+		EXTRADISPLAY_BIGFONT2,
+#endif
 		EXTRADISPLAY_END
 };
 
@@ -79,11 +83,20 @@ enum CUSTOMVIEWS
 		CVIEW_T3_GasList,
 		CVIEW_T3_Temperature,
 		CVIEW_T3_ApnoeSurfaceInfo,
+#ifdef ENABLE_BIGFONT_VX
+		CVIEW_T3_Navigation,
+		CVIEW_T3_DepthData,
+#endif
 		CVIEW_T3_END
 };
 
 // for custom view switch on/off 161122 hw
 extern const uint8_t cv_changelist[];
+extern const uint8_t cv_changelist_BS[];
+#ifdef ENABLE_BIGFONT_VX
+extern const uint8_t cv_changelist_BSV2[];
+#endif
+
 #define CHECK_BIT_THOME(var,pos) (((var)>>(pos)) & 1)
 
 typedef struct
@@ -134,7 +147,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
 void t3_basics_refresh_apnoeRight(float depth, uint8_t tX_selection_customview, GFX_DrawCfgScreen *tXscreen, GFX_DrawCfgWindow* tXc1, GFX_DrawCfgWindow* tXc2, uint8_t mode);
 //void _findNextStop(const uint16_t *list, uint8_t *depthOut, uint16_t *lengthOut);
 void t3_basics_colorscheme_mod(char *text);
-void t3_basics_change_customview(uint8_t *tX_selection_customview, const uint8_t *tX_customviews, uint8_t action);
+void t3_basics_change_customview(uint8_t *tX_selection_customview, uint8_t *tX_customviews, uint8_t action);
 
 uint8_t tHome_show_lost_connection_count(GFX_DrawCfgScreen *ScreenToWriteOn);
 
