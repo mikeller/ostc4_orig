@@ -69,21 +69,10 @@ const uint8_t t3_customviewsStandard[] =
     CVIEW_T3_StopWatch,
     CVIEW_T3_TTS,
     CVIEW_T3_ppO2andGas,
+	CVIEW_T3_Navigation,
+	CVIEW_T3_DepthData,
     CVIEW_T3_END
 };
-
-#ifdef ENABLE_BIGFONT_VX
-const uint8_t t3_customviewsV2[] =
-{
-    CVIEW_T3_Decostop,
-    CVIEW_sensors,
-    CVIEW_T3_Navigation,
-    CVIEW_T3_DepthData,
-    CVIEW_T3_TTS,
-    CVIEW_T3_ppO2andGas,
-    CVIEW_T3_END
-};
-#endif
 
 /* Private function prototypes -----------------------------------------------*/
 void t3_refresh_divemode(void);
@@ -146,23 +135,23 @@ void t3_init(void)
 
     t3c1.Image = &t3screen;
     t3c1.WindowNumberOfTextLines = 2;
-    t3c1.WindowLineSpacing = t3l1.WindowLineSpacing;
+    t3c1.WindowLineSpacing = 100;
     t3c1.WindowX0 = 0;
     t3c1.WindowX1 = 799;
     if(!pSettings->FlipDisplay)
     {
-    	t3c1.WindowY0 = 0;
+    	t3c1.WindowY0 = 5;
     	t3c1.WindowY1 = BigFontSeperationTopBottom - 5;
     }
 	else
 	{
 		t3c1.WindowY0 = 480 - BigFontSeperationTopBottom + 5;
-		t3c1.WindowY1 = 479;
+		t3c1.WindowY1 = 479 - 5;
 	}
 
     t3c2.Image = &t3screen;
     t3c2.WindowNumberOfTextLines = 3;
-    t3c2.WindowLineSpacing = 58;
+    t3c2.WindowLineSpacing = t3c1.WindowLineSpacing ;
     t3c2.WindowX0 = 370;
     t3c2.WindowX1 = 799;
     t3c2.WindowY0 = t3c1.WindowY0;
@@ -1017,7 +1006,6 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         GFX_write_string(&FontT48,tXc1,text,0);
         break;
 
-#ifdef ENABLE_BIGFONT_VX
     case CVIEW_T3_Navigation:
         Stopwatch.Total = timer_Stopwatch_GetTime();
         Stopwatch.Minutes = Stopwatch.Total / 60;
@@ -1035,9 +1023,9 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         }
 
         snprintf(text,TEXTSIZE,"\032\002\f%c", TXT_Stopwatch);
-        GFX_write_string(&FontT42,tXc2,text,0);
+        GFX_write_string(&FontT42,tXc1,text,0);
         snprintf(text,TEXTSIZE,"\030\016\002%01.1f",unit_depth_float(fAverageDepth));
-        GFX_write_string(&FontT105,tXc2,text,0);
+        GFX_write_string(&FontT105,tXc1,text,0);
         if(!pSettings->FlipDisplay)
         {
         	tXc2->WindowY0 = 100;
@@ -1048,7 +1036,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         }
 
         snprintf(text,TEXTSIZE,"\030\002%u:\016\016%02u",Stopwatch.Minutes, Stopwatch.Seconds);
-        GFX_write_string(&FontT105,tXc2,text,0);
+        GFX_write_string(&FontT105,tXc1,text,1);
 
 
         center.x = 400;
@@ -1099,12 +1087,11 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         }
         fAverageDepthAbsolute = stateUsed->lifeData.average_depth_meter;
         snprintf(text,TEXTSIZE,"\032\002\f%c",TXT_AvgDepth);
-        GFX_write_string(&FontT42,tXc2,text,0);
+        GFX_write_string(&FontT42,tXc1,text,0);
 
         snprintf(text,TEXTSIZE,"\020\003\016\002\%01.1f",unit_depth_float(fAverageDepthAbsolute));
-        GFX_write_string(&FontT105,tXc2,text,0);
+        GFX_write_string(&FontT105,tXc1,text,0);
         break;
-#endif
     }
 
 
@@ -1150,8 +1137,8 @@ void t3_basics_show_customview_warnings(GFX_DrawCfgWindow* tXc1)
     more = 0;
 
     textpointerMain = 0;
-    textMain[textpointerMain++] = '\025';
-    textMain[textpointerMain++] = '\003';
+    textMain[textpointerMain++] = '\025';		/* red */
+    textMain[textpointerMain++] = '\003';		/* doublesize */
 
     textpointer = 0;
 
@@ -1290,10 +1277,10 @@ void t3_basics_show_customview_warnings(GFX_DrawCfgWindow* tXc1)
         text[textpointer] = 0;
     }
 */
-    GFX_write_string(&FontT48,&t3c1,textMain,1);
+    GFX_write_string(&FontT48,&t3c1,textMain,0);
     if(more)
     {
-        GFX_write_string(&FontT48,&t3c2,text,1);
+        GFX_write_string(&FontT48,&t3c2,text,0);
     }
 }
 
@@ -1304,16 +1291,7 @@ uint8_t t3_customview_disabled(uint8_t view)
 	const uint8_t *pcv_changelist;
     uint32_t cv_config = settingsGetPointer()->cv_config_BigScreen;
 
-#ifdef ENABLE_BIGFONT_VX
-    if(settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT2)
-    {
-        pcv_changelist = cv_changelist_BSV2;
-    }
-    else
-#endif
-    {
-        pcv_changelist = cv_changelist_BS;
-    }
+    pcv_changelist = cv_changelist_BS;
 
   	while(pcv_changelist[i] != CVIEW_T3_END)
     {
@@ -1336,22 +1314,12 @@ uint8_t t3_customview_disabled(uint8_t view)
 
 void t3_change_customview(uint8_t action)
 {
-#ifdef ENABLE_BIGFONT_VX
-    if(settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT2)
-    {
-    	t3_basics_change_customview(&t3_selection_customview, t3_customviewsV2, action);
-    }
-    else
-    {
-    	t3_basics_change_customview(&t3_selection_customview, t3_customviewsStandard, action);
-    }
-#else
+
     t3_basics_change_customview(&t3_selection_customview, t3_customviewsStandard, action);
-#endif
 }
 
 
-void t3_basics_change_customview(uint8_t *tX_selection_customview, uint8_t *tX_customviews, uint8_t action)
+void t3_basics_change_customview(uint8_t *tX_selection_customview,const uint8_t *tX_customviews, uint8_t action)
 {
     const SDecoinfo * pDecoinfo;
     if(stateUsed->diveSettings.deco_type.ub.standard == GF_MODE)
@@ -1359,33 +1327,27 @@ void t3_basics_change_customview(uint8_t *tX_selection_customview, uint8_t *tX_c
     else
         pDecoinfo = &stateUsed->decolistVPM;
 
-    uint8_t curView;
-    uint8_t *pViews;
-    pViews = tX_customviews;
-
-    uint8_t *pStartView,*pCurView, *pLastView;
+    uint8_t curViewIdx = 0xff;
+    uint8_t index = 0;
+    uint8_t lastViewIdx = 0;
     uint8_t iterate = 0;	/* set to 1 if a view has to be skipped */
 
-    pStartView = pViews;
-    curView = CVIEW_T3_END;
     /* set pointer to currently selected view and count number of entries */
-    while((*pViews != CVIEW_T3_END))
+    while((tX_customviews[index] != CVIEW_T3_END))
     {
-    	if (*pViews == *tX_selection_customview)
+    	if (tX_customviews[index] == *tX_selection_customview)
     	{
-    		pCurView = pViews;
-    		curView = *pViews;
+    		curViewIdx = index;
     	}
-    	pViews++;
+    	index++;
     }
-    if(curView == CVIEW_T3_END)		/* called with unknown view */
+    if(curViewIdx == 0xff)		/* called with unknown view */
     {
-    	*tX_selection_customview = CVIEW_T3_Decostop;
-    	pCurView = pStartView;
+    	curViewIdx = 0;
+    	*tX_selection_customview = tX_customviews[index];
     }
-    pLastView = pViews;
-    pViews = pCurView;
-
+    lastViewIdx = index;
+    index = curViewIdx;
     do
     {
     	iterate = 0;
@@ -1394,33 +1356,34 @@ void t3_basics_change_customview(uint8_t *tX_selection_customview, uint8_t *tX_c
     		case ACTION_BUTTON_ENTER:
     		case ACTION_PITCH_POS:
 
-				if(*pViews != CVIEW_T3_END)
-					pViews++;
-
-				if(*pViews == CVIEW_T3_END)
+				if(tX_customviews[index] != CVIEW_T3_END)
 				{
-					pViews = pStartView;
+					index++;
+				}
+				if(tX_customviews[index] == CVIEW_T3_END)
+				{
+					index = 0;
 				}
 				break;
     		case ACTION_PITCH_NEG:
-    			if(pViews == pStartView)
+    			if(index == 0)
     			{
-    				pViews = pLastView - 1;
+    				index = lastViewIdx - 1;
     			}
     			else
     			{
-    				pViews--;
+    				index--;
     			}
     			break;
     		default:
     			break;
 		}
 
-		if(t3_customview_disabled(*pViews))
+		if(t3_customview_disabled(tX_customviews[index]))
 		{
 			iterate = 1;
 		}
-	    if((*pViews == CVIEW_T3_TTS) && !pDecoinfo->output_time_to_surface_seconds)
+	    if((tX_customviews[index] == CVIEW_T3_TTS) && !pDecoinfo->output_time_to_surface_seconds)
 	    {
 	    	iterate = 1;
 	    }
@@ -1430,7 +1393,7 @@ void t3_basics_change_customview(uint8_t *tX_selection_customview, uint8_t *tX_c
 	    }
     }while (iterate == 1);
 
-    *tX_selection_customview = *pViews;
+    *tX_selection_customview = tX_customviews[index];
 }
 
 
@@ -1576,16 +1539,7 @@ uint8_t t3_GetEnabled_customviews()
 	uint8_t increment = 1;
     uint8_t enabledViewCnt = 0;
 
-#ifdef ENABLE_BIGFONT_VX
-    if(settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT2)
-    {
-        pViews = (uint8_t*)t3_customviewsV2;
-    }
-    else
-    {
-        pViews = (uint8_t*)t3_customviewsStandard;
-    }
-
+    pViews = (uint8_t*)t3_customviewsStandard;
     while((*pViews != CVIEW_T3_END))
     {
     	increment = 1;
@@ -1597,32 +1551,6 @@ uint8_t t3_GetEnabled_customviews()
     	pViews++;
     	enabledViewCnt += increment;
     }
-#else
-
-    uint8_t i=0;
-    uint32_t cv_config = settingsGetPointer()->cv_config_BigScreen;
-    pcv_changelist = cv_changelist_BS;
-   	do
-    {
-        if(pcv_changelist[i] == CVIEW_sensors) /* at the moment specific big font view may not be selected. Only sensor setting is taken from t7 configuration */
-        {
-          	 if(!CHECK_BIT_THOME(cv_config, pcv_changelist[i]))
-          	 {
-           		 enabledViewCnt = NUMBER_OF_VIEWS - 1;		/* sensor shall not be displayed */
-           	 }
-          	 else
-          	 {
-           		 enabledViewCnt = NUMBER_OF_VIEWS; 			/* enable all possible views */
-           	 }
-             break;
-        }
-        i++;
-    } while(pcv_changelist[i] != CVIEW_T3_END);
-    if ((stateUsed->diveSettings.ppo2sensors_deactivated) || (stateUsed->diveSettings.ccrOption == 0))
-    {
-    	enabledViewCnt = NUMBER_OF_VIEWS - 1;		/* sensor shall not be displayed */
-    }
-#endif
     return enabledViewCnt;
 }
 
