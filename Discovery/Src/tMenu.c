@@ -41,12 +41,14 @@
 #include "tMenuEditSetpoint.h"
 #include "tMenuEditSystem.h"
 #include "tMenuEditXtra.h"
+#include "tMenuEditCustom.h"
 #include "tMenuGas.h"
 #include "tMenuHardware.h"
 #include "tMenuPlanner.h"
 #include "tMenuSetpoint.h"
 #include "tMenuSystem.h"
 #include "tMenuXtra.h"
+#include "tMenuCustom.h"
 
 /* Private types -------------------------------------------------------------*/
 #define MAXPAGES 		10
@@ -492,6 +494,7 @@ void tM_build_pages(void)
     {
         tM_add(StMDECO);
         tM_add(StMHARD);
+        tM_add(StMCustom);
 //		tM_add(StMSYS); now in both modes
     }
     else
@@ -541,6 +544,9 @@ void tM_build_pages(void)
     tM_build_page(id, text, tabPosition, subtext);
 
     id = tMSystem_refresh(0, text, &tabPosition, subtext);
+    tM_build_page(id, text, tabPosition, subtext);
+
+    id = tMCustom_refresh(0, text, &tabPosition, subtext);
     tM_build_page(id, text, tabPosition, subtext);
 }
 
@@ -697,6 +703,11 @@ void updateMenu(void)
             clean_line_actual_page();
             update_content_actual_page(text, tabPosition, subtext);
         }
+        break;
+    case StMCustom:
+	        tMCustom_refresh(line, text, &tabPosition, subtext);
+    	    clean_line_actual_page();
+        	update_content_actual_page(text, tabPosition, subtext);
         break;
     default:
         break;
@@ -936,6 +947,9 @@ static void gotoMenuEdit(void)
     case StMSYS:
         openEdit_System(line);
         break;
+    case StMCustom:
+    	openEdit_Custom(line);
+    	break;
     default:
         break;
     }
@@ -1139,8 +1153,8 @@ static void draw_tMheader(uint8_t page)
         "",
         "SYS",
         "",
-        "SIM",
-        ""
+		"",
+        "SIM"
     };
 
     const _Bool spacing[MAXPAGES+1] =
@@ -1152,7 +1166,8 @@ static void draw_tMheader(uint8_t page)
         0, // behind DECO1
         1, // behind DECO2
         0, // behind SYS1
-        1, // behind SYS2
+        0, // behind SYS2
+		1, // behind SYS3
         1, // behind SIM
         0
     };
