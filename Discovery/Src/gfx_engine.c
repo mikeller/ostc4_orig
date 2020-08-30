@@ -3624,6 +3624,11 @@ void gfx_write_page_number(GFX_DrawCfgScreen *tMscreen, uint8_t page, uint8_t to
 	SSettings* pSettings;
 	pSettings = settingsGetPointer();
 
+	if(total > 8)
+	{
+		Font = &FontT24;
+	}
+
 	hgfx.Image = tMscreen;
 	hgfx.WindowNumberOfTextLines = 1;
 	hgfx.WindowLineSpacing = 0;
@@ -3632,7 +3637,14 @@ void gfx_write_page_number(GFX_DrawCfgScreen *tMscreen, uint8_t page, uint8_t to
 	if(!pSettings->FlipDisplay)
 	{
 		hgfx.WindowX1 = 779;
-		hgfx.WindowX0 = hgfx.WindowX1 - (25*5);
+		if(Font == &FontT24)
+		{
+			hgfx.WindowX0 = hgfx.WindowX1 - (Font->spacesize*3);
+		}
+		else
+		{
+			hgfx.WindowX0 = hgfx.WindowX1 - (Font->spacesize2Monospaced*3);
+		}
 		hgfx.WindowY1 = 479;
 		hgfx.WindowY0 = hgfx.WindowY1 - Font->height;
 	}
