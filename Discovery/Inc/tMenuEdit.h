@@ -55,6 +55,7 @@ void tMenuEdit_init(void);
 void resetMenuEdit(uint8_t color);
 void tMenuEdit_refresh_live_content(void);
 void tMenuEdit_refresh_field(uint32_t editID);
+void tMenuEdit_select(uint32_t editID);
 
 void evaluateNewString	(uint32_t editID, uint32_t *pNewValue1, uint32_t *pNewValue2, uint32_t *pNewValue3, uint32_t *pNewValue4);
 void tMenuEdit_newInput	(uint32_t editID, uint32_t int1, uint32_t int2, uint32_t int3, uint32_t int4);
