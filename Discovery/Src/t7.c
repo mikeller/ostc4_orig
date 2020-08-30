@@ -1410,7 +1410,7 @@ void t7_show_customview_warnings(void)
 
     textpointer = 0;
     lineFree = 5;
-
+    text[textpointer++] = '\001';
     if(lineFree && stateUsed->warnings.decoMissed)
     {
         text[textpointer++] = TXT_2BYTE;
@@ -1589,9 +1589,9 @@ void t7_change_customview(uint8_t action)
 		{
 			case ACTION_BUTTON_ENTER:
 			case ACTION_PITCH_POS:
-						if(*pViews != CVIEW_T3_END)
+						if(*pViews != CVIEW_END)
 					pViews++;
-						if(*pViews == CVIEW_T3_END)
+						if(*pViews == CVIEW_END)
 				{
 					pViews = pStartView;
 				}
