@@ -222,8 +222,6 @@ typedef struct
 	uint8_t MotionDetection;
 	/* new in 0xFFFF001B */
 	uint32_t cv_config_BigScreen;
-	uint32_t cv_config_BigScreenV2;
-
 } SSettings;
 
 typedef struct
