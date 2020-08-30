@@ -37,6 +37,7 @@
 #include "tMenuEditPlanner.h"
 #include "tMenuEditSystem.h"
 #include "tMenuEditXtra.h"
+#include "tMenuEditCustom.h"
 
 /* Private types -------------------------------------------------------------*/
 #define TEXTSIZE 16
@@ -87,27 +88,27 @@ GFX_DrawCfgScreen	tMEscreen;
 GFX_DrawCfgScreen	tMEcursor;
 GFX_DrawCfgScreen	tMEcursorNew;
 
-uint32_t menuID;
-uint8_t menuColor;
+static uint32_t menuID;
+static uint8_t menuColor;
 
-int8_t id = 0;
-int8_t idLast = -1;
-SEditIdent ident[10];
-int8_t tME_stop = 0;
+static int8_t id = 0;
+static int8_t idLast = -1;
+static SEditIdent ident[10];
+static int8_t tME_stop = 0;
 
-int8_t evid = 0;
-int8_t evidLast = -1;
-SEventHandler event[10];
+static int8_t evid = 0;
+static int8_t evidLast = -1;
+static SEventHandler event[10];
 
-SBackMenuHandler backmenu;
+static SBackMenuHandler backmenu;
 
-int8_t block = 0;
-int8_t subBlockPosition = 0;
+static int8_t block = 0;
+static int8_t subBlockPosition = 0;
 
-_Bool EnterPressedBeforeButtonAction = 0;
-_Bool EnterPressed = 0;
+static _Bool EnterPressedBeforeButtonAction = 0;
+static _Bool EnterPressed = 0;
 
-_Bool WriteSettings = 0;
+static _Bool WriteSettings = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 void draw_tMEdesign(void);
@@ -198,73 +199,52 @@ void resetMenuEdit(uint8_t color)
 
 void tMenuEdit_refresh_live_content(void)
 {
+	uint32_t globState = get_globalState();
+	void (*refreshFct)() = NULL;
 
-    if(get_globalState() == (StMHARD3_O2_Sensor1 & MaskFieldDigit))
-    {
-        uint32_t rememberPage = tMEscreen.FBStartAdress;
-        tMEscreen.FBStartAdress = getFrame(9);
-//		draw_tMEdesign();
-        refresh_O2Sensors();
-        GFX_SetFrameTop(tMEscreen.FBStartAdress);
-        releaseFrame(9,rememberPage);
-    }
-    else if(get_globalState() == (StMHARD2_Compass_SetCourse & MaskFieldDigit))
-    {
-        uint32_t rememberPage = tMEscreen.FBStartAdress;
-        tMEscreen.FBStartAdress = getFrame(9);
-        refresh_CompassEdit();
-        GFX_SetFrameTop(tMEscreen.FBStartAdress);
-        releaseFrame(9,rememberPage);
-    }
-    else if(get_globalState() == (StMXTRA_CompassHeading & MaskFieldDigit))
-    {
-        uint32_t rememberPage = tMEscreen.FBStartAdress;
-        tMEscreen.FBStartAdress = getFrame(9);
-//		draw_tMEdesign();
-        refresh_CompassHeading();
-        GFX_SetFrameTop(tMEscreen.FBStartAdress);
-        releaseFrame(9,rememberPage);
-    }
-    else  if(get_globalState() == (StMSYS5_Info & MaskFieldDigit))
-    {
-        uint32_t rememberPage = tMEscreen.FBStartAdress;
-        tMEscreen.FBStartAdress = getFrame(9);
-        refresh_InformationPage();
-        GFX_SetFrameTop(tMEscreen.FBStartAdress);
-        releaseFrame(9,rememberPage);
-    }
-    else if(get_globalState() == (StMPLAN5_ExitResult & MaskFieldDigit))
-    {
-        uint32_t rememberPage = tMEscreen.FBStartAdress;
-        tMEscreen.FBStartAdress = getFrame(9);
-        refresh_PlanResult();
-        GFX_SetFrameTop(tMEscreen.FBStartAdress);
-        releaseFrame(9,rememberPage);
-    }
-    else if(get_globalState() == (StMHARD5_Button1 & MaskFieldDigit)) // will not be executed in EditFieldMode as global state is different
-    {
-        uint32_t rememberPage = tMEscreen.FBStartAdress;
-        tMEscreen.FBStartAdress = getFrame(9);
-        refresh_ButtonValuesFromPIC();
-        GFX_SetFrameTop(tMEscreen.FBStartAdress);
-        releaseFrame(9,rememberPage);
-    }
-    else if(get_globalState() == (StMSYS3_Units & MaskFieldDigit))
-    {
-        uint32_t rememberPage = tMEscreen.FBStartAdress;
-        tMEscreen.FBStartAdress = getFrame(9);
-        refresh_Design();
-        GFX_SetFrameTop(tMEscreen.FBStartAdress);
-        releaseFrame(9,rememberPage);
-    }
-    else if(get_globalState() == (StMSYS4_CViewTimeout & MaskFieldDigit))
-    {
-        uint32_t rememberPage = tMEscreen.FBStartAdress;
-        tMEscreen.FBStartAdress = getFrame(9);
-        refresh_Customviews();
-        GFX_SetFrameTop(tMEscreen.FBStartAdress);
-        releaseFrame(9,rememberPage);
-    }
+
+	 switch(globState)
+	 {
+	 	 case (StMHARD3_O2_Sensor1 & MaskFieldDigit): refreshFct = refresh_O2Sensors;
+	 	 	 break;
+	 	 case (StMHARD2_Compass_SetCourse & MaskFieldDigit): refreshFct = refresh_CompassEdit;
+	 	 	 break;
+	 	 case (StMXTRA_CompassHeading & MaskFieldDigit):  refreshFct = refresh_CompassHeading;
+	 	 	 break;
+	 	 case (StMSYS5_Info & MaskFieldDigit): refreshFct = &refresh_InformationPage;
+	 	 	 break;
+	 	 case (StMPLAN5_ExitResult & MaskFieldDigit): refreshFct = refresh_PlanResult;
+	 		 break;
+	 	 case (StMHARD5_Button1 & MaskFieldDigit): // will not be executed in EditFieldMode as global state is different
+						refreshFct = refresh_ButtonValuesFromPIC;
+	 	 	 break;
+	 	 case (StMSYS3_Units & MaskFieldDigit): refreshFct = refresh_Design;
+	 	 	 break;
+	 	 case (StMCustom1_CViewTimeout & MaskFieldDigit):
+	 	 case (StMSYS4_CViewTimeout & MaskFieldDigit): refreshFct = refresh_Customviews;
+	 	 	 break;
+	 	 case (StMCustom2_CViewSelection1 & MaskFieldDigit) :
+	 	 case StMCustom2_CViewSelection2:
+	 	 case StMCustom2_CViewSelection3:
+	 	 case StMCustom2_CViewSelection4:
+	 	 case StMCustom2_CViewSelection5:
+	 	 case StMCustom2_CViewSelection6:
+	 	 case (StMCustom2_BFSelection & MaskFieldDigit) : refreshFct = CustomviewDivemode2_refresh;
+	 	 	 break;
+	 	 default:	 /* no menu has been updated */
+	 		 break;
+	 }
+
+	 if(refreshFct != NULL)
+	 {
+			uint32_t rememberPage = tMEscreen.FBStartAdress;
+			tMEscreen.FBStartAdress = getFrame(9);
+
+			refreshFct();
+
+	        GFX_SetFrameTop(tMEscreen.FBStartAdress);
+	        releaseFrame(9,rememberPage);
+	 }
 }
 
 void tMenuEdit_writeSettingsToFlash(void)
@@ -980,7 +960,19 @@ void tMenuEdit_set_on_off(uint32_t editID, uint32_t int1)
     id = backup_id;
 }
 
+void tMenuEdit_select(uint32_t editID)
+{
+	uint8_t id_local = 0;
+	id_local = get_id_of(editID);
 
+	if(id_local <= idLast)
+	{
+		id = id_local;
+		set_cursorNew(id);
+	}
+}
+
+#if OLD_SELECTION
 void tMenuEdit_select(uint32_t editID, uint32_t int1, uint32_t int2, uint32_t int3, uint32_t int4)
 {
     if(int1 > 4)
@@ -1006,6 +998,7 @@ void tMenuEdit_select(uint32_t editID, uint32_t int1, uint32_t int2, uint32_t in
 
     id = backup_id;
 }
+#endif
 
 
 void tMenuEdit_newInput(uint32_t editID, uint32_t int1,  uint32_t int2,  uint32_t int3,  uint32_t int4)
