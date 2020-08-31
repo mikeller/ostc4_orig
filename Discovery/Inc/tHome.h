@@ -54,9 +54,6 @@ enum EXTRADISPLAYS
 		EXTRADISPLAY_none = 0,
 		EXTRADISPLAY_BIGFONT,
 		EXTRADISPLAY_DECOGAME,
-#ifdef ENABLE_BIGFONT_VX
-		EXTRADISPLAY_BIGFONT2,
-#endif
 		EXTRADISPLAY_END
 };
 
@@ -83,19 +80,14 @@ enum CUSTOMVIEWS
 		CVIEW_T3_GasList,
 		CVIEW_T3_Temperature,
 		CVIEW_T3_ApnoeSurfaceInfo,
-#ifdef ENABLE_BIGFONT_VX
 		CVIEW_T3_Navigation,
 		CVIEW_T3_DepthData,
-#endif
 		CVIEW_T3_END
 };
 
 // for custom view switch on/off 161122 hw
 extern const uint8_t cv_changelist[];
 extern const uint8_t cv_changelist_BS[];
-#ifdef ENABLE_BIGFONT_VX
-extern const uint8_t cv_changelist_BSV2[];
-#endif
 
 #define CHECK_BIT_THOME(var,pos) (((var)>>(pos)) & 1)
 
@@ -139,6 +131,7 @@ uint8_t tHome_gas_writer(uint8_t oxygen_percentage, uint8_t helium_percentage, c
 uint32_t tHome_DateCode(RTC_DateTypeDef *dateInput);
 
 void tHome_init_compass(void);
+uint8_t tHome_getNumberOfAvailableCVs(const uint8_t* pcv_list);
 
 float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCfgWindow* tXl1, GFX_DrawCfgWindow* tXr1, uint8_t mode);
 void t3_basics_battery_low_customview_extra(GFX_DrawCfgWindow* tXc1);
@@ -147,7 +140,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
 void t3_basics_refresh_apnoeRight(float depth, uint8_t tX_selection_customview, GFX_DrawCfgScreen *tXscreen, GFX_DrawCfgWindow* tXc1, GFX_DrawCfgWindow* tXc2, uint8_t mode);
 //void _findNextStop(const uint16_t *list, uint8_t *depthOut, uint16_t *lengthOut);
 void t3_basics_colorscheme_mod(char *text);
-void t3_basics_change_customview(uint8_t *tX_selection_customview, uint8_t *tX_customviews, uint8_t action);
+void t3_basics_change_customview(uint8_t *tX_selection_customview, const uint8_t *tX_customviews, uint8_t action);
 
 uint8_t tHome_show_lost_connection_count(GFX_DrawCfgScreen *ScreenToWriteOn);
 

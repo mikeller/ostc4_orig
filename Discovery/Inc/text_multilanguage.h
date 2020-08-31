@@ -302,6 +302,14 @@ extern const tText text_array2[];
 		TXT2BYTE_ApneaSurface,
 		/* */
 		TXT2BYTE_FLIPDISPLAY,
+		TXT2BYTE_SelectCustomviews,
+		TXT2BYTE_SelectBigFont,
+		TXT2BYTE_MaxDepth,
+		TXT2BYTE_Stopwatch,
+		TXT2BYTE_TTS,
+		TXT2BYTE_ppoNair,
+		TXT2BYTE_Navigation,
+		TXT2BYTE_DepthData,
 		TXT2BYTE_END
 };
 

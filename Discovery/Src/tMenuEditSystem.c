@@ -186,7 +186,6 @@ void openEdit_CustomviewDivemode(uint8_t line)
 		{
 			pSettings->cv_configuration ^= (1 << CVIEW_noneOrDebug);
 		}
-		WriteSettings = 1;
 		InitMotionDetection(); /* consider new view setup for view selection by motion */
 		exitMenuEdit_to_Menu_with_Menu_Update();
 	}
@@ -943,11 +942,7 @@ void refresh_Customviews(void)
     case EXTRADISPLAY_none:
         text[5] = TXT2BYTE_ExtraNone;
         break;
-#ifdef ENABLE_BIGFONT_VX
-    case EXTRADISPLAY_BIGFONT2:
-        text[5] = TXT2BYTE_ExtraBigFontV2;
-        break;
-#endif
+
     default:
         snprintf(&text[4],2,"%u",settingsGetPointer()->extraDisplay);
     break;

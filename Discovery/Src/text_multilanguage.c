@@ -1258,26 +1258,11 @@ static uint8_t text_IT_ExtraDisplay[] = "Caratteri grandi";
 static uint8_t text_ES_ExtraDisplay[] = "Letras grandes";
 
 // Menu SYS2
-#ifdef ENABLE_BIGFONT_VX
-static uint8_t text_EN_ExtraBigFont[] = "classic";
-static uint8_t text_DE_ExtraBigFont[] = "klassisch";
-static uint8_t text_FR_ExtraBigFont[] = "classic";
-static uint8_t text_IT_ExtraBigFont[] = "classic";
-static uint8_t text_ES_ExtraBigFont[] = "classic";
-
-static uint8_t text_EN_ExtraBigFontV2[] = "V2";
-static uint8_t text_DE_ExtraBigFontV2[] = "V2";
-static uint8_t text_FR_ExtraBigFontV2[] = "V2";
-static uint8_t text_IT_ExtraBigFontV2[] = "V2";
-static uint8_t text_ES_ExtraBigFontV2[] = "V2";
-
-#else
 static uint8_t text_EN_ExtraBigFont[] = "yes";
 static uint8_t text_DE_ExtraBigFont[] = "ja";
 static uint8_t text_FR_ExtraBigFont[] = "si";
 static uint8_t text_IT_ExtraBigFont[] = "si";
 static uint8_t text_ES_ExtraBigFont[] = "si";
-#endif
 
 // Menu SYS2 (future feature)
 static uint8_t text_EN_ExtraDecoGame[] = "Deco game";
@@ -1579,6 +1564,36 @@ static uint8_t text_FR_FlipDisplay[] = "";
 static uint8_t text_IT_FlipDisplay[] = "";
 static uint8_t text_ES_FlipDisplay[] = "";
 
+static uint8_t text_EN_SelectCustom[] = "Data views";
+static uint8_t text_DE_SelectCustom[] = "Auswahl Datenanzeige";
+static uint8_t text_FR_SelectCustom[] = "";
+static uint8_t text_IT_SelectCustom[] = "";
+static uint8_t text_ES_SelectCustom[] = "";
+
+static uint8_t text_EN_SelectBigFont[] = "Bigfont data views";
+static uint8_t text_DE_SelectBigFont[] = "Grosschrift Daten";
+static uint8_t text_FR_SelectBigFont[] = "";
+static uint8_t text_IT_SelectBigFont[] = "";
+static uint8_t text_ES_SelectBigFont[] = "";
+
+static uint8_t text_EN_ppo2Air[] = "PPO2 and active gas";
+static uint8_t text_DE_ppo2Air[] = "PPO2 und aktives Atemgas";
+static uint8_t text_FR_ppo2Air[] = "";
+static uint8_t text_IT_ppo2Air[] = "";
+static uint8_t text_ES_ppo2Air[] = "";
+
+static uint8_t text_EN_Navigation[] = "Compass and stop watch";
+static uint8_t text_DE_Navigation[] = "Kompass und Stoppuhr";
+static uint8_t text_FR_Navigation[] = "";
+static uint8_t text_IT_Navigation[] = "";
+static uint8_t text_ES_Navigation[] = "";
+
+static uint8_t text_EN_DepthData[] = "Average and max depth";
+static uint8_t text_DE_DepthData[] = "Mittlere und maximale Tiefe";
+static uint8_t text_FR_DepthData[] = "";
+static uint8_t text_IT_DepthData[] = "";
+static uint8_t text_ES_DepthData[] = "";
+
 /* Lookup Table -------------------------------------------------------------*/
 
 const tText text_array[] =
@@ -1769,9 +1784,6 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_DiveResetAvgQ,	{text_EN_DiveResetAvgQ, text_DE_DiveResetAvgQ, text_FR_DiveResetAvgQ, text_IT_DiveResetAvgQ, text_ES_DiveResetAvgQ}},
     {(uint8_t)TXT2BYTE_ExtraDisplay,	{text_EN_ExtraDisplay, text_DE_ExtraDisplay, text_FR_ExtraDisplay, text_IT_ExtraDisplay, text_ES_ExtraDisplay}},
     {(uint8_t)TXT2BYTE_ExtraBigFont,	{text_EN_ExtraBigFont, text_DE_ExtraBigFont, text_FR_ExtraBigFont, text_IT_ExtraBigFont, text_ES_ExtraBigFont}},
-#ifdef ENABLE_BIGFONT_VX
-	{(uint8_t)TXT2BYTE_ExtraBigFontV2,	{text_EN_ExtraBigFontV2, text_DE_ExtraBigFontV2, text_FR_ExtraBigFontV2, text_IT_ExtraBigFontV2, text_ES_ExtraBigFontV2}},
-#endif
     {(uint8_t)TXT2BYTE_ExtraDecoGame,	{text_EN_ExtraDecoGame, text_DE_ExtraDecoGame, text_FR_ExtraDecoGame, text_IT_ExtraDecoGame, text_ES_ExtraDecoGame}},
     {(uint8_t)TXT2BYTE_ExtraNone,		{text_EN_ExtraNone, text_DE_ExtraNone, text_FR_ExtraNone, text_IT_ExtraNone, text_ES_ExtraNone}},
 	{(uint8_t)TXT2BYTE_MotionCtrl,		{text_EN_MotionCtrl, text_DE_MotionCtrl, text_FR_MotionCtrl, text_IT_MotionCtrl, text_ES_MotionCtrl}},
@@ -1801,5 +1813,15 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_ApneaSurface,	{text_EN_ApneaSurface, text_DE_ApneaSurface, text_FR_ApneaSurface, text_IT_ApneaSurface, text_ES_ApneaSurface}},
 
 	{(uint8_t)TXT2BYTE_FLIPDISPLAY,		{text_EN_FlipDisplay, text_DE_FlipDisplay, text_FR_FlipDisplay, text_IT_FlipDisplay, text_ES_FlipDisplay}},
+
+	{(uint8_t)TXT2BYTE_SelectCustomviews,{text_EN_SelectCustom, text_DE_SelectCustom, text_FR_SelectCustom, text_IT_SelectCustom, text_ES_SelectCustom}},
+	{(uint8_t)TXT2BYTE_SelectBigFont,	{text_EN_SelectBigFont, text_DE_SelectBigFont, text_FR_SelectBigFont, text_IT_SelectBigFont, text_ES_SelectBigFont}},
+    {(uint8_t)TXT2BYTE_MaxDepth,         {text_EN_MaxDepth, text_DE_MaxDepth, text_FR_MaxDepth, text_IT_MaxDepth, text_ES_MaxDepth}},
+    {(uint8_t)TXT2BYTE_Stopwatch, 		{text_EN_Stopwatch, text_DE_Stopwatch, text_FR_Stopwatch, text_IT_Stopwatch, text_ES_Stopwatch}},
+	{(uint8_t)TXT2BYTE_TTS, 			{text_EN_TTS, text_DE_TTS, text_FR_TTS, text_IT_TTS, text_ES_TTS}},
+	{(uint8_t)TXT2BYTE_ppoNair, 		{text_EN_ppo2Air, text_DE_ppo2Air, text_FR_ppo2Air, text_IT_ppo2Air, text_ES_ppo2Air}},
+	{(uint8_t)TXT2BYTE_Navigation, 		{text_EN_Navigation, text_DE_Navigation, text_FR_Navigation, text_IT_Navigation, text_ES_Navigation}},
+	{(uint8_t)TXT2BYTE_DepthData, 		{text_EN_DepthData, text_DE_DepthData, text_FR_DepthData, text_IT_DepthData, text_ES_DepthData}},
+
 
 };

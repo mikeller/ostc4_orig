@@ -304,15 +304,41 @@
 #define StMSYS6_SetFactoryBC	_MB(2,8,6,11,0)
 #define StMSYS6_SetSampleIndx   _MB(2,8,6,12,0)
 
-/* PAGE 9 */
-#define StMPLAN		_MB(2,9,0,0,0)
+ /* PAGE 9 */
 
-/* PAGE 9 EDIT FIELD CONTENT */
-#define StMPLAN2_Interval			_MB(2,9,2,1,0)
-#define StMPLAN3_DiveTime			_MB(2,9,3,1,0)
-#define StMPLAN4_MaxDepth			_MB(2,9,4,1,0)
-#define StMPLAN5_ExitResult		_MB(2,9,5,1,0)
-#define StMPLAN4_Settings			_MB(2,9,6,1,0)
+ # define StMCustom 	_MB(2,9,0,0,0)
+
+ /* PAGE 9 EDIT FIELD CONTENT */
+//
+
+#define StMCustom1_CViewTimeout		_MB(2,9,1,1,0)
+#define StMCustom1_CViewStandard	_MB(2,9,1,2,0)
+#define StMCustom1_CornerTimeout	_MB(2,9,1,3,0)
+#define StMCustom1_CornerStandard	_MB(2,9,1,4,0)
+
+
+#define StMCustom2_CViewSelection1	_MB(2,9,2,1,0)
+#define StMCustom2_CViewSelection2	_MB(2,9,2,2,0)
+#define StMCustom2_CViewSelection3	_MB(2,9,2,3,0)
+#define StMCustom2_CViewSelection4	_MB(2,9,2,4,0)
+#define StMCustom2_CViewSelection5	_MB(2,9,2,5,0)
+#define StMCustom2_CViewSelection6	_MB(2,9,2,6,0)
+
+
+#define StMCustom2_BFSelection		_MB(2,9,3,1,0)
+
+/* PAGE 10 */
+#define StMPLAN		_MB(2,10,0,0,0)
+
+/* PAGE 10 EDIT FIELD CONTENT */
+#define StMPLAN2_Interval			_MB(2,10,2,1,0)
+#define StMPLAN3_DiveTime			_MB(2,10,3,1,0)
+#define StMPLAN4_MaxDepth			_MB(2,10,4,1,0)
+#define StMPLAN5_ExitResult		_MB(2,10,5,1,0)
+#define StMPLAN4_Settings			_MB(2,10,6,1,0)
+
+
+
 
 
 //#define StMDECO6_SALINITY			_MB(2,5,6,1,0)
@@ -321,7 +347,7 @@
 
 
 
-//#define StMDECO7_AMV					_MB(2,5,7,1,0)
+//#define StMDECO7_AMV				_MB(2,5,7,1,0)
 //#define StMDECO7_DefaultAMV		_MB(2,5,7,2,0)
 //#define StMDECO7_RESERVE			_MB(2,5,7,3,0)
 

@@ -84,7 +84,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
  * There might even be entries with fixed values that have no range
  */
 const SSettings SettingsStandard = {
-    .header = 0xFFFF001A,
+    .header = 0xFFFF001B,
     .warning_blink_dsec = 8 * 2,
     .lastDiveLogId = 0,
     .logFlashNextSampleStartAddress = 0,
@@ -310,6 +310,7 @@ const SSettings SettingsStandard = {
 	.FlipDisplay = 0,
 	.cv_configuration = 0xFFFFFFFF,
 	.MotionDetection = MOTION_DETECT_OFF,
+	.cv_config_BigScreen = 0xFFFFFFFF,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -457,6 +458,12 @@ void set_new_settings_missing_in_ext_flash(void)
     case 0xFFFF0019:
     	pSettings->MotionDetection = MOTION_DETECT_OFF;
     	// no break
+    case 0xFFFF001A:
+    	/* deactivate new views => to be activated by customer */
+        pSettings->cv_config_BigScreen = 0xFFFFFFFF;
+        pSettings->cv_config_BigScreen &= pSettings->cv_configuration ^= 1 << CVIEW_T3_Navigation;
+        pSettings->cv_config_BigScreen &= pSettings->cv_configuration ^= 1 << CVIEW_T3_DepthData;
+        // no break
     default:
         pSettings->header = pStandard->header;
         break; // no break before!!
