@@ -58,11 +58,7 @@ static uint16_t tHome_tick_count_cview;
 static uint16_t tHome_tick_count_field;
 
 const uint8_t cv_changelist[] = {CVIEW_Compass, CVIEW_SummaryOfLeftCorner, CVIEW_Tissues, CVIEW_Profile, CVIEW_EADTime, CVIEW_Gaslist, CVIEW_noneOrDebug, CVIEW_Decolist,CVIEW_sensors,CVIEW_sensors_mV, CVIEW_END};
-const uint8_t cv_changelist_BS[] = {CVIEW_T3_Decostop, CVIEW_sensors, CVIEW_Compass, CVIEW_T3_MaxDepth,CVIEW_T3_StopWatch, CVIEW_T3_TTS, CVIEW_T3_ppO2andGas, CVIEW_noneOrDebug, CVIEW_T3_END};
-
-#ifdef ENABLE_BIGFONT_VX
-const uint8_t cv_changelist_BSV2[] = {CVIEW_T3_Decostop, CVIEW_sensors, CVIEW_T3_Navigation, CVIEW_T3_DepthData, CVIEW_T3_TTS, CVIEW_T3_ppO2andGas, CVIEW_noneOrDebug, CVIEW_T3_END};
-#endif
+const uint8_t cv_changelist_BS[] = {CVIEW_T3_Decostop, CVIEW_sensors, CVIEW_Compass, CVIEW_T3_MaxDepth,CVIEW_T3_StopWatch, CVIEW_T3_TTS, CVIEW_T3_ppO2andGas, CVIEW_noneOrDebug, CVIEW_T3_Navigation, CVIEW_T3_DepthData, CVIEW_T3_END};
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -363,6 +359,21 @@ void tHome_change_customview_button_pressed(uint8_t action)
         t6_change_customview(action);
 }
 
+uint8_t tHome_getNumberOfAvailableCVs(const uint8_t* pcv_list)
+{
+	uint8_t cnt = 0;
+
+    while((pcv_list[cnt] != CVIEW_END) && (pcv_list[cnt] != CVIEW_T3_END))
+    {
+    	cnt++;
+    	if (cnt > 100)	/* just in case an invalid list has been provided... */
+    	{
+    		break;
+    	}
+    }
+    cnt--;		/* do not count end token */
+    return cnt;
+}
 
 void tHome_tick(void)
 {

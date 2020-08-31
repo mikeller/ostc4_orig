@@ -305,6 +305,7 @@ char customview_TXT2BYTE_helper(uint8_t customViewId)
         text = TXT2BYTE_Compass;
         break;
     case CVIEW_Decolist:
+    case CVIEW_T3_Decostop:
         text = TXT2BYTE_Decolist;
         break;
     case CVIEW_Tissues:
@@ -325,6 +326,24 @@ char customview_TXT2BYTE_helper(uint8_t customViewId)
     case CVIEW_noneOrDebug:
     	text = TXT2BYTE_DispNoneDbg;
         break;
+    case CVIEW_T3_MaxDepth:
+    	text = TXT2BYTE_MaxDepth;
+    	break;
+    case CVIEW_T3_StopWatch:
+    	text = TXT2BYTE_Stopwatch;
+    	break;
+    case CVIEW_T3_TTS:
+    	text = TXT2BYTE_TTS;
+    	break;
+    case CVIEW_T3_ppO2andGas:
+    	text = TXT2BYTE_ppoNair;
+    	break;
+    case CVIEW_T3_Navigation:
+    	text = TXT2BYTE_Navigation;
+    	break;
+    case CVIEW_T3_DepthData:
+    	text = TXT2BYTE_DepthData;
+    	break;
     default:
         break;
     }
