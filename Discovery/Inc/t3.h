@@ -36,6 +36,7 @@
 void t3_init(void);
 void t3_refresh(void);
 void t3_change_customview(uint8_t action);
-uint8_t t3_GetEnabled_customviews();
+uint8_t t3_GetEnabled_customviews(void);
+uint8_t t3_getCustomView(void);
 
 #endif /* T3_H */
