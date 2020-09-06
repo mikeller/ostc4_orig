@@ -1797,10 +1797,18 @@ void t7_refresh_customview(void)
             fPpO2ofGasAtThisDepth = (stateUsed->lifeData.pressure_ambient_bar - WATER_VAPOUR_PRESSURE) * pGasLine[gasId].oxygen_percentage / 100;
             if(pGasLine[gasId].note.ub.active == 0)
                 strcpy(&text[textpointer++],"\021");
+            else if(stateUsed->lifeData.actualGas.GasIdInSettings == gasId)	/* actual selected gas */
+            {
+            	strcpy(&text[textpointer++],"\030");
+            }
             else if((fPpO2ofGasAtThisDepth > fPpO2limitHigh) || (fPpO2ofGasAtThisDepth < fPpO2limitLow))
                 strcpy(&text[textpointer++],"\025");
+            else if(actualBetterGasId() == gasId)
+            {
+                strcpy(&text[textpointer++],"\026");			/* Highlight better gas */
+            }
             else
-                strcpy(&text[textpointer++],"\030");
+                strcpy(&text[textpointer++],"\023");
 
             text[textpointer++] = ' ';
             oxygen = pGasLine[gasId].oxygen_percentage;
