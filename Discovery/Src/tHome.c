@@ -58,7 +58,7 @@ static uint16_t tHome_tick_count_cview;
 static uint16_t tHome_tick_count_field;
 
 const uint8_t cv_changelist[] = {CVIEW_Compass, CVIEW_SummaryOfLeftCorner, CVIEW_Tissues, CVIEW_Profile, CVIEW_EADTime, CVIEW_Gaslist, CVIEW_noneOrDebug, CVIEW_Decolist,CVIEW_sensors,CVIEW_sensors_mV, CVIEW_END};
-const uint8_t cv_changelist_BS[] = {CVIEW_T3_Decostop, CVIEW_sensors, CVIEW_Compass, CVIEW_T3_MaxDepth,CVIEW_T3_StopWatch, CVIEW_T3_TTS, CVIEW_T3_ppO2andGas, CVIEW_noneOrDebug, CVIEW_T3_Navigation, CVIEW_T3_DepthData, CVIEW_T3_END};
+const uint8_t cv_changelist_BS[] = {CVIEW_T3_Decostop, CVIEW_sensors, CVIEW_Compass, CVIEW_T3_MaxDepth,CVIEW_T3_StopWatch, CVIEW_T3_TTS, CVIEW_T3_GasList, CVIEW_T3_ppO2andGas, CVIEW_noneOrDebug, CVIEW_T3_Navigation, CVIEW_T3_DepthData, CVIEW_T3_END};
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -148,18 +148,10 @@ void tHomeDiveMenuControl(uint8_t sendAction)
         if(settingsGetPointer()->design == 4)
             return;
 
-        if(settingsGetPointer()->design == 3)
-        {
-            settingsGetPointer()->design = 7;
-        	if(settingsGetPointer()->MotionDetection == MOTION_DETECT_SECTOR)
-        	{
-        		DefinePitchSectors(stateRealGetPointer()->lifeData.compass_pitch,CUSTOMER_DEFINED_VIEWS);
-        	}
-        }
         switch(get_globalState())
         {
-        case StD:
-            if(settingsGetPointer()->design == 6)
+        	case StD:
+        	if(settingsGetPointer()->design == 6)
             {
                 if(is_stateUsedSetToSim())
                     set_globalState(StDSIM1);
@@ -177,6 +169,26 @@ void tHomeDiveMenuControl(uint8_t sendAction)
                 break;
             }
 
+            if(settingsGetPointer()->design == 3)
+            {
+            	switch(t3_getCustomView())
+            	{
+            		case CVIEW_T3_Navigation:
+            		case CVIEW_Compass:		set_globalState(StDBEAR);
+            			break;
+            		case CVIEW_T3_StopWatch: set_globalState(StDRAVG);
+            			break;
+            		case CVIEW_T3_GasList: if(stateUsed->warnings.betterGas)
+            								{
+                        						set_globalState(StDMGAS);
+            								}
+            			break;
+            		default:
+            			break;
+            	}
+            	break;
+            }
+
             if(stateUsed->warnings.betterGas)
                 set_globalState(StDMGAS);
             else
@@ -187,10 +199,17 @@ void tHomeDiveMenuControl(uint8_t sendAction)
             break;
 
         case StDMGAS:
-            if(stateUsed->warnings.betterSetpoint)
-                set_globalState(StDMSPT);
-            else
-                set_globalState(StDMENU);
+        	if(settingsGetPointer()->design == 3)
+        	{
+        		set_globalState(StD);
+        	}
+        	else
+        	{
+				if(stateUsed->warnings.betterSetpoint)
+					set_globalState(StDMSPT);
+				else
+					set_globalState(StDMENU);
+        	}
             break;
 
         case StDMSPT:
@@ -220,17 +239,38 @@ void tHomeDiveMenuControl(uint8_t sendAction)
                 set_globalState(StD);
             break;
 
-        case StDBEAR: // t5_gauge
-            set_globalState(StDRAVG);
-            break;
+        case StDBEAR:
+        	if(settingsGetPointer()->design == 5)
+        	{
+        		set_globalState(StDRAVG);
+        	}
 
-        case StDRAVG: // t5_gauge
-            if(is_stateUsedSetToSim())
-                set_globalState(StDSIM1);
-            else
-                set_globalState(StD);
+           	if(settingsGetPointer()->design == 3)
+            {
+           		if(t3_getCustomView() == CVIEW_T3_Navigation)
+           		{
+           			set_globalState(StDRAVG);
+           		}
+           		else
+           		{
+           			set_globalState(StD);
+           		}
+            }
             break;
-
+        case StDRAVG:
+        	if(settingsGetPointer()->design == 5)
+        	{
+				if(is_stateUsedSetToSim())
+					set_globalState(StDSIM1);
+				else
+					set_globalState(StD);
+				break;
+        	}
+        	else
+        	{
+        		set_globalState(StD);
+        	}
+        	break;
         case StDQUIT: // t6_apnea
             set_globalState(StD);
             break;
@@ -244,15 +284,6 @@ void tHomeDiveMenuControl(uint8_t sendAction)
     {
         if(settingsGetPointer()->design == 4)
             return;
-
-        if(settingsGetPointer()->design == 3)	/* switch back to t7 (standard) view */
-        {
-            settingsGetPointer()->design = 7;
-        	if(settingsGetPointer()->MotionDetection == MOTION_DETECT_SECTOR)
-        	{
-        		DefinePitchSectors(stateRealGetPointer()->lifeData.compass_pitch,CUSTOMER_DEFINED_VIEWS);
-        	}
-        }
 
         switch(get_globalState())
         {
