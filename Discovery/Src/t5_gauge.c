@@ -143,7 +143,7 @@ void t5_init(void)
 
     t5c1.Image = &t5screen;
     t5c1.WindowNumberOfTextLines = 2;
-    t5c1.WindowLineSpacing = t5l1.WindowLineSpacing;
+    t5c1.WindowLineSpacing = 84 + 5;
     t5c1.WindowX0 = 0;
     t5c1.WindowX1 = 799;
     if(!pSettings->FlipDisplay)

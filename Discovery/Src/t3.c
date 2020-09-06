@@ -69,6 +69,7 @@ const uint8_t t3_customviewsStandard[] =
     CVIEW_T3_StopWatch,
     CVIEW_T3_TTS,
     CVIEW_T3_ppO2andGas,
+	CVIEW_T3_GasList,
 	CVIEW_T3_Navigation,
 	CVIEW_T3_DepthData,
     CVIEW_T3_END
@@ -133,9 +134,10 @@ void t3_init(void)
     t3r1.WindowY0 = t3l1.WindowY0;
     t3r1.WindowY1 = t3l1.WindowY1;
 
+    /* t3c1 is across the complete lower part of the display */
     t3c1.Image = &t3screen;
     t3c1.WindowNumberOfTextLines = 2;
-    t3c1.WindowLineSpacing = 100;
+    t3c1.WindowLineSpacing = 84 + 5; /* double font + spacing */
     t3c1.WindowX0 = 0;
     t3c1.WindowX1 = 799;
     if(!pSettings->FlipDisplay)
@@ -149,6 +151,7 @@ void t3_init(void)
 		t3c1.WindowY1 = 479 - 5;
 	}
 
+    /* t3c2 is just showing the lower right part of the display */
     t3c2.Image = &t3screen;
     t3c2.WindowNumberOfTextLines = 3;
     t3c2.WindowLineSpacing = t3c1.WindowLineSpacing ;
@@ -200,11 +203,13 @@ void t3_refresh(void)
 
 float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCfgWindow* tXl1, GFX_DrawCfgWindow* tXr1, uint8_t mode)
 {
-    char text[512];
+    char text[256];
+    uint8_t textPointer;
     uint8_t color;
     uint8_t depthChangeRate;
     uint8_t depthChangeAscent;
     point_t start, stop, startZeroLine;
+    SDivetime Divetime = {0,0,0,0};
 
 	SSettings* pSettings;
 	pSettings = settingsGetPointer();
@@ -432,8 +437,6 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
         }
         else
         {
-            SDivetime Divetime = {0,0,0, 0};
-
             Divetime.Total = stateUsed->lifeData.dive_time_seconds;
             Divetime.Minutes = Divetime.Total / 60;
             Divetime.Seconds = Divetime.Total - ( Divetime.Minutes * 60 );
@@ -446,25 +449,50 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
             else
                 snprintf(text,TEXTSIZE,"\020\003\016\002%u'",Divetime.Minutes);
         }
+        t3_basics_colorscheme_mod(text);
+        GFX_write_string(&FontT105,tXr1,text,1);
     }
     else
     {
-        SDivetime Divetime = {0,0,0, 0};
+    	switch(get_globalState())
+    	{
+    		case StDBEAR:   snprintf(text,TEXTSIZE,"\a\003\001%c%c", TXT_2BYTE, TXT2BYTE_DiveBearingQ);
+            				GFX_write_string_color(&FontT42,tXr1,text,1,CLUT_WarningYellow);
+            	break;
+    		case StDRAVG:	snprintf(text,TEXTSIZE,"\a\003\001%c%c", TXT_2BYTE, TXT2BYTE_DiveResetAvgQ);
+                			GFX_write_string_color(&FontT42,tXr1,text,1,CLUT_WarningYellow);
+                break;
 
-        Divetime.Total = stateUsed->lifeData.dive_time_seconds_without_surface_time;
-        Divetime.Minutes = Divetime.Total / 60;
-        Divetime.Seconds = Divetime.Total - ( Divetime.Minutes * 60 );
+    		case StDMGAS:
+    	        			textPointer = 0;
+    						text[textPointer++] = '\a';
+    						text[textPointer++] = '\001';
+    						text[textPointer++] = ' ';
+    	        			textPointer += tHome_gas_writer(stateUsed->diveSettings.gas[actualBetterGasId()].oxygen_percentage,stateUsed->diveSettings.gas[actualBetterGasId()].helium_percentage,&text[textPointer]);
+    	        			text[textPointer++] = '?';
+    	        			text[textPointer++] = ' ';
+    	        			text[textPointer++] = 0;
+    	        			GFX_write_string_color(&FontT42,tXr1,text,1,CLUT_WarningYellow);
+    	        break;
+    		default:		/* show divetime */
 
-        snprintf(text,TEXTSIZE,"\032\f\002%c",TXT_Divetime);
-        GFX_write_string(&FontT42,tXr1,text,0);
+							Divetime.Total = stateUsed->lifeData.dive_time_seconds_without_surface_time;
+							Divetime.Minutes = Divetime.Total / 60;
+							Divetime.Seconds = Divetime.Total - ( Divetime.Minutes * 60 );
 
-        if(Divetime.Minutes < 100)
-            snprintf(text,TEXTSIZE,"\020\003\016\002%u:%02u",Divetime.Minutes, Divetime.Seconds);
-        else
-            snprintf(text,TEXTSIZE,"\020\003\016\002%u'",Divetime.Minutes);
+							snprintf(text,TEXTSIZE,"\032\f\002%c",TXT_Divetime);
+							GFX_write_string(&FontT42,tXr1,text,0);
+
+							if(Divetime.Minutes < 100)
+								snprintf(text,TEXTSIZE,"\020\003\016\002%u:%02u",Divetime.Minutes, Divetime.Seconds);
+							else
+								snprintf(text,TEXTSIZE,"\020\003\016\002%u'",Divetime.Minutes);
+
+						    t3_basics_colorscheme_mod(text);
+						    GFX_write_string(&FontT105,tXr1,text,1);
+				break;
+    	}
     }
-    t3_basics_colorscheme_mod(text);
-    GFX_write_string(&FontT105,tXr1,text,1);
 
     return depth;
 }
@@ -474,9 +502,10 @@ void t3_refresh_divemode(void)
 {
     uint8_t  customview_warnings = 0;
     float depth_meter = 0.0;
-
+    char text[30];
     // everything like lines, depth, ascent graph and divetime
     depth_meter = t3_basics_lines_depth_and_divetime(&t3screen, &t3l1, &t3r1, 0); // 0 could be stateUsed->diveSettings.diveMode for CCR specials
+
 
     // customview
     if(stateUsed->warnings.numWarnings)
@@ -789,7 +818,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
 
         textpointer = 0;
         tXc2->WindowX0 = 0;
-        tXc2->WindowTab = 800/2;
+        tXc2->WindowTab = 800/3; // /2
 
         if(pSettings->FlipDisplay)
         {
@@ -805,25 +834,40 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         for(int gasId=1;gasId<=NUM_GASES;gasId++)
         {
             textpointer = 0;
+            text[textpointer++] = '\003';
             lineNumber = gasId;
             if(gasId > 3)
             {
-                text[textpointer++] = '\t';
-                lineNumber = gasId - 3;
+                 text[textpointer++] = '\002';	/* display right aligned */
+                 lineNumber = gasId %4;
             }
+            else if(gasId > 1)
+            {
+            	text[textpointer++] = '\001';  /* display centered */
+                lineNumber = gasId %2;
+            }
+
             fPpO2ofGasAtThisDepth = (stateUsed->lifeData.pressure_ambient_bar - WATER_VAPOUR_PRESSURE) * pGasLine[gasId].oxygen_percentage / 100;
             if(pGasLine[gasId].note.ub.active == 0)
                 strcpy(&text[textpointer++],"\021");
+            else if(stateUsed->lifeData.actualGas.GasIdInSettings == gasId)	/* actual selected gas */
+            {
+            	strcpy(&text[textpointer++],"\030");
+            }
             else if((fPpO2ofGasAtThisDepth > fPpO2limitHigh) || (fPpO2ofGasAtThisDepth < fPpO2limitLow))
                 strcpy(&text[textpointer++],"\025");
+            else if(actualBetterGasId() == gasId)
+            {
+            	strcpy(&text[textpointer++],"\026");	/* Highlight better gas */
+            }
             else
-                strcpy(&text[textpointer++],"\030");
+                strcpy(&text[textpointer++],"\023");	/* Blue for travel or deco without special state */
 
             text[textpointer++] = ' ';
             oxygen = pGasLine[gasId].oxygen_percentage;
             helium = pGasLine[gasId].helium_percentage;
             textpointer += write_gas(&text[textpointer], oxygen, helium);
-            GFX_write_string(&FontT42, tXc2, text, lineNumber);
+            GFX_write_string(&FontT42, tXc1, text, lineNumber);
         }
         break;
 
@@ -1554,4 +1598,7 @@ uint8_t t3_GetEnabled_customviews()
     return enabledViewCnt;
 }
 
-
+uint8_t t3_getCustomView(void)
+{
+    return t3_selection_customview;
+}
