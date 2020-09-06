@@ -322,7 +322,7 @@ char customview_TXT2BYTE_helper2(uint8_t customViewId)
     case CVIEW_Profile:
         text = TXT2BYTE_Profile;
         break;
-    case CVIEW_Gaslist:
+    case CVIEW_T3_GasList:
         text = TXT2BYTE_Gaslist;
         break;
     case CVIEW_EADTime:
@@ -650,8 +650,6 @@ void openEdit_CustomviewDivemode2(const uint8_t* pcv_changelist)
 					break;
 			};
      }
-
-
      write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
 }
 
@@ -718,4 +716,5 @@ void CustomviewDivemode2_refresh()
          text[textPointer] = 0;
          write_label_var( 30, 800, ME_Y_LINE6, &FontT48, text);
      }
+     write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
 }
