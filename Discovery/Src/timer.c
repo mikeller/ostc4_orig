@@ -46,6 +46,8 @@ void timer_UpdateSecond(_Bool checkOncePerSecond)
     static int last_second = -1;
     static _Bool bSafetyStop = false;
     static float last_depth_meter = 0;
+    static uint8_t safetyStopResetCnt = 0;
+    static uint16_t safetyStopRestartCnt = 0;
     long stopWatchTime_Second = 0;
 
     if(checkOncePerSecond)
@@ -86,15 +88,44 @@ void timer_UpdateSecond(_Bool checkOncePerSecond)
             }
         }
 
+        /* Has the diver left safety stop depth (descend)? => need to restart safety stop timer? */
+        if(safetyStopCountDown_Second != 0)
+        {
+        	if(stateUsed->lifeData.depth_meter >= (settingsGetPointer()->safetystopDepth + 2.0))
+        	{
+        		safetyStopRestartCnt = safetyStopCountDown_Second;
+        		safetyStopCountDown_Second = 0;
+        		safetyStopResetCnt = 60;			/* restart safety stop from scratch if depth is left for more than one minute */
+        	}
+        }
+        else if(safetyStopResetCnt)
+        {
+        	safetyStopResetCnt--;
+        	if(safetyStopResetCnt == 0)
+        	{
+        		safetyStopRestartCnt = 0;
+        	}
+        }
+
         //Countdown starts at 5 meters
         if(bSafetyStop && (stateUsed->lifeData.depth_meter - 0.0001f <= (settingsGetPointer()->safetystopDepth) ))
         {
             if(safetyStopCountDown_Second == 0)
             {
-                safetyStopCountDown_Second = (settingsGetPointer()->safetystopDuration) * 60;
+            	if(safetyStopRestartCnt)		/* just a short interrupt of the safetystop => continue using old count */
+            	{
+            		safetyStopCountDown_Second = safetyStopRestartCnt;
+            		safetyStopRestartCnt = 0;
+            	}
+            	else							/* setup safety stop duration */
+            	{
+            		safetyStopCountDown_Second = (settingsGetPointer()->safetystopDuration) * 60;
+            	}
             }
             else
+            {
                 safetyStopCountDown_Second--;
+            }
         }
 
         // after safetystopDuration minutes or below 3 (2) meter safetyStop is disabled
