@@ -40,26 +40,27 @@
 #include "motion.h"
 
 #define CV_PER_PAGE  (5u)			/* number of cv selections shown at one page */
+#define CV_SUBPAGE_MAX		(2u)	/* max number of customer view selection pages */
 
 static uint8_t customviewsSubpage = 0;
 static uint8_t customviewsSubpageMax = 0;	/* number of pages needed to display all selectable views */
 static const uint8_t*	pcv_curchangelist;
 /* Private function prototypes -----------------------------------------------*/
-void openEdit_Customview2(void);
-void refresh_Customviews2(void);
+void openEdit_Customview(void);
+void refresh_Customviews(void);
 /* Announced function prototypes -----------------------------------------------*/
 uint8_t OnAction_CViewTimeout  (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_CViewStandard (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_CornerTimeout (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_CornerStandard(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-
-
+uint8_t OnAction_ExtraDisplay	 (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+uint8_t OnAction_MotionCtrl	 (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 /* Exported functions --------------------------------------------------------*/
 
 
 
 
-void refresh_Customviews2(void)
+void refresh_Customviews(void)
 {
     char text[32];
     uint8_t textpointer = 0;
@@ -262,21 +263,21 @@ void openEdit_Custom(uint8_t line)
     {
     	case 1:
     	default:
-    			openEdit_Customview2();
+    			openEdit_Customview();
     		break;
     	case 2:
-				openEdit_CustomviewDivemode2(cv_changelist);
+				openEdit_CustomviewDivemode(cv_changelist);
     		break;
     	case 3:
-				openEdit_CustomviewDivemode2(cv_changelist_BS);
+				openEdit_CustomviewDivemode(cv_changelist_BS);
     		break;
     }
 }
 
 /* Private functions ---------------------------------------------------------*/
-void openEdit_Customview2(void)
+void openEdit_Customview(void)
 {
-    refresh_Customviews2();
+    refresh_Customviews();
 
     write_field_button(StMCustom1_CViewTimeout,		400, 700, ME_Y_LINE1,  &FontT48, "");
     write_field_button(StMCustom1_CViewStandard,	400, 700, ME_Y_LINE2,  &FontT48, "");
@@ -284,8 +285,8 @@ void openEdit_Customview2(void)
     write_field_button(StMCustom1_CornerTimeout,	400, 700, ME_Y_LINE3,  &FontT48, "");
     write_field_button(StMCustom1_CornerStandard,	400, 700, ME_Y_LINE4,  &FontT48, "");
 
-//    write_field_button(StMCustom1_ExtraDisplay,		400, 700, ME_Y_LINE5,  &FontT48, "");
-//    write_field_button(StMCustom1_MotionCtrl,		400, 700, ME_Y_LINE6,  &FontT48, "");
+    write_field_button(StMCustom1_ExtraDisplay,		400, 700, ME_Y_LINE5,  &FontT48, "");
+    write_field_button(StMCustom1_MotionCtrl,		400, 700, ME_Y_LINE6,  &FontT48, "");
 
     setEvent(StMCustom1_CViewTimeout,		(uint32_t)OnAction_CViewTimeout);
     setEvent(StMCustom1_CViewStandard,		(uint32_t)OnAction_CViewStandard);
@@ -293,11 +294,11 @@ void openEdit_Customview2(void)
     setEvent(StMCustom1_CornerTimeout,		(uint32_t)OnAction_CornerTimeout);
     setEvent(StMCustom1_CornerStandard,	(uint32_t)OnAction_CornerStandard);
 
-//    setEvent(StMCustom1_ExtraDisplay,		(uint32_t)OnAction_ExtraDisplay);
-//    setEvent(StMCustom1_MotionCtrl,		(uint32_t)OnAction_MotionCtrl);
+    setEvent(StMCustom1_ExtraDisplay,		(uint32_t)OnAction_ExtraDisplay);
+    setEvent(StMCustom1_MotionCtrl,		(uint32_t)OnAction_MotionCtrl);
 }
 
-char customview_TXT2BYTE_helper2(uint8_t customViewId)
+char customview_TXT2BYTE_helper(uint8_t customViewId)
 {
     char text = 0;
 
@@ -359,7 +360,7 @@ char customview_TXT2BYTE_helper2(uint8_t customViewId)
 }
 
 
-uint8_t OnAction_CViewTimeout2(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+uint8_t OnAction_CViewTimeout(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     uint8_t value;
     value = settingsGetPointer()->tX_customViewTimeout;
@@ -386,7 +387,7 @@ uint8_t OnAction_CViewTimeout2(uint32_t editId, uint8_t blockNumber, uint8_t dig
 }
 
 
-uint8_t OnAction_CViewStandard2(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+uint8_t OnAction_CViewStandard(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     uint8_t newValue;
     switch(settingsGetPointer()->tX_customViewPrimary)
@@ -428,7 +429,7 @@ uint8_t OnAction_CViewStandard2(uint32_t editId, uint8_t blockNumber, uint8_t di
 }
 
 
-uint8_t OnAction_CornerTimeout2(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+uint8_t OnAction_CornerTimeout(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     uint8_t value;
     value = settingsGetPointer()->tX_userselectedLeftLowerCornerTimeout;
@@ -455,7 +456,7 @@ uint8_t OnAction_CornerTimeout2(uint32_t editId, uint8_t blockNumber, uint8_t di
 }
 
 
-uint8_t OnAction_CornerStandard2(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+uint8_t OnAction_CornerStandard(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
     uint8_t value;
     value = settingsGetPointer()->tX_userselectedLeftLowerCornerPrimary;
@@ -514,20 +515,19 @@ uint8_t OnAction_Customview_Toggle(uint32_t editId, uint8_t blockNumber, uint8_t
 
 uint8_t OnAction_Customview_NextPage(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
-	uint8_t id_next = 0;
 	customviewsSubpage++;
 	if(customviewsSubpage == customviewsSubpageMax)
 	{
 		customviewsSubpage = 0;
 	}
 	resetMenuEdit(CLUT_MenuPageCustomView);				/* rebuild page */
-	openEdit_CustomviewDivemode2(pcv_curchangelist);
+	openEdit_CustomviewDivemode(pcv_curchangelist);
 
 	tMenuEdit_select(StMCustom2_CViewSelection6);
     return UPDATE_DIVESETTINGS;
 }
 
-void openEdit_CustomviewDivemode2(const uint8_t* pcv_changelist)
+void openEdit_CustomviewDivemode(const uint8_t* pcv_changelist)
 {
 
 	SSettings *pSettings = settingsGetPointer();
@@ -540,7 +540,7 @@ void openEdit_CustomviewDivemode2(const uint8_t* pcv_changelist)
 	customviewsSubpageMax = (tHome_getNumberOfAvailableCVs(pcv_changelist) / CV_PER_PAGE) + 1;
 	pcv_curchangelist = pcv_changelist;
 
-	CustomviewDivemode2_refresh(pcv_changelist);
+	CustomviewDivemode_refresh(pcv_changelist);
 
 
     text[0] = '\001';
@@ -568,7 +568,7 @@ void openEdit_CustomviewDivemode2(const uint8_t* pcv_changelist)
      				text[textPointer++] = '\006' - CHECK_BIT_THOME(pSettings->cv_config_BigScreen,id);
      			}
 				text[textPointer++] = ' ';
-				textPointer += snprintf(&text[textPointer], 60,	"%c%c\n\r",	TXT_2BYTE, customview_TXT2BYTE_helper2(id));
+				textPointer += snprintf(&text[textPointer], 60,	"%c%c\n\r",	TXT_2BYTE, customview_TXT2BYTE_helper(id));
 
 				switch(i)
 				{
@@ -653,8 +653,87 @@ void openEdit_CustomviewDivemode2(const uint8_t* pcv_changelist)
      write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
 }
 
+void openEdit_CustomviewDivemodeMenu(uint8_t line)
+{
+	static uint8_t customviewsSubpage = 0;
+	SSettings *pSettings = settingsGetPointer();
+	extern _Bool WriteSettings;
+	char text[MAX_PAGE_TEXTSIZE];
+	uint16_t tabPosition;
+	uint32_t id;
 
-void CustomviewDivemode2_refresh()
+
+	if((line == 6) || (cv_changelist[customviewsSubpage * 5 + line-1] == CVIEW_END))		/* select next set of views */
+	{
+		customviewsSubpage++;
+		if(customviewsSubpage == CV_SUBPAGE_MAX)
+		{
+			customviewsSubpage = 0;
+		}
+		set_CustomsviewsSubpage(customviewsSubpage);
+		/* rebuild the selection page with the next set of customer views */
+		id = tMSystem_refresh(0, text, &tabPosition, NULL);
+		tM_build_page(id, text, tabPosition, NULL);
+		openMenu(0);
+	}
+	else
+	{
+		pSettings->cv_configuration ^= 1 << (cv_changelist[customviewsSubpage * 5 + line-1]);
+		if(t7_GetEnabled_customviews() == 0)
+		{
+			pSettings->cv_configuration ^= (1 << CVIEW_noneOrDebug);
+		}
+		InitMotionDetection(); /* consider new view setup for view selection by motion */
+		exitMenuEdit_to_Menu_with_Menu_Update();
+	}
+}
+
+uint8_t OnAction_ExtraDisplay	 (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+{
+    uint8_t newValue;
+
+    newValue = settingsGetPointer()->extraDisplay + 1;
+    if(newValue == EXTRADISPLAY_DECOGAME)  /* Decogame not yet implemented */
+    {
+    	newValue++;
+    }
+    if(newValue >= EXTRADISPLAY_END)
+    {
+    	newValue = EXTRADISPLAY_none;
+    }
+    settingsGetPointer()->extraDisplay = newValue;
+    return UNSPECIFIC_RETURN;
+}
+
+
+
+uint8_t OnAction_MotionCtrl	 (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+{
+    uint8_t newValue;
+    switch(settingsGetPointer()->MotionDetection)
+    {
+    case MOTION_DETECT_OFF:
+        newValue = MOTION_DETECT_MOVE;
+        break;
+    case MOTION_DETECT_MOVE:
+        newValue = MOTION_DETECT_SECTOR;
+        break;
+    case MOTION_DETECT_SECTOR:
+        newValue = MOTION_DETECT_SCROLL;
+        break;
+    case MOTION_DETECT_SCROLL:
+    	newValue = MOTION_DETECT_OFF;
+    	break;
+    default:
+        newValue = MOTION_DETECT_OFF;
+        break;
+    }
+    settingsGetPointer()->MotionDetection = newValue;
+    InitMotionDetection();
+    return UNSPECIFIC_RETURN;
+}
+
+void CustomviewDivemode_refresh()
 {
 	SSettings *pSettings = settingsGetPointer();
 	char text[MAX_PAGE_TEXTSIZE];
@@ -689,7 +768,7 @@ void CustomviewDivemode2_refresh()
  				text[textPointer++] = '\006' - CHECK_BIT_THOME(pSettings->cv_config_BigScreen,id);
  			}
 			text[textPointer++] = ' ';
-			textPointer += snprintf(&text[textPointer], 60,	"%c%c\n\r",	TXT_2BYTE, customview_TXT2BYTE_helper2(id));
+			textPointer += snprintf(&text[textPointer], 60,	"%c%c\n\r",	TXT_2BYTE, customview_TXT2BYTE_helper(id));
 
 				switch(i)
 				{

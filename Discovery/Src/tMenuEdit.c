@@ -211,7 +211,7 @@ void tMenuEdit_refresh_live_content(void)
 	 	 	 break;
 	 	 case (StMXTRA_CompassHeading & MaskFieldDigit):  refreshFct = refresh_CompassHeading;
 	 	 	 break;
-	 	 case (StMSYS5_Info & MaskFieldDigit): refreshFct = &refresh_InformationPage;
+	 	 case (StMSYS4_Info & MaskFieldDigit): refreshFct = &refresh_InformationPage;
 	 	 	 break;
 	 	 case (StMPLAN5_ExitResult & MaskFieldDigit): refreshFct = refresh_PlanResult;
 	 		 break;
@@ -220,8 +220,7 @@ void tMenuEdit_refresh_live_content(void)
 	 	 	 break;
 	 	 case (StMSYS3_Units & MaskFieldDigit): refreshFct = refresh_Design;
 	 	 	 break;
-	 	 case (StMCustom1_CViewTimeout & MaskFieldDigit):
-	 	 case (StMSYS4_CViewTimeout & MaskFieldDigit): refreshFct = refresh_Customviews;
+	 	 case (StMCustom1_CViewTimeout & MaskFieldDigit):refreshFct = refresh_Customviews;
 	 	 	 break;
 	 	 case (StMCustom2_CViewSelection1 & MaskFieldDigit) :
 	 	 case StMCustom2_CViewSelection2:
@@ -229,7 +228,7 @@ void tMenuEdit_refresh_live_content(void)
 	 	 case StMCustom2_CViewSelection4:
 	 	 case StMCustom2_CViewSelection5:
 	 	 case StMCustom2_CViewSelection6:
-	 	 case (StMCustom2_BFSelection & MaskFieldDigit) : refreshFct = CustomviewDivemode2_refresh;
+	 	 case (StMCustom2_BFSelection & MaskFieldDigit) : refreshFct = CustomviewDivemode_refresh;
 	 	 	 break;
 	 	 default:	 /* no menu has been updated */
 	 		 break;
