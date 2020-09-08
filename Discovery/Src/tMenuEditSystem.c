@@ -38,11 +38,11 @@
 #include "tMenu.h"
 #include "tMenuEdit.h"
 #include "tMenuSystem.h"
+#include "tMenuEditCustom.h"
 #include "motion.h"
 #include "t7.h"
 
 
-#define CV_SUBPAGE_MAX		(2u)	/* max number of customer view selection pages */
 /*#define HAVE_DEBUG_VIEW */
 static uint8_t infoPage = 0;
 
@@ -50,10 +50,8 @@ static uint8_t infoPage = 0;
 void openEdit_DateTime(void);
 void openEdit_Language(void);
 void openEdit_Design(void);
-void openEdit_Customview(void);
 void openEdit_Information(void);
 void openEdit_Reset(void);
-void openEdit_CustomviewDivemode(uint8_t line);
 //void openEdit_ShowDebugInfo(void);
 //void openEdit_Salinity(void);
 
@@ -76,13 +74,6 @@ uint8_t OnAction_Espanol			(uint32_t editId, uint8_t blockNumber, uint8_t digitN
 uint8_t OnAction_Units				(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_Colorscheme	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_DebugInfo		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-
-uint8_t OnAction_CViewTimeout	 (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_CViewStandard (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_CornerTimeout (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_CornerStandard(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_ExtraDisplay	 (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_MotionCtrl	 (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 
 uint8_t OnAction_Exit					(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_Confirm			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
@@ -129,12 +120,9 @@ void openEdit_System(uint8_t line)
             openEdit_Design();
         break;
         case 4:
-            openEdit_Customview();
-        break;
-        case 5:
             openEdit_Information();
         break;
-        case 6:
+        case 5:
             openEdit_Reset();
         break;
 /*
@@ -149,47 +137,12 @@ void openEdit_System(uint8_t line)
     }
     else
     {
-        openEdit_CustomviewDivemode(line);
+        openEdit_CustomviewDivemodeMenu(line);
     }
 
 }
 
 /* Private functions ---------------------------------------------------------*/
-
-void openEdit_CustomviewDivemode(uint8_t line)
-{
-	static uint8_t customviewsSubpage = 0;
-	SSettings *pSettings = settingsGetPointer();
-	extern _Bool WriteSettings;
-	char text[MAX_PAGE_TEXTSIZE];
-	uint16_t tabPosition;
-	uint32_t id;
-
-
-	if((line == 6) || (cv_changelist[customviewsSubpage * 5 + line-1] == CVIEW_END))		/* select next set of views */
-	{
-		customviewsSubpage++;
-		if(customviewsSubpage == CV_SUBPAGE_MAX)
-		{
-			customviewsSubpage = 0;
-		}
-		set_CustomsviewsSubpage(customviewsSubpage);
-		/* rebuild the selection page with the next set of customer views */
-		id = tMSystem_refresh(0, text, &tabPosition, NULL);
-		tM_build_page(id, text, tabPosition, NULL);
-		openMenu(0);
-	}
-	else
-	{
-		pSettings->cv_configuration ^= 1 << (cv_changelist[customviewsSubpage * 5 + line-1]);
-		if(t7_GetEnabled_customviews() == 0)
-		{
-			pSettings->cv_configuration ^= (1 << CVIEW_noneOrDebug);
-		}
-		InitMotionDetection(); /* consider new view setup for view selection by motion */
-		exitMenuEdit_to_Menu_with_Menu_Update();
-	}
-}
 
 
 void openEdit_DateTime(void)
@@ -762,380 +715,6 @@ uint8_t OnAction_Design_t3			(uint32_t editId, uint8_t blockNumber, uint8_t digi
 */
 
 
-void openEdit_Customview(void)
-{
-    refresh_Customviews();
-
-    write_field_button(StMSYS4_CViewTimeout,		400, 700, ME_Y_LINE1,  &FontT48, "");
-    write_field_button(StMSYS4_CViewStandard,		400, 700, ME_Y_LINE2,  &FontT48, "");
-
-    write_field_button(StMSYS4_CornerTimeout,		400, 700, ME_Y_LINE3,  &FontT48, "");
-    write_field_button(StMSYS4_CornerStandard,		400, 700, ME_Y_LINE4,  &FontT48, "");
-
-    write_field_button(StMSYS4_ExtraDisplay,		400, 700, ME_Y_LINE5,  &FontT48, "");
-    write_field_button(StMSYS4_MotionCtrl,			400, 700, ME_Y_LINE6,  &FontT48, "");
-
-    setEvent(StMSYS4_CViewTimeout,		(uint32_t)OnAction_CViewTimeout);
-    setEvent(StMSYS4_CViewStandard,		(uint32_t)OnAction_CViewStandard);
-
-    setEvent(StMSYS4_CornerTimeout,		(uint32_t)OnAction_CornerTimeout);
-    setEvent(StMSYS4_CornerStandard,	(uint32_t)OnAction_CornerStandard);
-
-    setEvent(StMSYS4_ExtraDisplay,		(uint32_t)OnAction_ExtraDisplay);
-    setEvent(StMSYS4_MotionCtrl,		(uint32_t)OnAction_MotionCtrl);
-}
-
-
-void refresh_Customviews(void)
-{
-    char text[32];
-    uint8_t textpointer = 0;
-
-    // header
-    text[0] = '\001';
-    text[1] = TXT_2BYTE;
-    text[2] = TXT2BYTE_Customviews;
-    text[3] = 0;
-    write_topline(text);
-
-    // custom view center  return
-    textpointer = 0;
-    text[textpointer++] = TXT_2BYTE;
-    text[textpointer++] = TXT2BYTE_CViewTimeout;
-    textpointer += snprintf(&text[textpointer],11,"  %02u\016\016 %c\017",settingsGetPointer()->tX_customViewTimeout,TXT_Seconds);
-    write_label_var(  30, 700, ME_Y_LINE1, &FontT48, text);
-
-    // custom view center  primary
-    text[0] = TXT_2BYTE;
-    text[1] = TXT2BYTE_CViewStandard;
-    text[2] = ' ';
-    text[3] = ' ';
-    switch(settingsGetPointer()->tX_customViewPrimary)
-    {
-    case CVIEW_sensors:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_O2monitor;
-        break;
-    case CVIEW_sensors_mV:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_O2voltage;
-        break;
-    case CVIEW_Compass:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_Compass;
-        break;
-    case CVIEW_Decolist:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_Decolist;
-        break;
-    case CVIEW_Tissues:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_Tissues;
-        break;
-    case CVIEW_Profile:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_Profile;
-        break;
-    case CVIEW_Gaslist:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_Gaslist;
-        break;
-    case CVIEW_EADTime:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_Info;
-        break;
-    case CVIEW_SummaryOfLeftCorner:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_Summary;
-        break;
-    case CVIEW_noneOrDebug:
-        text[4] = ' ';
-        text[5] = '-';
-        break;
-    default:
-        snprintf(&text[4],3,"%02u",settingsGetPointer()->tX_customViewPrimary);
-    break;
-    }
-    text[6] = 0;
-    write_label_var(  30, 700, ME_Y_LINE2, &FontT48, text);
-
-
-    // field corner  return
-    textpointer = 0;
-    text[textpointer++] = TXT_2BYTE;
-    text[textpointer++] = TXT2BYTE_CornerTimeout;
-    textpointer += snprintf(&text[textpointer],11,"  %02u\016\016 %c\017",settingsGetPointer()->tX_userselectedLeftLowerCornerTimeout,TXT_Seconds);
-    write_label_var(  30, 700, ME_Y_LINE3, &FontT48, text);
-
-    // field corner  primary
-    text[0] = TXT_2BYTE;
-    text[1] = TXT2BYTE_CornerStandard;
-    text[2] = ' ';
-    text[3] = ' ';
-    switch(settingsGetPointer()->tX_userselectedLeftLowerCornerPrimary)
-    {
-    /* Temperature */
-    case LLC_Temperature:
-        text[4] = TXT_Temperature;
-        break;
-    /* Average Depth */
-    case LLC_AverageDepth:
-        text[4] = TXT_AvgDepth;
-        break;
-    /* ppO2 */
-    case LLC_ppO2:
-        text[4] = TXT_ppO2;
-        break;
-    /* Stop Uhr */
-    case LLC_Stopwatch:
-        text[4] = TXT_Stopwatch;
-        break;
-    /* Ceiling */
-    case LLC_Ceiling:
-        text[4] = TXT_Ceiling;
-        break;
-    /* Future TTS */
-    case LLC_FutureTTS:
-        text[4] = TXT_FutureTTS;
-        break;
-    /* CNS */
-    case LLC_CNS:
-        text[4] = TXT_CNS;
-        break;
-    case LLC_GF:
-    	text[4] = TXT_ActualGradient;
-    	break;
-#ifdef ENABLE_BOTTLE_SENSOR
-    case LCC_BottleBar:
-    	text[4] = TXT_AtemGasVorrat;
-    	    	break;
-#endif
-    /* none */
-    case LLC_Empty:
-        text[4] = '-';
-        break;
-    default:
-        snprintf(&text[4],2,"%u",settingsGetPointer()->tX_userselectedLeftLowerCornerPrimary);
-    break;
-    }
-    text[5] = 0;
-    write_label_var(  30, 700, ME_Y_LINE4, &FontT48, text);
-
-
-    // extra display
-    text[0] = TXT_2BYTE;
-    text[1] = TXT2BYTE_ExtraDisplay;
-    text[2] = ' ';
-    text[3] = ' ';
-    text[4] = TXT_2BYTE;
-    switch(settingsGetPointer()->extraDisplay)
-    {
-    /* BigFont */
-    case EXTRADISPLAY_BIGFONT:
-        text[5] = TXT2BYTE_ExtraBigFont;
-        break;
-    /* DecoGame */
-    case EXTRADISPLAY_DECOGAME:
-        text[5] = TXT2BYTE_ExtraDecoGame;
-        break;
-    /* none */
-    case EXTRADISPLAY_none:
-        text[5] = TXT2BYTE_ExtraNone;
-        break;
-
-    default:
-        snprintf(&text[4],2,"%u",settingsGetPointer()->extraDisplay);
-    break;
-    }
-    text[6] = 0;
-    write_label_var(  30, 700, ME_Y_LINE5, &FontT48, text);
-
-
-    /* MotionCtrl */
-    text[0] = TXT_2BYTE;
-    text[1] = TXT2BYTE_MotionCtrl;
-    text[2] = ' ';
-    text[3] = ' ';
-    text[4] = TXT_2BYTE;
-    switch(settingsGetPointer()->MotionDetection)
-    {
-		case MOTION_DETECT_OFF:
-			text[5] = TXT2BYTE_MoCtrlNone;
-			break;
-		case MOTION_DETECT_MOVE:
-			text[5] = TXT2BYTE_MoCtrlPitch;
-			break;
-		case MOTION_DETECT_SECTOR:
-			text[5] = TXT2BYTE_MoCtrlSector;
-			break;
-		case MOTION_DETECT_SCROLL:
-			text[5] = TXT2BYTE_MoCtrlScroll;
-					break;
-		default:
-			snprintf(&text[4],2,"%u",settingsGetPointer()->MotionDetection);
-		break;
-    }
-    text[6] = 0;
-    write_label_var(  30, 700, ME_Y_LINE6, &FontT48, text);
-
-    write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
-}
-
-
-uint8_t OnAction_CViewTimeout(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    uint8_t value;
-    value = settingsGetPointer()->tX_customViewTimeout;
-
-    if(value < 5)
-        value = 5;
-    else if(value < 10)
-        value = 10;
-    else if(value < 15)
-        value = 15;
-    else if(value < 20)
-        value = 20;
-    else if(value < 30)
-        value = 30;
-    else if(value < 45)
-        value = 45;
-    else if(value < 60)
-        value = 60;
-    else
-        value = 0;
-
-    settingsGetPointer()->tX_customViewTimeout = value;
-    return UPDATE_DIVESETTINGS;
-}
-
-
-uint8_t OnAction_CViewStandard(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    uint8_t newValue;
-    switch(settingsGetPointer()->tX_customViewPrimary)
-    {
-    case CVIEW_sensors:
-        newValue = CVIEW_sensors_mV;
-        break;
-    case CVIEW_sensors_mV:
-        newValue = CVIEW_Compass;
-        break;
-    case CVIEW_Compass:
-        newValue = CVIEW_Decolist;
-        break;
-    case CVIEW_Decolist:
-        newValue = CVIEW_Tissues;
-        break;
-    case CVIEW_Tissues:
-        newValue = CVIEW_Profile;
-        break;
-    case CVIEW_Profile:
-        newValue = CVIEW_Gaslist;
-        break;
-    case CVIEW_Gaslist:
-        newValue = CVIEW_EADTime;
-        break;
-    case CVIEW_EADTime:
-        newValue = CVIEW_SummaryOfLeftCorner;
-        break;
-    case CVIEW_SummaryOfLeftCorner:
-        newValue = CVIEW_noneOrDebug;
-        break;
-    case CVIEW_noneOrDebug:
-    default:
-         newValue = CVIEW_sensors;
-        break;
-    }
-    settingsGetPointer()->tX_customViewPrimary = newValue;
-    return UPDATE_DIVESETTINGS;
-}
-
-
-uint8_t OnAction_CornerTimeout(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    uint8_t value;
-    value = settingsGetPointer()->tX_userselectedLeftLowerCornerTimeout;
-
-    if(value < 5)
-        value = 5;
-    else  if(value < 10)
-        value = 10;
-    else if(value < 15)
-        value = 15;
-    else if(value < 20)
-        value = 20;
-    else if(value < 30)
-        value = 30;
-    else if(value < 45)
-        value = 45;
-    else if(value < 60)
-        value = 60;
-    else
-        value = 0;
-
-    settingsGetPointer()->tX_userselectedLeftLowerCornerTimeout = value;
-    return UPDATE_DIVESETTINGS;
-}
-
-
-uint8_t OnAction_CornerStandard(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    uint8_t value;
-    value = settingsGetPointer()->tX_userselectedLeftLowerCornerPrimary;
-
-    value += 1;
-
-    if(value >= LLC_END)
-        value = 0;
-
-    settingsGetPointer()->tX_userselectedLeftLowerCornerPrimary = value;
-    return UPDATE_DIVESETTINGS;
-}
-
-
-uint8_t OnAction_ExtraDisplay	 (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    uint8_t newValue;
-
-    newValue = settingsGetPointer()->extraDisplay + 1;
-    if(newValue == EXTRADISPLAY_DECOGAME)  /* Decogame not yet implemented */
-    {
-    	newValue++;
-    }
-    if(newValue >= EXTRADISPLAY_END)
-    {
-    	newValue = EXTRADISPLAY_none;
-    }
-    settingsGetPointer()->extraDisplay = newValue;
-    return UNSPECIFIC_RETURN;
-}
-
-
-uint8_t OnAction_MotionCtrl	 (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    uint8_t newValue;
-    switch(settingsGetPointer()->MotionDetection)
-    {
-    case MOTION_DETECT_OFF:
-        newValue = MOTION_DETECT_MOVE;
-        break;
-    case MOTION_DETECT_MOVE:
-        newValue = MOTION_DETECT_SECTOR;
-        break;
-    case MOTION_DETECT_SECTOR:
-        newValue = MOTION_DETECT_SCROLL;
-        break;
-    case MOTION_DETECT_SCROLL:
-    	newValue = MOTION_DETECT_OFF;
-    	break;
-    default:
-        newValue = MOTION_DETECT_OFF;
-        break;
-    }
-    settingsGetPointer()->MotionDetection = newValue;
-    InitMotionDetection();
-    return UNSPECIFIC_RETURN;
-}
 
 void openEdit_Information(void)
 {
@@ -1152,9 +731,9 @@ void openEdit_Information(void)
     text[1] = TXT2BYTE_ButtonNext;
     text[2] = 0;
 
-    write_field_button(StMSYS5_Info, 30, 800, ME_Y_LINE6,  &FontT48, text);
+    write_field_button(StMSYS4_Info, 30, 800, ME_Y_LINE6,  &FontT48, text);
 
-    setEvent(StMSYS5_Info, (uint32_t)OnAction_Information);
+    setEvent(StMSYS4_Info, (uint32_t)OnAction_Information);
 }
 
 
@@ -1340,7 +919,7 @@ void refresh_InformationPage(void)
     }
 
     write_topline(text_header);
-    tMenuEdit_newButtonText(StMSYS5_Info, text_button);
+    tMenuEdit_newButtonText(StMSYS4_Info, text_button);
     write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonNext,0);
 }
 
@@ -1361,45 +940,45 @@ void openEdit_Reset(void)
 
     write_label_var(  30, 400, ME_Y_LINE1, &FontT48, text);
 
-    write_field_udigit(StMSYS6_LogbookOffset,420, 800, ME_Y_LINE1, &FontT48, "####", settingsGetPointer()->logbookOffset,0,0,0);
+    write_field_udigit(StMSYS5_LogbookOffset,420, 800, ME_Y_LINE1, &FontT48, "####", settingsGetPointer()->logbookOffset,0,0,0);
 
     text[0] = TXT_2BYTE;
     text[2] = 0;
 
     text[1] = TXT2BYTE_ResetAll;
-    write_field_button(StMSYS6_ResetAll,		30, 800, ME_Y_LINE2,  &FontT48, text);
+    write_field_button(StMSYS5_ResetAll,		30, 800, ME_Y_LINE2,  &FontT48, text);
 
     text[1] = TXT2BYTE_ResetDeco;
-    write_field_button(StMSYS6_ResetDeco,		30, 800, ME_Y_LINE3,  &FontT48, text);
+    write_field_button(StMSYS5_ResetDeco,		30, 800, ME_Y_LINE3,  &FontT48, text);
 
     text[1] = TXT2BYTE_Reboot;
-    write_field_button(StMSYS6_Reboot,			30, 800, ME_Y_LINE4,  &FontT48, text);
+    write_field_button(StMSYS5_Reboot,			30, 800, ME_Y_LINE4,  &FontT48, text);
 
     text[1] = TXT2BYTE_Maintenance;
-    write_field_button(StMSYS6_Maintenance,	30, 800, ME_Y_LINE5,  &FontT48, text);
+    write_field_button(StMSYS5_Maintenance,	30, 800, ME_Y_LINE5,  &FontT48, text);
 
 #ifndef RESETLOGBLOCK
     text[1] = TXT2BYTE_ResetLogbook;
-    write_field_button(StMSYS6_ResetLogbook,30, 800, ME_Y_LINE6,  &FontT48, text);
+    write_field_button(StMSYS5_ResetLogbook,30, 800, ME_Y_LINE6,  &FontT48, text);
 #else
     text[0] = '\021';
     text[1] = TXT_2BYTE;
     text[2] = TXT2BYTE_ResetLogbook;
     text[3] = 0;
-    write_field_button(StMSYS6_ResetLogbook,30, 800, ME_Y_LINE6,  &FontT48, text);
+    write_field_button(StMSYS5_ResetLogbook,30, 800, ME_Y_LINE6,  &FontT48, text);
     text[0] = TXT_2BYTE;
     text[2] = 0;
 #endif
 
-    setEvent(StMSYS6_LogbookOffset,	(uint32_t)OnAction_LogbookOffset);
-    setEvent(StMSYS6_ResetAll, 			(uint32_t)OnAction_Confirm);
-    setEvent(StMSYS6_ResetDeco, 		(uint32_t)OnAction_Confirm);
-    setEvent(StMSYS6_Reboot, 				(uint32_t)OnAction_Confirm);
-    setEvent(StMSYS6_Maintenance,		(uint32_t)OnAction_Confirm);
+    setEvent(StMSYS5_LogbookOffset,	(uint32_t)OnAction_LogbookOffset);
+    setEvent(StMSYS5_ResetAll, 			(uint32_t)OnAction_Confirm);
+    setEvent(StMSYS5_ResetDeco, 		(uint32_t)OnAction_Confirm);
+    setEvent(StMSYS5_Reboot, 				(uint32_t)OnAction_Confirm);
+    setEvent(StMSYS5_Maintenance,		(uint32_t)OnAction_Confirm);
 #ifndef RESETLOGBLOCK
-    setEvent(StMSYS6_ResetLogbook,	(uint32_t)OnAction_Confirm);
+    setEvent(StMSYS5_ResetLogbook,	(uint32_t)OnAction_Confirm);
 #else
-    setEvent(StMSYS6_ResetLogbook,	(uint32_t)OnAction_Nothing);
+    setEvent(StMSYS5_ResetLogbook,	(uint32_t)OnAction_Nothing);
 #endif
 
     write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
@@ -1422,22 +1001,22 @@ void openEdit_ResetConfirmation(uint32_t editIdOfCaller)
     text[2] = 0;
     text[1] = TXT2BYTE_Abort;
 
-    write_field_button(StMSYS6_Exit,				30, 800, ME_Y_LINE1,  &FontT48, text);
+    write_field_button(StMSYS5_Exit,				30, 800, ME_Y_LINE1,  &FontT48, text);
 
     text[2] = 0;
     text[3] = 0;
     switch(editIdOfCaller)
     {
-    case StMSYS6_Reboot:
-    case StMSYS6_RebootRTE:
-    case StMSYS6_RebootMainCPU:
+    case StMSYS5_Reboot:
+    case StMSYS5_RebootRTE:
+    case StMSYS5_RebootMainCPU:
         text[1] = TXT2BYTE_RebootMainCPU;
-        write_field_button(StMSYS6_RebootMainCPU,	30, 800, ME_Y_LINE2,  &FontT48, text);
+        write_field_button(StMSYS5_RebootMainCPU,	30, 800, ME_Y_LINE2,  &FontT48, text);
         text[1] = TXT2BYTE_RebootRTE;
-        write_field_button(StMSYS6_RebootRTE,			30, 800, ME_Y_LINE3,  &FontT48, text);
-        setEvent(StMSYS6_Exit, (uint32_t)OnAction_Exit);
-        setEvent(StMSYS6_RebootMainCPU, (uint32_t)OnAction_RebootMainCPU);
-        setEvent(StMSYS6_RebootRTE, 		(uint32_t)OnAction_RebootRTE);
+        write_field_button(StMSYS5_RebootRTE,			30, 800, ME_Y_LINE3,  &FontT48, text);
+        setEvent(StMSYS5_Exit, (uint32_t)OnAction_Exit);
+        setEvent(StMSYS5_RebootMainCPU, (uint32_t)OnAction_RebootMainCPU);
+        setEvent(StMSYS5_RebootRTE, 		(uint32_t)OnAction_RebootRTE);
         text[0] = '\025';
         text[1] = TXT_2BYTE;
         text[2] = TXT2BYTE_DecoDataLost;
@@ -1445,10 +1024,10 @@ void openEdit_ResetConfirmation(uint32_t editIdOfCaller)
         write_label_var(			30, 800, ME_Y_LINE4,  &FontT48, text);
         break;
 
-    case StMSYS6_ResetDeco:
+    case StMSYS5_ResetDeco:
         text[1] = TXT2BYTE_ResetDeco;
         write_field_button(editIdOfCaller,			30, 800, ME_Y_LINE2,  &FontT48, text);
-        setEvent(StMSYS6_Exit, (uint32_t)OnAction_Exit);
+        setEvent(StMSYS5_Exit, (uint32_t)OnAction_Exit);
         setEvent(editIdOfCaller, (uint32_t)OnAction_ResetDeco);
         text[0] = '\025';
         text[1] = TXT_2BYTE;
@@ -1457,33 +1036,33 @@ void openEdit_ResetConfirmation(uint32_t editIdOfCaller)
         write_label_var(			30, 800, ME_Y_LINE4,  &FontT48, text);
         break;
 
-    case StMSYS6_ResetAll:
+    case StMSYS5_ResetAll:
         text[1] = TXT2BYTE_ResetAll;
         write_field_button(editIdOfCaller,			30, 800, ME_Y_LINE2,  &FontT48, text);
-        setEvent(StMSYS6_Exit, (uint32_t)OnAction_Exit);
+        setEvent(StMSYS5_Exit, (uint32_t)OnAction_Exit);
         setEvent(editIdOfCaller, (uint32_t)OnAction_ResetAll);
         break;
 
-    case StMSYS6_ResetLogbook:
+    case StMSYS5_ResetLogbook:
         text[1] = TXT2BYTE_ResetLogbook;
         write_field_button(editIdOfCaller,			30, 800, ME_Y_LINE2,  &FontT48, text);
-        setEvent(StMSYS6_Exit, (uint32_t)OnAction_Exit);
+        setEvent(StMSYS5_Exit, (uint32_t)OnAction_Exit);
         setEvent(editIdOfCaller, (uint32_t)OnAction_ResetLogbook);
         break;
 
-    case StMSYS6_Maintenance:
-    case StMSYS6_SetBattCharge:
-    case StMSYS6_SetSampleIndx:
+    case StMSYS5_Maintenance:
+    case StMSYS5_SetBattCharge:
+    case StMSYS5_SetSampleIndx:
         text[0] = TXT_2BYTE;
         text[1] = TXT2BYTE_SetFactoryDefaults;
         text[2] = 0;
-        write_field_button(StMSYS6_SetFactoryBC,			30, 800, ME_Y_LINE2,  &FontT48, text);
+        write_field_button(StMSYS5_SetFactoryBC,			30, 800, ME_Y_LINE2,  &FontT48, text);
 
 #ifdef ENABLE_ANALYSE_SAMPLES
         text[0] = TXT_2BYTE;
         text[1] = TXT2BYTE_SetSampleIndex;
         text[2] = 0;
-        write_field_button(StMSYS6_SetSampleIndx,			30, 800, ME_Y_LINE3,  &FontT48, text);
+        write_field_button(StMSYS5_SetSampleIndx,			30, 800, ME_Y_LINE3,  &FontT48, text);
 #endif
 
 
@@ -1494,28 +1073,28 @@ void openEdit_ResetConfirmation(uint32_t editIdOfCaller)
             text[2] = 0;
             snprintf(&text[2],10,": %u%%",settingsGetPointer()->lastKnownBatteryPercentage);
 #ifdef ENABLE_ANALYSE_SAMPLES
-            write_field_button(StMSYS6_SetBattCharge,			30, 800, ME_Y_LINE4,  &FontT48, text);
+            write_field_button(StMSYS5_SetBattCharge,			30, 800, ME_Y_LINE4,  &FontT48, text);
 #else
-            write_field_button(StMSYS6_SetBattCharge,			30, 800, ME_Y_LINE3,  &FontT48, text);
+            write_field_button(StMSYS5_SetBattCharge,			30, 800, ME_Y_LINE3,  &FontT48, text);
 #endif
 
-            setEvent(StMSYS6_Exit, (uint32_t)OnAction_Exit);
-            setEvent(StMSYS6_SetFactoryBC, (uint32_t)OnAction_SetFactoryDefaults);
+            setEvent(StMSYS5_Exit, (uint32_t)OnAction_Exit);
+            setEvent(StMSYS5_SetFactoryBC, (uint32_t)OnAction_SetFactoryDefaults);
 #ifdef ENABLE_ANALYSE_SAMPLES
-            setEvent(StMSYS6_SetSampleIndx, (uint32_t)OnAction_RecoverSampleIdx);
+            setEvent(StMSYS5_SetSampleIndx, (uint32_t)OnAction_RecoverSampleIdx);
 #endif
-            setEvent(StMSYS6_SetBattCharge, (uint32_t)OnAction_SetBatteryCharge);
+            setEvent(StMSYS5_SetBattCharge, (uint32_t)OnAction_SetBatteryCharge);
         }
         else
         {
-            setEvent(StMSYS6_Exit, (uint32_t)OnAction_Exit);
-            setEvent(StMSYS6_SetFactoryBC, (uint32_t)OnAction_SetFactoryDefaults);
+            setEvent(StMSYS5_Exit, (uint32_t)OnAction_Exit);
+            setEvent(StMSYS5_SetFactoryBC, (uint32_t)OnAction_SetFactoryDefaults);
 #ifdef ENABLE_ANALYSE_SAMPLES
-            setEvent(StMSYS6_SetSampleIndx, (uint32_t)OnAction_RecoverSampleIdx);
+            setEvent(StMSYS5_SetSampleIndx, (uint32_t)OnAction_RecoverSampleIdx);
 #endif
         }
-//		write_field_button(StMSYS6_ScreenTest,			30, 800, ME_Y_LINE3,  &FontT48, "Screen Test");
-//		setEvent(StMSYS6_ScreenTest, (uint32_t)OnAction_ScreenTest);
+//		write_field_button(StMSYS5_ScreenTest,			30, 800, ME_Y_LINE3,  &FontT48, "Screen Test");
+//		setEvent(StMSYS5_ScreenTest, (uint32_t)OnAction_ScreenTest);
 
         text[0] = TXT_2BYTE;
         text[1] = TXT2BYTE_WarnBatteryLow;
@@ -1661,7 +1240,7 @@ uint8_t OnAction_ScreenTest		(uint32_t editId, uint8_t blockNumber, uint8_t digi
     tTestScreen.ImageWidth = 800;
     tTestScreen.LayerIndex = 1;
 
-    set_globalState(StMSYS6_ScreenTest);
+    set_globalState(StMSYS5_ScreenTest);
     tTestScreen.FBStartAdress = getFrameByNumber(FrameCount);
     if(tTestScreen.FBStartAdress == 0)
     {

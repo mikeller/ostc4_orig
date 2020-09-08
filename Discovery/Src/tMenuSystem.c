@@ -252,15 +252,6 @@ uint32_t tMSystem_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext
 
     if((line == 0) || (line == 4))
     {
-        text[textPointer++] = TXT_2BYTE;
-        text[textPointer++] = TXT2BYTE_Customviews;//TXT2BYTE_ShowDebug;
-    }
-    text[textPointer++] = '\n';
-    text[textPointer++] = '\r';
-    text[textPointer] = 0;
-
-    if((line == 0) || (line == 5))
-    {
         text[textPointer++] = TXT_Information;
         text[textPointer++] = '\t';
         textPointer += snprintf(&text[textPointer],29,"RTE %u.%u  OS %i.%i.%i"
@@ -274,7 +265,7 @@ uint32_t tMSystem_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext
     strcpy(&text[textPointer],"\n\r");
     textPointer += 2;
 
-    if((line == 0) || (line == 6))
+    if((line == 0) || (line == 5))
     {
         text[textPointer++] = TXT_2BYTE;
         text[textPointer++] = TXT2BYTE_ResetMenu;
@@ -288,64 +279,3 @@ uint32_t tMSystem_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext
 
 
 /* Private functions ---------------------------------------------------------*/
-
-char customview_TXT2BYTE_helper(uint8_t customViewId)
-{
-    char text = 0;
-
-    switch(customViewId)
-    {
-    case CVIEW_sensors:
-        text = TXT2BYTE_O2monitor;
-        break;
-    case CVIEW_sensors_mV:
-        text = TXT2BYTE_O2voltage;
-        break;
-    case CVIEW_Compass:
-        text = TXT2BYTE_Compass;
-        break;
-    case CVIEW_Decolist:
-    case CVIEW_T3_Decostop:
-        text = TXT2BYTE_Decolist;
-        break;
-    case CVIEW_Tissues:
-        text = TXT2BYTE_Tissues;
-        break;
-    case CVIEW_Profile:
-        text = TXT2BYTE_Profile;
-        break;
-    case CVIEW_Gaslist:
-        text = TXT2BYTE_Gaslist;
-        break;
-    case CVIEW_EADTime:
-        text = TXT2BYTE_Info;
-        break;
-    case CVIEW_SummaryOfLeftCorner:
-        text = TXT2BYTE_Summary;
-        break;
-    case CVIEW_noneOrDebug:
-    	text = TXT2BYTE_DispNoneDbg;
-        break;
-    case CVIEW_T3_MaxDepth:
-    	text = TXT2BYTE_MaxDepth;
-    	break;
-    case CVIEW_T3_StopWatch:
-    	text = TXT2BYTE_Stopwatch;
-    	break;
-    case CVIEW_T3_TTS:
-    	text = TXT2BYTE_TTS;
-    	break;
-    case CVIEW_T3_ppO2andGas:
-    	text = TXT2BYTE_ppoNair;
-    	break;
-    case CVIEW_T3_Navigation:
-    	text = TXT2BYTE_Navigation;
-    	break;
-    case CVIEW_T3_DepthData:
-    	text = TXT2BYTE_DepthData;
-    	break;
-    default:
-        break;
-    }
-    return text;
-}
