@@ -1366,11 +1366,16 @@ uint8_t check_and_correct_settings(void)
     	Settings.FlipDisplay = 0;
 	    corrections++;
    	}
+
+#ifdef ENABLE_MOTION_CONTROL
     if(Settings.MotionDetection >= MOTION_DETECT_END)
    	{
     	Settings.MotionDetection = MOTION_DETECT_OFF;
 	    corrections++;
    	}
+#else
+    Settings.MotionDetection = MOTION_DETECT_OFF;
+#endif
 
     if(corrections > 255)
         return 255;
