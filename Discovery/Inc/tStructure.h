@@ -280,29 +280,21 @@
 #define StMSYS3_Colors	_MB(2,8,3,2,0)
 #define StMSYS3_Debug		_MB(2,8,3,3,0)
 
-#define StMSYS4_CViewTimeout		_MB(2,8,4,1,0)
-#define StMSYS4_CViewStandard		_MB(2,8,4,2,0)
-#define StMSYS4_CornerTimeout		_MB(2,8,4,3,0)
-#define StMSYS4_CornerStandard		_MB(2,8,4,4,0)
-#define StMSYS4_ExtraDisplay		_MB(2,8,4,5,0)
-#define StMSYS4_MotionCtrl			_MB(2,8,4,6,0)
+#define StMSYS4_Info		_MB(2,8,4,1,0)
 
-#define StMSYS5_Info		_MB(2,8,5,1,0)
-
-
-#define StMSYS6_Exit			_MB(2,8,6,1,0)
-#define StMSYS6_LogbookOffset	_MB(2,8,6,7,0)
-#define StMSYS6_ResetAll		_MB(2,8,6,2,0)
-#define StMSYS6_ResetDeco		_MB(2,8,6,3,0)
-#define StMSYS6_Reboot			_MB(2,8,6,4,0)
-#define StMSYS6_Maintenance		_MB(2,8,6,5,0)
-#define StMSYS6_ResetLogbook	_MB(2,8,6,6,0)
-#define StMSYS6_SetBattCharge	_MB(2,8,6,7,0)
-#define StMSYS6_RebootRTE		_MB(2,8,6,8,0)
-#define StMSYS6_RebootMainCPU	_MB(2,8,6,9,0)
-#define StMSYS6_ScreenTest		_MB(2,8,6,10,0)
-#define StMSYS6_SetFactoryBC	_MB(2,8,6,11,0)
-#define StMSYS6_SetSampleIndx   _MB(2,8,6,12,0)
+#define StMSYS5_Exit			_MB(2,8,5,1,0)
+#define StMSYS5_LogbookOffset	_MB(2,8,5,7,0)
+#define StMSYS5_ResetAll		_MB(2,8,5,2,0)
+#define StMSYS5_ResetDeco		_MB(2,8,5,3,0)
+#define StMSYS5_Reboot			_MB(2,8,5,4,0)
+#define StMSYS5_Maintenance		_MB(2,8,5,5,0)
+#define StMSYS5_ResetLogbook	_MB(2,8,5,6,0)
+#define StMSYS5_SetBattCharge	_MB(2,8,5,7,0)
+#define StMSYS5_RebootRTE		_MB(2,8,5,8,0)
+#define StMSYS5_RebootMainCPU	_MB(2,8,5,9,0)
+#define StMSYS5_ScreenTest		_MB(2,8,5,10,0)
+#define StMSYS5_SetFactoryBC	_MB(2,8,5,11,0)
+#define StMSYS5_SetSampleIndx   _MB(2,8,5,12,0)
 
  /* PAGE 9 */
 
@@ -315,17 +307,18 @@
 #define StMCustom1_CViewStandard	_MB(2,9,1,2,0)
 #define StMCustom1_CornerTimeout	_MB(2,9,1,3,0)
 #define StMCustom1_CornerStandard	_MB(2,9,1,4,0)
+#define StMCustom1_ExtraDisplay		_MB(2,9,1,5,0)
+#define StMCustom1_MotionCtrl		_MB(2,9,1,6,0)
 
+#define StMCustom2_BFSelection		_MB(2,9,2,1,0)
 
-#define StMCustom2_CViewSelection1	_MB(2,9,2,1,0)
-#define StMCustom2_CViewSelection2	_MB(2,9,2,2,0)
-#define StMCustom2_CViewSelection3	_MB(2,9,2,3,0)
-#define StMCustom2_CViewSelection4	_MB(2,9,2,4,0)
-#define StMCustom2_CViewSelection5	_MB(2,9,2,5,0)
-#define StMCustom2_CViewSelection6	_MB(2,9,2,6,0)
+#define StMCustom3_CViewSelection1	_MB(2,9,3,1,0)
+#define StMCustom3_CViewSelection2	_MB(2,9,3,2,0)
+#define StMCustom3_CViewSelection3	_MB(2,9,3,3,0)
+#define StMCustom3_CViewSelection4	_MB(2,9,3,4,0)
+#define StMCustom3_CViewSelection5	_MB(2,9,3,5,0)
+#define StMCustom3_CViewSelection6	_MB(2,9,3,6,0)
 
-
-#define StMCustom2_BFSelection		_MB(2,9,3,1,0)
 
 /* PAGE 10 */
 #define StMPLAN		_MB(2,10,0,0,0)

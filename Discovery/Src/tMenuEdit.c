@@ -222,12 +222,12 @@ void tMenuEdit_refresh_live_content(void)
 	 	 	 break;
 	 	 case (StMCustom1_CViewTimeout & MaskFieldDigit):refreshFct = refresh_Customviews;
 	 	 	 break;
-	 	 case (StMCustom2_CViewSelection1 & MaskFieldDigit) :
-	 	 case StMCustom2_CViewSelection2:
-	 	 case StMCustom2_CViewSelection3:
-	 	 case StMCustom2_CViewSelection4:
-	 	 case StMCustom2_CViewSelection5:
-	 	 case StMCustom2_CViewSelection6:
+	 	 case (StMCustom3_CViewSelection1 & MaskFieldDigit) :
+	 	 case StMCustom3_CViewSelection2:
+	 	 case StMCustom3_CViewSelection3:
+	 	 case StMCustom3_CViewSelection4:
+	 	 case StMCustom3_CViewSelection5:
+	 	 case StMCustom3_CViewSelection6:
 	 	 case (StMCustom2_BFSelection & MaskFieldDigit) : refreshFct = CustomviewDivemode_refresh;
 	 	 	 break;
 	 	 default:	 /* no menu has been updated */

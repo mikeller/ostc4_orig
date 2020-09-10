@@ -38,6 +38,9 @@
 #include "t7.h"
 #include "data_exchange_main.h"
 #include "motion.h"
+#include "tMenu.h"
+#include "tMenuSystem.h"
+
 
 #define CV_PER_PAGE  (5u)			/* number of cv selections shown at one page */
 #define CV_SUBPAGE_MAX		(2u)	/* max number of customer view selection pages */
@@ -47,14 +50,14 @@ static uint8_t customviewsSubpageMax = 0;	/* number of pages needed to display a
 static const uint8_t*	pcv_curchangelist;
 /* Private function prototypes -----------------------------------------------*/
 void openEdit_Customview(void);
+void openEdit_BigScreen(void);
+void openEdit_MotionCtrl(void);
 void refresh_Customviews(void);
 /* Announced function prototypes -----------------------------------------------*/
 uint8_t OnAction_CViewTimeout  (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_CViewStandard (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_CornerTimeout (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_CornerStandard(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_ExtraDisplay	 (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-uint8_t OnAction_MotionCtrl	 (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 /* Exported functions --------------------------------------------------------*/
 
 
@@ -195,62 +198,6 @@ void refresh_Customviews(void)
     text[5] = 0;
     write_label_var(  30, 700, ME_Y_LINE4, &FontT48, text);
 
-
-    // extra display
-    text[0] = TXT_2BYTE;
-    text[1] = TXT2BYTE_ExtraDisplay;
-    text[2] = ' ';
-    text[3] = ' ';
-    text[4] = TXT_2BYTE;
-    switch(settingsGetPointer()->extraDisplay)
-    {
-    /* BigFont */
-    case EXTRADISPLAY_BIGFONT:
-        text[5] = TXT2BYTE_ExtraBigFont;
-        break;
-    /* DecoGame */
-    case EXTRADISPLAY_DECOGAME:
-        text[5] = TXT2BYTE_ExtraDecoGame;
-        break;
-    /* none */
-    case EXTRADISPLAY_none:
-        text[5] = TXT2BYTE_ExtraNone;
-        break;
-
-    default:
-        snprintf(&text[4],2,"%u",settingsGetPointer()->extraDisplay);
-    break;
-    }
-    text[6] = 0;
-    write_label_var(  30, 700, ME_Y_LINE5, &FontT48, text);
-
-    /* MotionCtrl */
-    text[0] = TXT_2BYTE;
-    text[1] = TXT2BYTE_MotionCtrl;
-    text[2] = ' ';
-    text[3] = ' ';
-    text[4] = TXT_2BYTE;
-    switch(settingsGetPointer()->MotionDetection)
-    {
-		case MOTION_DETECT_OFF:
-			text[5] = TXT2BYTE_MoCtrlNone;
-			break;
-		case MOTION_DETECT_MOVE:
-			text[5] = TXT2BYTE_MoCtrlPitch;
-			break;
-		case MOTION_DETECT_SECTOR:
-			text[5] = TXT2BYTE_MoCtrlSector;
-			break;
-		case MOTION_DETECT_SCROLL:
-			text[5] = TXT2BYTE_MoCtrlScroll;
-					break;
-		default:
-			snprintf(&text[4],2,"%u",settingsGetPointer()->MotionDetection);
-		break;
-    }
-    text[6] = 0;
-    write_label_var(  30, 700, ME_Y_LINE6, &FontT48, text);
-
     write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
 }
 
@@ -262,14 +209,15 @@ void openEdit_Custom(uint8_t line)
     switch(line)
     {
     	case 1:
-    	default:
-    			openEdit_Customview();
+    	default:	openEdit_Customview();
     		break;
-    	case 2:
-				openEdit_CustomviewDivemode(cv_changelist);
+    	case 2: 	openEdit_BigScreen();
     		break;
-    	case 3:
-				openEdit_CustomviewDivemode(cv_changelist_BS);
+    	case 3:		openEdit_CustomviewDivemode(cv_changelist);
+    		break;
+    	case 4:		openEdit_CustomviewDivemode(cv_changelist_BS);
+    		break;
+    	case 5:		openEdit_MotionCtrl();
     		break;
     }
 }
@@ -285,17 +233,59 @@ void openEdit_Customview(void)
     write_field_button(StMCustom1_CornerTimeout,	400, 700, ME_Y_LINE3,  &FontT48, "");
     write_field_button(StMCustom1_CornerStandard,	400, 700, ME_Y_LINE4,  &FontT48, "");
 
-    write_field_button(StMCustom1_ExtraDisplay,		400, 700, ME_Y_LINE5,  &FontT48, "");
-    write_field_button(StMCustom1_MotionCtrl,		400, 700, ME_Y_LINE6,  &FontT48, "");
-
     setEvent(StMCustom1_CViewTimeout,		(uint32_t)OnAction_CViewTimeout);
     setEvent(StMCustom1_CViewStandard,		(uint32_t)OnAction_CViewStandard);
 
     setEvent(StMCustom1_CornerTimeout,		(uint32_t)OnAction_CornerTimeout);
     setEvent(StMCustom1_CornerStandard,	(uint32_t)OnAction_CornerStandard);
+}
 
-    setEvent(StMCustom1_ExtraDisplay,		(uint32_t)OnAction_ExtraDisplay);
-    setEvent(StMCustom1_MotionCtrl,		(uint32_t)OnAction_MotionCtrl);
+void openEdit_BigScreen(void)
+{
+	uint8_t newValue = 0;
+    SSettings *pSettings = settingsGetPointer();
+
+    newValue = pSettings->extraDisplay + 1;
+    if(newValue == EXTRADISPLAY_DECOGAME)  /* Decogame not yet implemented */
+    {
+    	newValue++;
+    }
+    if(newValue >= EXTRADISPLAY_END)
+    {
+    	newValue = EXTRADISPLAY_none;
+    }
+    pSettings->extraDisplay = newValue;
+
+    exitMenuEdit_to_Menu_with_Menu_Update_do_not_write_settings_for_this_only();
+}
+
+void openEdit_MotionCtrl(void)
+{
+	uint8_t newValue = 0;
+    SSettings *pSettings = settingsGetPointer();
+
+     switch(pSettings->MotionDetection)
+     {
+     case MOTION_DETECT_OFF:
+         newValue = MOTION_DETECT_MOVE;
+         break;
+     case MOTION_DETECT_MOVE:
+         newValue = MOTION_DETECT_SECTOR;
+         break;
+     case MOTION_DETECT_SECTOR:
+         newValue = MOTION_DETECT_SCROLL;
+         break;
+     case MOTION_DETECT_SCROLL:
+     	newValue = MOTION_DETECT_OFF;
+     	break;
+     default:
+         newValue = MOTION_DETECT_OFF;
+         break;
+     }
+     pSettings->MotionDetection = newValue;
+     InitMotionDetection();
+
+     exitMenuEdit_to_Menu_with_Menu_Update_do_not_write_settings_for_this_only();
 }
 
 char customview_TXT2BYTE_helper(uint8_t customViewId)
@@ -479,15 +469,15 @@ uint8_t OnAction_Customview_Toggle(uint32_t editId, uint8_t blockNumber, uint8_t
 
 	switch(editId)
 	{
-		case StMCustom2_CViewSelection1:	line = 1;
+		case StMCustom3_CViewSelection1:	line = 1;
 			break;
-		case StMCustom2_CViewSelection2:	line = 2;
+		case StMCustom3_CViewSelection2:	line = 2;
 			break;
-		case StMCustom2_CViewSelection3:	line = 3;
+		case StMCustom3_CViewSelection3:	line = 3;
 			break;
-		case StMCustom2_CViewSelection4:	line = 4;
+		case StMCustom3_CViewSelection4:	line = 4;
 			break;
-		case StMCustom2_CViewSelection5:	line = 5;
+		case StMCustom3_CViewSelection5:	line = 5;
 			break;
 
 		default:
@@ -523,7 +513,7 @@ uint8_t OnAction_Customview_NextPage(uint32_t editId, uint8_t blockNumber, uint8
 	resetMenuEdit(CLUT_MenuPageCustomView);				/* rebuild page */
 	openEdit_CustomviewDivemode(pcv_curchangelist);
 
-	tMenuEdit_select(StMCustom2_CViewSelection6);
+	tMenuEdit_select(StMCustom3_CViewSelection6);
     return UPDATE_DIVESETTINGS;
 }
 
@@ -572,23 +562,21 @@ void openEdit_CustomviewDivemode(const uint8_t* pcv_changelist)
 
 				switch(i)
 				{
-					case 0: 	write_field_button(StMCustom2_CViewSelection1,	30, 800, ME_Y_LINE1,  &FontT48, "");
+					case 0: 	write_field_button(StMCustom3_CViewSelection1,	30, 800, ME_Y_LINE1,  &FontT48, "");
 						break;
-					case 1: 	write_field_button(StMCustom2_CViewSelection2,	30, 800, ME_Y_LINE2,  &FontT48, "");
+					case 1: 	write_field_button(StMCustom3_CViewSelection2,	30, 800, ME_Y_LINE2,  &FontT48, "");
 						break;
-					case 2: 	write_field_button(StMCustom2_CViewSelection3,	30, 800, ME_Y_LINE3,  &FontT48, "");
+					case 2: 	write_field_button(StMCustom3_CViewSelection3,	30, 800, ME_Y_LINE3,  &FontT48, "");
 						break;
-					case 3: 	write_field_button(StMCustom2_CViewSelection4,	30, 800, ME_Y_LINE4,  &FontT48, "");
+					case 3: 	write_field_button(StMCustom3_CViewSelection4,	30, 800, ME_Y_LINE4,  &FontT48, "");
 						break;
-					case 4: 	write_field_button(StMCustom2_CViewSelection5,	30, 800, ME_Y_LINE5,  &FontT48, "");
+					case 4: 	write_field_button(StMCustom3_CViewSelection5,	30, 800, ME_Y_LINE5,  &FontT48, "");
 						break;
 					default:
 						break;
 				}
      	}
      }
-  //   setEvent(StMCustom2_CViewSelection1, 				(uint32_t)OnAction_Customview_Toggle);
-
 
      if(customviewsSubpageMax != 1)
      {
@@ -596,7 +584,7 @@ void openEdit_CustomviewDivemode(const uint8_t* pcv_changelist)
          text[textPointer++] = TXT_2BYTE;
          text[textPointer++] = TXT2BYTE_ButtonNext;
          text[textPointer] = 0;
-    	 write_field_button(StMCustom2_CViewSelection6,	30, 800, ME_Y_LINE6,  &FontT48, text);
+    	 write_field_button(StMCustom3_CViewSelection6,	30, 800, ME_Y_LINE6,  &FontT48, text);
      }
 
      /* because of the ID handling inside of the functions, all buttons needs to be assigned before the events may be set => have the same loop twice */
@@ -611,15 +599,15 @@ void openEdit_CustomviewDivemode(const uint8_t* pcv_changelist)
      	{
 				switch(i)
 				{
-					case 0: 	setEvent(StMCustom2_CViewSelection1, 				(uint32_t)OnAction_Customview_Toggle);
+					case 0: 	setEvent(StMCustom3_CViewSelection1, 				(uint32_t)OnAction_Customview_Toggle);
 						break;
-					case 1: 	setEvent(StMCustom2_CViewSelection2, 				(uint32_t)OnAction_Customview_Toggle);
+					case 1: 	setEvent(StMCustom3_CViewSelection2, 				(uint32_t)OnAction_Customview_Toggle);
 						break;
-					case 2: 	setEvent(StMCustom2_CViewSelection3, 				(uint32_t)OnAction_Customview_Toggle);
+					case 2: 	setEvent(StMCustom3_CViewSelection3, 				(uint32_t)OnAction_Customview_Toggle);
 						break;
-					case 3: 	setEvent(StMCustom2_CViewSelection4, 				(uint32_t)OnAction_Customview_Toggle);
+					case 3: 	setEvent(StMCustom3_CViewSelection4, 				(uint32_t)OnAction_Customview_Toggle);
 						break;
-					case 4: 	setEvent(StMCustom2_CViewSelection5, 				(uint32_t)OnAction_Customview_Toggle);
+					case 4: 	setEvent(StMCustom3_CViewSelection5, 				(uint32_t)OnAction_Customview_Toggle);
 						break;
 
 					default:
@@ -630,7 +618,7 @@ void openEdit_CustomviewDivemode(const uint8_t* pcv_changelist)
      }
      if(customviewsSubpageMax != 1)
      {
-    	 setEvent(StMCustom2_CViewSelection6,(uint32_t)OnAction_Customview_NextPage);
+    	 setEvent(StMCustom3_CViewSelection6,(uint32_t)OnAction_Customview_NextPage);
      }
      for(;i<5;i++)	/* clear empty lines in case menu shows less than 5 entries */
      {
@@ -657,7 +645,6 @@ void openEdit_CustomviewDivemodeMenu(uint8_t line)
 {
 	static uint8_t customviewsSubpage = 0;
 	SSettings *pSettings = settingsGetPointer();
-	extern _Bool WriteSettings;
 	char text[MAX_PAGE_TEXTSIZE];
 	uint16_t tabPosition;
 	uint32_t id;
@@ -702,34 +689,6 @@ uint8_t OnAction_ExtraDisplay	 (uint32_t editId, uint8_t blockNumber, uint8_t di
     	newValue = EXTRADISPLAY_none;
     }
     settingsGetPointer()->extraDisplay = newValue;
-    return UNSPECIFIC_RETURN;
-}
-
-
-
-uint8_t OnAction_MotionCtrl	 (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
-{
-    uint8_t newValue;
-    switch(settingsGetPointer()->MotionDetection)
-    {
-    case MOTION_DETECT_OFF:
-        newValue = MOTION_DETECT_MOVE;
-        break;
-    case MOTION_DETECT_MOVE:
-        newValue = MOTION_DETECT_SECTOR;
-        break;
-    case MOTION_DETECT_SECTOR:
-        newValue = MOTION_DETECT_SCROLL;
-        break;
-    case MOTION_DETECT_SCROLL:
-    	newValue = MOTION_DETECT_OFF;
-    	break;
-    default:
-        newValue = MOTION_DETECT_OFF;
-        break;
-    }
-    settingsGetPointer()->MotionDetection = newValue;
-    InitMotionDetection();
     return UNSPECIFIC_RETURN;
 }
 
