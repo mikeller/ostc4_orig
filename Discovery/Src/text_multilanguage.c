@@ -1564,14 +1564,14 @@ static uint8_t text_FR_FlipDisplay[] = "";
 static uint8_t text_IT_FlipDisplay[] = "";
 static uint8_t text_ES_FlipDisplay[] = "";
 
-static uint8_t text_EN_SelectCustom[] = "Data views";
+static uint8_t text_EN_SelectCustom[] = "Select data views";
 static uint8_t text_DE_SelectCustom[] = "Auswahl Datenanzeige";
 static uint8_t text_FR_SelectCustom[] = "";
 static uint8_t text_IT_SelectCustom[] = "";
 static uint8_t text_ES_SelectCustom[] = "";
 
-static uint8_t text_EN_SelectBigFont[] = "Bigfont data views";
-static uint8_t text_DE_SelectBigFont[] = "Grosschrift Daten";
+static uint8_t text_EN_SelectBigFont[] = "Select bigfont data views";
+static uint8_t text_DE_SelectBigFont[] = "Auswahl Grosschrift Daten";
 static uint8_t text_FR_SelectBigFont[] = "";
 static uint8_t text_IT_SelectBigFont[] = "";
 static uint8_t text_ES_SelectBigFont[] = "";
