@@ -51,7 +51,7 @@
 #include "tMenuCustom.h"
 
 /* Private types -------------------------------------------------------------*/
-#define MAXPAGES 		10
+#define MAXPAGES 		11
 #define CURSOR_HIGH 	25
 #define TAB_HEADER_HIGH	25
 #define TAB_BAR_HIGH	5
