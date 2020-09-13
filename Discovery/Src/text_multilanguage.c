@@ -290,6 +290,13 @@ static uint8_t text_IT_Inactive[] = "Disattivato";
 static uint8_t text_ES_Inactive[] = "Inactivo";     
 
 // Menu Gas
+static uint8_t text_EN_Off[] = "Off";
+static uint8_t text_DE_Off[] = "Ausblenden";
+static uint8_t text_FR_Off[] = "";
+static uint8_t text_IT_Off[] = "";
+static uint8_t text_ES_Off[] = "";
+
+// Menu Gas
 static uint8_t text_EN_ChangeDepth[] = "Change depth";
 static uint8_t text_DE_ChangeDepth[] = "Wechseltiefe";
 static uint8_t text_FR_ChangeDepth[] = "Prof.Changmt";
@@ -1632,7 +1639,8 @@ const tText text_array[] =
     {(uint8_t)TXT_First, 			{text_EN_First, text_DE_First, text_FR_First, text_IT_First, text_ES_First}},
     {(uint8_t)TXT_Deco, 			{text_EN_Deco, text_DE_Deco, text_FR_Deco, text_IT_Deco, text_ES_Deco}},
     {(uint8_t)TXT_Travel, 			{text_EN_Travel, text_DE_Travel, text_FR_Travel, text_IT_Travel, text_ES_Travel}},
-    {(uint8_t)TXT_Inactive, 		{text_EN_Inactive, text_DE_Inactive, text_FR_Inactive, text_IT_Inactive, text_ES_Inactive}},
+	{(uint8_t)TXT_Inactive, 		{text_EN_Inactive, text_DE_Inactive, text_FR_Inactive, text_IT_Inactive, text_ES_Inactive}},
+	{(uint8_t)TXT_Off, 				{text_EN_Off, text_DE_Off, text_FR_Off, text_IT_Off, text_ES_Off}},
     {(uint8_t)TXT_ChangeDepth, 		{text_EN_ChangeDepth, text_DE_ChangeDepth, text_FR_ChangeDepth, text_IT_ChangeDepth, text_ES_ChangeDepth}},
     {(uint8_t)TXT_Active, 			{text_EN_Active, text_DE_Active, text_FR_Active, text_IT_Active, text_ES_Active}},
     {(uint8_t)TXT_Default, 			{text_EN_Default, text_DE_Default, text_FR_Default, text_IT_Default, text_ES_Default}},

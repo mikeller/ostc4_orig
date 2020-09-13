@@ -52,4 +52,6 @@
 /* Enable to have access to the motion control selection menu */
 /* #define ENABLE_MOTION_CONTROL */
 
+/* Enable to have option to hide not needed gases from dive views */
+/* #define ENABLE_UNUSED_GAS_HIDING */
 #endif

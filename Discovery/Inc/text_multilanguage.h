@@ -90,6 +90,7 @@ extern const tText text_array2[];
 		TXT_Deco,
 		TXT_Travel,
 		TXT_Inactive,
+		TXT_Off,
 		TXT_ChangeDepth,
 		TXT_Active,
 		TXT_Default,

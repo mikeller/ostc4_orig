@@ -124,12 +124,13 @@
 #define StMOG_SetToMOD			_MB(2,1,255,4,0)
 #define StMOG_Bottle				_MB(2,1,255,5,0)
 
-#define StMOG_MOD						_MB(2,1,255,9,0)
+#define StMOG_MOD					_MB(2,1,255,9,0)
 
 #define StMOG_First					_MB(2,1,255,21,0)
 #define StMOG_Deco					_MB(2,1,255,22,0)
 #define StMOG_Travel				_MB(2,1,255,23,0)
-#define StMOG_Inactive			_MB(2,1,255,24,0)
+#define StMOG_Inactive				_MB(2,1,255,24,0)
+#define StMOG_Off					_MB(2,1,255,25,0)
 
 #define StMOG_NoTransmitter	_MB(2,1,255,30,0)
 #define StMOG_Transmitter1	_MB(2,1,255,31,0)
