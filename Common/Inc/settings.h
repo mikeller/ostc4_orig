@@ -76,7 +76,8 @@ uint8_t active:1;
 uint8_t first:1;
 uint8_t deco:1;
 uint8_t travel:1;
-uint8_t senderCode:4;
+uint8_t off:1;
+uint8_t spare:3;
 } gasubit8_t;
 
 typedef union{
