@@ -961,7 +961,7 @@ void openEdit_Reset(void)
     text[1] = TXT2BYTE_ResetLogbook;
     write_field_button(StMSYS5_ResetLogbook,30, 800, ME_Y_LINE6,  &FontT48, text);
 #else
-    text[0] = '\021';
+    text[0] = '\031';
     text[1] = TXT_2BYTE;
     text[2] = TXT2BYTE_ResetLogbook;
     text[3] = 0;

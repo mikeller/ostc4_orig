@@ -33,6 +33,7 @@
 #include "gfx_fonts.h"
 #include "tMenuEdit.h"
 #include "unit.h"
+#include "configuration.h"
 
 /* Private types -------------------------------------------------------------*/
 typedef struct
@@ -71,6 +72,7 @@ uint8_t OnAction_First			(uint32_t editId, uint8_t blockNumber, uint8_t digitNum
 uint8_t OnAction_Deco			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_Travel			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_Inactive		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+uint8_t OnAction_Off			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 
 uint8_t OnAction_DM_Active		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_DM_Mix			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
@@ -155,6 +157,12 @@ void openEdit_DiveGasSelect_Subroutine(uint8_t line, uint8_t ccr)
         setpoint = 0;
     }
 
+#ifdef ENABLE_UNUSED_GAS_HIDING
+    if(editGasPage.pGasLine[editGasPage.gasID].note.ub.off)		/* disable selection of switched off gases */
+    {
+    	return;
+    }
+#endif
     for(int i=0;i<(1+ (2*NUM_GASES));i++)
         editGasPage.pGasLine[i].note.ub.first = 0;
 
@@ -336,7 +344,7 @@ void tMEGas_check_switch_to_bailout(void)
 /* surface mode */
 void openEdit_Gas(uint8_t line, uint8_t ccr)
 {
-    uint8_t gasID, oxygen, helium, depthDeco, active, first, depthMOD, deco, travel, inactive;//, bottleSizeLiter;
+    uint8_t gasID, oxygen, helium, depthDeco, active, first, depthMOD, deco, travel, inactive, off;//, bottleSizeLiter;
 
     char text[32];
     char textMOD[32];
@@ -374,7 +382,7 @@ void openEdit_Gas(uint8_t line, uint8_t ccr)
     first = editGasPage.pGasLine[gasID].note.ub.first;
     deco = editGasPage.pGasLine[gasID].note.ub.deco;
     travel = editGasPage.pGasLine[gasID].note.ub.travel;
-
+    off = editGasPage.pGasLine[gasID].note.ub.off;
     //bottleSizeLiter = editGasPage.pGasLine[gasID].bottle_size_liter;
 
     if(active)
@@ -411,6 +419,9 @@ void openEdit_Gas(uint8_t line, uint8_t ccr)
 
 
         text[1] = 0;
+        if(off)
+        	text[0] = TXT_Off;
+        else
         if(inactive)
             text[0] = TXT_Inactive;
         else
@@ -423,7 +434,7 @@ void openEdit_Gas(uint8_t line, uint8_t ccr)
         if(travel)
             text[0] = TXT_Travel;
         else
-            text[0] = TXT_Inactive;
+        	text[0] = TXT_Inactive;
 
         write_field_button(StMOG_GasType,	20, 710, ME_Y_LINE2, &FontT48, text);
 
@@ -453,7 +464,7 @@ void openEdit_Gas(uint8_t line, uint8_t ccr)
         else
         {
             txtptr = 0;
-            text[txtptr++] = '\021';
+            text[txtptr++] = '\031';
             text[txtptr++] = TXT_ChangeDepth;
             text[txtptr++] = ' ';
             text[txtptr++] = TXT_Deco;
@@ -461,7 +472,7 @@ void openEdit_Gas(uint8_t line, uint8_t ccr)
             write_label_var(  20 ,800, ME_Y_LINE3, &FontT48, text);
 
             txtptr = 0;
-            text[txtptr++] = '\021';
+            text[txtptr++] = '\031';
             text[txtptr++] = TXT_2BYTE;
             text[txtptr++] = TXT2BYTE_SetToMOD;
             text[txtptr++] = 0;
@@ -510,7 +521,7 @@ void openEdit_Gas(uint8_t line, uint8_t ccr)
 /* surface mode */
 void openEdit_GasType(void)
 {
-    uint8_t gasID, active, first, deco, travel, inactive;
+    uint8_t gasID, active, first, deco, travel, inactive, off;
     char text[32];
 
 
@@ -530,8 +541,9 @@ void openEdit_GasType(void)
     first = editGasPage.pGasLine[gasID].note.ub.first;
     deco = editGasPage.pGasLine[gasID].note.ub.deco;
     travel = editGasPage.pGasLine[gasID].note.ub.travel;
+    off = editGasPage.pGasLine[gasID].note.ub.off;
 
-    if(active)
+    if((active) || (off))
         inactive = 0;
     else
         inactive = 1;
@@ -571,10 +583,18 @@ void openEdit_GasType(void)
     text[0] = TXT_Inactive;
     write_field_on_off(StMOG_Inactive,  30, 400, ME_Y_LINE4, &FontT48, text, inactive);
 
+#ifdef ENABLE_UNUSED_GAS_HIDING
+    text[0] = TXT_Off;
+    write_field_on_off(StMOG_Off,  30, 400, ME_Y_LINE5, &FontT48, text, off);
+#endif
+
     setEvent(StMOG_First,               (uint32_t)OnAction_First);
     setEvent(StMOG_Deco,                (uint32_t)OnAction_Deco);
     setEvent(StMOG_Travel,				(uint32_t)OnAction_Travel);
     setEvent(StMOG_Inactive,			(uint32_t)OnAction_Inactive);
+#ifdef ENABLE_UNUSED_GAS_HIDING
+    setEvent(StMOG_Off,			(uint32_t)OnAction_Off);
+#endif
 
     write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
 }
@@ -802,6 +822,7 @@ uint8_t OnAction_First(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber
     editGasPage.pGasLine[editGasPage.gasID].note.ub.active = 1;
     editGasPage.pGasLine[editGasPage.gasID].note.ub.deco = 0;
     editGasPage.pGasLine[editGasPage.gasID].note.ub.travel = 0;
+    editGasPage.pGasLine[editGasPage.gasID].note.ub.off = 0;
     editGasPage.pGasLine[editGasPage.gasID].depth_meter = 0;
     editGasPage.pGasLine[editGasPage.gasID].depth_meter_travel = 0;
 
@@ -809,6 +830,9 @@ uint8_t OnAction_First(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber
     tMenuEdit_set_on_off(StMOG_Deco, 0);
     tMenuEdit_set_on_off(StMOG_Travel, 0);
     tMenuEdit_set_on_off(StMOG_Inactive, 0);
+#ifdef ENABLE_UNUSED_GAS_HIDING
+    tMenuEdit_set_on_off(StMOG_Off, 0);
+#endif
 
     if(!first)
         return UPDATE_DIVESETTINGS;
@@ -848,6 +872,7 @@ uint8_t OnAction_Deco(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber,
     editGasPage.pGasLine[editGasPage.gasID].note.ub.active = 1;
     editGasPage.pGasLine[editGasPage.gasID].note.ub.deco = 1;
     editGasPage.pGasLine[editGasPage.gasID].note.ub.travel = 0;
+    editGasPage.pGasLine[editGasPage.gasID].note.ub.off = 0;
     editGasPage.pGasLine[editGasPage.gasID].depth_meter_travel = 0;
     editGasPage.mod = calc_MOD(editGasPage.gasID);
     editGasPage.pGasLine[editGasPage.gasID].depth_meter = editGasPage.mod;
@@ -864,6 +889,9 @@ uint8_t OnAction_Deco(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber,
     tMenuEdit_set_on_off(StMOG_Deco, 1);
     tMenuEdit_set_on_off(StMOG_Travel, 0);
     tMenuEdit_set_on_off(StMOG_Inactive, 0);
+#ifdef ENABLE_UNUSED_GAS_HIDING
+    tMenuEdit_set_on_off(StMOG_Off, 0);
+#endif
 
     if(!deco)
         return UPDATE_DIVESETTINGS;
@@ -903,6 +931,7 @@ uint8_t OnAction_Travel(uint32_t editId, uint8_t blockNumber, uint8_t digitNumbe
     editGasPage.pGasLine[editGasPage.gasID].note.ub.active = 1;
     editGasPage.pGasLine[editGasPage.gasID].note.ub.deco = 0;
     editGasPage.pGasLine[editGasPage.gasID].note.ub.travel = 1;
+    editGasPage.pGasLine[editGasPage.gasID].note.ub.off = 0;
     editGasPage.pGasLine[editGasPage.gasID].depth_meter = 0;
     editGasPage.pGasLine[editGasPage.gasID].depth_meter_travel = 0;
 
@@ -910,6 +939,9 @@ uint8_t OnAction_Travel(uint32_t editId, uint8_t blockNumber, uint8_t digitNumbe
     tMenuEdit_set_on_off(StMOG_Deco, 0);
     tMenuEdit_set_on_off(StMOG_Travel, 1);
     tMenuEdit_set_on_off(StMOG_Inactive, 0);
+#ifdef ENABLE_UNUSED_GAS_HIDING
+    tMenuEdit_set_on_off(StMOG_Off, 0);
+#endif
 
     if(!travel)
         return UPDATE_DIVESETTINGS;
@@ -953,18 +985,66 @@ uint8_t OnAction_Inactive(uint32_t editId, uint8_t blockNumber, uint8_t digitNum
     editGasPage.pGasLine[editGasPage.gasID].note.ub.active = 0;
     editGasPage.pGasLine[editGasPage.gasID].note.ub.deco = 0;
     editGasPage.pGasLine[editGasPage.gasID].note.ub.travel = 0;
+    editGasPage.pGasLine[editGasPage.gasID].note.ub.off = 0;
 
     tMenuEdit_set_on_off(StMOG_First, 0);
     tMenuEdit_set_on_off(StMOG_Deco, 0);
     tMenuEdit_set_on_off(StMOG_Travel, 0);
     tMenuEdit_set_on_off(StMOG_Inactive, 1);
-
+#ifdef ENABLE_UNUSED_GAS_HIDING
+    tMenuEdit_set_on_off(StMOG_Off, 0);
+#endif
     if(!inactive)
         return UPDATE_DIVESETTINGS;
     else
         return UPDATE_AND_EXIT_TO_MENU;
 }
 
+uint8_t OnAction_Off			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+{
+    uint8_t first, off, gasOne;
+
+    if(editGasPage.ccr)
+        gasOne = 1 + NUM_OFFSET_DILUENT;
+    else
+        gasOne = 1;
+
+    first = editGasPage.pGasLine[editGasPage.gasID].note.ub.first;
+    off =editGasPage.pGasLine[editGasPage.gasID].note.ub.off;
+
+    if(first)
+    {
+        if(editGasPage.gasID == gasOne)
+            return UNSPECIFIC_RETURN;
+        else
+        {
+            editGasPage.pGasLine[gasOne].note.ub.first = 1;
+            editGasPage.pGasLine[gasOne].note.ub.active = 1;
+            editGasPage.pGasLine[gasOne].note.ub.deco = 0;
+            editGasPage.pGasLine[gasOne].note.ub.travel = 0;
+            editGasPage.pGasLine[gasOne].depth_meter = 0;
+            editGasPage.pGasLine[gasOne].depth_meter_travel = 0;
+        }
+    }
+
+    editGasPage.pGasLine[editGasPage.gasID].note.ub.first = 0;
+    editGasPage.pGasLine[editGasPage.gasID].note.ub.active = 0;
+    editGasPage.pGasLine[editGasPage.gasID].note.ub.deco = 0;
+    editGasPage.pGasLine[editGasPage.gasID].note.ub.travel = 0;
+    editGasPage.pGasLine[editGasPage.gasID].note.ub.off = 1;
+
+    tMenuEdit_set_on_off(StMOG_First, 0);
+    tMenuEdit_set_on_off(StMOG_Deco, 0);
+    tMenuEdit_set_on_off(StMOG_Travel, 0);
+    tMenuEdit_set_on_off(StMOG_Inactive, 0);
+#ifdef ENABLE_UNUSED_GAS_HIDING
+    tMenuEdit_set_on_off(StMOG_Off, 1);
+#endif
+    if(!off)
+        return UPDATE_DIVESETTINGS;
+    else
+        return UPDATE_AND_EXIT_TO_MENU;
+}
 
 uint8_t OnAction_SetToMOD	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
