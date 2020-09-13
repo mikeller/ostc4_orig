@@ -94,7 +94,7 @@ uint32_t tMSP_refresh(uint8_t line,
             if((first == 0) || (actual_menu_content != MENU_SURFACE))
                 strcpy(&text[textPointer++],"\177");
 
-            char color = '\021';
+            char color = '\031';
             if(depthUp)
                 color = '\020';
 

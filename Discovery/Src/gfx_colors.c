@@ -39,7 +39,7 @@ uint32_t ColorLUT[] =
 {
 	// ARGB
 	0x00FFFFFF, // \020 wei�
-	0x00777777, // \021 grau f�r inaktiv / hw 151027: war zuvor 0x00555555 grau
+	0x00333333, // \021 dark grey
 	0x0050FF50, // \022 units
 	0x003060FF, // \023 blau
 	0x00FFFF00, // \024 + CLUT_WarningYellow
@@ -47,7 +47,7 @@ uint32_t ColorLUT[] =
 	0x0000FF00, // \026 + CLUT_NiceGreen
 	0x00FFFFFF, // \027 DIVE_MainColorIfNotWhite\020
 	0x00FFFFFF, // \030 DIVE_PluginBoxMainColor
-	0x00777777, // \031 DIVE_PluginBoxGrey
+	0x00777777, // \031 DIVE_PluginBoxGrey also used to display deactivation
 	0x0050FF50, // \032 DIVE_LabelColor
 	0x00FFFFFF, // CLUT_DIVE_FieldSeperatorLines
 	0x0050FF50, // CLUT_DIVE_pluginbox // old pink 0x00FF20FF
