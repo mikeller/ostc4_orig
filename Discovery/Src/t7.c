@@ -28,7 +28,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "t7.h"
-
+#include "settings.h"
 #include "data_exchange_main.h"
 #include "decom.h"
 #include "gfx_fonts.h"
@@ -39,6 +39,7 @@
 #include "timer.h"
 #include "unit.h"
 #include "motion.h"
+#include "configuration.h"
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -674,6 +675,7 @@ void t7_refresh_surface(void)
 {
 	static float debounceAmbientPressure = 0;
     char text[256];
+    uint8_t loop, textIdx;
     uint8_t date[3], year,month,day;
     uint32_t color;
     uint8_t  customview_warnings = 0;
@@ -744,16 +746,16 @@ void t7_refresh_surface(void)
     if(Stime.Seconds % 2)
         snprintf(text,255,"\001%02d:%02d",Stime.Hours,Stime.Minutes);
     else
-        snprintf(text,255,"\001%02d\021:\020%02d",Stime.Hours,Stime.Minutes);
+        snprintf(text,255,"\001%02d\031:\020%02d",Stime.Hours,Stime.Minutes);
     GFX_write_string(&FontT54,&t7surfaceR,text,3);
 */
 // debug version:
     if(Stime.Seconds % 2)
         snprintf(text,255,"\001%02d:%02d:%02d",Stime.Hours,Stime.Minutes,Stime.Seconds);
     else if(dateNotSet)
-        snprintf(text,255,"\001\021%02d:%02d:%02d\020",Stime.Hours,Stime.Minutes,Stime.Seconds);
+        snprintf(text,255,"\001\031%02d:%02d:%02d\020",Stime.Hours,Stime.Minutes,Stime.Seconds);
     else
-        snprintf(text,255,"\001%02d\021:\020%02d:%02d",Stime.Hours,Stime.Minutes,Stime.Seconds);
+        snprintf(text,255,"\001%02d\031:\020%02d:%02d",Stime.Hours,Stime.Minutes,Stime.Seconds);
     GFX_write_string(&FontT54,&t7surfaceR,text,3);
 
     if(settingsGetPointer()->date_format == DDMMYY)
@@ -782,7 +784,7 @@ void t7_refresh_surface(void)
     if((Stime.Seconds % 2) || (dateNotSet == 0))
         snprintf(text,255,"\001%02d.%02d.%02d",date[0],date[1],date[2]);
     else
-        snprintf(text,255,"\001\021%02d.%02d.%02d",date[0],date[1],date[2]);
+        snprintf(text,255,"\001\031%02d.%02d.%02d",date[0],date[1],date[2]);
 
     GFX_write_string(&FontT54,&t7surfaceR,text,5);
 
@@ -799,7 +801,7 @@ void t7_refresh_surface(void)
             text[5] += Sdate.WeekDay;
 
         if(!(Stime.Seconds % 2) && (dateNotSet == 1))
-            text[1] = '\021';
+            text[1] = '\031';
 
         GFX_write_string(&FontT48,&t7surfaceR,text,4);
     }
@@ -967,39 +969,37 @@ void t7_refresh_surface(void)
     }
     else
     {
-        text[0] = '\021';
-        text[1] = '1';
-        text[2] = '\177';
-        text[3] = '\177';
-        text[4] = 10;
-        text[5] = '\021';
-        text[6] = '2';
-        text[7] = '\177';
-        text[8] = '\177';
-        text[9] = 10;
-        text[10] = '\021';
-        text[11] = '3';
-        text[12] = '\177';
-        text[13] = '\177';
-        text[14] = 10;
-        text[15] = '\021';
-        text[16] = '4';
-        text[17] = '\177';
-        text[18] = '\177';
-        text[19] = 10;
-        text[20] = '\021';
-        text[21] = '5';
-        text[22] = 0;
-
+    	textIdx = 0;
         if(stateUsed->diveSettings.diveMode == DIVEMODE_CCR)
             gasOffset = NUM_OFFSET_DILUENT;
         else
             gasOffset = 0;
-        for(int i=1;i<=5;i++)
-        {
-            if(stateUsed->diveSettings.gas[i+gasOffset].note.ub.active)
-                text[(i-1)*5] -= 1;
-        }
+
+    	/* Display gas setup */
+    	for(loop = 1; loop <= NUM_GASES; loop++)
+    	{
+#ifdef ENABLE_UNUSED_GAS_HIDING
+    		if(stateUsed->diveSettings.gas[loop+gasOffset].note.ub.off)
+    		{
+    			text[textIdx++] = '\021';
+    		}
+    		else
+#endif
+    		if(stateUsed->diveSettings.gas[loop+gasOffset].note.ub.active)
+    		{
+    			text[textIdx++]= '\020';
+    		}
+    		else
+    		{
+    			text[textIdx++]= '\031';
+    		}
+
+   			text[textIdx++] = '0' + loop;
+			text[textIdx++] = '\177';
+			text[textIdx++] = '\177';
+			text[textIdx++] = 10;
+    	}
+    	text[textIdx++] = 0;
         GFX_write_string(&FontT48,&t7surfaceL,text,6);
 
 
@@ -1794,9 +1794,13 @@ void t7_refresh_customview(void)
         for(int gasId=1;gasId<=NUM_GASES;gasId++)
         {
             textpointer = 0;
+#ifdef ENABLE_UNUSED_GAS_HIDING
+            if(!pGasLine[gasId].note.ub.off)
+            {
+#endif
             fPpO2ofGasAtThisDepth = (stateUsed->lifeData.pressure_ambient_bar - WATER_VAPOUR_PRESSURE) * pGasLine[gasId].oxygen_percentage / 100;
             if(pGasLine[gasId].note.ub.active == 0)
-                strcpy(&text[textpointer++],"\021");
+                strcpy(&text[textpointer++],"\031");
             else if(stateUsed->lifeData.actualGas.GasIdInSettings == gasId)	/* actual selected gas */
             {
             	strcpy(&text[textpointer++],"\030");
@@ -1820,6 +1824,9 @@ void t7_refresh_customview(void)
                 textpointer += snprintf(&text[textpointer],7,"\t%u %c%c",unit_depth_integer(pGasLine[gasId].depth_meter), unit_depth_char1(), unit_depth_char2());
             }
             GFX_write_string(&FontT42, &t7cY0free, text, gasId);
+#ifdef ENABLE_UNUSED_GAS_HIDING
+        }
+#endif
         }
         break;
 
@@ -2248,7 +2255,7 @@ void t7_refresh_divemode(void)
             , (nextstopLengthSeconds+59)/60);
         t7_colorscheme_mod(TextR2);
         if(time_elapsed_ms(pDecoinfo->tickstamp, HAL_GetTick()) > MAX_AGE_DECOINFO_MS)
-            TextR2[0] = '\021';
+            TextR2[0] = '\031';
         if(textlength <= 9)
             GFX_write_string(&FontT105,&t7r2,TextR2,1);
         else
@@ -2276,7 +2283,7 @@ void t7_refresh_divemode(void)
             snprintf(TextR3,TEXTSIZE,"\020\002%ih",(pDecoinfo->output_time_to_surface_seconds + 59)/ 3600);
         t7_colorscheme_mod(TextR3);
         if(time_elapsed_ms(pDecoinfo->tickstamp, HAL_GetTick()) > MAX_AGE_DECOINFO_MS)
-            TextR2[0] = '\021';
+            TextR2[0] = '\031';
         GFX_write_string(&FontT105,&t7r3,TextR3,1);
     }
     else if(pDecoinfo->output_ndl_seconds)
@@ -2289,7 +2296,7 @@ void t7_refresh_divemode(void)
             snprintf(TextR3,TEXTSIZE,"\020\002%ih",pDecoinfo->output_ndl_seconds/3600);
         t7_colorscheme_mod(TextR3);
         if(time_elapsed_ms(pDecoinfo->tickstamp, HAL_GetTick()) > MAX_AGE_DECOINFO_MS)
-            TextR2[0] = '\021';
+            TextR2[0] = '\031';
         GFX_write_string(&FontT105,&t7r3,TextR3,1);
     }
 

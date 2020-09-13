@@ -502,10 +502,9 @@ void t3_refresh_divemode(void)
 {
     uint8_t  customview_warnings = 0;
     float depth_meter = 0.0;
-    char text[30];
+
     // everything like lines, depth, ascent graph and divetime
     depth_meter = t3_basics_lines_depth_and_divetime(&t3screen, &t3l1, &t3r1, 0); // 0 could be stateUsed->diveSettings.diveMode for CCR specials
-
 
     // customview
     if(stateUsed->warnings.numWarnings)
@@ -698,6 +697,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
     const SGasLine * pGasLine;
     uint8_t oxygen, helium;
     uint8_t lineNumber;
+    uint8_t gasPosIdx;
 
     /* compass position */
     point_t center;
@@ -813,6 +813,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
        break;
 
     case CVIEW_T3_GasList:
+    	gasPosIdx = 0;
         snprintf(text,TEXTSIZE,"\032\f%c%c",TXT_2BYTE, TXT2BYTE_Gaslist);
         GFX_write_string(&FontT42,tXc1,text,0);
 
@@ -833,23 +834,42 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         fPpO2limitLow = (float)(settingsGetPointer()->ppO2_min) / 100;
         for(int gasId=1;gasId<=NUM_GASES;gasId++)
         {
+#ifdef ENABLE_UNUSED_GAS_HIDING
+            if(!pGasLine[gasId].note.ub.off)
+            {
+#endif
             textpointer = 0;
             text[textpointer++] = '\003';
-            lineNumber = gasId;
-            if(gasId > 3)
+
+            lineNumber = 1;
+
+            switch(gasPosIdx)
             {
-                 text[textpointer++] = '\002';	/* display right aligned */
-                 lineNumber = gasId %4;
+            	case 0:			lineNumber = 0;
+            	case 1:
+            		break;
+            	case 4:			text[textpointer++] = '\001';   /* display centered */
+            		break;
+            	case 2:			lineNumber = 0;
+            	case 3:			text[textpointer++] = '\002';	/* display right aligned */
+            	default:
+            		break;
             }
-            else if(gasId > 1)
+#if 0
+            if(gasPosIdx < 3)
             {
-            	text[textpointer++] = '\001';  /* display centered */
-                lineNumber = gasId %2;
+            	lineNumber = 1;
             }
+            else
+            {
+                lineNumber = 0;
+            }
+#endif
+            gasPosIdx++;
 
             fPpO2ofGasAtThisDepth = (stateUsed->lifeData.pressure_ambient_bar - WATER_VAPOUR_PRESSURE) * pGasLine[gasId].oxygen_percentage / 100;
             if(pGasLine[gasId].note.ub.active == 0)
-                strcpy(&text[textpointer++],"\021");
+                strcpy(&text[textpointer++],"\031");
             else if(stateUsed->lifeData.actualGas.GasIdInSettings == gasId)	/* actual selected gas */
             {
             	strcpy(&text[textpointer++],"\030");
@@ -867,7 +887,16 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
             oxygen = pGasLine[gasId].oxygen_percentage;
             helium = pGasLine[gasId].helium_percentage;
             textpointer += write_gas(&text[textpointer], oxygen, helium);
+
+            if((pGasLine[gasId].depth_meter) && (gasPosIdx < 5))	/* do not show for potential last gas because of formating issues */
+            {
+                textpointer += snprintf(&text[textpointer],7,"\016\016%u%c%c",unit_depth_integer(pGasLine[gasId].depth_meter), unit_depth_char1(), unit_depth_char2());
+            }
+            text[textpointer++] = 0;
             GFX_write_string(&FontT42, tXc1, text, lineNumber);
+#ifdef ENABLE_UNUSED_GAS_HIDING
+            }
+#endif
         }
         break;
 
@@ -1186,7 +1215,7 @@ void t3_basics_show_customview_warnings(GFX_DrawCfgWindow* tXc1)
 
     textpointer = 0;
 
-    text[textpointer++] = '\021';
+    text[textpointer++] = '\031';
     text[textpointer++] = TXT_2BYTE;
     text[textpointer++] = TXT2BYTE_WarnDecoMissed;
     if(stateUsed->warnings.decoMissed)
@@ -1206,7 +1235,7 @@ void t3_basics_show_customview_warnings(GFX_DrawCfgWindow* tXc1)
     }
 
     text[textpointer++] = '\t';
-    text[textpointer++] = '\021';
+    text[textpointer++] = '\031';
     text[textpointer++] = TXT_2BYTE;
     text[textpointer++] = TXT2BYTE_WarnPPO2Low;
     if(stateUsed->warnings.ppO2Low)
@@ -1227,7 +1256,7 @@ void t3_basics_show_customview_warnings(GFX_DrawCfgWindow* tXc1)
 
     text[textpointer++] = '\n';
     text[textpointer++] = '\r';
-    text[textpointer++] = '\021';
+    text[textpointer++] = '\031';
     text[textpointer++] = TXT_2BYTE;
     text[textpointer++] = TXT2BYTE_WarnPPO2High;
     if(stateUsed->warnings.ppO2High)
@@ -1247,7 +1276,7 @@ void t3_basics_show_customview_warnings(GFX_DrawCfgWindow* tXc1)
     }
 
     text[textpointer++] = '\t';
-    text[textpointer++] = '\021';
+    text[textpointer++] = '\031';
     text[textpointer++] = TXT_2BYTE;
     text[textpointer++] = TXT2BYTE_WarnFallback;
     if(stateUsed->warnings.fallback)
@@ -1268,7 +1297,7 @@ void t3_basics_show_customview_warnings(GFX_DrawCfgWindow* tXc1)
 
     text[textpointer++] = '\n';
     text[textpointer++] = '\r';
-    text[textpointer++] = '\021';
+    text[textpointer++] = '\031';
     text[textpointer++] = TXT_2BYTE;
     text[textpointer++] = TXT2BYTE_WarnSensorLinkLost;
     if(stateUsed->warnings.sensorLinkLost)
@@ -1289,7 +1318,7 @@ void t3_basics_show_customview_warnings(GFX_DrawCfgWindow* tXc1)
 
 /*
     text[textpointer++] = '\t';
-    text[textpointer++] = '\021';
+    text[textpointer++] = '\031';
     text[textpointer++] = TXT_2BYTE;
     text[textpointer++] = TXT2BYTE_WarnBatteryLow;
     if(stateUsed->warnings.lowBattery)
