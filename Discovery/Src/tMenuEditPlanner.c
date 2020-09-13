@@ -493,7 +493,7 @@ void refresh_PlanResult_helper(char *text, int start)
         textptr += snprintf(&text[textptr],20," %3i'", lengthInMinutes);
     }
     else
-        textptr = snprintf(text,20,"\021\034%2u\016\016m\017 ",depthNext);
+        textptr = snprintf(text,20,"\031\034%2u\016\016m\017 ",depthNext);
 
     for(int i = 0; i < ListCount; i++)
     {
@@ -630,7 +630,7 @@ void refresh_PlanResult(void)
             text[textpointer] = 0;
 
             if(tMplan_pGasConsumption[j] == 0)
-                text[textpointer++] = '\021';
+                text[textpointer++] = '\031';
 
             textpointer += write_gas(&text[textpointer], settingsGetPointer()->gas[j].oxygen_percentage,   settingsGetPointer()->gas[j].helium_percentage );
             text[textpointer] = 0;
@@ -641,7 +641,7 @@ void refresh_PlanResult(void)
             text[textpointer] = 0;
 
             if(tMplan_pGasConsumption[j] == 0)
-                text[textpointer++] = '\021';
+                text[textpointer++] = '\031';
 
             textpointer += snprintf(&text[textpointer],20,"\002%u\016\016 ltr\017",tMplan_pGasConsumption[j]);
             text[textpointer] = 0;

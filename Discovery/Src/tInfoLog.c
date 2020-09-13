@@ -328,11 +328,11 @@ void tInfoLog_BuildAndShowNextPage(void)
             date[month] = logbookHeader.dateMonth;
 
             text[textPointer++] = '\034';// monospaced space large size mode
-            textPointer += snprintf(&text[textPointer], 20,"\021%04u \020", number);
+            textPointer += snprintf(&text[textPointer], 20,"\031%04u \020", number);
 /*			if(number < 1000)
-                textPointer += snprintf(&text[textPointer], 20,"\021%2u \020", number);
+                textPointer += snprintf(&text[textPointer], 20,"\031%2u \020", number);
             else
-                textPointer += snprintf(&text[textPointer], 20,"\021\016\016%3u \017\020", number);
+                textPointer += snprintf(&text[textPointer], 20,"\031\016\016%3u \017\020", number);
 */
             textPointer += snprintf(&text[textPointer], 20,"%02d.%02d ",date[0],date[1]);
             textPointer += snprintf(&text[textPointer], 20,"%02d:%02d ",logbookHeader.timeHour,logbookHeader.timeMinute);

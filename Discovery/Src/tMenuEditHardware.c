@@ -480,7 +480,7 @@ void refresh_ButtonValuesFromPIC(void)
 
     write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
 
-    text[0] = '\020'; // '\021';
+    text[0] = '\020'; // '\031';
     text[1] = TXT_2BYTE;
     text[2] = TXT2BYTE_LowerIsLess;
     text[3] = 0;
