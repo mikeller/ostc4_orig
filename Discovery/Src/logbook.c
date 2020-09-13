@@ -1843,12 +1843,12 @@ void logbook_createDummyProfile(SLogbookHeader* pHeader, uint16_t length, uint16
 	if(ppo2)
 	{
 		/* find first gas ID */
-		for(index = 0; index < NUM_GAS; index++)
+		for(index = 0; index < NUM_GASES; index++)
 		{
 			if(pHeader->gasordil[index].note.ub.first)
 				break;
 		}
-		if(index != NUM_GAS)
+		if(index != NUM_GASES)
 		{
 			gas.helium_percentage = pHeader->gasordil[index].helium_percentage;
 			gas.nitrogen_percentage = 100 -  gas.helium_percentage - pHeader->gasordil[index].oxygen_percentage;
