@@ -32,6 +32,7 @@
 #include "check_warning.h"
 #include "decom.h"
 #include "unit.h"
+#include "configuration.h"
 
 #define OCGAS_STANDARD (0)
 #define OCGAS_BAILOUT_INACTIVE (1)
@@ -144,6 +145,13 @@ void tMG_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext, uint8_t
             ltr = pGasLine[gasId].bottle_size_liter;
             //bar = stateUsed->lifeData.bottle_bar[gasId];
 
+#ifdef ENABLE_UNUSED_GAS_HIDING
+            if(pGasLine[gasId].note.ub.off)
+            {
+            	strcpy(&text[textPointer++],"\021");
+            }
+            else
+#endif
             if(active)
             {
                 if(actual_menu_content == MENU_SURFACE)
@@ -158,8 +166,9 @@ void tMG_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext, uint8_t
                 }
             }
             else
-                strcpy(&text[textPointer++],"\021");
-
+            {
+                strcpy(&text[textPointer++],"\031");
+            }
             textPointer += write_gas(&text[textPointer], oxygen, helium);
 
             strcpy(&text[textPointer++],"\t");
@@ -169,7 +178,7 @@ void tMG_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext, uint8_t
                 textPointer += snprintf(&text[textPointer], 59,\
                     "\024"
                     " Bailout"
-                    "\021"
+                    "\031"
                     "\034"
                     " %3u"
                     "\016\016"
@@ -185,7 +194,7 @@ void tMG_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext, uint8_t
                 textPointer += snprintf(&text[textPointer], 57,\
                     "\024"
                     " Bailout"
-                    "\021"
+                    "\031"
                     "\034"
                     " %3u"
                     "\016\016"
@@ -211,7 +220,7 @@ void tMG_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext, uint8_t
                     strcpy(&text[textPointer++],"\177");
 
                 /* color active / inactive for gas changes */
-                char color[5] = {'\021','\021','\021','\021','\021'};
+                char color[5] = {'\031','\031','\031','\031','\031'};
                 if(active)
                 {
                     /* mod */
