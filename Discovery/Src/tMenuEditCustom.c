@@ -313,6 +313,7 @@ char customview_TXT2BYTE_helper(uint8_t customViewId)
     case CVIEW_Profile:
         text = TXT2BYTE_Profile;
         break;
+    case CVIEW_Gaslist:
     case CVIEW_T3_GasList:
         text = TXT2BYTE_Gaslist;
         break;
@@ -528,16 +529,14 @@ void openEdit_CustomviewDivemode(const uint8_t* pcv_changelist)
     uint8_t i;
 
 	customviewsSubpageMax = (tHome_getNumberOfAvailableCVs(pcv_changelist) / CV_PER_PAGE) + 1;
+
+	if(pcv_curchangelist != pcv_changelist)		/* new selection base? => reset page index */
+	{
+		customviewsSubpage = 0;
+	}
 	pcv_curchangelist = pcv_changelist;
 
 	CustomviewDivemode_refresh(pcv_changelist);
-
-
-    text[0] = '\001';
-    text[1] = TXT_2BYTE;
-    text[2] = TXT2BYTE_SelectCustomviews;
-    text[3] = 0;
-    write_topline(text);
 
      for(i=0; i<5;i++)		/* fill maximum 5 items and leave last one for sub page selection */
      {
@@ -701,10 +700,12 @@ void CustomviewDivemode_refresh()
 
     uint8_t i;
 
-    text[0] = '\001';
-    text[1] = TXT_2BYTE;
-    text[2] = TXT2BYTE_SelectCustomviews;
-    text[3] = 0;
+    text[textPointer++] = '\001';
+    text[textPointer++] = TXT_2BYTE;
+    text[textPointer++] = TXT2BYTE_SelectCustomviews;
+    text[textPointer++] = ' ';
+    text[textPointer++] = '1' + customviewsSubpage;
+    text[textPointer++] = 0;
     write_topline(text);
 
 
