@@ -320,6 +320,7 @@
 #define StMCustom3_CViewSelection5	_MB(2,9,3,5,0)
 #define StMCustom3_CViewSelection6	_MB(2,9,3,6,0)
 
+#define StMCustom4_CViewSelection1	_MB(2,9,4,1,0)
 
 /* PAGE 10 */
 #define StMPLAN		_MB(2,10,0,0,0)
