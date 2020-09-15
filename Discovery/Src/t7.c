@@ -1498,10 +1498,7 @@ uint8_t t7_GetEnabled_customviews()
     uint8_t enabledViewCnt = 0;
     uint32_t cv_config = settingsGetPointer()->cv_configuration;
 
-    if(stateUsed->mode == MODE_DIVE)
-        pViews = (uint8_t*)customviewsDive;
-    else
-        pViews = (uint8_t*)customviewsSurface;
+    pViews = (uint8_t*)customviewsDive;
 
     while((*pViews != CVIEW_END))
     {
