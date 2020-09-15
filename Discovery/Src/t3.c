@@ -52,7 +52,7 @@ GFX_DrawCfgWindow	t3r1;
 GFX_DrawCfgWindow	t3c1;
 GFX_DrawCfgWindow	t3c2;
 
-uint8_t t3_selection_customview = 0;
+uint8_t t3_selection_customview = CVIEW_noneOrDebug;
 
 /* TEM HAS TO MOVE TO GLOBAL--------------------------------------------------*/
 
@@ -551,10 +551,6 @@ void t3_basics_battery_low_customview_extra(GFX_DrawCfgWindow* tXc1)
 
 void t3_refresh_customview(float depth)
 {
-#if 0
-    if((t3_selection_customview == CVIEW_sensors) &&(stateUsed->diveSettings.ccrOption == 0))
-        t3_change_customview();
-#endif
     t3_basics_refresh_customview(depth, t3_selection_customview, &t3screen, &t3c1, &t3c2, stateUsedWrite->diveSettings.diveMode);
 }
 
@@ -855,16 +851,6 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
             	default:
             		break;
             }
-#if 0
-            if(gasPosIdx < 3)
-            {
-            	lineNumber = 1;
-            }
-            else
-            {
-                lineNumber = 0;
-            }
-#endif
             gasPosIdx++;
 
             fPpO2ofGasAtThisDepth = (stateUsed->lifeData.pressure_ambient_bar - WATER_VAPOUR_PRESSURE) * pGasLine[gasId].oxygen_percentage / 100;
@@ -1456,9 +1442,13 @@ void t3_basics_change_customview(uint8_t *tX_selection_customview,const uint8_t 
 		{
 			iterate = 1;
 		}
-	    if((tX_customviews[index] == CVIEW_T3_TTS) && !pDecoinfo->output_time_to_surface_seconds)
+	    if((tX_customviews[index] == CVIEW_T3_TTS) && !pDecoinfo->output_time_to_surface_seconds)	/* Skip TTS if value is 0 */
 	    {
 	    	iterate = 1;
+	    }
+	    if((tX_customviews[index] == CVIEW_T3_Decostop) && ((!pDecoinfo->output_ndl_seconds) && (!pDecoinfo->output_time_to_surface_seconds) && (timer_Safetystop_GetCountDown() == 0)))			/* Skip Deco if NDL is not set */
+	    {
+	       	iterate = 1;
 	    }
 	    if((iterate) && (action == ACTION_END))
 	    {
