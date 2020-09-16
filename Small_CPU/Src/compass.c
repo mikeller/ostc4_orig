@@ -260,6 +260,10 @@ void compass_init(uint8_t fast, uint8_t gain)
 /* No compass identified => Retry */
 	if(hardwareCompass == 0)
 	{
+		I2C_DeInit();
+		HAL_Delay(100);
+		MX_I2C1_Init();
+		HAL_Delay(100);
 		uint8_t data = WHO_AM_I;
 		I2C_Master_Transmit( DEVICE_COMPASS_303D, &data, 1);
 		I2C_Master_Receive(  DEVICE_COMPASS_303D, &data, 1);
@@ -354,15 +358,12 @@ int compass_calib(void)
 //  ===============================================================================
 void compass_sleep(void)
 {
-	if(hardwareCompass == compass_generation2)			//LSM303D)
-	{
+	if(hardwareCompass == compass_generation2)			//LSM303D
 		compass_sleep_LSM303D();
-	}
-	else
-	if(hardwareCompass == compass_generation1)			//HMC5883L)
-	{
+	if(hardwareCompass == compass_generation1)			//HMC5883L
 		compass_sleep_HMC5883L();
-	}
+	if(hardwareCompass == compass_generation3)			//LSM303AGR
+		compass_sleep_LSM303AGR();
 }
 
 
@@ -378,7 +379,7 @@ void compass_read(void)
 	if(hardwareCompass == compass_generation1)			//HMC5883L)
 		compass_read_HMC5883L();
 	if(hardwareCompass == compass_generation3)			//LSM303AGR)
-			compass_read_LSM303AGR();
+		compass_read_LSM303AGR();
 
 }
 
