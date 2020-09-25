@@ -38,7 +38,7 @@
 /* #define ALWAYS_SHOW_VOLTAGE */
 
 /* Enable this to skip coplete scan of dive log during startup */
-/* #define TRUST_LOG_CONSISTENCY */
+#define TRUST_LOG_CONSISTENCY
 
 /* Enable this to transfer additional data list last dive ID and last sample index during raw data requests */
 /* define SEND_DATA_DETAILS */
