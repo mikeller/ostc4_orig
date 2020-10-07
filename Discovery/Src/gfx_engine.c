@@ -2033,10 +2033,10 @@ uint32_t GFX_write_string_color(const tFont *Font, GFX_DrawCfgWindow* hgfx, cons
 			if(*pText == '\r') // carriage return, no newline
 				settings.Xdelta = 0;
 			else
-			if((*pText == '\001') && !minimal) // center
+			if((*pText == '\001')) // center
 				settings.Xdelta = GFX_write__Modify_Xdelta__Centered(&settings, hgfx, pText+1);
 			else
-			if((*pText == '\002') && !minimal) // right
+			if((*pText == '\002')) // right
 				settings.Xdelta = GFX_write__Modify_Xdelta__RightAlign(&settings, hgfx, pText+1);
 			else
 			if((*pText == '\003') && !minimal) // doubleSize
@@ -2986,7 +2986,7 @@ static int8_t GFX_write__Modify_helper(char *cText, const char *pTextInput, uint
 	
 	pText = (uint32_t)pTextInput;
 	counter = 0;
-	while((counter < 100) && (*(char*)pText != 0) && (*(char*)pText != '\r'))
+	while((counter < 100) && (*(char*)pText != 0) && (*(char*)pText != '\r') && (*(char*)pText != '\n'))
 	{
 		if((*(char*)pText) == TXT_2BYTE)
 		{
