@@ -49,7 +49,7 @@
 /* remove comment to use a predefined profile for pressure changes instead of real world data */
 /* #define SIMULATE_PRESSURE */
 
-#define PRESSURE_SURFACE_MAX_MBAR			(1030.0f)		/* It is unlikely that pressure at surface is greater than this value => clip to it */
+#define PRESSURE_SURFACE_MAX_MBAR			(1060.0f)		/* It is unlikely that pressure at surface is greater than this value => clip to it */
 
 #define PRESSURE_SURFACE_QUE					(30u)			/* history buffer [minutes] for past pressure measurements */
 #define PRESSURE_SURFACE_EVA_WINDOW				(15u)			/* Number of entries evaluated during instability test. Used to avoid detection while dive enters water */
