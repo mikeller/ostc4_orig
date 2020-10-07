@@ -195,12 +195,9 @@ uint32_t tMSystem_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext
 
             if(data->tX_colorscheme != 0)
             {
-                text[textPointer++] = ' ';
-                text[textPointer++] = ' ';
-                text[textPointer++] = ' ';
-                text[textPointer++] = ' ';
-                text[textPointer++] = '\027';
+            	text[textPointer++] = ' ';
                 text[textPointer++] = '/';
+                text[textPointer++] = '\027';
                 text[textPointer++] = ' ';
                 text[textPointer++] = '0' + data->tX_colorscheme;
                 text[textPointer++] = '\020';
@@ -211,27 +208,32 @@ uint32_t tMSystem_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext
             if(data->nonMetricalSystem == 0)
             {
             text[textPointer++] = 'm';
+            text[textPointer++] = ' ';
             text[textPointer++] = '/';
+            text[textPointer++] = ' ';
             text[textPointer++] = 'C';
+            text[textPointer++] = ' ';
             }
             else
             {
             text[textPointer++] = 'f';
             text[textPointer++] = 't';
+            text[textPointer++] = ' ';
             text[textPointer++] = '/';
+            text[textPointer++] = ' ';
             text[textPointer++] = 'F';
+            text[textPointer++] = ' ';
             }
-
-            text[textPointer++] = ' ';
-            text[textPointer++] = ' ';
-            text[textPointer++] = ' ';
-            text[textPointer++] = ' ';
-            text[textPointer++] = '\027';
+            if(data->tX_colorscheme != 0)
+            {
+            	text[textPointer++] = '/';
+            	text[textPointer++] = '\027';
+            	text[textPointer++] = ' ';
+            	text[textPointer++] = '0' + data->tX_colorscheme;
+            	text[textPointer++] = ' ';
+            	text[textPointer++] = '\020';
+            }
             text[textPointer++] = '/';
-            text[textPointer++] = ' ';
-            text[textPointer++] = '0' + data->tX_colorscheme;
-            text[textPointer++] = '\020';
-            text[textPointer++] = ' ';
             text[textPointer++] = ' ';
             text[textPointer++] = 'd';
             text[textPointer++] = 'e';
