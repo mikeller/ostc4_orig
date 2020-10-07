@@ -240,6 +240,8 @@ uint8_t tComm_control(void)
 
 void tComm_refresh(void)
 {
+	char localString[255];
+
     if(tCscreen.FBStartAdress == 0)
     {
         GFX_hwBackgroundOn();
@@ -258,11 +260,13 @@ void tComm_refresh(void)
     else if(display_text[255])
     {
         display_text[(uint8_t)display_text[255]] = 0;
+        localString[0] = TXT_MINIMAL;
+        strcpy (&localString[1],display_text);
         releaseFrame(18,tCscreen.FBStartAdress);
         tCscreen.FBStartAdress = getFrame(18);
         write_content_simple(&tCscreen, 0, 800, 480-24, &FontT24,"Exit",CLUT_ButtonSurfaceScreen);
         write_content_simple(&tCscreen, 800 - 70, 800, 480-24, &FontT24,"Signal",CLUT_ButtonSurfaceScreen);
-        GFX_write_string(&FontT48, &tCwindow, display_text,2);
+        GFX_write_string(&FontT48, &tCwindow, localString,2);
         GFX_SetFrameTop(tCscreen.FBStartAdress);
         display_text[0] = 0;
         display_text[255] = 0;

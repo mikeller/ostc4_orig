@@ -2762,11 +2762,33 @@ uint8_t t7_customtextPrepare(char * text)
         do
         {
             nextChar = settingsGetPointer()->customtext[i+j];
-            i++;
-            if((!nextChar) || (nextChar =='\n')  || (nextChar =='\r'))
-                break;
-            text[textptr++] = nextChar;
+         	if(nextChar == '^')		/* center */
+           	{
+           		text[textptr++] = '\001';
+           		i++;
+           	}else
+           	if(nextChar == 180)		/* '´' => Right */
+           	{
+           		text[textptr++] = '\002';
+           		i++;
+           	}else
+           	{
+           		i++;
+           		if((!nextChar) || (nextChar =='\n')  || (nextChar =='\r'))
+           		{
+           			break;
+           		}
+           		text[textptr++] = nextChar;
+           	}
         } while (i < 12);
+
+        if(i == 12)		/* exit by limit => check for blanks at the end of the string */
+        {
+        	while((textptr - 1 > 0) && (text[textptr - 1] == 32))
+			{
+				textptr--;
+			}
+        }
 
         if(!nextChar)
             break;
