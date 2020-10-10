@@ -53,9 +53,11 @@ void openEdit_Customview(void);
 void openEdit_BigScreen(void);
 void openEdit_MotionCtrl(void);
 void refresh_Customviews(void);
+char customview_TXT2BYTE_helper(uint8_t customViewId);
 /* Announced function prototypes -----------------------------------------------*/
 uint8_t OnAction_CViewTimeout  (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_CViewStandard (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+uint8_t OnAction_CViewStandardBF(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_CornerTimeout (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_CornerStandard(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 /* Exported functions --------------------------------------------------------*/
@@ -82,11 +84,13 @@ void refresh_Customviews(void)
     textpointer += snprintf(&text[textpointer],11,"  %02u\016\016 %c\017",settingsGetPointer()->tX_customViewTimeout,TXT_Seconds);
     write_label_var(  30, 700, ME_Y_LINE1, &FontT48, text);
 
-    // custom view center  primary
+    // custom view center primary
     text[0] = TXT_2BYTE;
     text[1] = TXT2BYTE_CViewStandard;
     text[2] = ' ';
     text[3] = ' ';
+
+#if 0
     switch(settingsGetPointer()->tX_customViewPrimary)
     {
     case CVIEW_sensors:
@@ -133,16 +137,28 @@ void refresh_Customviews(void)
         snprintf(&text[4],3,"%02u",settingsGetPointer()->tX_customViewPrimary);
     break;
     }
+#endif
+    text[4] = TXT_2BYTE;
+    text[5] = customview_TXT2BYTE_helper(settingsGetPointer()->tX_customViewPrimary);
     text[6] = 0;
     write_label_var(  30, 700, ME_Y_LINE2, &FontT48, text);
 
+    // custom view big font
+    text[0] = TXT_2BYTE;
+    text[1] = TXT2BYTE_ExtraDisplay;
+    text[2] = ' ';
+    text[3] = ' ';
+    text[4] = TXT_2BYTE;
+    text[5] = customview_TXT2BYTE_helper(settingsGetPointer()->tX_customViewPrimaryBF);
+    text[6] = 0;
+    write_label_var(  30, 700, ME_Y_LINE3, &FontT48, text);
 
     // field corner  return
     textpointer = 0;
     text[textpointer++] = TXT_2BYTE;
     text[textpointer++] = TXT2BYTE_CornerTimeout;
     textpointer += snprintf(&text[textpointer],11,"  %02u\016\016 %c\017",settingsGetPointer()->tX_userselectedLeftLowerCornerTimeout,TXT_Seconds);
-    write_label_var(  30, 700, ME_Y_LINE3, &FontT48, text);
+    write_label_var(  30, 700, ME_Y_LINE5, &FontT48, text);
 
     // field corner  primary
     text[0] = TXT_2BYTE;
@@ -196,7 +212,7 @@ void refresh_Customviews(void)
     break;
     }
     text[5] = 0;
-    write_label_var(  30, 700, ME_Y_LINE4, &FontT48, text);
+    write_label_var(  30, 700, ME_Y_LINE6, &FontT48, text);
 
     write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
 }
@@ -229,15 +245,17 @@ void openEdit_Customview(void)
 
     write_field_button(StMCustom1_CViewTimeout,		400, 700, ME_Y_LINE1,  &FontT48, "");
     write_field_button(StMCustom1_CViewStandard,	400, 700, ME_Y_LINE2,  &FontT48, "");
+    write_field_button(StMCustom1_CViewStandardBF,	400, 700, ME_Y_LINE3,  &FontT48, "");
 
-    write_field_button(StMCustom1_CornerTimeout,	400, 700, ME_Y_LINE3,  &FontT48, "");
-    write_field_button(StMCustom1_CornerStandard,	400, 700, ME_Y_LINE4,  &FontT48, "");
+    write_field_button(StMCustom1_CornerTimeout,	400, 700, ME_Y_LINE5,  &FontT48, "");
+    write_field_button(StMCustom1_CornerStandard,	400, 700, ME_Y_LINE6,  &FontT48, "");
 
     setEvent(StMCustom1_CViewTimeout,		(uint32_t)OnAction_CViewTimeout);
     setEvent(StMCustom1_CViewStandard,		(uint32_t)OnAction_CViewStandard);
+    setEvent(StMCustom1_CViewStandardBF,	(uint32_t)OnAction_CViewStandardBF);
 
     setEvent(StMCustom1_CornerTimeout,		(uint32_t)OnAction_CornerTimeout);
-    setEvent(StMCustom1_CornerStandard,	(uint32_t)OnAction_CornerStandard);
+    setEvent(StMCustom1_CornerStandard,		(uint32_t)OnAction_CornerStandard);
 }
 
 void openEdit_BigScreen(void)
@@ -416,6 +434,29 @@ uint8_t OnAction_CViewStandard(uint32_t editId, uint8_t blockNumber, uint8_t dig
         break;
     }
     settingsGetPointer()->tX_customViewPrimary = newValue;
+    return UPDATE_DIVESETTINGS;
+}
+
+uint8_t OnAction_CViewStandardBF(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+{
+	uint8_t index = 0;
+    uint8_t newValue;
+
+	/* list contains all views which may be selected => get index of current setting */
+	while((settingsGetPointer()->tX_customViewPrimaryBF != cv_changelist_BS[index])	 || (cv_changelist_BS[index] == CVIEW_T3_END))
+	{
+		index++;
+	}
+	if((cv_changelist_BS[index] == CVIEW_T3_END) || (cv_changelist_BS[index+1] == CVIEW_T3_END)) 	/* invalid or last setting */
+	{
+		newValue = cv_changelist_BS[0];
+	}
+	else
+	{
+		newValue = cv_changelist_BS[index + 1];
+	}
+
+    settingsGetPointer()->tX_customViewPrimaryBF = newValue;
     return UPDATE_DIVESETTINGS;
 }
 
