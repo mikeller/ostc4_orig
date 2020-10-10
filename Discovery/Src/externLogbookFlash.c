@@ -568,6 +568,7 @@ void ext_flash_write_settings(uint8_t resetRing)
 uint8_t ext_flash_read_settings(void)
 {
 	uint8_t returnValue = HAL_BUSY;
+	uint8_t exit = 0;
 	uint8_t *pData;
 	const uint16_t lengthStandardNow = sizeof(SSettings);
 	uint8_t length_lo, length_hi;
@@ -581,25 +582,48 @@ uint8_t ext_flash_read_settings(void)
 	ext_flash_read_block(&length_lo, EF_SETTINGS);
 	ext_flash_read_block(&length_hi, EF_SETTINGS);
 	
-	while ((length_lo != 0xFF) && (length_hi != 0xFF))		/* get the latest stored setting block */
+	while ((length_lo != 0xFF) && (length_hi != 0xFF) && (exit == 0))		/* get the latest stored setting block */
 	{
 		lengthOnEEPROM = length_hi * 256;
 		lengthOnEEPROM += length_lo;
-		if(lengthOnEEPROM <= lengthStandardNow)
+		if(lengthOnEEPROM <= lengthStandardNow) 			/* EEPROM Header size equal or smaller => settings constant or upgraded */
 		{
 			ext_flash_read_block_multi(&header, 4, EF_SETTINGS);
-			if((header <= pSettings->header) && (header >= pSettings->updateSettingsAllowedFromHeader))
+			if((header <= pSettings->header) && (header >= pSettings->updateSettingsAllowedFromHeader))	/* check to allow update of header */
 			{
 				returnValue = HAL_OK;
 				pSettings->header = header;
 				pData = (uint8_t *)pSettings + 4; /* header */
 				for(uint16_t i = 0; i < (lengthOnEEPROM-4); i++)
 					ext_flash_read_block(&pData[i], EF_SETTINGS);
+				if(header != pSettings->header)				/* setting layout changed => no additional setting sets expected */
+				{
+					exit = 1;
+				}
+			}
+			else
+			{
+				returnValue = HAL_ERROR;
+				exit = 1;
+			}
+		}
+		else											/* size of settings decreased => possible downgrade of firmware */
+		{
+			ext_flash_read_block_multi(&header, 4, EF_SETTINGS);
+
+			if(header > 0xFFFF0014)						/* verify that new (old) header should be compatible (only less bytes, no change in layout) */
+			{
+				returnValue = HAL_OK;
+				pSettings->header = header;
+				pData = (uint8_t *)pSettings + 4; /* header */
+				for(uint16_t i = 0; i < (lengthStandardNow-4); i++) 		/* only read the data fitting into the structure */
+					ext_flash_read_block(&pData[i], EF_SETTINGS);
 			}
 			else
 			{
 				returnValue = HAL_ERROR;
 			}
+			exit = 1;
 		}
 		ext_flash_read_block(&length_lo, EF_SETTINGS);
 		ext_flash_read_block(&length_hi, EF_SETTINGS);
