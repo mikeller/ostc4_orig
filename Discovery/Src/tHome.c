@@ -434,6 +434,10 @@ void tHome_tick(void)
             {
                 t7_set_customview_to_primary();
             }
+            if(settingsGetPointer()->design == 3)
+            {
+                t3_set_customview_to_primary();
+            }
         }
     }
 }

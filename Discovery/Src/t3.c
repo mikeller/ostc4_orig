@@ -72,6 +72,7 @@ const uint8_t t3_customviewsStandard[] =
 	CVIEW_T3_GasList,
 	CVIEW_T3_Navigation,
 	CVIEW_T3_DepthData,
+	CVIEW_noneOrDebug,
     CVIEW_T3_END
 };
 
@@ -179,7 +180,7 @@ void t3_refresh(void)
     if(status.base != BaseHome)
         return;
 
-    if(last_mode != MODE_DIVE)			/* Select customview */
+    if(last_mode != MODE_DIVE)			/* Select custom view */
     {
     	if((settingsGetPointer()->tX_customViewTimeout == 0) && (settingsGetPointer()->showDebugInfo))
     	{
@@ -187,7 +188,7 @@ void t3_refresh(void)
     	}
     	else
     	{
-    		t3_selection_customview = settingsGetPointer()->tX_customViewPrimary;
+    		t3_selection_customview = settingsGetPointer()->tX_customViewPrimaryBF;
     	}
     	t3_change_customview(ACTION_END);
     }
@@ -198,6 +199,13 @@ void t3_refresh(void)
     last_mode = stateUsed->mode;
 }
 
+void t3_set_customview_to_primary(void)
+{
+    if(stateUsed->mode == MODE_DIVE)
+    {
+    	t3_selection_customview = settingsGetPointer()->tX_customViewPrimaryBF;
+    }
+}
 
 /* Private functions ---------------------------------------------------------*/
 

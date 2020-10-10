@@ -313,6 +313,7 @@ const SSettings SettingsStandard = {
 	.MotionDetection = MOTION_DETECT_OFF,
 	.cv_config_BigScreen = 0xFFFFFFFF,
 	.compassInertia = 0,
+	.tX_customViewPrimaryBF = CVIEW_T3_Decostop,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -467,7 +468,8 @@ void set_new_settings_missing_in_ext_flash(void)
         pSettings->cv_config_BigScreen &= pSettings->cv_configuration ^= 1 << CVIEW_T3_DepthData;
         // no break
     case 0xFFFF001B:
-    	pSettings->compassInertia = 0; 	/* no inertia */
+    	pSettings->compassInertia = 0; 			/* no inertia */
+    	pSettings->tX_customViewPrimaryBF = CVIEW_T3_Decostop;
         // no break
     default:
         pSettings->header = pStandard->header;
@@ -1387,6 +1389,11 @@ uint8_t check_and_correct_settings(void)
     	Settings.compassInertia = 0;
 	    corrections++;
    	}
+    if(Settings.tX_customViewPrimaryBF > CVIEW_T3_END)
+    {
+    	Settings.tX_customViewPrimaryBF = CVIEW_T3_Decostop;
+    	corrections++;
+    }
 
     if(corrections > 255)
         return 255;
