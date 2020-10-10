@@ -1608,6 +1608,12 @@ static uint8_t text_FR_DepthData[] = "";
 static uint8_t text_IT_DepthData[] = "";
 static uint8_t text_ES_DepthData[] = "";
 
+static uint8_t text_EN_DecoTTS[] = "Deco and TTS";
+static uint8_t text_DE_DecoTTS[] = "Deco und TTS";
+static uint8_t text_FR_DecoTTS[] = "";
+static uint8_t text_IT_DecoTTS[] = "";
+static uint8_t text_ES_DecoTTS[] = "";
+
 /* Lookup Table -------------------------------------------------------------*/
 
 const tText text_array[] =
@@ -1838,6 +1844,5 @@ const tText text_array2[] =
 	{(uint8_t)TXT2BYTE_ppoNair, 		{text_EN_ppo2Air, text_DE_ppo2Air, text_FR_ppo2Air, text_IT_ppo2Air, text_ES_ppo2Air}},
 	{(uint8_t)TXT2BYTE_Navigation, 		{text_EN_Navigation, text_DE_Navigation, text_FR_Navigation, text_IT_Navigation, text_ES_Navigation}},
 	{(uint8_t)TXT2BYTE_DepthData, 		{text_EN_DepthData, text_DE_DepthData, text_FR_DepthData, text_IT_DepthData, text_ES_DepthData}},
-
-
+	{(uint8_t)TXT2BYTE_DecoTTS, 		{text_EN_DecoTTS, text_DE_DecoTTS, text_FR_DecoTTS, text_IT_DecoTTS, text_ES_DecoTTS}},
 };

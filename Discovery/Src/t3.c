@@ -73,6 +73,7 @@ const uint8_t t3_customviewsStandard[] =
 	CVIEW_T3_Navigation,
 	CVIEW_T3_DepthData,
 	CVIEW_noneOrDebug,
+	CVIEW_T3_DecoTTS,
     CVIEW_T3_END
 };
 
@@ -928,6 +929,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         t3_basics_compass(tXscreen, center, heading, stateUsed->diveSettings.compassHeading);
         break;
 
+    case CVIEW_T3_DecoTTS:
     case CVIEW_T3_Decostop:
     default:
         // decostop
@@ -952,13 +954,12 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
 
             textpointer = 0;
             snprintf(&text[textpointer],TEXTSIZE,"\020\003%u%c%c %u'"
-            , unit_depth_integer(nextstopDepthMeter)
-            , unit_depth_char1_T105()
-            , unit_depth_char2_T105()
-            , (nextstopLengthSeconds+59)/60);
-//	old without feet hw 170703			snprintf(&text[textpointer],TEXTSIZE,"\020\003%um %u'",nextstopDepthMeter,(nextstopLengthSeconds+59)/60);
-            t3_basics_colorscheme_mod(text);
-            GFX_write_string(&FontT105,tXc1,text,0);
+			, unit_depth_integer(nextstopDepthMeter)
+			, unit_depth_char1_T105()
+			, unit_depth_char2_T105()
+			, (nextstopLengthSeconds+59)/60);
+			t3_basics_colorscheme_mod(text);
+			GFX_write_string(&FontT105,tXc1,text,0);
         }
         else if(SafetyStopTime.Total && (depth > timer_Safetystop_GetDepthUpperLimit()))
         {
@@ -981,6 +982,21 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
                 snprintf(text,TEXTSIZE,"\020\003%ih",pDecoinfo->output_ndl_seconds/3600);
             t3_basics_colorscheme_mod(text);
             GFX_write_string(&FontT105,tXc1,text,0);
+        }
+
+        if(tX_selection_customview == CVIEW_T3_DecoTTS)	/* add tts data on right side of screen */
+        {
+            snprintf(text,TEXTSIZE,"\002\032\f%c",TXT_TTS);
+            GFX_write_string(&FontT42,tXc1,text,0);
+            if(pDecoinfo->output_time_to_surface_seconds)
+            {
+                if(pDecoinfo->output_time_to_surface_seconds < 100 * 60)
+                    snprintf(text,TEXTSIZE,"\020\003\002%i'",(pDecoinfo->output_time_to_surface_seconds + 59)/ 60);
+                else
+                    snprintf(text,TEXTSIZE,"\020\003\002%ih",(pDecoinfo->output_time_to_surface_seconds + 59)/ 3600);
+                t3_basics_colorscheme_mod(text);
+                GFX_write_string(&FontT105,tXc1,text,0);
+            }
         }
         break;
 

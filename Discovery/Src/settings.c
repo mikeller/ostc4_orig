@@ -470,6 +470,7 @@ void set_new_settings_missing_in_ext_flash(void)
     case 0xFFFF001B:
     	pSettings->compassInertia = 0; 			/* no inertia */
     	pSettings->tX_customViewPrimaryBF = CVIEW_T3_Decostop;
+    	pSettings->cv_config_BigScreen &= pSettings->cv_configuration ^= 1 << CVIEW_T3_DecoTTS;
         // no break
     default:
         pSettings->header = pStandard->header;

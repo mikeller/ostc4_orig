@@ -227,6 +227,7 @@ typedef struct
 	uint32_t cv_config_BigScreen;
 	/* new in 0xFFFF001C */
 	uint8_t compassInertia;
+	uint8_t tX_customViewPrimaryBF;
 } SSettings;
 
 typedef struct

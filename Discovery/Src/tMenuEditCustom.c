@@ -362,6 +362,9 @@ char customview_TXT2BYTE_helper(uint8_t customViewId)
     case CVIEW_T3_DepthData:
     	text = TXT2BYTE_DepthData;
     	break;
+    case CVIEW_T3_DecoTTS:
+    	text = TXT2BYTE_DecoTTS;
+    	break;
     default:
         break;
     }
