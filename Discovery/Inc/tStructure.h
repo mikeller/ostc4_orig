@@ -238,6 +238,7 @@
 #define StMHARD2_Compass_SetCourse		_MB(2,7,2,2,0)
 #define StMHARD2_Compass_ResetCourse	_MB(2,7,2,3,0)
 #define StMHARD2_Compass_Calibrate		_MB(2,7,2,4,0)
+#define StMHARD2_Compass_Inertia		_MB(2,7,2,5,0)
 
 //#define StMHARD2_Exit						_MB(2,7,2,2,0)
 
@@ -251,7 +252,7 @@
 #define StMHARD4_BrightnessHigh	_MB(2,7,4,3,0)
 #define StMHARD4_BrightnessMax	_MB(2,7,4,4,0)
 
-#define StMHARD5_Button1				_MB(2,7,5,1,0)
+#define StMHARD5_Button1		_MB(2,7,5,1,0)
 #define StMHARD5_ButtonBalance1	_MB(2,7,5,2,0)
 #define StMHARD5_ButtonBalance2	_MB(2,7,5,3,0)
 #define StMHARD5_ButtonBalance3	_MB(2,7,5,4,0)

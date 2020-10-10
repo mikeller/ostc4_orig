@@ -195,6 +195,7 @@ extern const tText text_array2[];
 		TXT2BYTE_SpecialDiveGasMenu,
 		TXT2BYTE_SpecialDiveGasMenuCCR,
 		TXT2BYTE_CompassCalib,
+		TXT2BYTE_CompassInertia,
 		TXT2BYTE_UseSensor,
 		/* */
 		TXT2BYTE_WarnDecoMissed,

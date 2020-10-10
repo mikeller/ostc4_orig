@@ -34,6 +34,7 @@
 #include "tHome.h" // for CVIEW_END
 #include "motion.h"
 #include "t7.h"
+#include "data_central.h"
 
 SSettings Settings;
 
@@ -84,7 +85,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
  * There might even be entries with fixed values that have no range
  */
 const SSettings SettingsStandard = {
-    .header = 0xFFFF001B,
+    .header = 0xFFFF001C,
     .warning_blink_dsec = 8 * 2,
     .lastDiveLogId = 0,
     .logFlashNextSampleStartAddress = 0,
@@ -311,6 +312,7 @@ const SSettings SettingsStandard = {
 	.cv_configuration = 0xFFFFFFFF,
 	.MotionDetection = MOTION_DETECT_OFF,
 	.cv_config_BigScreen = 0xFFFFFFFF,
+	.compassInertia = 0,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -463,6 +465,9 @@ void set_new_settings_missing_in_ext_flash(void)
         pSettings->cv_config_BigScreen = 0xFFFFFFFF;
         pSettings->cv_config_BigScreen &= pSettings->cv_configuration ^= 1 << CVIEW_T3_Navigation;
         pSettings->cv_config_BigScreen &= pSettings->cv_configuration ^= 1 << CVIEW_T3_DepthData;
+        // no break
+    case 0xFFFF001B:
+    	pSettings->compassInertia = 0; 	/* no inertia */
         // no break
     default:
         pSettings->header = pStandard->header;
@@ -1376,6 +1381,12 @@ uint8_t check_and_correct_settings(void)
 #else
     Settings.MotionDetection = MOTION_DETECT_OFF;
 #endif
+
+    if(Settings.compassInertia > MAX_COMPASS_COMP)
+   	{
+    	Settings.compassInertia = 0;
+	    corrections++;
+   	}
 
     if(corrections > 255)
         return 255;

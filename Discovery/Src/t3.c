@@ -697,6 +697,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
 
     /* compass position */
     point_t center;
+    uint16_t heading;
 
     // CVIEW_T3_StopWatch
     SDivetime Stopwatch = {0,0,0,0};
@@ -722,6 +723,15 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
     tempWinC2X1  = tXc2->WindowX1;
     tempWinC2Y1 = tXc2->WindowY1;
     tempWinC2Tab = tXc2->WindowTab;
+
+    if(settingsGetPointer()->compassInertia)
+    {
+    	heading = (uint16_t)compass_getCompensated();
+    }
+    else
+    {
+    	heading = (uint16_t)stateUsed->lifeData.compass_heading;
+    }
 
     switch(tX_selection_customview)
     {
@@ -905,9 +915,9 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         center.y = 116;
         snprintf(text,TEXTSIZE,"\032\f%c%c",TXT_2BYTE, TXT2BYTE_Compass);
         GFX_write_string(&FontT42,tXc1,text,0);
-        snprintf(text,100,"\030\003%03i`",(uint16_t)stateUsed->lifeData.compass_heading);
+        snprintf(text,100,"\030\003%03i`",heading);
         GFX_write_string(&FontT105,tXc1,text,0);
-        t3_basics_compass(tXscreen, center, (uint16_t)stateUsed->lifeData.compass_heading, stateUsed->diveSettings.compassHeading);
+        t3_basics_compass(tXscreen, center, heading, stateUsed->diveSettings.compassHeading);
         break;
 
     case CVIEW_T3_Decostop:
@@ -1103,10 +1113,9 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
 
         snprintf(text,TEXTSIZE,"\032\f%c%c",TXT_2BYTE, TXT2BYTE_Compass);
         GFX_write_string(&FontT42,tXc1,text,0);
-        //snprintf(text,100,"\030\003%03i`",(uint16_t)stateUsed->lifeData.compass_heading);
-        snprintf(text,100,"\030%03i`",(uint16_t)stateUsed->lifeData.compass_heading);
+        snprintf(text,100,"\030%03i`",heading);
         GFX_write_string(&FontT144,tXc1,text,0);
-        t3_basics_compass(tXscreen, center, (uint16_t)stateUsed->lifeData.compass_heading, stateUsed->diveSettings.compassHeading);
+        t3_basics_compass(tXscreen, center, heading, stateUsed->diveSettings.compassHeading);
 
     	break;
 

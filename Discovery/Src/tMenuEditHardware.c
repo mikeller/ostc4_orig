@@ -54,6 +54,7 @@ void openEdit_FlipDisplay(void);
 uint8_t OnAction_Compass		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_Bearing		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_BearingClear	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+uint8_t OnAction_InertiaLevel	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 //uint8_t OnAction_ExitHardw	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_Sensor1		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_Sensor2		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
@@ -147,6 +148,7 @@ void refresh_CompassEdit(void)
 {
     uint16_t heading;
     char text[32];
+    uint8_t textIndex = 0;
 
     text[0] = '\001';
     text[1] = TXT_2BYTE;
@@ -154,13 +156,27 @@ void refresh_CompassEdit(void)
     text[3] = 0;
     write_topline(text);
 
-    heading = (uint16_t)stateUsed->lifeData.compass_heading;
+    if(settingsGetPointer()->compassInertia)
+    {
+    	heading = (uint16_t)compass_getCompensated();
+    }
+    else
+    {
+    	heading = (uint16_t)stateUsed->lifeData.compass_heading;
+    }
     snprintf(text,32,"\001%03i`",heading);
     write_label_var(   0, 800, ME_Y_LINE1, &FontT54, text);
 
     tMenuEdit_refresh_field(StMHARD2_Compass_SetCourse);
     tMenuEdit_refresh_field(StMHARD2_Compass_Calibrate);
     tMenuEdit_refresh_field(StMHARD2_Compass_ResetCourse);
+    text[textIndex++] = TXT_2BYTE;
+    text[textIndex++] = TXT2BYTE_CompassInertia;
+    text[textIndex++] = ':';
+    text[textIndex++] = ' ';
+    text[textIndex++] = '0' + settingsGetPointer()->compassInertia;
+
+    write_label_var(30, 800, ME_Y_LINE5,  &FontT48, text);
 
     write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
 }
@@ -168,12 +184,13 @@ void refresh_CompassEdit(void)
 
 void openEdit_Compass(void)
 {
-    char text[4];
+    char text[10];
+    uint8_t textIndex = 0;
 
-    text[0] = '\001';
-    text[1] = TXT_2BYTE;
-    text[2] = TXT2BYTE_Compass;
-    text[3] = 0;
+    text[textIndex++] = '\001';
+    text[textIndex++] = TXT_2BYTE;
+    text[textIndex++] = TXT2BYTE_Compass;
+    text[textIndex++] = 0;
     write_topline(text);
 
     text[0] = TXT_2BYTE;
@@ -188,9 +205,18 @@ void openEdit_Compass(void)
     text[1] = TXT2BYTE_ResetBearing;
     write_field_button(StMHARD2_Compass_ResetCourse, 30, 800, ME_Y_LINE4,  &FontT48, text);
 
+    text[1] = TXT2BYTE_CompassInertia;
+    textIndex = 2;
+    text[textIndex++] = ':';
+    text[textIndex++] = ' ';
+    text[textIndex++] = '0' + settingsGetPointer()->compassInertia;
+
+    write_field_button(StMHARD2_Compass_Inertia, 30, 800, ME_Y_LINE5,  &FontT48, text);
+
     setEvent(StMHARD2_Compass_SetCourse,		(uint32_t)OnAction_Bearing);
     setEvent(StMHARD2_Compass_Calibrate,		(uint32_t)OnAction_Compass);
     setEvent(StMHARD2_Compass_ResetCourse,	(uint32_t)OnAction_BearingClear);
+    setEvent(StMHARD2_Compass_Inertia,	(uint32_t)OnAction_InertiaLevel);
 
     write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
 }
@@ -216,6 +242,20 @@ uint8_t OnAction_BearingClear	(uint32_t editId, uint8_t blockNumber, uint8_t dig
 {
     settingsGetPointer()->compassBearing = 0;
     return UPDATE_AND_EXIT_TO_MENU;
+}
+
+
+uint8_t OnAction_InertiaLevel	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+{
+	uint8_t newLevel = 0;
+
+	newLevel = settingsGetPointer()->compassInertia + 1;
+	if(newLevel > MAX_COMPASS_COMP)
+	{
+		newLevel = 0;
+	}
+	settingsGetPointer()->compassInertia = newLevel;
+    return UPDATE_DIVESETTINGS;
 }
 
 /*

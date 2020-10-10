@@ -1634,6 +1634,7 @@ void t7_refresh_customview(void)
 
     char text[256];
     uint16_t textpointer = 0;
+    uint16_t heading = 0;
     int16_t start;
     uint8_t lineCountCustomtext = 0;
     int16_t shiftWindowY0;
@@ -1677,15 +1678,6 @@ void t7_refresh_customview(void)
     case CVIEW_CompassDebug:
         snprintf(text,100,"\032\f\001Compass raw");
         GFX_write_string(&FontT42,&t7cH,text,0);
-/*
-        pStateReal->lifeData.compass_heading = dataIn.data[dataIn.boolCompassData].compass_heading;
-        pStateReal->lifeData.compass_roll = dataIn.data[dataIn.boolCompassData].compass_roll;
-        pStateReal->lifeData.compass_pitch = dataIn.data[dataIn.boolCompassData].compass_pitch;
-
-        pStateReal->lifeData.compass_DX_f = dataIn.data[dataIn.boolCompassData].compass_DX_f;
-        pStateReal->lifeData.compass_DY_f = dataIn.data[dataIn.boolCompassData].compass_DY_f;
-        pStateReal->lifeData.compass_DZ_f = dataIn.data[dataIn.boolCompassData].compass_DZ_f;
-*/
         snprintf(text,255,"%1.1f\n\r%1.1f\n\r%1.1f\n\r%i\n\r%i\n\r%i"
                     ,stateUsed->lifeData.compass_heading
                     ,stateUsed->lifeData.compass_roll
@@ -1978,9 +1970,18 @@ void t7_refresh_customview(void)
 
     case CVIEW_Compass:
     default:
+
+	    if(pSettings->compassInertia)
+	    {
+	    	heading = (uint16_t)compass_getCompensated();
+	    }
+	    else
+	    {
+	    	heading = (uint16_t)stateUsed->lifeData.compass_heading;
+	    }
         snprintf(text,100,"\032\f\001%c%c",TXT_2BYTE, TXT2BYTE_Compass);
         GFX_write_string(&FontT42,&t7cH,text,0);
-        t7_compass((uint16_t)stateUsed->lifeData.compass_heading, stateUsed->diveSettings.compassHeading);
+        t7_compass(heading, stateUsed->diveSettings.compassHeading);
 
         if(!pSettings->FlipDisplay)
         {
@@ -1993,7 +1994,7 @@ void t7_refresh_customview(void)
         	t7cY0free.WindowY0 = 0;
         	t7cY0free.WindowY1 = 250;
         }
-        snprintf(text,100,"\030\001%03i`",(uint16_t)stateUsed->lifeData.compass_heading);
+        snprintf(text,100,"\030\001%03i`",heading);
         GFX_write_string(&FontT54,&t7cY0free,text,0);
         if(!pSettings->FlipDisplay)
         {
@@ -2747,6 +2748,7 @@ uint8_t t7_customtextPrepare(char * text)
 {
     uint8_t i, j, textptr, lineCount;
     char nextChar;
+    uint8_t alignmentChanged = 0;
 
     textptr = 0;
     lineCount = 0;
@@ -2762,14 +2764,16 @@ uint8_t t7_customtextPrepare(char * text)
         do
         {
             nextChar = settingsGetPointer()->customtext[i+j];
-         	if(nextChar == '^')		/* center */
+         	if((nextChar == '^') && (alignmentChanged == 0))		/* center */
            	{
            		text[textptr++] = '\001';
+           		alignmentChanged = 1;
            		i++;
            	}else
-           	if(nextChar == 180)		/* '´' => Right */
+           	if((nextChar == 180) && (alignmentChanged == 0))		/* 'ï¿½' => Right */
            	{
            		text[textptr++] = '\002';
+           		alignmentChanged = 1;
            		i++;
            	}else
            	{
@@ -2798,6 +2802,7 @@ uint8_t t7_customtextPrepare(char * text)
             text[textptr++] = '\n';
             text[textptr++] = '\r';
         }
+        alignmentChanged = 0;
         lineCount++;
         for(uint8_t k=0;k<2;k++)
         {

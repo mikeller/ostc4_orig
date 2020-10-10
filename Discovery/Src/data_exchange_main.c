@@ -970,6 +970,7 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		pStateReal->compass_uTick_old = pStateReal->compass_uTick_new;
 		pStateReal->compass_uTick_new = dataIn.data[dataIn.boolCompassData].compass_uTick;
 		pStateReal->compass_uTick_local_new = HAL_GetTick();
+		compass_Inertia(pStateReal->lifeData.compass_heading);
 
 		memcpy(pStateReal->lifeData.tissue_nitrogen_bar, dataIn.data[dataIn.boolTisssueData].tissue_nitrogen_bar,sizeof(pStateReal->lifeData.tissue_nitrogen_bar));
 		memcpy(pStateReal->lifeData.tissue_helium_bar, dataIn.data[dataIn.boolTisssueData].tissue_helium_bar,sizeof(pStateReal->lifeData.tissue_helium_bar));

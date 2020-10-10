@@ -433,6 +433,8 @@ void setTime(RTC_TimeTypeDef Stime);
 void setBatteryPercentage(uint8_t newChargePercentage);
 void setButtonResponsiveness(uint8_t *ButtonSensitivyList);
 void calibrateCompass(void);
+void compass_Inertia(float newHeading);
+float compass_getCompensated();
 void clearDeco(void);
 void translateDate(uint32_t datetmpreg, RTC_DateTypeDef *sDate);
 void translateTime(uint32_t tmpreg, RTC_TimeTypeDef *sTime);
