@@ -177,6 +177,13 @@ static uint8_t text_FR_CompassCalib[] = "Calibration boussole";
 static uint8_t text_IT_CompassCalib[] = "Calibrazione bussola";
 static uint8_t text_ES_CompassCalib[] = "Calibrar brújula";
 
+static uint8_t text_EN_CompassInertia[] = "Compass inertia level";
+static uint8_t text_DE_CompassInertia[] = "Kompass Trägheitsfaktor";
+static uint8_t text_FR_CompassInertia[] = "";
+static uint8_t text_IT_CompassInertia[] = "";
+static uint8_t text_ES_CompassInertia[] = "";
+
+
 // Menu SYS1 and Customview header
 static uint8_t text_EN_Compass[] = "Compass";
 static uint8_t text_DE_Compass[] = "Kompass";
@@ -1577,7 +1584,7 @@ static uint8_t text_FR_SelectCustom[] = "";
 static uint8_t text_IT_SelectCustom[] = "";
 static uint8_t text_ES_SelectCustom[] = "";
 
-static uint8_t text_EN_SelectBigFont[] = "Select bigfont data views";
+static uint8_t text_EN_SelectBigFont[] = "Select big font data views";
 static uint8_t text_DE_SelectBigFont[] = "Auswahl Grosschrift Daten";
 static uint8_t text_FR_SelectBigFont[] = "";
 static uint8_t text_IT_SelectBigFont[] = "";
@@ -1724,7 +1731,8 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_SpecialDiveGasMenu,{text_EN_SpecialDiveGasMenu, text_DE_SpecialDiveGasMenu, text_FR_SpecialDiveGasMenu, text_IT_SpecialDiveGasMenu, text_ES_SpecialDiveGasMenu}},
     {(uint8_t)TXT2BYTE_SpecialDiveGasMenuCCR,{text_EN_SpecialDiveGasMenuCCR, text_DE_SpecialDiveGasMenuCCR, text_FR_SpecialDiveGasMenuCCR, text_IT_SpecialDiveGasMenuCCR, text_ES_SpecialDiveGasMenuCCR}},
     {(uint8_t)TXT2BYTE_CompassCalib, 	{text_EN_CompassCalib, text_DE_CompassCalib, text_FR_CompassCalib, text_IT_CompassCalib, text_ES_CompassCalib}},
-    {(uint8_t)TXT2BYTE_UseSensor,		{text_EN_UseSensor, text_DE_UseSensor, text_FR_UseSensor, text_IT_UseSensor, text_ES_UseSensor}},
+	{(uint8_t)TXT2BYTE_CompassInertia,	{text_EN_CompassInertia, text_DE_CompassInertia, text_FR_CompassInertia, text_IT_CompassInertia, text_ES_CompassInertia}},
+	{(uint8_t)TXT2BYTE_UseSensor,		{text_EN_UseSensor, text_DE_UseSensor, text_FR_UseSensor, text_IT_UseSensor, text_ES_UseSensor}},
     {(uint8_t)TXT2BYTE_WarnDecoMissed,  {text_EN_WarnDecoMissed, text_DE_WarnDecoMissed, text_FR_WarnDecoMissed, text_IT_WarnDecoMissed, text_ES_WarnDecoMissed}},
     {(uint8_t)TXT2BYTE_WarnPPO2Low,		{text_EN_WarnPPO2Low, text_DE_WarnPPO2Low, text_FR_WarnPPO2Low, text_IT_WarnPPO2Low, text_ES_WarnPPO2Low}},
     {(uint8_t)TXT2BYTE_WarnPPO2High,	{text_EN_WarnPPO2High, text_DE_WarnPPO2High, text_FR_WarnPPO2High, text_IT_WarnPPO2High, text_ES_WarnPPO2High}},

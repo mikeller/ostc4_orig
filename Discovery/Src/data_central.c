@@ -61,6 +61,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <string.h>
+#include <math.h>
 #include "data_central.h"
 #include "calc_crush.h"
 #include "decom.h"
@@ -102,6 +103,11 @@ static SVpmRepetitiveData stateVPM =
 
 const SDiveState *stateUsed = &stateReal;
 SDiveState *stateUsedWrite = &stateReal;
+
+
+#define COMPASS_FRACTION		(4.0f)		/* delay till value changes to new actual */
+
+static float compass_compensated = 0;
 
 void set_stateUsedToReal(void)
 {
@@ -770,3 +776,41 @@ _Bool is_ambient_pressure_close_to_surface(SLifeData *lifeData)
 	else
 		return false;
 }
+
+void compass_Inertia(float newHeading)
+{
+	float newTarget = newHeading;
+
+	if(settingsGetPointer()->compassInertia == 0)
+	{
+		compass_compensated = newHeading;
+	}
+	else
+	{
+		if((compass_compensated > 270.0) && (newHeading < 90.0))		/* transition passing 0 clockwise */
+		{
+			newTarget = newHeading + 360.0;
+		}
+
+		if((compass_compensated < 90.0) && (newHeading > 270.0))		/* transition passing 0 counter clockwise */
+		{
+			newTarget = newHeading - 360.0;
+		}
+
+		compass_compensated = compass_compensated + ((newTarget - compass_compensated) / (COMPASS_FRACTION * (settingsGetPointer()->compassInertia)));
+		if(compass_compensated < 0.0)
+		{
+			compass_compensated += 360.0;
+		}
+		if(compass_compensated >= 360.0)
+		{
+			compass_compensated -= 360.0;
+		}
+	}
+}
+
+float compass_getCompensated()
+{
+	return compass_compensated;
+}
+

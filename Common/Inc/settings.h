@@ -68,6 +68,8 @@
 
 #define PRESSURE_OFFSET_LIMIT_MBAR	50
 
+#define MAX_COMPASS_COMP (2u)
+
 /*	2015 Jan 30, hw, deco and travel added for MenuEditGas
 	* can be used for buehlmann, vpm, etc. later but be carefull
 	*	with current implemenation */
@@ -223,6 +225,8 @@ typedef struct
 	uint8_t MotionDetection;
 	/* new in 0xFFFF001B */
 	uint32_t cv_config_BigScreen;
+	/* new in 0xFFFF001C */
+	uint8_t compassInertia;
 } SSettings;
 
 typedef struct
