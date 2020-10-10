@@ -742,11 +742,28 @@ static void TriggerButtonAction()
 					tHomeDiveMenuControl(action);
 			} else if (action == ACTION_BUTTON_BACK) {
 				if (get_globalState() == StS)
+				{
 					openInfo(StILOGLIST);
-				else if ((status.page == PageDive)
-						&& (settingsGetPointer()->design < 7)) {
-					settingsGetPointer()->design = 7; // auto switch to 9 if necessary
-				} else if ((status.page == PageDive) && (status.line != 0)) {
+				}
+				else if ((status.page == PageDive) && (settingsGetPointer()->design < 7))
+				{
+					if(settingsGetPointer()->design == 3)
+					{
+						if(get_globalState() != StD)		/* located in submenu? => return */
+						{
+							set_globalState(StD);
+						}
+						else								/* return to t7 view */
+						{
+							settingsGetPointer()->design = 7;
+						}
+					}
+					else
+					{
+						settingsGetPointer()->design = 7; // auto switch to 9 if necessary
+					}
+				} else if ((status.page == PageDive) && (status.line != 0))
+				{
 					if (settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT)
 					{
 						settingsGetPointer()->design = 3;
@@ -755,13 +772,14 @@ static void TriggerButtonAction()
 							DefinePitchSectors(stateRealGetPointer()->lifeData.compass_pitch,CUSTOMER_DEFINED_VIEWS);
 						}
 					}
-					else if (settingsGetPointer()->extraDisplay
-							== EXTRADISPLAY_DECOGAME)
+					else if (settingsGetPointer()->extraDisplay	== EXTRADISPLAY_DECOGAME)
 						settingsGetPointer()->design = 4;
-
 					set_globalState(StD);
-				} else
+				}
+				else
+				{
 					tHome_change_field_button_pressed();
+				}
 			} else if ((action == ACTION_BUTTON_ENTER) || (action == ACTION_PITCH_NEG) || (action == ACTION_PITCH_POS))
 					{
 
