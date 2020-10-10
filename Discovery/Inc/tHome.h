@@ -82,6 +82,7 @@ enum CUSTOMVIEWS
 		CVIEW_T3_ApnoeSurfaceInfo,
 		CVIEW_T3_Navigation,
 		CVIEW_T3_DepthData,
+		CVIEW_T3_DecoTTS,
 		CVIEW_T3_END
 };
 
