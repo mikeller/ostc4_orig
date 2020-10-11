@@ -1591,25 +1591,25 @@ static uint8_t text_IT_SelectBigFont[] = "";
 static uint8_t text_ES_SelectBigFont[] = "";
 
 static uint8_t text_EN_ppo2Air[] = "PPO2 and active gas";
-static uint8_t text_DE_ppo2Air[] = "PPO2 und aktives Atemgas";
+static uint8_t text_DE_ppo2Air[] = "PPO2/Atemgas";
 static uint8_t text_FR_ppo2Air[] = "";
 static uint8_t text_IT_ppo2Air[] = "";
 static uint8_t text_ES_ppo2Air[] = "";
 
 static uint8_t text_EN_Navigation[] = "Compass and stop watch";
-static uint8_t text_DE_Navigation[] = "Kompass und Stoppuhr";
+static uint8_t text_DE_Navigation[] = "Kompass/Stoppuhr";
 static uint8_t text_FR_Navigation[] = "";
 static uint8_t text_IT_Navigation[] = "";
 static uint8_t text_ES_Navigation[] = "";
 
 static uint8_t text_EN_DepthData[] = "Average and max depth";
-static uint8_t text_DE_DepthData[] = "Mittlere und maximale Tiefe";
+static uint8_t text_DE_DepthData[] = "Mittlere/max Tiefe";
 static uint8_t text_FR_DepthData[] = "";
 static uint8_t text_IT_DepthData[] = "";
 static uint8_t text_ES_DepthData[] = "";
 
 static uint8_t text_EN_DecoTTS[] = "Deco and TTS";
-static uint8_t text_DE_DecoTTS[] = "Deco und TTS";
+static uint8_t text_DE_DecoTTS[] = "Deco/TTS";
 static uint8_t text_FR_DecoTTS[] = "";
 static uint8_t text_IT_DecoTTS[] = "";
 static uint8_t text_ES_DecoTTS[] = "";
