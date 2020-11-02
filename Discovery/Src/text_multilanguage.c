@@ -746,6 +746,13 @@ static uint8_t text_IT_CompassHeading[] = "Direzione bussola";
 static uint8_t text_ES_CompassHeading[] = "Rumbo brújula";
 
 // Dive Menu
+static uint8_t text_EN_CalibView[] = "Calibrate View";
+static uint8_t text_DE_CalibView[] = "Blickwinkel";
+static uint8_t text_FR_CalibView[] = "Calibrate View";
+static uint8_t text_IT_CalibView[] = "Calibrate View";
+static uint8_t text_ES_CalibView[] = "Calibrate View";
+
+// Dive Menu
 static uint8_t text_EN_EndDiveMode[] = "End dive";
 static uint8_t text_DE_EndDiveMode[] = "Tauchgang beenden";
 static uint8_t text_FR_EndDiveMode[] = "End dive";
@@ -1714,6 +1721,7 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_ResetStopwatch,  {text_EN_ResetStopwatch, text_DE_ResetStopwatch, text_FR_ResetStopwatch, text_IT_ResetStopwatch, text_ES_ResetStopwatch}},
     {(uint8_t)TXT2BYTE_SetMarker,		{text_EN_SetMarker, text_DE_SetMarker, text_FR_SetMarker, text_IT_SetMarker, text_ES_SetMarker}},
     {(uint8_t)TXT2BYTE_CompassHeading,  {text_EN_CompassHeading, text_DE_CompassHeading, text_FR_CompassHeading, text_IT_CompassHeading, text_ES_CompassHeading}},
+	{(uint8_t)TXT2BYTE_CalibView,  		{text_EN_CalibView, text_DE_CalibView, text_FR_CalibView, text_IT_CalibView, text_ES_CalibView}},
     {(uint8_t)TXT2BYTE_EndDiveMode,		{text_EN_EndDiveMode, text_DE_EndDiveMode, text_FR_EndDiveMode, text_IT_EndDiveMode, text_ES_EndDiveMode}},
 	{(uint8_t)TXT2BYTE_Simulator,		{text_EN_Simulator, text_DE_Simulator, text_FR_Simulator, text_IT_Simulator, text_ES_Simulator}},
     {(uint8_t)TXT2BYTE_StartSimulator,  {text_EN_StartSimulator, text_DE_StartSimulator, text_FR_StartSimulator, text_IT_StartSimulator, text_ES_StartSimulator}},

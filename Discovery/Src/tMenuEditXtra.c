@@ -34,6 +34,7 @@
 #include "timer.h"
 #include "tMenuEdit.h"
 #include "data_exchange_main.h"
+#include "motion.h"
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -66,6 +67,9 @@ void openEdit_Xtra(uint8_t line)
         openEdit_SetManualMarker();
         break;
     case 4:
+    	openEdit_CalibViewport();
+        break;
+    case 5:
     	if(is_stateUsedSetToSim())
     	{
     		 openEdit_SimFollowDecostops();
@@ -101,6 +105,12 @@ void openEdit_SimFollowDecostops(void)
 {
     simulation_set_heed_decostops(!simulation_get_heed_decostops());
     exitMenuEdit_to_Menu_with_Menu_Update();
+}
+
+void openEdit_CalibViewport(void)
+{
+	calibrateViewport(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading);
+    exitMenuEdit_to_Home();
 }
 
 void refresh_CompassHeading(void)
