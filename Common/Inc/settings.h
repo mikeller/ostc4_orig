@@ -70,6 +70,8 @@
 
 #define MAX_COMPASS_COMP (2u)
 
+#define MAX_VIEWPORT_MODE (2u)
+
 /*	2015 Jan 30, hw, deco and travel added for MenuEditGas
 	* can be used for buehlmann, vpm, etc. later but be carefull
 	*	with current implemenation */
@@ -228,6 +230,11 @@ typedef struct
 	/* new in 0xFFFF001C */
 	uint8_t compassInertia;
 	uint8_t tX_customViewPrimaryBF;
+	/* new in 0xFFFF001D */
+	uint8_t  viewPortMode;
+	uint16_t viewRoll;
+	uint16_t viewPitch;
+	uint16_t viewYaw;
 } SSettings;
 
 typedef struct
