@@ -78,9 +78,17 @@ uint32_t tMXtra_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext)
     strcpy(&text[textPointer],"\n\r");
     textPointer += 2;
 
+    if((line == 0) || (line == 4))
+    {
+        text[textPointer++] = TXT_2BYTE;
+        text[textPointer++] = TXT2BYTE_CalibView;
+    }
+    strcpy(&text[textPointer],"\n\r");
+    textPointer += 2;
+
     if(is_stateUsedSetToSim())
     {
-        if((line == 0) || (line == 4))
+        if((line == 0) || (line == 5))
         {
             text[textPointer++] = TXT_2BYTE;
             text[textPointer++] = TXT2BYTE_SimFollowDecoStops;
@@ -96,7 +104,7 @@ uint32_t tMXtra_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext)
     }
     else
     {
-    	if((line == 0) || (line == 4))		/* end dive mode only used during real dives */
+    	if((line == 0) || (line == 5))		/* end dive mode only used during real dives */
     	    {
     	        text[textPointer++] = TXT_2BYTE;
     	        text[textPointer++] = TXT2BYTE_EndDiveMode;
