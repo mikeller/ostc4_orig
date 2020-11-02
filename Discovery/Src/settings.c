@@ -85,7 +85,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
  * There might even be entries with fixed values that have no range
  */
 const SSettings SettingsStandard = {
-    .header = 0xFFFF001C,
+    .header = 0xFFFF001D,
     .warning_blink_dsec = 8 * 2,
     .lastDiveLogId = 0,
     .logFlashNextSampleStartAddress = 0,
@@ -314,6 +314,10 @@ const SSettings SettingsStandard = {
 	.cv_config_BigScreen = 0xFFFFFFFF,
 	.compassInertia = 0,
 	.tX_customViewPrimaryBF = CVIEW_T3_Decostop,
+	.viewPortMode = 0,
+	.viewRoll = 0,
+	.viewPitch = 0,
+	.viewYaw = 0,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -472,6 +476,12 @@ void set_new_settings_missing_in_ext_flash(void)
     	pSettings->tX_customViewPrimaryBF = CVIEW_T3_Decostop;
     	pSettings->cv_config_BigScreen &= pSettings->cv_configuration ^= 1 << CVIEW_T3_DecoTTS;
         // no break
+    case 0xFFFF001C:
+    	pSettings->viewPortMode = 0;
+    	pSettings->viewRoll = 0;
+    	pSettings->viewPitch = 0;
+    	pSettings->viewYaw = 0;
+    	// no break
     default:
         pSettings->header = pStandard->header;
         break; // no break before!!
@@ -1393,6 +1403,11 @@ uint8_t check_and_correct_settings(void)
     if(Settings.tX_customViewPrimaryBF > CVIEW_T3_END)
     {
     	Settings.tX_customViewPrimaryBF = CVIEW_T3_Decostop;
+    	corrections++;
+    }
+    if(Settings.viewPortMode > MAX_VIEWPORT_MODE)
+    {
+    	Settings.viewPortMode = 0;
     	corrections++;
     }
 
