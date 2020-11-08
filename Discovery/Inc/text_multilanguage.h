@@ -262,6 +262,9 @@ extern const tText text_array2[];
 		TXT2BYTE_CViewStandard,
 		TXT2BYTE_CornerTimeout,
 		TXT2BYTE_CornerStandard,
+		TXT2BYTE_IndicateFrame,
+		TXT2BYTE_BoostBacklight,
+
 		TXT2BYTE_SetToMOD,
 		/* */
 		TXT2BYTE_HUDbattery,

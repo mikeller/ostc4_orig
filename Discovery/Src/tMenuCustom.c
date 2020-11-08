@@ -36,6 +36,9 @@
 #include "text_multilanguage.h"
 #include "data_central.h"
 #include "motion.h"
+#include "gfx_fonts.h"
+#include "tInfo.h"
+#include "motion.h"
 
 
 /* Exported functions --------------------------------------------------------*/
@@ -132,6 +135,15 @@ uint32_t tMCustom_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext
 				textPointer++;
 			break;
 		}
+    }
+
+	strcpy(&text[textPointer],"\n\r");
+	textPointer += 2;
+
+    if((line == 0) || (line == 6))
+    {
+		text[textPointer++] = TXT_2BYTE;
+		text[textPointer++] = TXT2BYTE_CalibView;
 		strcpy(&text[textPointer],"\n\r");
 		textPointer += 2;
     }

@@ -1,5 +1,4 @@
-﻿/////////////////////////////////////////////////////////////////////////////
-/// -*- coding: UTF-8 -*-
+﻿/// -*- coding: UTF-8 -*-
 ///
 /// \file   Discovery/Src/text_multilanguage.c
 /// \brief  Date file of TXT Multilanguage Support
@@ -1407,6 +1406,18 @@ static uint8_t text_FR_ApneaSurface[] = "Tps.surface";
 static uint8_t text_IT_ApneaSurface[] = "Tempo di superficie";
 static uint8_t text_ES_ApneaSurface[] = "Tiempo de superficie";
 
+static uint8_t text_EN_IndicateFrame[] = "Change frame color";
+static uint8_t text_DE_IndicateFrame[] = "Farbwechsel Rahmen";
+static uint8_t text_FR_IndicateFrame[] = "";
+static uint8_t text_IT_IndicateFrame[] = "";
+static uint8_t text_ES_IndicateFrame[] = "";
+
+static uint8_t text_EN_BoostBacklight[] = "Boost Backlight:";
+static uint8_t text_DE_BoostBacklight[] = "Helligkeit+:";
+static uint8_t text_FR_BoostBacklight[] = "";
+static uint8_t text_IT_BoostBacklight[] = "";
+static uint8_t text_ES_BoostBacklight[] = "";
+
 /*
 static uint8_t text_EN_ApneaCount[] = "";
 static uint8_t text_DE_ApneaCount[] = "";
@@ -1722,6 +1733,8 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_SetMarker,		{text_EN_SetMarker, text_DE_SetMarker, text_FR_SetMarker, text_IT_SetMarker, text_ES_SetMarker}},
     {(uint8_t)TXT2BYTE_CompassHeading,  {text_EN_CompassHeading, text_DE_CompassHeading, text_FR_CompassHeading, text_IT_CompassHeading, text_ES_CompassHeading}},
 	{(uint8_t)TXT2BYTE_CalibView,  		{text_EN_CalibView, text_DE_CalibView, text_FR_CalibView, text_IT_CalibView, text_ES_CalibView}},
+	{(uint8_t)TXT2BYTE_IndicateFrame,	{text_EN_IndicateFrame, text_DE_IndicateFrame, text_FR_IndicateFrame, text_IT_IndicateFrame, text_ES_IndicateFrame}},
+	{(uint8_t)TXT2BYTE_BoostBacklight,	{text_EN_BoostBacklight, text_DE_BoostBacklight, text_FR_BoostBacklight, text_IT_BoostBacklight, text_ES_BoostBacklight}},
     {(uint8_t)TXT2BYTE_EndDiveMode,		{text_EN_EndDiveMode, text_DE_EndDiveMode, text_FR_EndDiveMode, text_IT_EndDiveMode, text_ES_EndDiveMode}},
 	{(uint8_t)TXT2BYTE_Simulator,		{text_EN_Simulator, text_DE_Simulator, text_FR_Simulator, text_IT_Simulator, text_ES_Simulator}},
     {(uint8_t)TXT2BYTE_StartSimulator,  {text_EN_StartSimulator, text_DE_StartSimulator, text_FR_StartSimulator, text_IT_StartSimulator, text_ES_StartSimulator}},

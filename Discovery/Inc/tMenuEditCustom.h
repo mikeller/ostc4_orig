@@ -38,5 +38,7 @@ void openEdit_Custom(uint8_t line);
 void openEdit_CustomviewDivemode(const uint8_t* pcv_changelist);
 void openEdit_CustomviewDivemodeMenu(uint8_t line);
 void CustomviewDivemode_refresh();
+void refresh_ViewPort(void);
+void tViewControl(uint8_t sendAction);
 
 #endif /* TMENU_EDIT_CUSTOM_H */
