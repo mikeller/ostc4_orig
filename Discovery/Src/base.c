@@ -199,6 +199,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stdio.h"
 #include <string.h> // for memcopy
+#include <math.h>
 #include "configuration.h"
 
 #include "stm32f4xx_hal.h"
@@ -264,6 +265,8 @@ static TIM_HandleTypeDef   TimBacklightHandle;
 TIM_HandleTypeDef   TimDemoHandle; /* used in stm32f4xx_it.c too */
 #endif
 
+
+static uint8_t blBoost = 0;
 static uint8_t RequestModeChange = 0;
 
 static uint8_t LastButtonPressed;
@@ -500,30 +503,42 @@ int main(void)
 
         	TimeoutControl();								/* exit menus if needed */
 
-        	if(stateUsed->mode == MODE_DIVE)			/* handle motion events in divemode only */
+#ifdef ENABLE_MOTION_CONTROL
+        	if((stateUsed->mode == MODE_DIVE) && (settingsGetPointer()->MotionDetection != MOTION_DETECT_OFF))		/* handle motion events in divemode only */
         	{
-				switch(settingsGetPointer()->MotionDetection)
-				{
-					case MOTION_DETECT_MOVE: pitchstate = detectPitch(stateRealGetPointer()->lifeData.compass_pitch);
-						break;
-					case MOTION_DETECT_SECTOR: pitchstate = detectSectorButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
-						break;
-					case MOTION_DETECT_SCROLL: pitchstate = detectScrollButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
-						 break;
-					default:
-						pitchstate = DETECT_NOTHING;
-						break;
-				}
-				if(DETECT_NEG_PITCH == pitchstate)
-	           	{
-	            	StoreButtonAction((uint8_t)ACTION_PITCH_NEG);
-	           	}
-	            if(DETECT_POS_PITCH == pitchstate)
-	           	{
-	            	StoreButtonAction((uint8_t)ACTION_PITCH_POS);
-	           	}
-        	}
+        		evaluateMotionDelta(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading);
+        		checkViewport(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading);
 
+       			if(viewInFocus())
+        		{
+       				set_Backlight_Boost(settingsGetPointer()->viewPortMode & 0x03);
+					switch(settingsGetPointer()->MotionDetection)
+					{
+						case MOTION_DETECT_MOVE: pitchstate = detectPitch(stateRealGetPointer()->lifeData.compass_pitch);
+							break;
+						case MOTION_DETECT_SECTOR: pitchstate = detectSectorButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
+							break;
+						case MOTION_DETECT_SCROLL: pitchstate = detectScrollButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
+							 break;
+						default:
+							pitchstate = DETECT_NOTHING;
+							break;
+					}
+					if(DETECT_NEG_PITCH == pitchstate)
+					{
+						StoreButtonAction((uint8_t)ACTION_PITCH_NEG);
+					}
+					if(DETECT_POS_PITCH == pitchstate)
+					{
+						StoreButtonAction((uint8_t)ACTION_PITCH_POS);
+					}
+       			}
+       			else
+       			{
+       				set_Backlight_Boost(0);
+       			}
+        	}
+#endif
 
 #ifdef SIM_WRITES_LOGBOOK
         if(stateUsed == stateSimGetPointer())
@@ -786,10 +801,6 @@ static void TriggerButtonAction()
 						if ((status.page == PageDive) && (status.line == 0))
 						{
 							tHome_change_customview_button_pressed(action);
-							if((settingsGetPointer()->MotionDetection != MOTION_DETECT_OFF) && (action == ACTION_BUTTON_ENTER))  /* Button pressed while motion detection is active => calibrate to current pitch value */
-							{
-								DefinePitchSectors(stateRealGetPointer()->lifeData.compass_pitch,CUSTOMER_KEEP_LAST_SECTORS);
-							}
 						}
 						else if (status.page == PageSurface)
 							tHome_change_customview_button_pressed(action);
@@ -1143,7 +1154,7 @@ static uint32_t TIM_BACKLIGHT_adjust(void)
         /* important levelAmbient 300 - 1200 */
         levelAmbient = 10 * pStateReal->lifeData.ambient_light_level;
 
-        switch(	pSettings->brightness)
+        switch(	pSettings->brightness + blBoost)
         {
         case 0: /* Cave */
             levelMax = 3000;/* max 25 % (x2) */
@@ -1241,6 +1252,14 @@ static void TIM_BACKLIGHT_init(void)
 }
 #endif
 
+
+void set_Backlight_Boost(uint8_t level)
+{
+	if(level < 3)
+	{
+		blBoost = level;
+	}
+}
 
 static void EXTILine_Buttons_Config(void)
 {
