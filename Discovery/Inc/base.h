@@ -108,6 +108,7 @@ void set_globalMode(uint8_t newMode);
 void set_globalState_Log_Page(uint8_t pageIsLine);
 void set_returnFromComm(void);
 uint8_t font_update_required(void);
+void set_Backlight_Boost(uint8_t level);
 
 #endif /* BASE_H */
 

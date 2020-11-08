@@ -51,13 +51,39 @@ typedef struct
     uint8_t count;				/* number of sectors used for detection */
 } SSector;
 
+typedef struct
+{
+	float x;
+	float y;
+	float z;
+} SCoord;
 
+typedef enum
+{
+		MOTION_HISTORY_ROLL = 0,
+		MOTION_HISTORY_PITCH,
+		MOTION_HISTORY_YAW
+} MotionHistoryEntry_t;
 
+typedef struct
+{
+	uint8_t roll;
+	uint8_t pitch;
+	uint8_t yaw;
+} SDeltaHistory;
 
 void InitMotionDetection(void);
+void resetMotionDeltaHistory();
+void evaluateMotionDelta(float roll, float pitch, float yaw);
 void DefinePitchSectors(float centerAngle, uint8_t numOfSectors);
 detectionState_t detectPitch(float currentPitch);
 detectionState_t detectSectorButtonEvent(float curPitch);
 detectionState_t detectScrollButtonEvent(float curPitch);
+
+void anglesToCoord(float roll, float pitch, float yaw, SCoord *pCoord);
+void calibrateViewport(float roll, float pitch, float yaw);
+float checkViewport(float roll, float pitch, float yaw);
+uint8_t viewInFocus(void);
+void resetFocusState(void);
 
 #endif /* INC_MOTION_H_ */
