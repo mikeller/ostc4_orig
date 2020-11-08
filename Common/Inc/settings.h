@@ -69,8 +69,7 @@
 #define PRESSURE_OFFSET_LIMIT_MBAR	50
 
 #define MAX_COMPASS_COMP (2u)
-
-#define MAX_VIEWPORT_MODE (2u)
+#define MAX_VIEWPORT_MODE (0x1F)
 
 /*	2015 Jan 30, hw, deco and travel added for MenuEditGas
 	* can be used for buehlmann, vpm, etc. later but be carefull
