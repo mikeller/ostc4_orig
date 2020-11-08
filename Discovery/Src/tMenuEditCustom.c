@@ -40,6 +40,7 @@
 #include "motion.h"
 #include "tMenu.h"
 #include "tMenuSystem.h"
+#include <math.h>
 
 
 #define CV_PER_PAGE  (5u)			/* number of cv selections shown at one page */
@@ -52,6 +53,7 @@ static const uint8_t*	pcv_curchangelist;
 void openEdit_Customview(void);
 void openEdit_BigScreen(void);
 void openEdit_MotionCtrl(void);
+void openEdit_ViewPort(void);
 void refresh_Customviews(void);
 char customview_TXT2BYTE_helper(uint8_t customViewId);
 /* Announced function prototypes -----------------------------------------------*/
@@ -60,6 +62,9 @@ uint8_t OnAction_CViewStandard (uint32_t editId, uint8_t blockNumber, uint8_t di
 uint8_t OnAction_CViewStandardBF(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_CornerTimeout (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_CornerStandard(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+uint8_t OnAction_CViewPortCalib(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+uint8_t OnAction_CViewPortLayout(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+uint8_t OnAction_CViewPortAmbient(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 /* Exported functions --------------------------------------------------------*/
 
 
@@ -90,54 +95,6 @@ void refresh_Customviews(void)
     text[2] = ' ';
     text[3] = ' ';
 
-#if 0
-    switch(settingsGetPointer()->tX_customViewPrimary)
-    {
-    case CVIEW_sensors:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_O2monitor;
-        break;
-    case CVIEW_sensors_mV:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_O2voltage;
-        break;
-    case CVIEW_Compass:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_Compass;
-        break;
-    case CVIEW_Decolist:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_Decolist;
-        break;
-    case CVIEW_Tissues:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_Tissues;
-        break;
-    case CVIEW_Profile:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_Profile;
-        break;
-    case CVIEW_Gaslist:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_Gaslist;
-        break;
-    case CVIEW_EADTime:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_Info;
-        break;
-    case CVIEW_SummaryOfLeftCorner:
-        text[4] = TXT_2BYTE;
-        text[5] = TXT2BYTE_Summary;
-        break;
-    case CVIEW_noneOrDebug:
-        text[4] = ' ';
-        text[5] = '-';
-        break;
-    default:
-        snprintf(&text[4],3,"%02u",settingsGetPointer()->tX_customViewPrimary);
-    break;
-    }
-#endif
     text[4] = TXT_2BYTE;
     text[5] = customview_TXT2BYTE_helper(settingsGetPointer()->tX_customViewPrimary);
     text[6] = 0;
@@ -217,6 +174,83 @@ void refresh_Customviews(void)
     write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
 }
 
+void refresh_ViewPort(void)
+{
+    uint16_t heading;
+    char text[32];
+    uint8_t textIndex = 0;
+    float distance = 0.0;
+    SSettings* pSettings = settingsGetPointer();
+    GFX_DrawCfgScreen* pdrawScreen;
+    point_t lowerleft = {0,0};
+    point_t upperright = {799,479};
+
+    text[0] = '\001';
+    text[1] = TXT_2BYTE;
+    text[2] = TXT2BYTE_CalibView;
+    text[3] = 0;
+    write_topline(text);
+
+    text[0] = TXT_2BYTE;
+    text[1] = TXT2BYTE_CalibView;
+    text[2] = 0;
+    write_label_var(   30, 700, ME_Y_LINE3, &FontT48, text);
+
+    if(pSettings->compassInertia)
+    {
+    	heading = (uint16_t)compass_getCompensated();
+    }
+    else
+    {
+    	heading = (uint16_t)stateUsed->lifeData.compass_heading;
+    }
+    snprintf(text,32,"\001%03i`",heading);
+    write_label_var(   30, 700, ME_Y_LINE1, &FontT48, text);
+
+    textIndex = 0;
+    text[textIndex++] = TXT_2BYTE;
+    text[textIndex++] = TXT2BYTE_IndicateFrame;
+    text[textIndex++] = ' ';
+    text[textIndex++] = '\006' - (settingsGetPointer()->viewPortMode >> 4);
+    text[textIndex++] = 0;
+    write_label_var(   30, 700, ME_Y_LINE5, &FontT48, text);
+    textIndex = 0;
+    text[textIndex++] = TXT_2BYTE;
+    text[textIndex++] = TXT2BYTE_BoostBacklight;
+    text[textIndex++] = ' ';
+    snprintf(&text[textIndex],32," %d",(settingsGetPointer()->viewPortMode & 0x3));
+    write_label_var(   30, 700, ME_Y_LINE6, &FontT48, text);
+
+    write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
+
+    /* test if we are in focus */
+    if((pSettings->viewPitch != 0.0) || (pSettings->viewRoll != 0.0) || (pSettings->viewYaw != 0.0))
+    {
+    	distance = checkViewport(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading);
+
+		if(distance < 0.5)
+		{
+			set_Backlight_Boost(settingsGetPointer()->viewPortMode & 0x03);
+		    if(pSettings->viewPortMode >> 4)
+		    {
+		    	pdrawScreen = getMenuEditScreen();
+		    	GFX_draw_box(pdrawScreen,lowerleft,upperright,0,CLUT_NiceGreen);
+		    }
+		}
+		else
+		{
+			set_Backlight_Boost(0);
+		    if(pSettings->viewPortMode >> 4)
+		    {
+		    	pdrawScreen = getMenuEditScreen();
+		    	GFX_draw_box(pdrawScreen,lowerleft,upperright,0,CLUT_MenuTopBackground);
+		    }
+		}
+		resetFocusState();	/* no other instance shall be impacted by the local detection */
+    }
+
+}
+
 void openEdit_Custom(uint8_t line)
 {
     set_globalState_Menu_Line(line);
@@ -235,6 +269,8 @@ void openEdit_Custom(uint8_t line)
     		break;
     	case 5:		openEdit_MotionCtrl();
     		break;
+    	case 6: 	openEdit_ViewPort();
+    	break;
     }
 }
 
@@ -305,6 +341,22 @@ void openEdit_MotionCtrl(void)
 
      exitMenuEdit_to_Menu_with_Menu_Update_do_not_write_settings_for_this_only();
 }
+
+
+
+void openEdit_ViewPort(void)
+{
+    refresh_ViewPort();
+
+    write_field_button(StMCustom6_CViewPortCalib,	400, 700, ME_Y_LINE3,  &FontT48, "");
+    write_field_button(StMCustom6_CViewPortLayout,	400, 700, ME_Y_LINE5,  &FontT48, "");
+    write_field_button(StMCustom6_CViewPortAmbient,	400, 700, ME_Y_LINE6,  &FontT48, "");
+
+    setEvent(StMCustom6_CViewPortCalib,		(uint32_t)OnAction_CViewPortCalib);
+    setEvent(StMCustom6_CViewPortLayout,	(uint32_t)OnAction_CViewPortLayout);
+    setEvent(StMCustom6_CViewPortAmbient,	(uint32_t)OnAction_CViewPortAmbient);
+}
+
 
 char customview_TXT2BYTE_helper(uint8_t customViewId)
 {
@@ -562,6 +614,45 @@ uint8_t OnAction_Customview_NextPage(uint32_t editId, uint8_t blockNumber, uint8
     return UPDATE_DIVESETTINGS;
 }
 
+uint8_t OnAction_CViewPortCalib(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+{
+	float heading;
+	if(settingsGetPointer()->compassInertia)
+	{
+	  	heading = (uint16_t)compass_getCompensated();
+	}
+	else
+	{
+	  	heading = (uint16_t)stateUsed->lifeData.compass_heading;
+	}
+	calibrateViewport(stateUsed->lifeData.compass_roll,stateUsed->lifeData.compass_pitch,heading);
+
+	return UPDATE_DIVESETTINGS;
+}
+uint8_t OnAction_CViewPortLayout(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+{
+	SSettings* pSettings = settingsGetPointer();
+	if(pSettings->viewPortMode >> 4 != 0)
+	{
+		pSettings->viewPortMode &= 0x0F;
+	}
+	else
+	{
+		pSettings->viewPortMode |= 0x10;
+	}
+
+	return UPDATE_DIVESETTINGS;
+}
+uint8_t OnAction_CViewPortAmbient(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+{
+	SSettings* pSettings = settingsGetPointer();
+	pSettings->viewPortMode = (pSettings->viewPortMode + 1) & 0xF3;
+
+	return UPDATE_DIVESETTINGS;
+}
+
+
+
 void openEdit_CustomviewDivemode(const uint8_t* pcv_changelist)
 {
 
@@ -800,4 +891,25 @@ void CustomviewDivemode_refresh()
          write_label_var( 30, 800, ME_Y_LINE6, &FontT48, text);
      }
      write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
+}
+
+void tViewControl(uint8_t sendAction)
+{
+    switch(sendAction)
+    {
+    case ACTION_BUTTON_ENTER:
+        break;
+    case ACTION_BUTTON_NEXT:
+        break;
+    case ACTION_TIMEOUT:
+    case ACTION_MODE_CHANGE:
+    case ACTION_BUTTON_BACK:
+    exitInfo();
+    	break;
+    default:
+        break;
+    case ACTION_IDLE_TICK:
+    case ACTION_IDLE_SECOND:
+        break;
+    }
 }

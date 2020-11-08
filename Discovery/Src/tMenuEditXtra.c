@@ -43,6 +43,7 @@ void openEdit_ResetStopwatch(void);
 void openEdit_SimFollowDecostops(void);
 void openEdit_SetManualMarker(void);
 void openEdit_SetEndDive(void);
+void openEdit_CalibViewport(void);
 
 /* Announced function prototypes -----------------------------------------------*/
 uint8_t OnAction_CompassHeading	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);

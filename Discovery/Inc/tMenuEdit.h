@@ -98,4 +98,5 @@ void exitMenuEdit_to_Menu_with_Menu_Update_do_not_write_settings_for_this_only(v
 
 void tMenuEdit_writeSettingsToFlash(void);
 
+GFX_DrawCfgScreen* getMenuEditScreen(void);
 #endif /* TMENU_EDIT_H */
