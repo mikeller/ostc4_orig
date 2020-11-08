@@ -1393,6 +1393,10 @@ uint8_t check_and_correct_settings(void)
    	}
 #else
     Settings.MotionDetection = MOTION_DETECT_OFF;
+    Settings.viewPortMode = 0;
+    Settings.viewRoll = 0.0;
+    Settings.viewPitch = 0.0;
+    Settings.viewYaw = 0.0;
 #endif
 
     if(Settings.compassInertia > MAX_COMPASS_COMP)
