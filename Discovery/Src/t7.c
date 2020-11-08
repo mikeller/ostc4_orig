@@ -577,7 +577,11 @@ void t7_refresh(void)
                 selection_customview = settingsGetPointer()->tX_customViewPrimary;
 
             t7_change_customview(ACTION_END);
-            InitMotionDetection();
+
+            if((settingsGetPointer()->MotionDetection != MOTION_DETECT_OFF))
+            {
+            	InitMotionDetection();
+            }
         }
 
         if(status.page == PageSurface)
@@ -609,6 +613,7 @@ void t7_refresh(void)
             last_mode = MODE_SURFACE;
             selection_customview = customviewsSurface[0];
             InitMotionDetection();
+            resetFocusState();
         }
         if(status.page == PageDive)
             set_globalState(StS);
@@ -2841,7 +2846,14 @@ void draw_frame(_Bool PluginBoxHeader, _Bool LinesOnTheSides, uint8_t colorBox, 
     WidthHeight.x = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_LINE_LEFT;
     LeftLow.y = 60;
     WidthHeight.y = 440 - LeftLow.y;
-    GFX_draw_box(&t7screen, LeftLow, WidthHeight, 1, colorBox);
+    if(viewInFocus())
+    {
+    	GFX_draw_box(&t7screen, LeftLow, WidthHeight, 1, CLUT_Font023);
+    }
+    else
+    {
+    	GFX_draw_box(&t7screen, LeftLow, WidthHeight, 1, colorBox);
+    }
 
     if(PluginBoxHeader)
     {

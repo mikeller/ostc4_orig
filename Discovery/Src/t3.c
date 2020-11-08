@@ -36,6 +36,7 @@
 #include "tHome.h"
 #include "timer.h"
 #include "unit.h"
+#include "motion.h"
 
 //* Imported function prototypes ---------------------------------------------*/
 extern uint8_t write_gas(char *text, uint8_t oxygen, uint8_t helium);
@@ -226,13 +227,28 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
     start.x = 0;
     stop.x = 799;
     stop.y = start.y = BigFontSeperationTopBottom;
-    GFX_draw_line(tXscreen, start, stop, CLUT_Font020);
+    if(viewInFocus())
+    {
+    	GFX_draw_line(tXscreen, start, stop, CLUT_Font023);
+    }
+    else
+    {
+    	GFX_draw_line(tXscreen, start, stop, CLUT_Font020);
+    }
+
 
     start.y = BigFontSeperationTopBottom;
     stop.y = 479;
 
     stop.x = start.x = BigFontSeperationLeftRight;
-    GFX_draw_line(tXscreen, start, stop, CLUT_Font020);
+    if(viewInFocus())
+    {
+    	GFX_draw_line(tXscreen, start, stop, CLUT_Font023);
+    }
+    else
+    {
+    	GFX_draw_line(tXscreen, start, stop, CLUT_Font020);
+    }
 
     /* depth */
     float depth = unit_depth_float(stateUsed->lifeData.depth_meter);
