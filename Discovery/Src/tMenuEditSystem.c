@@ -1213,12 +1213,17 @@ uint8_t OnAction_SetFactoryDefaults(uint32_t editId, uint8_t blockNumber, uint8_
 uint8_t OnAction_RecoverSampleIdx(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
 	char text[32];
-	char strResult[20];
-
-	ext_flash_AnalyseSampleBuffer(strResult);
-    snprintf(&text[0],30,"Ring: %s",strResult); //"Code: %X",settingsGetPointer()->logFlashNextSampleStartAddress); //getLicence());
+	uint8_t openSec;
+	uint8_t retval = UNSPECIFIC_RETURN;
+	openSec = ext_flash_AnalyseSampleBuffer();
+    snprintf(&text[0],30,"OpenSec: %d",openSec);
     write_label_var(  30, 800, ME_Y_LINE6, &FontT42, text);
-    return UNSPECIFIC_RETURN;
+
+    if(openSec == 2)
+    {
+    	retval = UPDATE_DIVESETTINGS;
+    }
+    return retval;
 }
 #endif
 
