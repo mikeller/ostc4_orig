@@ -72,6 +72,7 @@
 #include "buehlmann.h"
 #include "externLogbookFlash.h"
 
+//#define TESTBENCH
 
 /* Exported variables --------------------------------------------------------*/
 static uint8_t	wasPowerOn = 0;
@@ -771,15 +772,6 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 	SDiveState *pStateReal = stateRealGetPointerWrite();
 	static uint16_t getDeviceDataAfterStartOfMainCPU = 20;
 	
-	/* internal sensor: HUD data
-	 */
-	for(int i=0;i<3;i++)
-	{
-		pStateReal->lifeData.ppO2Sensor_bar[i] = get_ppO2Sensor_bar(i);
-		pStateReal->lifeData.sensorVoltage_mV[i] = get_sensorVoltage_mV(i);
-	}
-	pStateReal->lifeData.HUD_battery_voltage_V = get_HUD_battery_voltage_V();
-
 	
 	// wireless - �ltere daten aufr�umen
 #if 0
@@ -868,6 +860,27 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 		dataIn.data[dataIn.boolPressureData].surface_mbar = 999;
 		dataIn.data[dataIn.boolPressureData].pressure_mbar = 98971;
 		dataIn.mode = MODE_DIVE;
+	}
+
+
+	/* internal sensor: HUD data	 */
+	if(DataEX_external_ADC_Present == 0)
+	{
+		for(int i=0;i<3;i++)
+		{
+			pStateReal->lifeData.ppO2Sensor_bar[i] = get_ppO2Sensor_bar(i);
+			pStateReal->lifeData.sensorVoltage_mV[i] = get_sensorVoltage_mV(i);
+		}
+		pStateReal->lifeData.HUD_battery_voltage_V = get_HUD_battery_voltage_V();
+	}
+	else /* use data from external ADC */
+	{
+		if(pStateReal->data_old__lost_connection_to_slave == 0)
+		{
+			pStateReal->lifeData.sensorVoltage_mV[0] = dataIn.data[0].extADC_voltage[0];
+			pStateReal->lifeData.sensorVoltage_mV[1] = dataIn.data[0].extADC_voltage[1];
+			pStateReal->lifeData.sensorVoltage_mV[2] = dataIn.data[0].extADC_voltage[2];
+		}
 	}
 
 	if(pStateReal->data_old__lost_connection_to_slave == 0)
@@ -1170,4 +1183,12 @@ void DataEX_merge_devicedata(void)
 		DataEX_merge_DeviceData_and_store();
 	}
 }
+uint8_t DataEX_external_ADC_Present(void)
+{
+	uint8_t retval;
+	SDataExchangeSlaveToMasterDeviceData * dataInDevice = (SDataExchangeSlaveToMasterDeviceData *)&dataIn;
 
+	retval = dataInDevice->hw_Info.extADC;
+
+	return retval;
+}

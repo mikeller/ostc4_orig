@@ -50,6 +50,7 @@ uint32_t DataEX_lost_connection_count(void);
 void DataEX_control_connection_while_asking_for_sleep(void);
 uint8_t DataEX_check_RTE_version__needs_update(void);
 void setAvgDepth(SDiveState *pStateReal);
+uint8_t DataEX_external_ADC_Present(void);
 
 SDataReceiveFromMaster * dataOutGetPointer(void);
 

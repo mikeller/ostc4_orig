@@ -166,7 +166,7 @@ uint32_t ext_flash_read_firmware2(uint32_t *offset, uint8_t *pSample1, uint32_t 
 
 uint16_t ext_flash_repair_SPECIAL_dive_numbers_starting_count_with(uint16_t startCount);
 
-uint32_t ext_flash_AnalyseSampleBuffer(char *pstrResult);
+uint32_t ext_flash_AnalyseSampleBuffer(void);
 void ext_flash_CloseSector(void);
 
 uint32_t ext_flash_read_profilelength_small_header(uint32_t smallHeaderAddr);
