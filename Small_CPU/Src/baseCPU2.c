@@ -141,6 +141,7 @@
 #include "batteryCharger.h"
 #include "scheduler.h"
 #include "tm_stm32f4_otp.h"
+#include "externalInterface.h"
 
 // From Common/Inc:
 #include "calc_crush.h"
@@ -397,6 +398,7 @@ int main(void) {
 			//				ReInit_battery_charger_status_pins();
 			compass_init(0, 7);
 			accelerator_init();
+			externalInterface_Init();
 
 			if (global.mode == MODE_BOOT) {
 				GPIO_Power_MainCPU_OFF();
