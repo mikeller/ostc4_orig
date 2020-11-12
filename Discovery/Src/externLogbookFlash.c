@@ -1401,31 +1401,50 @@ uint8_t ext_dive_log_consistent(void)
 	uint8_t  header1, header2;
 	uint8_t id;
 	convert_Type dataStart;
+	convert_Type dataEnd;
 
 	SSettings *settings = settingsGetPointer();
 	id = settings->lastDiveLogId;
 
-    actualAddress = HEADERSTART + (0x800 * id);
-    ext_flash_read_block_start();
-    ext_flash_read_block(&header1, EF_HEADER);
-    ext_flash_read_block(&header2, EF_HEADER);
-    dataStart.u8bit.byteHigh = 0;
-    ext_flash_read_block(&dataStart.u8bit.byteLow, EF_HEADER);
-    ext_flash_read_block(&dataStart.u8bit.byteMidLow, EF_HEADER);
-    ext_flash_read_block(&dataStart.u8bit.byteMidHigh, EF_HEADER);
-    ext_flash_read_block_stop();
-    if((header1 == 0xFA) && (header2 == 0xFA))						/* Header is indicating the start of a dive */
-    {
-      actualAddress = HEADERSTART + (0x800 * id) + HEADER2OFFSET;
-      ext_flash_read_block_start();
-      ext_flash_read_block(&header1, EF_HEADER);
-      ext_flash_read_block(&header2, EF_HEADER);
-      ext_flash_read_block_stop();
-      if((header1 == 0xFA) && (header2 == 0xFA))					/* Secondary header was written at the end of a dive */
-      {
-    	  ret = 1;													/* => lastDiveLogID points to a valid dive entry */
-      }
-    }
+	if(settings->lastDiveLogId != 0) /* not trust LogID 0 which might be reset by a settings problem */
+	{								 /* ==> Find function will be called restoring the Id belonging to the latest sample */
+		actualAddress = HEADERSTART + (0x800 * id);
+		ext_flash_read_block_start();
+		ext_flash_read_block(&header1, EF_HEADER);
+		ext_flash_read_block(&header2, EF_HEADER);
+		ext_flash_read_block_stop();
+		if((header1 == 0xFA) && (header2 == 0xFA))						/* Header is indicating the start of a dive */
+		{
+		  actualAddress = HEADERSTART + (0x800 * id) + HEADER2OFFSET;
+		  ext_flash_read_block_start();
+		  ext_flash_read_block(&header1, EF_HEADER);
+		  ext_flash_read_block(&header2, EF_HEADER);
+		  dataStart.u8bit.byteHigh = 0;
+		  ext_flash_read_block(&dataStart.u8bit.byteLow, EF_HEADER);
+		  ext_flash_read_block(&dataStart.u8bit.byteMidLow, EF_HEADER);
+		  ext_flash_read_block(&dataStart.u8bit.byteMidHigh, EF_HEADER);
+		  dataEnd.u8bit.byteHigh = 0;
+		  ext_flash_read_block(&dataEnd.u8bit.byteLow, EF_HEADER);
+		  ext_flash_read_block(&dataEnd.u8bit.byteMidLow, EF_HEADER);
+		  ext_flash_read_block(&dataEnd.u8bit.byteMidHigh, EF_HEADER);
+		  ext_flash_read_block_stop();
+
+		  if((header1 == 0xFA) && (header2 == 0xFA))					/* Secondary header was written at the end of a dive */
+		  {
+			  if(dataStart.u32bit < dataEnd.u32bit)
+			  {
+				  ret = 1;												/* => lastDiveLogID points to a valid dive entry */
+			  }
+			  else														/* check if address wrap is valid */
+			  {
+				  if(ext_flash_SampleOverrunValid())
+				  {
+					  ret = 1;
+				  }
+			  }
+		  }
+		}
+	}
     return ret;
 }
 
@@ -2230,7 +2249,7 @@ uint8_t ext_flash_SampleOverrunValid(void)
 	uint8_t emptyCellCnt = 0;
 
 	actualaddrbackup = actualAddress;
-	curAddress = SAMPLESTOP - 20;	/* check the last 10 bytes of the last sample sector */
+	curAddress = SAMPLESTOP - 20;	/* check the last 20 bytes of the last sample sector */
 	actualAddress = curAddress;
 	ext_flash_read_block_start();
 	while(actualAddress < SAMPLESTOP)
@@ -2252,9 +2271,9 @@ uint8_t ext_flash_SampleOverrunValid(void)
 	return jumpvalid;
 }
 
-uint32_t ext_flash_AnalyseSampleBuffer(char *pstrResult)
+uint32_t ext_flash_AnalyseSampleBuffer()
 {
-	uint8_t sectorState[16];	/* samples are stored in 16 sector / 64k each */
+	uint8_t sectorState[192];	/* samples are stored in 192 sector / 64k each */
 	uint32_t curAddress = SAMPLESTART;
 	uint8_t curSector = 0;
 	uint8_t samplebuffer[10];
@@ -2265,7 +2284,7 @@ uint32_t ext_flash_AnalyseSampleBuffer(char *pstrResult)
 	uint8_t	lastSectorInuse = 0;
 
 /* check if a sector is used till its end */
-	for(curSector = 0; curSector < 16; curSector++)
+	for(curSector = 0; curSector < 192; curSector++)
 	{
 		sectorState[curSector] = 0;
 		emptyCellCnt = 0;
@@ -2304,14 +2323,13 @@ uint32_t ext_flash_AnalyseSampleBuffer(char *pstrResult)
 		}
 	}
 
-	for(i=0;i<16;i++)
+	for(i=0;i<192;i++)
 	{
 		if( sectorState[i] == SECTOR_INUSE)
 		{
 			startedSectors++;
 			lastSectorInuse = i;
 		}
-		*(pstrResult+i) = sectorState[i] + 48;
 	}
 
 	if(startedSectors > 1)	/* more than one sector is in used => ring buffer corrupted */
@@ -2343,10 +2361,10 @@ uint32_t ext_flash_AnalyseSampleBuffer(char *pstrResult)
 			closeSectorAddress = settingsGetPointer()->logFlashNextSampleStartAddress & 0xFFFF0000;
 			closeSectorAddress += 0xFFF5; /* to be used once next time a dive is logged. Needed because NextSampleID is derived at every startup */
 			settingsGetPointer()->logFlashNextSampleStartAddress = actualPointerSample;	/* store new position to be used for next dive */
+			ext_flash_CloseSector();
 		}
 	}
 	actualAddress = actualAddressBackup;
-	*(pstrResult+i) = 0;
 	return startedSectors;
 }
 
