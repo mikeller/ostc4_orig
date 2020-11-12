@@ -68,6 +68,13 @@ uint8_t batterygauge:1;
 uint8_t accident:1;
 } confirmbit8_t;
 
+typedef struct{
+uint8_t reserve:7;
+uint8_t extADC:1;
+uint8_t compass:8;
+} hw_Info_t;
+
+
 #define CRBUTTON 			(0x01)
 #define CRDATE 				(0x02)
 #define CRTIME 				(0x04)
@@ -137,8 +144,9 @@ typedef struct
 		float battery_charge;
 		//ambient light
 		uint16_t ambient_light_level;
-		// wireless data
-		SDataWireless wireless_data[4];
+		uint16_t SPARE_ALIGN32;
+		float	extADC_voltage[3];
+		uint8_t SPARE_OldWireless[50]; /* 64 - 12 for extADC */
 		// PIC data
 		uint8_t button_setting[4]; /* see dependency to SLiveData->buttonPICdata */
 		uint8_t SPARE1;
@@ -231,9 +239,8 @@ typedef struct
 	uint8_t RTE_VERSION_low;
 
 	uint8_t chargeStatus;
+	hw_Info_t hw_Info;
 	uint8_t spare1;
-	uint8_t spare2;
-	uint8_t spare3;
 
 	uint8_t boolDeviceData;
 	uint8_t boolVpmRepetitiveDataValid;
