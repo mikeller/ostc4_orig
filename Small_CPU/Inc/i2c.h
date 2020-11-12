@@ -27,7 +27,7 @@
 #define DEVICE_BATTERYGAUGE 			0xC8 	// LTC2941 battery gauge
 
 /* ADC for external bulkhead */
-#define DEVICE_EXTERNAL_ADC				0x68	// MCP3424 with Adr0=GND and Adr1=GND (Hardware gen 3 only)
+#define DEVICE_EXTERNAL_ADC				0xD0	// MCP3424 with Adr0=GND and Adr1=GND (Hardware gen 3 only)
 
 
 /* Includes ------------------------------------------------------------------*/

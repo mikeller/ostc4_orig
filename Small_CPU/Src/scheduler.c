@@ -41,6 +41,7 @@
 #include "stm32f4xx_hal_rtc_ex.h"
 #include "decom.h"
 #include "tm_stm32f4_otp.h"
+#include "externalInterface.h"
 
 /* uncomment to enable restoting of last known date in case of a power loss (RTC looses timing data) */
 /* #define RESTORE_LAST_KNOWN_DATE */
@@ -88,6 +89,7 @@ void copyTissueData(void);
 void copyVpmCrushingData(void);
 void copyDeviceData(void);
 void copyPICdata(void);
+void copyExtADCdata();
 static void schedule_update_timer_helper(int8_t thisSeconds);
 uint32_t time_elapsed_ms(uint32_t ticksstart,uint32_t ticksnow);
 
@@ -454,6 +456,7 @@ void scheduleDiveMode(void)
 {
 	uint32_t ticksdiff = 0; 
 	uint32_t lasttick = 0;
+	uint8_t extAdcChannel = 0;
 	uint8_t counterAscentRate = 0;
 	float lastPressure_bar = 0.0f;
 	global.dataSendToMaster.mode = MODE_DIVE;
@@ -491,6 +494,13 @@ void scheduleDiveMode(void)
 				Scheduler.counterSPIdata100msec++;
 			}
 			schedule_check_resync();
+
+			extAdcChannel = externalInterface_ReadAndSwitch();
+			if(extAdcChannel != EXTERNAL_ADC_NO_DATA)
+			{
+				externalInterface_CalculateADCValue(extAdcChannel);
+				copyExtADCdata();
+			}
 		}
 
 		//Evaluate pressure at 20 ms, 120 ms, 220 ms,....
@@ -754,6 +764,7 @@ void scheduleSurfaceMode(void)
 
 	uint32_t ticksdiff = 0; 
 	uint32_t lasttick = 0;
+	uint8_t extAdcChannel = 0;
 	Scheduler.tickstart = HAL_GetTick();
 	Scheduler.counterSPIdata100msec = 0;
 	Scheduler.counterCompass100msec = 0;
@@ -784,6 +795,12 @@ void scheduleSurfaceMode(void)
 				Scheduler.counterSPIdata100msec++;
 			}
 			schedule_check_resync();
+			extAdcChannel = externalInterface_ReadAndSwitch();
+			if(extAdcChannel != EXTERNAL_ADC_NO_DATA)
+			{
+				externalInterface_CalculateADCValue(extAdcChannel);
+				copyExtADCdata();
+			}
 		}
 
 		/* Evaluate pressure at 20 ms, 120 ms, 220 ms,... duration ~22ms] */
@@ -1604,6 +1621,19 @@ void copyPICdata(void)
 		global.dataSendToMaster.data[boolPICdata].button_setting[i] = global.ButtonPICdata[i];
 	}
 	global.dataSendToMaster.boolPICdata = boolPICdata;
+}
+
+void copyExtADCdata()
+{
+	float value;
+
+	uint8_t channel = 0;
+
+	for(channel = 0; channel < MAX_ADC_CHANNEL; channel++)
+	{
+		value = getExternalInterfaceChannel(channel);
+		global.dataSendToMaster.data[0].extADC_voltage[channel] = value;
+	}
 }
 
 
