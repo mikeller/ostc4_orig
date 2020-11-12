@@ -35,31 +35,13 @@
 
 #include "i2c.h"
 #include "spi.h"
+#include "scheduler.h"
 #include "RTE_FlashAccess.h" // to store compass_calib_data
 
 #include "stm32f4xx_hal.h"
 
 extern uint32_t time_elapsed_ms(uint32_t ticksstart,uint32_t ticksnow);
-
-/// split byte to bits
-typedef struct{ 
-uint8_t bit0:1; ///< split byte to bits
-uint8_t bit1:1; ///< split byte to bits
-uint8_t bit2:1; ///< split byte to bits
-uint8_t bit3:1; ///< split byte to bits
-uint8_t bit4:1; ///< split byte to bits
-uint8_t bit5:1; ///< split byte to bits
-uint8_t bit6:1; ///< split byte to bits
-uint8_t bit7:1; ///< split byte to bits
-} ubit8_t;
-
-
-/// split byte to bits
-typedef union{ 
-ubit8_t ub; ///< split byte to bits
-uint8_t uw; ///< split byte to bits
-} bit8_Type;
-	
+extern SGlobal global;
 
 /// split word to 2 bytes
 typedef struct{
@@ -309,6 +291,10 @@ void compass_init(uint8_t fast, uint8_t gain)
 	if(hardwareCompass == compass_generation1)			//HMC5883L)
 		compass_init_HMC5883L(fast, gain);
 	
+	if(global.deviceDataSendToMaster.hw_Info.compass == 0)
+	{
+		global.deviceDataSendToMaster.hw_Info.compass = hardwareCompass;
+	}
 	tfull32 dataBlock[4];
 	if(BFA_readLastDataBlock((uint32_t *)dataBlock) == BFA_OK)
 		{
