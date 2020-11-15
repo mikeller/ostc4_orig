@@ -128,7 +128,7 @@ float get_HUD_battery_voltage_V(void)
 }
 
 
-void test_HUD_sensor_values_outOfBounds(int8_t * outOfBouds1, int8_t * outOfBouds2, int8_t * outOfBouds3)
+void test_O2_sensor_values_outOfBounds(int8_t * outOfBouds1, int8_t * outOfBouds2, int8_t * outOfBouds3)
 {
     uint8_t sensorNotActiveBinary;
     uint8_t sensorActive[3];
@@ -156,8 +156,8 @@ void test_HUD_sensor_values_outOfBounds(int8_t * outOfBouds1, int8_t * outOfBoud
     {
         if(sensorActive[i])
         {
-            if(	(receiveHUD[boolHUDdata].sensor_voltage_100uV[i] < 80) ||
-                    (receiveHUD[boolHUDdata].sensor_voltage_100uV[i] > 2500))
+            if(	(stateUsed->lifeData.sensorVoltage_mV[i] < 8) ||
+                    (stateUsed->lifeData.sensorVoltage_mV[i] > 250))
             {
                 sensorActive[i] = 0;
                 switch(i)
@@ -199,9 +199,9 @@ void test_HUD_sensor_values_outOfBounds(int8_t * outOfBouds1, int8_t * outOfBoud
     else
     {
         uint8_t sensor_id_ordered[3];
-        uint8_t difference[2];
+        float difference[2];
 
-        if((receiveHUD[boolHUDdata].sensor_ppo2_cbar[1]) > (receiveHUD[boolHUDdata].sensor_ppo2_cbar[0]))
+        if((stateUsed->lifeData.ppO2Sensor_bar[1] > stateUsed->lifeData.ppO2Sensor_bar[0]))
         {
             sensor_id_ordered[0] = 0;
             sensor_id_ordered[1] = 1;
@@ -211,14 +211,14 @@ void test_HUD_sensor_values_outOfBounds(int8_t * outOfBouds1, int8_t * outOfBoud
             sensor_id_ordered[0] = 1;
             sensor_id_ordered[1] = 0;
         }
-        if(receiveHUD[boolHUDdata].sensor_ppo2_cbar[2] > receiveHUD[boolHUDdata].sensor_ppo2_cbar[sensor_id_ordered[1]])
+        if(stateUsed->lifeData.ppO2Sensor_bar[2] > stateUsed->lifeData.ppO2Sensor_bar[sensor_id_ordered[1]])
         {
             sensor_id_ordered[2] = 2;
         }
         else
         {
             sensor_id_ordered[2] = sensor_id_ordered[1];
-            if(receiveHUD[boolHUDdata].sensor_ppo2_cbar[2] > receiveHUD[boolHUDdata].sensor_ppo2_cbar[sensor_id_ordered[0]])
+            if(stateUsed->lifeData.ppO2Sensor_bar[2] > stateUsed->lifeData.ppO2Sensor_bar[sensor_id_ordered[0]])
             {
                 sensor_id_ordered[1] = 2;
             }
@@ -229,10 +229,10 @@ void test_HUD_sensor_values_outOfBounds(int8_t * outOfBouds1, int8_t * outOfBoud
             }
         }
 
-        difference[0] = receiveHUD[boolHUDdata].sensor_ppo2_cbar[sensor_id_ordered[1]]- receiveHUD[boolHUDdata].sensor_ppo2_cbar[sensor_id_ordered[0]];
-        difference[1] = receiveHUD[boolHUDdata].sensor_ppo2_cbar[sensor_id_ordered[2]]- receiveHUD[boolHUDdata].sensor_ppo2_cbar[sensor_id_ordered[1]];
+        difference[0] = stateUsed->lifeData.ppO2Sensor_bar[sensor_id_ordered[1]]- stateUsed->lifeData.ppO2Sensor_bar[sensor_id_ordered[0]];
+        difference[1] = stateUsed->lifeData.ppO2Sensor_bar[sensor_id_ordered[2]]- stateUsed->lifeData.ppO2Sensor_bar[sensor_id_ordered[1]];
 
-        if((difference[0] > difference[1]) && (difference[0] > 15))
+        if((difference[0] > difference[1]) && (difference[0] > 0.15))		/* was 15cBar ==> 0.15 bar */
         {
             switch(sensor_id_ordered[0])
             {
@@ -248,7 +248,7 @@ void test_HUD_sensor_values_outOfBounds(int8_t * outOfBouds1, int8_t * outOfBoud
             }
         }
         else
-        if((difference[0] < difference[1]) && (difference[1] > 15))
+        if((difference[0] < difference[1]) && (difference[1] > 0.15))
         {
             switch(sensor_id_ordered[2])
             {
@@ -273,13 +273,13 @@ uint8_t get_ppO2SensorWeightedResult_cbar(void)
     uint16_t result = 0;
     uint8_t count = 0;
 
-    test_HUD_sensor_values_outOfBounds(&sensorOutOfBound[0], &sensorOutOfBound[1], &sensorOutOfBound[2]);
+    test_O2_sensor_values_outOfBounds(&sensorOutOfBound[0], &sensorOutOfBound[1], &sensorOutOfBound[2]);
 
     for(int i=0;i<3;i++)
     {
         if(!sensorOutOfBound[i])
         {
-            result += receiveHUD[boolHUDdata].sensor_ppo2_cbar[i];
+            result += stateUsed->lifeData.ppO2Sensor_bar[i] * 100.0;		/* convert centibar used by HUB */
             count++;
         }
     }
@@ -309,16 +309,19 @@ void tCCR_init(void)
     */
 void tCCR_tick(void)
 {
-    if(HUDTimeoutCount < 3 * 10)
-        HUDTimeoutCount++;
-    else
-    {
-        data_old__lost_connection_to_HUD = 1;
-        if(HUDTimeoutCount < 20 * 10)
-            HUDTimeoutCount++;
-        else
-            tCCR_fallbackToFixedSetpoint();
-    }
+	if(settingsGetPointer()->ppo2sensors_source == O2_SENSOR_SOURCE_OPTIC)
+	{
+		if(HUDTimeoutCount < 3 * 10)
+			HUDTimeoutCount++;
+		else
+		{
+			data_old__lost_connection_to_HUD = 1;
+			if(HUDTimeoutCount < 20 * 10)
+				HUDTimeoutCount++;
+			else
+				tCCR_fallbackToFixedSetpoint();
+		}
+	}
 }
 
 void tCCR_SetRXIndication(void)
