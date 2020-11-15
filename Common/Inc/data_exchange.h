@@ -69,7 +69,9 @@ uint8_t accident:1;
 } confirmbit8_t;
 
 typedef struct{
-uint8_t reserve:7;
+uint8_t checkCompass:1;
+uint8_t checkADC:1;
+uint8_t reserve:5;
 uint8_t extADC:1;
 uint8_t compass:8;
 } hw_Info_t;

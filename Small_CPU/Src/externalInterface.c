@@ -64,6 +64,7 @@ void externalInterface_Init(void)
 		externalInterfacePresent = 1;
 		global.deviceDataSendToMaster.hw_Info.extADC = 1;
 	}
+	global.deviceDataSendToMaster.hw_Info.checkADC = 1;
 }
 
 
