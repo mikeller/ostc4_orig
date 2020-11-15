@@ -232,7 +232,6 @@
 #include "test_vpm.h"
 #include "tDebug.h"
 #include "motion.h"
-#include "data_exchange_main.h"
 
 #ifdef DEMOMODE
 #include "demo.h"
@@ -350,7 +349,9 @@ int main(void)
     uint16_t totalDiveCounterFound;
 
 	SStateList status;
+#ifdef ENABLE_MOTION_CONTROL
     detectionState_t pitchstate;
+#endif
     set_globalState( StBoot0 );
     LastButtonPressed = 0;
 
