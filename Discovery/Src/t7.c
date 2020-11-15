@@ -1415,9 +1415,10 @@ void t7_show_customview_warnings(void)
 
     textpointer = 0;
     lineFree = 5;
-    text[textpointer++] = '\001';
+
     if(lineFree && stateUsed->warnings.decoMissed)
     {
+    	text[textpointer++] = '\001';
         text[textpointer++] = TXT_2BYTE;
         text[textpointer++] = TXT2BYTE_WarnDecoMissed;
         text[textpointer++] = '\n';
@@ -1428,6 +1429,7 @@ void t7_show_customview_warnings(void)
 
     if(lineFree && stateUsed->warnings.fallback)
     {
+    	text[textpointer++] = '\001';
         text[textpointer++] = TXT_2BYTE;
         text[textpointer++] = TXT2BYTE_WarnFallback;
         text[textpointer++] = '\n';
@@ -1438,6 +1440,7 @@ void t7_show_customview_warnings(void)
 
     if(lineFree && stateUsed->warnings.ppO2Low)
     {
+    	text[textpointer++] = '\001';
         text[textpointer++] = TXT_2BYTE;
         text[textpointer++] = TXT2BYTE_WarnPPO2Low;
         text[textpointer++] = '\n';
@@ -1448,6 +1451,7 @@ void t7_show_customview_warnings(void)
 
     if(lineFree && stateUsed->warnings.ppO2High)
     {
+    	text[textpointer++] = '\001';
         text[textpointer++] = TXT_2BYTE;
         text[textpointer++] = TXT2BYTE_WarnPPO2High;
         text[textpointer++] = '\n';
@@ -1458,6 +1462,7 @@ void t7_show_customview_warnings(void)
 
     if(lineFree && stateUsed->warnings.sensorLinkLost)
     {
+    	text[textpointer++] = '\001';
         text[textpointer++] = TXT_2BYTE;
         text[textpointer++] = TXT2BYTE_WarnSensorLinkLost;
         text[textpointer++] = '\n';
@@ -1468,6 +1473,7 @@ void t7_show_customview_warnings(void)
 #ifdef ENABLE_BOTTLE_SENSOR
     if(stateUsed->warnings.newPressure)
     {
+    	text[textpointer++] = '\001';
     	sprintf(&text[textpointer],"  %u Bar\n", stateUsed->warnings.newPressure);
     	textpointer++;
         lineFree--;
@@ -1527,7 +1533,7 @@ uint8_t t7_GetEnabled_customviews()
     		 increment = 0;
     	}
         if (((*pViews == CVIEW_sensors) || (*pViews == CVIEW_sensors_mV)) &&
-           	((stateUsed->diveSettings.ppo2sensors_deactivated) || (stateUsed->diveSettings.ccrOption == 0)))
+           	((stateUsed->diveSettings.ppo2sensors_deactivated == 0x07) || (stateUsed->diveSettings.ccrOption == 0)))
         {
         	increment = 0;
         }
@@ -1554,7 +1560,7 @@ uint8_t t7_customview_disabled(uint8_t view)
     }
 
     if (((view == CVIEW_sensors) || (view == CVIEW_sensors_mV)) &&
-       	((stateUsed->diveSettings.ppo2sensors_deactivated) || (stateUsed->diveSettings.ccrOption == 0)))
+       	((stateUsed->diveSettings.ppo2sensors_deactivated == 0x07) || (stateUsed->diveSettings.ccrOption == 0)))
     {
       	cv_disabled = 1;
     }
@@ -2240,9 +2246,9 @@ void t7_refresh_divemode(void)
     }
 
     if(Divetime.Minutes < 1000)
-        snprintf(TextR1,TEXTSIZE,"\020\016\002%u:%02u",Divetime.Minutes, Divetime.Seconds);
+        snprintf(TextR1,TEXTSIZE,"\020\002\016%u:%02u",Divetime.Minutes, Divetime.Seconds);
     else
-        snprintf(TextR1,TEXTSIZE,"\020\016\002%u'",Divetime.Minutes);
+        snprintf(TextR1,TEXTSIZE,"\020\002\016%u'",Divetime.Minutes);
     t7_colorscheme_mod(TextR1);
     GFX_write_string(&FontT105,&t7r1,TextR1,1);
 
@@ -2268,7 +2274,7 @@ void t7_refresh_divemode(void)
     {
         snprintf(TextR2,TEXTSIZE,"\032\f\002%c%c",TXT_2BYTE,TXT2BYTE_SafetyStop2);
         GFX_write_string(&FontT42,&t7r2,TextR2,0);
-        snprintf(TextR2,TEXTSIZE,"\020\016\002%u:%02u",SafetyStopTime.Minutes,SafetyStopTime.Seconds);
+        snprintf(TextR2,TEXTSIZE,"\020\002\016%u:%02u",SafetyStopTime.Minutes,SafetyStopTime.Seconds);
         t7_colorscheme_mod(TextR2);
         GFX_write_string(&FontT105,&t7r2,TextR2,1);
     }

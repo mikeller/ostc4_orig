@@ -458,7 +458,7 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
             snprintf(text,TEXTSIZE,"\032\f\002%c%c", TXT_2BYTE,TXT2BYTE_ApneaSurface);
             GFX_write_string(&FontT42,tXr1,text,0);
 
-            snprintf(text,TEXTSIZE,"\020\003\016\002%u:%02u",SurfaceBreakTime.Minutes, SurfaceBreakTime.Seconds);
+            snprintf(text,TEXTSIZE,"\020\003\002\016%u:%02u",SurfaceBreakTime.Minutes, SurfaceBreakTime.Seconds);
         }
         else
         {
@@ -470,9 +470,9 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
             GFX_write_string(&FontT42,tXr1,text,0);
 
             if(Divetime.Minutes < 100)
-                snprintf(text,TEXTSIZE,"\020\003\016\002%u:%02u",Divetime.Minutes, Divetime.Seconds);
+                snprintf(text,TEXTSIZE,"\020\003\002\016%u:%02u",Divetime.Minutes, Divetime.Seconds);
             else
-                snprintf(text,TEXTSIZE,"\020\003\016\002%u'",Divetime.Minutes);
+                snprintf(text,TEXTSIZE,"\020\003\002\016%u'",Divetime.Minutes);
         }
         t3_basics_colorscheme_mod(text);
         GFX_write_string(&FontT105,tXr1,text,1);
@@ -509,9 +509,9 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
 							GFX_write_string(&FontT42,tXr1,text,0);
 
 							if(Divetime.Minutes < 100)
-								snprintf(text,TEXTSIZE,"\020\003\016\002%u:%02u",Divetime.Minutes, Divetime.Seconds);
+								snprintf(text,TEXTSIZE,"\020\003\002\016%u:%02u",Divetime.Minutes, Divetime.Seconds);
 							else
-								snprintf(text,TEXTSIZE,"\020\003\016\002%u'",Divetime.Minutes);
+								snprintf(text,TEXTSIZE,"\020\003\002\016%u'",Divetime.Minutes);
 
 						    t3_basics_colorscheme_mod(text);
 						    GFX_write_string(&FontT105,tXr1,text,1);
@@ -1025,9 +1025,10 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
             textpointer = 0;
             text[textpointer++] = '\030';
             if(i==1)
-                text[textpointer++] = '\001';
+                text[textpointer++] = '\001';		/* center */
             else if(i==2)
-                text[textpointer++] = '\002';
+                text[textpointer++] = '\002';		/* right  */
+
             if(stateUsed->diveSettings.ppo2sensors_deactivated & (1<<i))
             {
                 text[textpointer++] = '\031';
@@ -1039,9 +1040,9 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
             {
                 if(stateUsed->warnings.sensorOutOfBounds[i])
                     text[textpointer++] = '\025';
-                textpointer += snprintf(&text[textpointer],TEXTSIZE,"%.1f",stateUsed->lifeData.ppO2Sensor_bar[i]);
+                textpointer += snprintf(&text[textpointer],TEXTSIZE,"%.2f",stateUsed->lifeData.ppO2Sensor_bar[i]);
             }
-            GFX_write_string(&FontT144,tXc1,text,0);
+            GFX_write_string(&FontT105,tXc1,text,0);
         }
         break;
 
@@ -1133,7 +1134,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
 
         snprintf(text,TEXTSIZE,"\032\002\f%c", TXT_Stopwatch);
         GFX_write_string(&FontT42,tXc1,text,0);
-        snprintf(text,TEXTSIZE,"\030\016\002%01.1f",unit_depth_float(fAverageDepth));
+        snprintf(text,TEXTSIZE,"\030\002\016%01.1f",unit_depth_float(fAverageDepth));
         GFX_write_string(&FontT105,tXc1,text,0);
         if(!pSettings->FlipDisplay)
         {
@@ -1197,7 +1198,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         snprintf(text,TEXTSIZE,"\032\002\f%c",TXT_AvgDepth);
         GFX_write_string(&FontT42,tXc1,text,0);
 
-        snprintf(text,TEXTSIZE,"\020\003\016\002\%01.1f",unit_depth_float(fAverageDepthAbsolute));
+        snprintf(text,TEXTSIZE,"\020\003\002\016\%01.1f",unit_depth_float(fAverageDepthAbsolute));
         GFX_write_string(&FontT105,tXc1,text,0);
         break;
     }
@@ -1412,7 +1413,7 @@ uint8_t t3_customview_disabled(uint8_t view)
     }
 
     if (((view == CVIEW_sensors) || (view == CVIEW_sensors_mV)) &&
-       	((stateUsed->diveSettings.ppo2sensors_deactivated) || (stateUsed->diveSettings.ccrOption == 0)))
+       	((stateUsed->diveSettings.ppo2sensors_deactivated == 0x07) || (stateUsed->diveSettings.ccrOption == 0)))
     {
       	cv_disabled = 1;
     }
