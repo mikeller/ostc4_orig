@@ -3102,6 +3102,7 @@ static uint32_t GFX_write__Modify_Xdelta__Centered(GFX_CfgWriteString* cfg, GFX_
 	pText = (uint32_t)&cText[0];
 	Xsum = 0;
 	j = 0;
+	ptargetFont = (tFont *)cfg->font;
 	while (*(char*)pText != 0)// und fehlend: Abfrage window / image size
 	{
 		if(*(char*)pText == '\016')	/* request font change */
@@ -3112,6 +3113,12 @@ static uint32_t GFX_write__Modify_Xdelta__Centered(GFX_CfgWriteString* cfg, GFX_
 		{
 			tinyState = 0;
 		}
+
+		if((ptargetFont == &FontT105) && ((*(char*)pText == '.') || (*(char*)pText == ':')))
+		{
+			tinyState++;
+		}
+
 		if(tinyState > 1)
 		{
 			ptargetFont = (tFont *)cfg->TinyFont;
@@ -3206,6 +3213,16 @@ static uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GF
 		{
 			tinyState = 0;
 		}
+
+		if((font == &FontT144) && (*(char*)pText == '.'))
+		{
+			tinyState++;
+		}
+		if((font == &FontT105) && ((*(char*)pText == '.') || (*(char*)pText == ':')))
+		{
+			tinyState++;
+		}
+
 		if(tinyState > 1)
 		{
 			font = (tFont *)cfg->TinyFont;
@@ -3213,27 +3230,6 @@ static uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GF
 		else
 		{
 			font = (tFont *)cfg->font;
-		}
-
-
-		if((font == &FontT144) && (*(char*)pText == '.'))
-		{
-			font = (tFont *)&FontT84;
-			tinyState = 2;
-		}
-		else
-		if((font == &FontT105) && (*(char*)pText == '\16')) // two times to start tiny font
-		{
-			if(!setToTinyFont)
-				setToTinyFont = 1;
-			else
-				font = (tFont *)&FontT54;
-		}
-		else
-		if((font == &FontT105) && cfg->dualFont && ((*(char*)pText == '.') || (*(char*)pText == ':')))		/* Display character after '.' or ':' using smaller font */
-		{
-			font = (tFont *)&FontT54;
-			tinyState = 2;
 		}
 
 		if(*(char*)pText == ' ')
