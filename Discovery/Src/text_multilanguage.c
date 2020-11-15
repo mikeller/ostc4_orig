@@ -1235,6 +1235,30 @@ static uint8_t text_FR_HUDBattery[] = "Batterie HUD";
 static uint8_t text_IT_HUDBattery[] = "Batteria HUD";
 static uint8_t text_ES_HUDBattery[] = "Carga del HUD";
 
+static uint8_t text_EN_O2CalibAir[] = "Calibrate Air";
+static uint8_t text_DE_O2CalibAir[] = "Kalibrierung Luft";
+static uint8_t text_FR_O2CalibAir[] = "";
+static uint8_t text_IT_O2CalibAir[] = "";
+static uint8_t text_ES_O2CalibAir[] = "";
+
+static uint8_t text_EN_O2Interface[] = "O2 Interface";
+static uint8_t text_DE_O2Interface[] = "O2 Interface";
+static uint8_t text_FR_O2Interface[] = "";
+static uint8_t text_IT_O2Interface[] = "";
+static uint8_t text_ES_O2Interface[] = "";
+
+static uint8_t text_EN_O2IFOptic[] = "optical";
+static uint8_t text_DE_O2IFOptic[] = "optisch";
+static uint8_t text_FR_O2IFOptic[] = "";
+static uint8_t text_IT_O2IFOptic[] = "";
+static uint8_t text_ES_O2IFOptic[] = "";
+
+static uint8_t text_EN_O2IFAnalog[] = "analog";
+static uint8_t text_DE_O2IFAnalog[] = "analog";
+static uint8_t text_FR_O2IFAnalog[] = "";
+static uint8_t text_IT_O2IFAnalog[] = "";
+static uint8_t text_ES_O2IFAnalog[] = "";
+
 // Menu SYS1 sub (buttons)
 static uint8_t text_EN_LowerIsLess[] = "Lower is less sensitive";
 static uint8_t text_DE_LowerIsLess[] = "Niedriger ist schwergängiger";
@@ -1820,6 +1844,10 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_CornerStandard,  {text_EN_CornerStandard, text_DE_CornerStandard, text_FR_CornerStandard, text_IT_CornerStandard, text_ES_CornerStandard}},
     {(uint8_t)TXT2BYTE_SetToMOD,		{text_EN_SetToMOD, text_DE_SetToMOD, text_FR_SetToMOD, text_IT_SetToMOD, text_ES_SetToMOD}},
     {(uint8_t)TXT2BYTE_HUDbattery,		{text_EN_HUDBattery, text_DE_HUDBattery, text_FR_HUDBattery, text_IT_HUDBattery, text_ES_HUDBattery}},
+	{(uint8_t)TXT2BYTE_O2CalibAir,		{text_EN_O2CalibAir, text_DE_O2CalibAir, text_FR_O2CalibAir, text_IT_O2CalibAir, text_ES_O2CalibAir}},
+	{(uint8_t)TXT2BYTE_O2Interface,		{text_EN_O2Interface, text_DE_O2Interface, text_FR_O2Interface, text_IT_O2Interface, text_ES_O2Interface}},
+	{(uint8_t)TXT2BYTE_O2IFOptic,		{text_EN_O2IFOptic, text_DE_O2IFOptic, text_FR_O2IFOptic, text_IT_O2IFOptic, text_ES_O2IFOptic}},
+	{(uint8_t)TXT2BYTE_O2IFAnalog,		{text_EN_O2IFAnalog, text_DE_O2IFAnalog, text_FR_O2IFAnalog, text_IT_O2IFAnalog, text_ES_O2IFAnalog}},
     {(uint8_t)TXT2BYTE_LowerIsLess,		{text_EN_LowerIsLess, text_DE_LowerIsLess, text_FR_LowerIsLess, text_IT_LowerIsLess, text_ES_LowerIsLess}},
     {(uint8_t)TXT2BYTE_DiveMenuQ,		{text_EN_DiveMenuQ, text_DE_DiveMenuQ, text_FR_DiveMenuQ, text_IT_DiveMenuQ, text_ES_DiveMenuQ}},
     {(uint8_t)TXT2BYTE_DiveQuitQ,		{text_EN_DiveQuitQ, text_DE_DiveQuitQ, text_FR_DiveQuitQ, text_IT_DiveQuitQ, text_ES_DiveQuitQ}},

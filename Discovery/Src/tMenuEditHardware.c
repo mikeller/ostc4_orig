@@ -38,6 +38,7 @@
 #include "tInfo.h"
 #include "tInfoLog.h"
 #include "tComm.h"
+#include "data_exchange_main.h"
 
 extern void tM_build_pages(void);
 
@@ -60,11 +61,17 @@ uint8_t OnAction_Sensor1		(uint32_t editId, uint8_t blockNumber, uint8_t digitNu
 uint8_t OnAction_Sensor2		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_Sensor3		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_O2_Fallback	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+uint8_t OnAction_O2_Calibrate   (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+uint8_t OnAction_O2_Source		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_Button			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_ButtonBalance	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 // nicht notwending uint8_t OnAction_Bluetooth				(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 
 /* Exported functions --------------------------------------------------------*/
+
+
+#define O2_CALIB_FRACTION_AIR	(0.209F)
+
 
 void openEdit_Hardware(uint8_t line)
 {
@@ -267,8 +274,10 @@ uint8_t OnAction_ExitHardw (uint32_t editId, uint8_t blockNumber, uint8_t digitN
 
 void refresh_O2Sensors(void)
 {
-    char text[16];
+    char text[32];
     uint16_t y_line;
+
+    const SDiveState *pStateReal = stateRealGetPointer();
 
     text[0] = '\001';
     text[1] = TXT_o2Sensors;
@@ -287,22 +296,49 @@ void refresh_O2Sensors(void)
     text[3] = '3';
     write_label_var(  96, 340, ME_Y_LINE3, &FontT48, text);
 
-    text[0] = TXT_2BYTE;
-    text[1] = TXT2BYTE_HUDbattery;
-    text[2] = 0;
-    write_label_var(  30, 340, ME_Y_LINE4, &FontT48, text);
-//	write_label_var(  30, 340, ME_Y_LINE4, &FontT48, "HUD Battery");
-
-    for(int i=0;i<3;i++)
+    if(settingsGetPointer()->ppo2sensors_source == O2_SENSOR_SOURCE_OPTIC)
     {
-        snprintf(text, 20,"%01.2f, %01.1fmV",get_ppO2Sensor_bar(i),get_sensorVoltage_mV(i));
-        y_line = ME_Y_LINE1 + (i * ME_Y_LINE_STEP);
-        write_label_var(  400, 800, y_line, &FontT48, text);
+		text[0] = TXT_2BYTE;
+		text[1] = TXT2BYTE_HUDbattery;
+		text[2] = 0;
+		write_label_var(  30, 340, ME_Y_LINE4, &FontT48, text);
+
+
+		snprintf(text, 20,"%01.3fV", get_HUD_battery_voltage_V());
+		write_label_var(  400, 800, ME_Y_LINE4, &FontT48, text);
+    }
+    else
+    {
+    	text[0] = TXT_2BYTE;
+    	text[1] = TXT2BYTE_O2CalibAir;
+    	text[2] = 0;
+    	write_label_var(  30, 340, ME_Y_LINE4, &FontT48, text);
     }
 
-    snprintf(text, 20,"%01.3fV", get_HUD_battery_voltage_V());
-    write_label_var(  400, 800, ME_Y_LINE4, &FontT48, text);
+	for(int i=0;i<3;i++)
+	{
+		snprintf(text, 20,"%01.2f, %01.1fmV",  pStateReal->lifeData.ppO2Sensor_bar[i], pStateReal->lifeData.sensorVoltage_mV[i]);
+		y_line = ME_Y_LINE1 + (i * ME_Y_LINE_STEP);
+		write_label_var(  400, 800, y_line, &FontT48, text);
+	}
 
+    if(DataEX_external_ADC_Present())
+    {
+		text[0] = TXT_2BYTE;
+		text[1] = TXT2BYTE_O2Interface;
+		text[2] = 0;
+		write_label_var(  30, 340, ME_Y_LINE6, &FontT48, text);
+		text[0] = TXT_2BYTE;
+		switch(settingsGetPointer()->ppo2sensors_source)
+		{
+			default:
+			case O2_SENSOR_SOURCE_OPTIC: text[1] = TXT2BYTE_O2IFOptic;
+				break;
+			case O2_SENSOR_SOURCE_ANALOG: text[1] = TXT2BYTE_O2IFAnalog;
+		}
+		text[2] = 0;
+		write_label_var(  400, 800, ME_Y_LINE6, &FontT48, text);
+    }
     tMenuEdit_refresh_field(StMHARD3_O2_Sensor1);
     tMenuEdit_refresh_field(StMHARD3_O2_Sensor2);
     tMenuEdit_refresh_field(StMHARD3_O2_Sensor3);
@@ -331,14 +367,33 @@ void openEdit_O2Sensors(void)
     write_field_on_off(StMHARD3_O2_Sensor2,	 30, 95, ME_Y_LINE2,  &FontT48, "", sensorActive[1]);
     write_field_on_off(StMHARD3_O2_Sensor3,	 30, 95, ME_Y_LINE3,  &FontT48, "", sensorActive[2]);
 
+    if(settingsGetPointer()->ppo2sensors_source == O2_SENSOR_SOURCE_ANALOG)
+    {
+    	write_field_button(StMHARD3_O2_Calibrate,	 30, 800, ME_Y_LINE4,  &FontT48, "");
+    }
+
     text[0] = TXT_Fallback;
     text[1] = 1;
+
     write_field_on_off(StMHARD3_O2_Fallback,	 30, 500, ME_Y_LINE5,  &FontT48, text, settingsGetPointer()->fallbackToFixedSetpoint);
+
+    if(DataEX_external_ADC_Present())
+    {
+    	write_field_button(StMHARD3_O2_Source,	 30, 800, ME_Y_LINE6,  &FontT48, "");
+    }
 
     setEvent(StMHARD3_O2_Sensor1, (uint32_t)OnAction_Sensor1);
     setEvent(StMHARD3_O2_Sensor2, (uint32_t)OnAction_Sensor2);
     setEvent(StMHARD3_O2_Sensor3, (uint32_t)OnAction_Sensor3);
+    if(settingsGetPointer()->ppo2sensors_source == O2_SENSOR_SOURCE_ANALOG)
+    {
+    	setEvent(StMHARD3_O2_Calibrate, (uint32_t)OnAction_O2_Calibrate);
+    }
     setEvent(StMHARD3_O2_Fallback, (uint32_t)OnAction_O2_Fallback);
+    if(DataEX_external_ADC_Present())
+    {
+    	setEvent(StMHARD3_O2_Source, (uint32_t)OnAction_O2_Source);
+    }
 
     write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
 }
@@ -408,7 +463,50 @@ uint8_t OnAction_O2_Fallback	(uint32_t editId, uint8_t blockNumber, uint8_t digi
     tMenuEdit_set_on_off(editId, fallback);
     return UPDATE_DIVESETTINGS;
 }
+uint8_t OnAction_O2_Calibrate (uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+{
+	uint8_t loop;
+	const SDiveState *pStateReal = stateRealGetPointer();
+	SSettings* pSettings = settingsGetPointer();
 
+	for(loop=0;loop<3;loop++)
+	{
+		if((pSettings->ppo2sensors_deactivated & (0x1 << loop)) == 0)
+		{
+			if(pStateReal->lifeData.sensorVoltage_mV[loop] > 0.0001)		/* sensor connected ?*/
+			{
+				pSettings->ppo2sensors_calibCoeff[loop] = O2_CALIB_FRACTION_AIR / pStateReal->lifeData.sensorVoltage_mV[loop];
+			}
+			else
+			{
+				pSettings->ppo2sensors_calibCoeff[loop] = 0.0;
+				settingsGetPointer()->ppo2sensors_deactivated |= 0x1 << loop;
+				tMenuEdit_set_on_off(editId, 0);
+			}
+		}
+	}
+
+	return UPDATE_DIVESETTINGS;
+}
+uint8_t OnAction_O2_Source	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+{
+    uint8_t source = settingsGetPointer()->ppo2sensors_source;
+
+    if(source == O2_SENSOR_SOURCE_OPTIC)
+    {
+    	source = O2_SENSOR_SOURCE_ANALOG;
+    }
+    else
+    {
+    	source = O2_SENSOR_SOURCE_OPTIC;
+    }
+
+    settingsGetPointer()->ppo2sensors_source = source;
+
+    resetMenuEdit(CLUT_MenuPageHardware); 	/* rebuild menu structure (Hide HUD <=> Show Calibrate) */
+    openEdit_O2Sensors();
+    return UPDATE_DIVESETTINGS;
+}
 
 void openEdit_Brightness(void)
 {
