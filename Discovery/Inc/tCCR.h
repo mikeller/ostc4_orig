@@ -44,6 +44,6 @@ float get_ppO2Sensor_bar(uint8_t sensor_id);
 float get_sensorVoltage_mV(uint8_t sensor_id);
 float get_HUD_battery_voltage_V(void);
 uint8_t get_ppO2SensorWeightedResult_cbar(void);
-void test_HUD_sensor_values_outOfBounds(int8_t * outOfBouds1, int8_t * outOfBouds2, int8_t * outOfBouds3);
+void test_O2_sensor_values_outOfBounds(int8_t * outOfBouds1, int8_t * outOfBouds2, int8_t * outOfBouds3);
 
 #endif /* TCCR_H */
