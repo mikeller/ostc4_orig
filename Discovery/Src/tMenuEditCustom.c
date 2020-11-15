@@ -892,24 +892,3 @@ void CustomviewDivemode_refresh()
      }
      write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
 }
-
-void tViewControl(uint8_t sendAction)
-{
-    switch(sendAction)
-    {
-    case ACTION_BUTTON_ENTER:
-        break;
-    case ACTION_BUTTON_NEXT:
-        break;
-    case ACTION_TIMEOUT:
-    case ACTION_MODE_CHANGE:
-    case ACTION_BUTTON_BACK:
-    exitInfo();
-    	break;
-    default:
-        break;
-    case ACTION_IDLE_TICK:
-    case ACTION_IDLE_SECOND:
-        break;
-    }
-}
