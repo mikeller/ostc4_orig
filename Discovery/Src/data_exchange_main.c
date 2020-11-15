@@ -83,6 +83,7 @@ static uint8_t wasUpdateNotPowerOn = 0;
 
 /* Private variables ---------------------------------------------------------*/
 static uint8_t	told_reset_logik_alles_ok = 0;
+static hw_Info_t hw_Info;
 
 static SDataReceiveFromMaster dataOut;
 static SDataExchangeSlaveToMaster dataIn;
@@ -685,6 +686,8 @@ static void DataEX_copy_to_DeviceData(void)
 	SDevice * pDeviceState = stateDeviceGetPointerWrite();
 
 	memcpy(pDeviceState, &dataInDevice->DeviceData[dataInDevice->boolDeviceData], sizeof(SDevice));
+	memcpy(&hw_Info, &dataInDevice->hw_Info, sizeof(dataInDevice->hw_Info));
+
 	DeviceDataUpdated = 1;	/* indicate new data to be written to flash by background task (at last op hour count will be updated) */
 }
 
@@ -864,7 +867,7 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 
 
 	/* internal sensor: HUD data	 */
-	if(DataEX_external_ADC_Present == 0)
+	if(pSettings->ppo2sensors_source == O2_SENSOR_SOURCE_OPTIC)
 	{
 		for(int i=0;i<3;i++)
 		{
@@ -880,6 +883,9 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 			pStateReal->lifeData.sensorVoltage_mV[0] = dataIn.data[0].extADC_voltage[0];
 			pStateReal->lifeData.sensorVoltage_mV[1] = dataIn.data[0].extADC_voltage[1];
 			pStateReal->lifeData.sensorVoltage_mV[2] = dataIn.data[0].extADC_voltage[2];
+			pStateReal->lifeData.ppO2Sensor_bar[0] = pStateReal->lifeData.sensorVoltage_mV[0] * pSettings->ppo2sensors_calibCoeff[0];
+			pStateReal->lifeData.ppO2Sensor_bar[1] = pStateReal->lifeData.sensorVoltage_mV[1] * pSettings->ppo2sensors_calibCoeff[1];
+			pStateReal->lifeData.ppO2Sensor_bar[2] = pStateReal->lifeData.sensorVoltage_mV[2] * pSettings->ppo2sensors_calibCoeff[2];
 		}
 	}
 
@@ -1186,9 +1192,7 @@ void DataEX_merge_devicedata(void)
 uint8_t DataEX_external_ADC_Present(void)
 {
 	uint8_t retval;
-	SDataExchangeSlaveToMasterDeviceData * dataInDevice = (SDataExchangeSlaveToMasterDeviceData *)&dataIn;
-
-	retval = dataInDevice->hw_Info.extADC;
+	retval = hw_Info.extADC;
 
 	return retval;
 }

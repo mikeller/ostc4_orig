@@ -307,7 +307,9 @@ void SPI_Start_single_TxRx_with_Master(void) {
 
 	if ((global.dataSendToSlave.getDeviceDataNow) || (DeviceDataPending))
 	{
-		if(((DevicedataDelayCnt == 0) || (((get_voltage() != 6.0) && (get_temperature() != 0.0)))))			/* devicedata complete? */
+		if(((DevicedataDelayCnt == 0) || (((get_voltage() != 6.0) && (get_temperature() != 0.0)
+											&& global.deviceDataSendToMaster.hw_Info.checkCompass)
+											&& global.deviceDataSendToMaster.hw_Info.checkADC)))			/* devicedata complete? */
 		{
 			global.dataSendToSlave.getDeviceDataNow = 0;
 			DeviceDataPending = 0;

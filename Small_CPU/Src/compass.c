@@ -294,6 +294,7 @@ void compass_init(uint8_t fast, uint8_t gain)
 	if(global.deviceDataSendToMaster.hw_Info.compass == 0)
 	{
 		global.deviceDataSendToMaster.hw_Info.compass = hardwareCompass;
+		global.deviceDataSendToMaster.hw_Info.checkCompass = 1;
 	}
 	tfull32 dataBlock[4];
 	if(BFA_readLastDataBlock((uint32_t *)dataBlock) == BFA_OK)
