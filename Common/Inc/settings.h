@@ -68,8 +68,16 @@
 
 #define PRESSURE_OFFSET_LIMIT_MBAR	50
 
-#define MAX_COMPASS_COMP (2u)
-#define MAX_VIEWPORT_MODE (0x1F)
+#define MAX_COMPASS_COMP 		(2u)
+#define MAX_VIEWPORT_MODE 		(0x1F)
+
+typedef enum
+{
+	O2_SENSOR_SOURCE_OPTIC = 0,
+	O2_SENSOR_SOURCE_ANALOG,
+	O2_SENSOR_SOURCE_MAX
+} SensorSource;
+#define MAX_O2_SENSOR_SOURCE 	(2u)
 
 /*	2015 Jan 30, hw, deco and travel added for MenuEditGas
 	* can be used for buehlmann, vpm, etc. later but be carefull
@@ -173,7 +181,7 @@ typedef struct
 	uint32_t backup_localtime_rtc_tr;
 	uint32_t backup_localtime_rtc_dr;
 	uint16_t totalDiveCounter;
-	uint16_t	personalDiveCount;
+	uint16_t personalDiveCount;
 	uint8_t showDebugInfo;
 	uint8_t ButtonResponsiveness[4];// changed content in 0xFFFF0016
 	uint8_t nonMetricalSystem;
@@ -234,6 +242,9 @@ typedef struct
 	uint16_t viewRoll;
 	uint16_t viewPitch;
 	uint16_t viewYaw;
+	/* new in 0xFFFF001E */
+	uint8_t ppo2sensors_source;
+	float   ppo2sensors_calibCoeff[3];
 } SSettings;
 
 typedef struct

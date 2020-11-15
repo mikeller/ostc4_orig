@@ -85,7 +85,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
  * There might even be entries with fixed values that have no range
  */
 const SSettings SettingsStandard = {
-    .header = 0xFFFF001D,
+    .header = 0xFFFF001E,
     .warning_blink_dsec = 8 * 2,
     .lastDiveLogId = 0,
     .logFlashNextSampleStartAddress = 0,
@@ -318,6 +318,10 @@ const SSettings SettingsStandard = {
 	.viewRoll = 0,
 	.viewPitch = 0,
 	.viewYaw = 0,
+	.ppo2sensors_source = 0,
+	.ppo2sensors_calibCoeff[0] = 0.0,
+	.ppo2sensors_calibCoeff[1] = 0.0,
+	.ppo2sensors_calibCoeff[2] = 0.0,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -481,6 +485,12 @@ void set_new_settings_missing_in_ext_flash(void)
     	pSettings->viewRoll = 0;
     	pSettings->viewPitch = 0;
     	pSettings->viewYaw = 0;
+    	// no break
+    case 0xFFFF001D:
+    	pSettings->ppo2sensors_source = O2_SENSOR_SOURCE_OPTIC;
+    	pSettings->ppo2sensors_calibCoeff[0] = 0.0;
+    	pSettings->ppo2sensors_calibCoeff[1] = 0.0;
+    	pSettings->ppo2sensors_calibCoeff[2] = 0.0;
     	// no break
     default:
         pSettings->header = pStandard->header;
@@ -1413,6 +1423,14 @@ uint8_t check_and_correct_settings(void)
     {
     	Settings.viewPortMode = 0;
     	corrections++;
+    }
+    if(Settings.ppo2sensors_source >= O2_SENSOR_SOURCE_MAX)
+    {
+    	Settings.ppo2sensors_source = O2_SENSOR_SOURCE_OPTIC;
+    	Settings.ppo2sensors_calibCoeff[0] = 0.0;
+    	Settings.ppo2sensors_calibCoeff[1] = 0.0;
+    	Settings.ppo2sensors_calibCoeff[2] = 0.0;
+        corrections++;
     }
 
     if(corrections > 255)
