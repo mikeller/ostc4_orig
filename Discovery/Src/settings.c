@@ -58,7 +58,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
 {
     .versionFirst   = 1,
     .versionSecond 	= 5,
-    .versionThird   = 5,
+    .versionThird   = 6,
     .versionBeta    = 0,
 
     /* 4 bytes with trailing 0 */
@@ -322,6 +322,7 @@ const SSettings SettingsStandard = {
 	.ppo2sensors_calibCoeff[0] = 0.0,
 	.ppo2sensors_calibCoeff[1] = 0.0,
 	.ppo2sensors_calibCoeff[2] = 0.0,
+	.amPMTime = 0,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -1433,6 +1434,11 @@ uint8_t check_and_correct_settings(void)
         corrections++;
     }
 
+    if(Settings.amPMTime > 1) /* only boolean values allowed */
+    {
+    	Settings.amPMTime = 0;
+    	corrections++;
+    }
     if(corrections > 255)
         return 255;
     else

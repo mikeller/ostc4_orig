@@ -245,6 +245,8 @@ typedef struct
 	/* new in 0xFFFF001E */
 	uint8_t ppo2sensors_source;
 	float   ppo2sensors_calibCoeff[3];
+	/* new in something */
+	uint8_t amPMTime;
 } SSettings;
 
 typedef struct

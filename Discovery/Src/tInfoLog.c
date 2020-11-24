@@ -256,6 +256,8 @@ void tInfoLog_BuildAndShowNextPage(void)
 //	uint16_t maxDepth =  logbookHeader.maxDepth/100;
     int i = 0;
     uint8_t date[2], month,day;
+    char timeSuffix;
+    uint8_t hours;
 
     if(INFOLOGscreen.FBStartAdress)
         releaseFrame(15,INFOLOGscreen.FBStartAdress);
@@ -335,7 +337,34 @@ void tInfoLog_BuildAndShowNextPage(void)
                 textPointer += snprintf(&text[textPointer], 20,"\031\016\016%3u \017\020", number);
 */
             textPointer += snprintf(&text[textPointer], 20,"%02d.%02d ",date[0],date[1]);
-            textPointer += snprintf(&text[textPointer], 20,"%02d:%02d ",logbookHeader.timeHour,logbookHeader.timeMinute);
+
+            if (settingsGetPointer()->amPMTime)
+            {
+				if (logbookHeader.timeHour > 11)
+				{
+					timeSuffix = 'P';
+				}
+				else
+				{
+					timeSuffix = 'A';
+				}
+
+				if (logbookHeader.timeHour % 12 == 0)
+				{
+					hours = 12;
+				}
+				else
+				{
+					hours = (logbookHeader.timeHour % 12);
+				}
+
+				textPointer += snprintf(&text[textPointer], 20,"%02d:%02d\016\016%cM\017", hours,logbookHeader.timeMinute, timeSuffix);
+            }
+            else
+            {
+            	textPointer += snprintf(&text[textPointer], 20,"%02d:%02d ",logbookHeader.timeHour,logbookHeader.timeMinute);
+            }
+
             switch(logbookHeader.decoModel)
             {
             case 1:
@@ -359,7 +388,8 @@ void tInfoLog_BuildAndShowNextPage(void)
             {
                 textPointer += snprintf(&text[textPointer], 20,"%3d.%d\016\016m\017 ", maxDepthMeter,maxDepthSubmeter);
             }
-            textPointer += snprintf(&text[textPointer], 20,"%3d'\n\r", divetime);
+            textPointer += snprintf(&text[textPointer], 20,"%3d\016\016min\017\n\r", divetime);
+
         }
     }
     GFX_write_string(&FontT48, &INFOLOGwindow, text,1);

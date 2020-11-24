@@ -121,7 +121,14 @@ static void show_logbook_draw_depth_graph(GFX_DrawCfgScreen *hgfx, uint8_t StepB
     winsmal.right = wintemp.left -1;
     winsmal.bottom = winsmal.top + 16;
 
-    Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_GasSensor1,"[m]");
+    if(settingsGetPointer()->nonMetricalSystem)
+    {
+    	Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_GasSensor1,"[ft]");
+    }
+    else
+    {
+    	Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_GasSensor1,"[m]");
+    }
 
  //   winsmal.left = wintemp.left - 48;
     char msg[3];
@@ -132,7 +139,7 @@ static void show_logbook_draw_depth_graph(GFX_DrawCfgScreen *hgfx, uint8_t StepB
         winsmal.bottom = winsmal.top + 16;
 
     //    winsmal.right = wintemp.left - 2;
-        snprintf(msg,5,"%i",i * vstep);
+        snprintf(msg,5,"%i",unit_depth_integer(i * vstep));
         Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_GasSensor1,msg);
     }
 
@@ -421,6 +428,8 @@ static void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t 
     wintemp.right = 799 - wintemp.left;
     wintemp.top = LOG_BORDER_OFFSET;
     wintemp.bottom = 479 - 40;
+    char timeSuffix;
+    uint8_t hoursToDisplay;
 
     SLogbookHeader logbookHeader;
     logbook_getHeader(StepBackwards ,&logbookHeader);
@@ -467,7 +476,36 @@ static void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t 
     //Print time
     uint8_t hour = logbookHeader.timeHour;
     uint8_t minute = logbookHeader.timeMinute;
-    snprintf(text,20,"\002%02i:%02i",hour,minute);
+
+    if (settingsGetPointer()->amPMTime)
+    {
+    	if (logbookHeader.timeHour > 11)
+    	{
+    		timeSuffix = 'P';
+    	}
+    	else
+    	{
+    		timeSuffix = 'A';
+    	}
+
+    	if (logbookHeader.timeHour % 12 == 0)
+    	{
+    		hoursToDisplay = 12;
+    	}
+    	else
+    	{
+    		hoursToDisplay = (logbookHeader.timeHour % 12);
+    	}
+
+    	snprintf(text,20,"\002%02i:%02i %cM",hoursToDisplay,minute,timeSuffix);
+    }
+    else
+    {
+    	hoursToDisplay = logbookHeader.timeHour;
+    	snprintf(text,20,"\002%02i:%02i",hoursToDisplay,minute);
+    }
+
+
     Gfx_write_label_var(hgfx, 600, wintemp.right,10, &FontT42,CLUT_GasSensor1,text);
 
     //Print Dive Mode (OC/CCR/...)
@@ -705,7 +743,14 @@ static void show_logbook_logbook_show_log_page2(GFX_DrawCfgScreen *hgfx, uint8_t
     winsmal.right =  wintemp.right + 30;
     winsmal.bottom = winsmal.top + 16;
 
-    Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_LogbookTemperature,"[C]");
+    if(settingsGetPointer()->nonMetricalSystem)
+    {
+    	Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_LogbookTemperature,"[F]");
+    }
+    else
+    {
+    	Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_LogbookTemperature,"[C]");
+    }
 
     int16_t minVal = 0;
     int16_t maxVal = 0;
@@ -726,17 +771,24 @@ static void show_logbook_logbook_show_log_page2(GFX_DrawCfgScreen *hgfx, uint8_t
     int deltaline = (1 + wintemp.bottom - wintemp.top)/5;
     char msg[3];
     int tmp = maxValTop;
+    int converted;
     for(int i = 1; i<=5; i++)
     {
         tmp -= 	step;
+        if(settingsGetPointer()->nonMetricalSystem) {
+        	converted = unit_temperature_integer(tmp);
+        }
+        else{
+        	converted = tmp;
+        }
         //if(tmp < 0)
             //break;
         winsmal.top	= wintemp.top + deltaline * i - 14;
         winsmal.bottom = winsmal.top + 16;
-        if((tmp >= 0) && (tmp < 100))
-            snprintf(msg,2,"%1i",tmp);
+        if((converted >= 0) && (converted < 100))
+            snprintf(msg,2,"%1i",converted);
         else
-            snprintf(msg,3,"%2i",tmp);
+            snprintf(msg,3,"%2i",converted);
         Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_LogbookTemperature,msg);
     }
 

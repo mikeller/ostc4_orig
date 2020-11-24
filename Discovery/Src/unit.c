@@ -48,7 +48,7 @@ uint8_t  test;
 char unit_depth_char1_T105(void)
 {
     if(settingsGetPointer()->nonMetricalSystem)
-        return '\'';
+        return 'f';
     else
         return 'm';
 }
@@ -56,7 +56,7 @@ char unit_depth_char1_T105(void)
 char unit_depth_char2_T105(void)
 {
     if(settingsGetPointer()->nonMetricalSystem)
-        return ' ';
+        return 't';
     else
         return '\004'; // 004 is nop
 }
@@ -104,6 +104,16 @@ float unit_temperature_float(float input_celsius)
     else
     {
         return input_celsius * (9.0f/5.0f) + 32;
+    }
+}
+
+uint16_t unit_temperature_integer(uint16_t input_celsius)
+{
+    if(settingsGetPointer()->nonMetricalSystem == 0)
+        return input_celsius;
+    else
+    {
+        return ((input_celsius * 9 / 5) + 320);
     }
 }
 
