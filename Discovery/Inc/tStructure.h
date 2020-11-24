@@ -273,6 +273,7 @@
 #define StMSYS1_MMDDYY	_MB(2,8,1,4,0)
 #define StMSYS1_YYMMDD	_MB(2,8,1,5,0)
 #define StMSYS1_DST			_MB(2,8,1,6,0)
+#define StMSYS1_12HR    _MB(2,8,1,7,0)
 
 #define StMSYS2_English	_MB(2,8,2,1,0)
 #define StMSYS2_German	_MB(2,8,2,2,0)

@@ -573,3 +573,5 @@ static const tChar FontT84_array[] __attribute__(( section(".upper_fonts.FontT84
 };
 
 const tFont FontT84 __attribute__ (( used, section(".upper_font_directory.FontT84") )) = { 11, FontT84_array,0, 43, 64 };
+
+const tFont FontT84Spaced =  { 11, FontT84_array, 18, 43, 64 };

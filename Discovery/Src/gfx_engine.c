@@ -2656,6 +2656,7 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 
 static uint32_t GFX_write_char(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteString* cfg, uint8_t character, tFont *Font)
 {
+	Font = GFX_Check_Extra_Font(character, Font);
 	if(cfg->doubleSize)
 	{
 		return GFX_write_char_doubleSize(hgfx, cfg, character, Font);
@@ -3138,14 +3139,8 @@ static uint32_t GFX_write__Modify_Xdelta__Centered(GFX_CfgWriteString* cfg, GFX_
 			decodeUTF8 = *(char*)pText; /* place ASCII char */
 		}
 
-		for(i=0;i<ptargetFont->length;i++)
-		{
-			if(ptargetFont->chars[i].code == decodeUTF8)
-			{
-				Xsum += ptargetFont->chars[i].image->width;
-				break;
-			}
-		}
+		Xsum += GFX_Character_Width(decodeUTF8, ptargetFont);
+
 		pText++;
 		j++;
 		if((ptargetFont == &FontT144) && (*(char*)pText != 0))
@@ -3248,14 +3243,7 @@ static uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GF
 			{
 				decodeUTF8 = *(char*)pText;
 			}
-			for(i=0;i<font->length;i++)						/* lookup character and add width */
-			{
-				if(font->chars[i].code == decodeUTF8)
-				{
-					Xsum += font->chars[i].image->width;
-					break;
-				}
-			}
+			Xsum += GFX_Character_Width(decodeUTF8, font);  /* lookup character and add width */
 		}
 		pText++;
 		j++;
@@ -3872,4 +3860,78 @@ void GFX_screenshot(void)
 		}
 	}
 */	
+}
+
+tFont* GFX_Check_Extra_Font(uint8_t character, tFont *Font)
+{
+	uint32_t i;
+	uint32_t found;
+
+	found = 0;
+	for(i=0;i<Font->length;i++)
+	{
+		if(Font->chars[i].code == character)
+		{
+			found = 1;
+			break;
+		}
+	}
+	if (!found && Font == &FontT54)
+	{
+		Font = &FontT54Extra;
+	}
+	else if (!found && (Font == &FontT84 || Font == &FontT84Spaced))
+	{
+		Font = &FontT84Extra;
+	}
+	else if (!found && Font == &FontT105)
+	{
+		Font = &FontT105Extra;
+	}
+
+	return Font;
+}
+
+uint32_t GFX_Character_Width(uint8_t character, tFont *Font)
+{
+	uint32_t i;
+	uint32_t found;
+
+	for(i=0;i<Font->length;i++)
+	{
+		if(Font->chars[i].code == character)
+		{
+			return Font->chars[i].image->width;
+		}
+	}
+
+	found = 0;
+	if (Font == &FontT54)
+	{
+		found = 1;
+		Font = &FontT54Extra;
+	}
+	else if (Font == &FontT84 || Font == &FontT84Spaced)
+	{
+		found = 1;
+		Font = &FontT84Extra;
+	}
+	else if (Font == &FontT105)
+	{
+		found = 1;
+		Font = &FontT105Extra;
+	}
+
+	if (found)
+	{
+		for(i=0;i<Font->length;i++)
+		{
+			if(Font->chars[i].code == character)
+			{
+				return Font->chars[i].image->width;
+			}
+		}
+	}
+
+	return 0;
 }

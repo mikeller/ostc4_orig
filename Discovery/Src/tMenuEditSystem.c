@@ -58,6 +58,7 @@ void openEdit_Reset(void);
 /* Announced function prototypes -----------------------------------------------*/
 uint8_t OnAction_Date					(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_Time					(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+uint8_t OnAction_12HR				(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_DDMMYY				(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_MMDDYY				(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_YYMMDD				(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
@@ -193,20 +194,23 @@ void openEdit_DateTime(void)
     write_topline(text);
 
     write_label_fix(  20, 340, ME_Y_LINE1, &FontT42, TXT_TimeConfig);
-    write_label_fix(  20, 340, ME_Y_LINE2, &FontT42, TXT_DateConfig);
-    write_label_var( 600, 800, ME_Y_LINE2, &FontT48, "\016\016DDMMYY\017");
-    write_label_fix(  20, 790, ME_Y_LINE3, &FontT42, TXT_Format);
+    write_label_fix(  20, 340, ME_Y_LINE2, &FontT42, TXT_Format);
+    write_label_fix(  20, 340, ME_Y_LINE3, &FontT42, TXT_DateConfig);
+    write_label_var( 600, 800, ME_Y_LINE4, &FontT48, "\016\016DDMMYY\017");
+    write_label_fix(  20, 790, ME_Y_LINE5, &FontT42, TXT_Format);
 //	write_label_fix( 350 ,580, 250, &FontT42, TXT_Daylightsaving);
 
     write_field_2digit(StMSYS1_Time,		320, 780, ME_Y_LINE1,  &FontT48, "##:##", (uint32_t)hour, (uint32_t)minute, 0, 0);
-    write_field_2digit(StMSYS1_Date,		320, 780, ME_Y_LINE2,  &FontT48, "##-##-20##", (uint32_t)day, (uint32_t)month, (uint32_t)year, 0);
-    write_field_on_off(StMSYS1_DDMMYY,	320, 790, ME_Y_LINE3,  &FontT48, "DDMMYY", ddmmyy);
-    write_field_on_off(StMSYS1_MMDDYY,	320, 790, ME_Y_LINE4,  &FontT48, "MMDDYY", mmddyy);
-    write_field_on_off(StMSYS1_YYMMDD,	320, 790, ME_Y_LINE5,  &FontT48, "YYMMDD", yymmdd);
+    write_field_on_off(StMSYS1_12HR,			320, 790, ME_Y_LINE2,  &FontT48, "12 HR", pSettings->amPMTime);
+    write_field_2digit(StMSYS1_Date,		320, 780, ME_Y_LINE3,  &FontT48, "##-##-20##", (uint32_t)day, (uint32_t)month, (uint32_t)year, 0);
+    write_field_on_off(StMSYS1_DDMMYY,	320, 790, ME_Y_LINE4,  &FontT48, "DDMMYY", ddmmyy);
+    write_field_on_off(StMSYS1_MMDDYY,	320, 790, ME_Y_LINE5,  &FontT48, "MMDDYY", mmddyy);
+    write_field_on_off(StMSYS1_YYMMDD,	320, 790, ME_Y_LINE6,  &FontT48, "YYMMDD", yymmdd);
 //	write_field_on_off(StMSYS1_DST,			350, 580, 310,  &FontT48, "Active", daylightsaving);
 
     setEvent(StMSYS1_Date, 		(uint32_t)OnAction_Date);
     setEvent(StMSYS1_Time, 		(uint32_t)OnAction_Time);
+    setEvent(StMSYS1_12HR,      (uint32_t)OnAction_12HR);
     setEvent(StMSYS1_DDMMYY,	(uint32_t)OnAction_DDMMYY);
     setEvent(StMSYS1_MMDDYY,	(uint32_t)OnAction_MMDDYY);
     setEvent(StMSYS1_YYMMDD,	(uint32_t)OnAction_YYMMDD);
@@ -385,6 +389,17 @@ uint8_t OnAction_Time(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber,
     return UNSPECIFIC_RETURN;
 }
 
+uint8_t OnAction_12HR(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+{
+    SSettings *pSettings;
+
+    pSettings = settingsGetPointer();
+    pSettings->amPMTime = !(pSettings->amPMTime);
+
+    tMenuEdit_set_on_off(editId, pSettings->amPMTime);
+
+    return UNSPECIFIC_RETURN;
+}
 
 uint8_t OnAction_DDMMYY(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {

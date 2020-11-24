@@ -41,6 +41,7 @@
 #define STD_divetime (20)
 
 uint16_t tMplan_depth_meter = STD_depth, tMplan_intervall_time_minutes = STD_intervall, tMplan_dive_time_minutes = STD_divetime;
+uint16_t tMplan_depth_editor;
 
 /* Exported functions --------------------------------------------------------*/
 
@@ -88,7 +89,7 @@ uint32_t tMPlanner_refresh(uint8_t line, char *text, uint16_t *tab, char *subtex
         text[textPointer++] = TXT_2BYTE;
         text[textPointer++] = TXT2BYTE_Intervall;
         text[textPointer++] = '\t';
-        textPointer += snprintf(&text[textPointer],30,"%u'",tMplan_intervall_time_minutes);
+        textPointer += snprintf(&text[textPointer],30,"%u \016\016min\017",tMplan_intervall_time_minutes);
     }
     strcpy(&text[textPointer],"\n\r");
     textPointer += 2;
@@ -97,7 +98,7 @@ uint32_t tMPlanner_refresh(uint8_t line, char *text, uint16_t *tab, char *subtex
         text[textPointer++] = TXT_2BYTE;
         text[textPointer++] = TXT2BYTE_SimDiveTime;
         text[textPointer++] = '\t';
-        textPointer += snprintf(&text[textPointer],30,"%u'",tMplan_dive_time_minutes);
+        textPointer += snprintf(&text[textPointer],30,"%u \016\016min\017",tMplan_dive_time_minutes);
     }
     strcpy(&text[textPointer],"\n\r");
     textPointer += 2;

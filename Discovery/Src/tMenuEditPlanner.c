@@ -49,7 +49,7 @@ extern uint8_t write_gas(char *text, uint8_t oxygen, uint8_t helium);
 
 /* Imported variables --------------------------------------------------------*/
 
-extern uint16_t tMplan_depth_meter, tMplan_intervall_time_minutes, tMplan_dive_time_minutes;
+extern uint16_t tMplan_depth_meter, tMplan_intervall_time_minutes, tMplan_dive_time_minutes, tMplan_depth_editor;
 
 /* Private variables ---------------------------------------------------------*/
 uint8_t gasChangeListDepthGasId[40];
@@ -123,7 +123,7 @@ void openEdit_PlanInterval(void)
     text[2] = 0;
     write_label_var(  20, 550, ME_Y_LINE2, &FontT48, text);
 
-    write_field_udigit(StMPLAN2_Interval, 400, 800, ME_Y_LINE2, &FontT48, "###'", (uint32_t)tMplan_intervall_time_minutes, 0, 0, 0);
+    write_field_udigit(StMPLAN2_Interval, 400, 800, ME_Y_LINE2, &FontT48, "###\016\016min\017", (uint32_t)tMplan_intervall_time_minutes, 0, 0, 0);
     setEvent(StMPLAN2_Interval, (uint32_t)OnAction_PlanInterval);
     startEdit();
 }
@@ -144,7 +144,7 @@ void openEdit_PlanDiveTime(void)
     text[2] = 0;
     write_label_var(  20, 550, ME_Y_LINE3, &FontT48, text);
 
-    write_field_udigit(StMPLAN3_DiveTime, 400, 800, ME_Y_LINE3, &FontT48, "###'", (uint32_t)tMplan_dive_time_minutes, 0, 0, 0);
+    write_field_udigit(StMPLAN3_DiveTime, 400, 800, ME_Y_LINE3, &FontT48, "###\016\016min\017", (uint32_t)tMplan_dive_time_minutes, 0, 0, 0);
     setEvent(StMPLAN3_DiveTime, (uint32_t)OnAction_PlanDiveTime);
     startEdit();
 }
@@ -153,6 +153,7 @@ void openEdit_PlanDiveTime(void)
 void openEdit_PlanMaxDepth(void)
 {
     char text[32];
+    tMplan_depth_editor = unit_depth_integer(tMplan_depth_meter);
 
     text[0] = '\001';
     text[1] = TXT_2BYTE;
@@ -165,7 +166,15 @@ void openEdit_PlanMaxDepth(void)
     text[2] = 0;
     write_label_var(  20, 550, ME_Y_LINE4, &FontT48, text);
 
-    write_field_udigit(StMPLAN4_MaxDepth, 400, 800, ME_Y_LINE4, &FontT48, "###\016\016m\017", (uint32_t)tMplan_depth_meter, 0, 0, 0);
+    if(settingsGetPointer()->nonMetricalSystem)
+    {
+    	write_field_udigit(StMPLAN4_MaxDepth, 400, 800, ME_Y_LINE4, &FontT48, "###\016\016ft\017", (uint32_t)tMplan_depth_editor, 0, 0, 0);
+    }
+    else
+    {
+    	write_field_udigit(StMPLAN4_MaxDepth, 400, 800, ME_Y_LINE4, &FontT48, "###\016\016m\017", (uint32_t)tMplan_depth_editor, 0, 0, 0);
+    }
+
     setEvent(StMPLAN4_MaxDepth, (uint32_t)OnAction_PlanMaxDepth);
     startEdit();
 }
@@ -238,7 +247,15 @@ uint8_t OnAction_PlanMaxDepth	(uint32_t editId, uint8_t blockNumber, uint8_t dig
     if(action == ACTION_BUTTON_ENTER_FINAL)
     {
         evaluateNewString(editId, &newValue, 0, 0, 0);
-        tMplan_depth_meter = newValue;
+        if(settingsGetPointer()->nonMetricalSystem)
+        {
+        	tMplan_depth_editor = newValue * 10 / 33;
+        }
+        else
+        {
+        	tMplan_depth_editor = newValue;
+        }
+        tMplan_depth_meter = tMplan_depth_editor;
         return EXIT_TO_MENU;
     }
     else

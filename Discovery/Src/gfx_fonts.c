@@ -18,6 +18,11 @@
 
 #include "gfx_fonts.h"
 
+/* Fonts in the firmware image */
+#include "Fonts/font_T54_extra.h"
+#include "Fonts/font_T84_extra.h"
+#include "Fonts/font_T105_extra.h"
+
 #ifdef DEBUG
 # 	define INCLUDE_FONTS_BINARY
 #endif
