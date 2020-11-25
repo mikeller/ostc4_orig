@@ -75,7 +75,7 @@ uint8_t BFA_FindLastDataBlockAndSetAddress(void);
 
 /* Exported functions --------------------------------------------------------*/
 
-uint8_t BFA_readLastDataBlock(uint32_t *dataArray4)
+uint8_t BFA_readLastDataBlock(tfull32 *dataArray4)
 {
 	uint8_t answer;
 	
@@ -83,15 +83,15 @@ uint8_t BFA_readLastDataBlock(uint32_t *dataArray4)
 	if(answer != BFA_OK)
 		return answer;
 
-	dataArray4[0] = *(__IO uint32_t*)(Address +  0);
-	dataArray4[1] = *(__IO uint32_t*)(Address +  4);
-	dataArray4[2] = *(__IO uint32_t*)(Address +  8);
-	dataArray4[3] = *(__IO uint32_t*)(Address + 12);
+	dataArray4[0].Full32 = *(__IO uint32_t*)(Address +  0);
+	dataArray4[1].Full32 = *(__IO uint32_t*)(Address +  4);
+	dataArray4[2].Full32 = *(__IO uint32_t*)(Address +  8);
+	dataArray4[3].Full32 = *(__IO uint32_t*)(Address + 12);
 	return BFA_OK;
 }
 
 
-uint8_t BFA_writeDataBlock(const uint32_t *dataArray4)
+uint8_t BFA_writeDataBlock(const tfull32 *dataArray4)
 {
 	uint8_t answer;
 	uint32_t dataTest[4];
@@ -128,14 +128,25 @@ uint8_t BFA_writeDataBlock(const uint32_t *dataArray4)
 	HAL_FLASH_Unlock();
 	for(int i=0;i<4;i++)
 	{
-		answer = HAL_FLASH_Program(TYPEPROGRAM_WORD, Address, dataArray4[i]);
+		answer = HAL_FLASH_Program(TYPEPROGRAM_WORD, Address, dataArray4[i].Full32);
 		Address = Address + 4;
 	}
 	HAL_FLASH_Lock();
 	Address = StartAddress; // back to start of this data set (for reading etc.)
 	return answer;
 }
+uint16_t BFA_calc_Block_Checksum(const tfull32 *dataArray4)
+{
+	uint16_t checksum = 0;
+	uint8_t loop = 0;
+	uint16_t* p_data = (uint16_t*)dataArray4;
 
+	for (loop = 0; loop < 6; loop++) // calc checksum across first 6 words */
+	{
+		checksum += *p_data;
+	}
+	return checksum;
+}
 
 /* Private functions ---------------------------------------------------------*/
 /*

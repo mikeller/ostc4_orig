@@ -8,9 +8,15 @@
 
 /* Compass/Accelerometer */
 #define COMPASS_NOT_RECOGNIZED  		0xAA	///< id used with hardwareCompass
-#define	compass_generation1				0x01	// Hardware gen 1 (Two chip solution with MMA8452Q and HMC5883L)
-#define	compass_generation2				0x02	// Hardware gen 2 (Single chip solution LSM303D)
-#define	compass_generation3				0x03	// Hardware gen 3 (Single chip solution LSM303AGR)
+
+typedef enum
+{
+	compass_generation_undef =			0x00,
+	compass_generation1,						// Hardware gen 1 (Two chip solution with MMA8452Q and HMC5883L)
+	compass_generation2,						// Hardware gen 2 (Single chip solution LSM303D)
+	compass_generation3,						// Hardware gen 3 (Single chip solution LSM303AGR)
+	compass_generation_future
+} compass_generation_t;
 
 #define DEVICE_ACCELARATOR_MMA8452Q 	0x38	// Hardware gen 1 (Two chip solution with MMA8452Q and HMC5883L)
 #define DEVICE_COMPASS_HMC5883L			0x3C	// Hardware gen 1 (Two chip solution with MMA8452Q and HMC5883L)
