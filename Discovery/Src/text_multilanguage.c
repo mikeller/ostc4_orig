@@ -746,7 +746,7 @@ static uint8_t text_ES_CompassHeading[] = "Rumbo brújula";
 
 // Dive Menu
 static uint8_t text_EN_CalibView[] = "Calibrate View";
-static uint8_t text_DE_CalibView[] = "Blickwinkel";
+static uint8_t text_DE_CalibView[] = "Kalibriere Blickwinkel";
 static uint8_t text_FR_CalibView[] = "Calibrate View";
 static uint8_t text_IT_CalibView[] = "Calibrate View";
 static uint8_t text_ES_CalibView[] = "Calibrate View";
