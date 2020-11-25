@@ -228,6 +228,11 @@ void refresh_ViewPort(void)
     {
     	distance = checkViewport(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading);
 
+    	if(pSettings->showDebugInfo)
+    	{
+			snprintf(text,32,"\001%03.3f",distance);
+			write_label_var(   30, 700, ME_Y_LINE2, &FontT48, text);
+    	}
 		if(distance < 0.5)
 		{
 			set_Backlight_Boost(settingsGetPointer()->viewPortMode & 0x03);
