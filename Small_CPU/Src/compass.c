@@ -43,38 +43,6 @@
 extern uint32_t time_elapsed_ms(uint32_t ticksstart,uint32_t ticksnow);
 extern SGlobal global;
 
-/// split word to 2 bytes
-typedef struct{
-uint8_t low; ///< split word to 2 bytes
-uint8_t hi; ///< split word to 2 bytes
-} two_byte; 
-	
-
-/// split word to 2 bytes
-typedef union{
-two_byte Byte; ///< split word to 2 bytes
-uint16_t Word; ///< split word to 2 bytes
-} tword; 
-
-
-/// split signed word to 2 bytes
-typedef union{
-two_byte Byte; ///< split signed word to 2 bytes
-int16_t Word; ///< split signed word to 2 bytes
-} signed_tword; 
-
-
-/// split full32 to 2 words
-typedef struct{
-uint16_t low16; ///< split word to 2 bytes
-uint16_t hi16; ///< split word to 2 bytes
-} two_word; 
-
-typedef union{
-two_word Word16; ///< split word to 2 bytes
-uint32_t Full32; ///< split word to 2 bytes
-} tfull32; 
-
 
 /// crazy compass calibration stuff
 typedef struct
@@ -132,7 +100,7 @@ float compass_pitch;		///< the final result calculated in compass_calc()
 
 uint8_t compass_gain; ///< 7 on start, can be reduced during calibration
 
-uint8_t  hardwareCompass = 0;	///< either HMC5883L (=1) or LSM303D (=2) or LSM303AGR (=3) or not defined yet (=0)
+uint8_t  hardwareCompass = compass_generation_undef;	///< either HMC5883L (=1) or LSM303D (=2) or LSM303AGR (=3) or not defined yet (=0)
 
 /// LSM303D variables
 uint8_t magDataBuffer[6];	///< here raw data from LSM303D is stored, can be local
@@ -224,8 +192,27 @@ void compass_init(uint8_t fast, uint8_t gain)
 		return;
 	}
 	
+	if(hardwareCompass == compass_generation_undef)					/* check if compass had been detected before */
+	{
+		tfull32 dataBlock[4];
+		if(BFA_readLastDataBlock(dataBlock) == BFA_OK)
+		{
+			if(dataBlock[3].Word16.hi16 == BFA_calc_Block_Checksum(dataBlock))
+			{
+				compass_CX_f = dataBlock[0].Word16.low16;
+				compass_CY_f = dataBlock[0].Word16.hi16;
+				compass_CZ_f = dataBlock[1].Word16.low16;
+				hardwareCompass = dataBlock[1].Word16.hi16;
+				if(hardwareCompass >= compass_generation_future)		/* no generation stored (including COMPASS_NOT_RECOGNIZED) */
+				{
+					hardwareCompass = compass_generation_undef;
+				}
+			}
+		}
+	}
+
 // old code but without else
-	if(hardwareCompass == 0)
+	if(hardwareCompass == compass_generation_undef)
 	{
 		uint8_t data = WHO_AM_I;
 		I2C_Master_Transmit( DEVICE_COMPASS_303D, &data, 1);
@@ -240,7 +227,7 @@ void compass_init(uint8_t fast, uint8_t gain)
 	}
 
 /* No compass identified => Retry */
-	if(hardwareCompass == 0)
+	if(hardwareCompass == compass_generation_undef)
 	{
 		I2C_DeInit();
 		HAL_Delay(100);
@@ -259,7 +246,7 @@ void compass_init(uint8_t fast, uint8_t gain)
 	}
 
 /* Assume that a HMC5883L is equipped by default if detection still failed */
-	if(hardwareCompass == 0)
+	if(hardwareCompass == compass_generation_undef)
 		hardwareCompass = compass_generation1;				//HMC5883L;
 	
 	HAL_StatusTypeDef resultOfOperationHMC_MMA = HAL_TIMEOUT;
@@ -296,14 +283,6 @@ void compass_init(uint8_t fast, uint8_t gain)
 		global.deviceDataSendToMaster.hw_Info.compass = hardwareCompass;
 		global.deviceDataSendToMaster.hw_Info.checkCompass = 1;
 	}
-	tfull32 dataBlock[4];
-	if(BFA_readLastDataBlock((uint32_t *)dataBlock) == BFA_OK)
-		{
-			compass_CX_f = dataBlock[0].Word16.low16;
-			compass_CY_f = dataBlock[0].Word16.hi16;
-			compass_CZ_f = dataBlock[1].Word16.low16;
-		}
-
 }
 
 
@@ -1382,15 +1361,19 @@ int compass_calib_common(void)
         
     compass_solve_calibration(&g);
 		
-	tfull32 dataBlock[4];
-	dataBlock[0].Word16.low16 = compass_CX_f;
-	dataBlock[0].Word16.hi16 = compass_CY_f;
-	dataBlock[1].Word16.low16 = compass_CZ_f;
-	dataBlock[1].Word16.hi16 = 0xFFFF;
-	dataBlock[2].Full32 = 0x7FFFFFFF;
-	dataBlock[3].Full32 = 0x7FFFFFFF;
-	BFA_writeDataBlock((uint32_t *)dataBlock);
-	
+    if((hardwareCompass != compass_generation_undef)		/* if compass is not know at this point in time storing data makes no sense */
+    	&& (hardwareCompass != COMPASS_NOT_RECOGNIZED))
+    {
+		tfull32 dataBlock[4];
+		dataBlock[0].Word16.low16 = compass_CX_f;
+		dataBlock[0].Word16.hi16 = compass_CY_f;
+		dataBlock[1].Word16.low16 = compass_CZ_f;
+		dataBlock[1].Word16.hi16 = hardwareCompass;
+		dataBlock[2].Full32 = 0x7FFFFFFF;
+		dataBlock[3].Word16.low16 = 0xFFFF;
+		dataBlock[3].Word16.hi16 = BFA_calc_Block_Checksum(dataBlock);
+		BFA_writeDataBlock(dataBlock);
+    }
 	return 0;
 }
 

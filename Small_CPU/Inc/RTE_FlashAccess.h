@@ -43,10 +43,43 @@ enum
 	BFA_EMPTY,
 };
 
+/// split word to 2 bytes
+typedef struct{
+uint8_t low; ///< split word to 2 bytes
+uint8_t hi; ///< split word to 2 bytes
+} two_byte;
+
+
+/// split word to 2 bytes
+typedef union{
+two_byte Byte; ///< split word to 2 bytes
+uint16_t Word; ///< split word to 2 bytes
+} tword;
+
+
+/// split signed word to 2 bytes
+typedef union{
+two_byte Byte; ///< split signed word to 2 bytes
+int16_t Word; ///< split signed word to 2 bytes
+} signed_tword;
+
+
+/// split full32 to 2 words
+typedef struct{
+uint16_t low16; ///< split word to 2 bytes
+uint16_t hi16; ///< split word to 2 bytes
+} two_word;
+
+typedef union{
+two_word Word16; ///< split word to 2 bytes
+uint32_t Full32; ///< split word to 2 bytes
+} tfull32;
+
 	 /* Exported functions --------------------------------------------------------*/
 
-uint8_t BFA_readLastDataBlock(uint32_t *dataArray4);
-uint8_t BFA_writeDataBlock(const uint32_t *dataArray4);
+uint8_t BFA_readLastDataBlock(tfull32 *dataArray4);
+uint8_t BFA_writeDataBlock(const tfull32 *dataArray4);
+uint16_t BFA_calc_Block_Checksum(const tfull32 *dataArray4);
 
 #ifdef __cplusplus
 }
