@@ -33,7 +33,7 @@
 #define MOTION_DELTA_FALL			3
 
 #define MOTION_DELTA_JITTER_LEVEL	3.0		/* lower values are considered as stable */
-#define MOTION_DELTA_RAISE_LEVEL	6.0	/* Movement causing a significant change detected */
+#define MOTION_DELTA_RAISE_LEVEL	6.0		/* Movement causing a significant change detected */
 #define MOTION_DELTA_FALL_LEVEL		-6.0	/* Movement causing a significant change detected */
 
 #define MOTION_DELTA_HISTORY_SIZE	20		/* Number of history data sets */
@@ -271,10 +271,8 @@ detectionState_t detectScrollButtonEvent(float curPitch)
 		/* for scroll detection the motion window is split into 6 sectors => set event accoring to the sector number*/
 		switch(newSector)
 		{
-			case 0:
-			case 1:	PitchEvent = DETECT_POS_PITCH;
+			case 0: PitchEvent = DETECT_POS_PITCH;
 				break;
-			case 5:
 			case 6:	PitchEvent = DETECT_NEG_PITCH;
 				break;
 			default:
@@ -282,7 +280,7 @@ detectionState_t detectScrollButtonEvent(float curPitch)
 		}
 		if(PitchEvent != DETECT_NOTHING)
 		{
-			delayscroll = 5;
+			delayscroll = 7;
 		}
 	}
 	else
@@ -299,6 +297,7 @@ detectionState_t detectPitch(float currentPitch)
 {
 	uint8_t exit = 0;
 	uint8_t step = 0;
+	uint8_t duration = 0;
 	SDeltaHistory test;
 
 	detectionState = DETECT_NOTHING;
@@ -306,6 +305,7 @@ detectionState_t detectPitch(float currentPitch)
 	{
 		test = GetDeltaHistory(step);
 		step++;
+		duration++;
 		switch (detectionState)
 		{
 				case DETECT_NOTHING: 	if(test.pitch > MOTION_DELTA_STABLE)
@@ -325,6 +325,7 @@ detectionState_t detectPitch(float currentPitch)
 										{
 											detectionState = DETECT_NEG_MOVE;
 										}
+										duration = 0;
 					break;
 				case DETECT_NEG_MOVE:
 				case DETECT_POS_MOVE:	if(test.pitch <= MOTION_DELTA_JITTER)
@@ -345,8 +346,15 @@ detectionState_t detectPitch(float currentPitch)
 				case DETECT_RISEBACK:
 				case DETECT_FALLBACK:	if(test.pitch == MOTION_DELTA_STABLE)
 										{
-											detectionState++;
-											exit = 1;
+											if(duration > 5)	/* avoid detection triggered by short moves */
+											{
+												detectionState++;
+												exit = 1;
+											}
+											else
+											{
+												detectionState = DETECT_NOTHING;
+											}
 										}
 									break;
 				default:
@@ -445,6 +453,9 @@ void calibrateViewport(float roll, float pitch, float yaw)
 
 float checkViewport(float roll, float pitch, float yaw)
 {
+	static float freezeRoll = 0;
+	static float freezeYaw = 0;
+
 	uint8_t retval = 0;
 	float angleYaw;
 	float anglePitch;
@@ -459,11 +470,17 @@ float checkViewport(float roll, float pitch, float yaw)
 	SCoord axis_2;
 	SCoord curVec;
 	SCoord resultVec;
+	SDeltaHistory test;
 
 	SSettings* pSettings = settingsGetPointer();
 
 	/* calculate base vector taking calibration delta into account yaw (heading) */
 	float compYaw = yaw + pSettings->viewYaw;
+
+	compYaw = 360.0 - yaw; 				/* turn to 0° */
+	compYaw +=  pSettings->viewYaw; 	/* consider calib yaw value */
+	compYaw += yaw;
+
 	if (compYaw < 0.0)
 	{
 		compYaw = 360.0 + compYaw;
@@ -471,10 +488,13 @@ float checkViewport(float roll, float pitch, float yaw)
 
 	if (compYaw > 360.0)
 	{
-		compYaw = compYaw - 360.0;;
+		compYaw = compYaw - 360.0;
 	}
-
-	angleYaw = compYaw * M_PI / 180.0;
+	if (compYaw > 360.0)
+	{
+		compYaw = compYaw - 360.0;
+	}
+	angleYaw = pSettings->viewYaw * M_PI / 180.0;
 	anglePitch = pSettings->viewPitch * M_PI / 180.0;
 	angleRoll = pSettings->viewRoll * M_PI / 180.0;
 
@@ -509,7 +529,7 @@ float checkViewport(float roll, float pitch, float yaw)
     }
     else
     {
-    	angleYaw = yaw * M_PI / 180.0;
+    	angleYaw = compYaw * M_PI / 180.0;
     	anglePitch = pitch * M_PI / 180.0;
     	angleRoll = roll * M_PI / 180.0;
     	curVec.x = 0;
@@ -566,20 +586,43 @@ float checkViewport(float roll, float pitch, float yaw)
 			}
 			focusCnt++;
 		}
-		if(focusCnt == 10)
+		if((focusCnt == 10) && (inFocus == 0))
 		{
 			inFocus = 1;
+			freezeRoll = roll;
+			freezeYaw = yaw;
 		}
 	}
 	else
 	{
-		if(focusCnt)
+		if(focusCnt >= 5)												/* Reset focus faster then setting focus */
 		{
+			if(pSettings->MotionDetection != MOTION_DETECT_MOVE)		/* only apply extended focus for methods using absolute pitch values */
+			{
+				test = GetDeltaHistory(0);
+				if((test.yaw == MOTION_DELTA_STABLE) && (test.roll == MOTION_DELTA_STABLE)) 
+				{
+					if((fabsf(freezeRoll - roll) < MOTION_DELTA_JITTER_LEVEL) && (fabsf(freezeYaw - yaw) < MOTION_DELTA_JITTER_LEVEL))
+					{
+						focusCnt++;
+					}
+				}
+				else
+				{
+					if(freezeRoll != 0.0)
+					{
+						focusCnt = 1;
+					}
+				}
+			}
 			focusCnt--;
 		}
 		else
 		{
+			focusCnt = 0;
 			inFocus = 0;
+			freezeRoll = 0;
+			freezeYaw = 0;
 		}
 	}
     return distance;
