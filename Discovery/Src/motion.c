@@ -107,11 +107,13 @@ void evaluateMotionDelta(float roll, float pitch, float yaw)
 
 SDeltaHistory GetDeltaHistory(uint8_t stepback)
 {
-	uint8_t loop = stepback;
+	uint8_t loop;
 	uint8_t index = motionDeltaHistoryIdx;
 
 	SDeltaHistory result = {0,0,0};
 
+	stepback++;						/* motionDeltaHistoryIdx is pointing to future entry => step back one to get the latest */
+	loop = stepback;
 	if(stepback < MOTION_DELTA_HISTORY_SIZE)
 	{
 		while(loop != 0)			/* find requested entry */
@@ -295,40 +297,62 @@ detectionState_t detectScrollButtonEvent(float curPitch)
 /* This is done by feeding the past movements value per value into a state machine */
 detectionState_t detectPitch(float currentPitch)
 {
+	static int8_t lastStart = 0;
 	uint8_t exit = 0;
-	uint8_t step = 0;
+	int8_t step = 0;
 	uint8_t duration = 0;
 	SDeltaHistory test;
 
-	detectionState = DETECT_NOTHING;
-	while((step != MOTION_DELTA_HISTORY_SIZE) && (!exit))		/* start backward evalution of pitch changes*/
+	if(lastStart < 0)
+	{
+		detectionState = DETECT_NOTHING;
+		lastStart = 0;
+	}
+	else
+	{
+		detectionState = DETECT_START;
+	}
+	step = lastStart;
+	do
 	{
 		test = GetDeltaHistory(step);
-		step++;
 		duration++;
 		switch (detectionState)
 		{
 				case DETECT_NOTHING: 	if(test.pitch > MOTION_DELTA_STABLE)
 										{
 											exit = 1;
+											lastStart = -2;
 										}
 										else
 										{
 											detectionState = DETECT_START;
+											lastStart = -1;
 										}
 					break;
 				case DETECT_START:		if(test.pitch == MOTION_DELTA_RAISE)
 										{
 											detectionState = DETECT_POS_MOVE;
+											lastStart = step;
 										}
+										else
 										if(test.pitch == MOTION_DELTA_FALL)
 										{
 											detectionState = DETECT_NEG_MOVE;
+											lastStart = step;
+										}
+										else
+										{
+											lastStart = -1;
 										}
 										duration = 0;
 					break;
-				case DETECT_NEG_MOVE:
-				case DETECT_POS_MOVE:	if(test.pitch <= MOTION_DELTA_JITTER)
+				case DETECT_NEG_MOVE:	if((test.pitch <= MOTION_DELTA_JITTER) || (test.pitch == MOTION_DELTA_RAISE))
+										{
+											detectionState++;
+										}
+					break;
+				case DETECT_POS_MOVE:	if((test.pitch <= MOTION_DELTA_JITTER) || (test.pitch == MOTION_DELTA_FALL))
 										{
 											detectionState++;
 										}
@@ -346,15 +370,12 @@ detectionState_t detectPitch(float currentPitch)
 				case DETECT_RISEBACK:
 				case DETECT_FALLBACK:	if(test.pitch == MOTION_DELTA_STABLE)
 										{
-											if(duration > 5)	/* avoid detection triggered by short moves */
+											if(duration > 4)	/* avoid detection triggered by short moves */
 											{
 												detectionState++;
-												exit = 1;
 											}
-											else
-											{
-												detectionState = DETECT_NOTHING;
-											}
+											exit = 1;
+											lastStart = -2;
 										}
 									break;
 				default:
@@ -362,6 +383,16 @@ detectionState_t detectPitch(float currentPitch)
 					exit = 1;
 				break;
 		}
+		step--;
+	} while((step >= 0) && (!exit));
+
+	if((lastStart < MOTION_DELTA_HISTORY_SIZE))
+	{
+		lastStart++;	/* prepare value for next iteration (history index will be increased) */
+	}
+	else
+	{
+		lastStart = -1;
 	}
 	if((detectionState != DETECT_POS_PITCH) && (detectionState != DETECT_NEG_PITCH))	/* nothing found */
 	{
