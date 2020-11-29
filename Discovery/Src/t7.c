@@ -1662,6 +1662,13 @@ void t7_change_customview(uint8_t action)
     selection_customview = *pViews;
 }
 
+void t7_select_customview(uint8_t selectedCustomview)
+{
+	if(selectedCustomview < CVIEW_END)
+	{
+		selection_customview = selectedCustomview;
+	}
+}
 
 uint8_t t7_get_length_of_customtext(void)
 {
@@ -1976,7 +1983,7 @@ void t7_refresh_customview(void)
         text[textpointer++] = '\030'; // main color
         for(int i=0;i<3;i++)
         {
-            if(stateUsed->diveSettings.ppo2sensors_deactivated & (1<<i))
+            if((stateUsed->diveSettings.ppo2sensors_deactivated & (1<<i)) || (stateUsed->lifeData.ppO2Sensor_bar[i] == 0.0))
             {
                 text[textpointer++] = '\031'; // labelcolor
                 text[textpointer++] = '\001';

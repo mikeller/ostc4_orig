@@ -61,6 +61,7 @@ void t7_refresh_customview_old(void);
 
 void t7_change_field(void);
 void t7_change_customview(uint8_t action);
+void t7_select_customview(uint8_t selectedCustomview);
 
 void t7_set_field_to_primary(void);
 void t7_set_customview_to_primary(void);
