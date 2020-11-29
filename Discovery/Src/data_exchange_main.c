@@ -102,6 +102,8 @@ static uint8_t DeviceDataUpdated = 0;
 #define UNKNOWN_DATE_MONTH		1
 #define UNKNOWN_DATE_YEAR		16
 
+#define IGNORE_O2_VOLTAGE_LEVEL_MV	(0.5f)
+
 /* Private function prototypes -----------------------------------------------*/
 static uint8_t DataEX_check_header_and_footer_ok(void);
 static uint8_t DataEX_check_header_and_footer_shifted(void);
@@ -774,7 +776,7 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 {
 	SDiveState *pStateReal = stateRealGetPointerWrite();
 	static uint16_t getDeviceDataAfterStartOfMainCPU = 20;
-	
+	uint8_t idx;
 	
 	// wireless - �ltere daten aufr�umen
 #if 0
@@ -880,12 +882,20 @@ void DataEX_copy_to_LifeData(_Bool *modeChangeFlag)
 	{
 		if(pStateReal->data_old__lost_connection_to_slave == 0)
 		{
-			pStateReal->lifeData.sensorVoltage_mV[0] = dataIn.data[0].extADC_voltage[0];
-			pStateReal->lifeData.sensorVoltage_mV[1] = dataIn.data[0].extADC_voltage[1];
-			pStateReal->lifeData.sensorVoltage_mV[2] = dataIn.data[0].extADC_voltage[2];
-			pStateReal->lifeData.ppO2Sensor_bar[0] = pStateReal->lifeData.sensorVoltage_mV[0] * pSettings->ppo2sensors_calibCoeff[0];
-			pStateReal->lifeData.ppO2Sensor_bar[1] = pStateReal->lifeData.sensorVoltage_mV[1] * pSettings->ppo2sensors_calibCoeff[1];
-			pStateReal->lifeData.ppO2Sensor_bar[2] = pStateReal->lifeData.sensorVoltage_mV[2] * pSettings->ppo2sensors_calibCoeff[2];
+			for(idx = 0; idx < 3; idx++)
+			{
+				pStateReal->lifeData.sensorVoltage_mV[idx] = dataIn.data[0].extADC_voltage[idx];
+				if(pStateReal->lifeData.sensorVoltage_mV[idx] < IGNORE_O2_VOLTAGE_LEVEL_MV)
+				{
+					pStateReal->lifeData.sensorVoltage_mV[idx] = 0.0;
+					pStateReal->lifeData.ppO2Sensor_bar[idx] = 0;
+				}
+				else
+				{
+					pStateReal->lifeData.ppO2Sensor_bar[idx] = pStateReal->lifeData.sensorVoltage_mV[idx] * pSettings->ppo2sensors_calibCoeff[idx];
+				}
+
+			}
 		}
 	}
 

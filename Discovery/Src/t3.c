@@ -1029,7 +1029,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
             else if(i==2)
                 text[textpointer++] = '\002';		/* right  */
 
-            if(stateUsed->diveSettings.ppo2sensors_deactivated & (1<<i))
+            if((stateUsed->diveSettings.ppo2sensors_deactivated & (1<<i)) || (stateUsed->lifeData.ppO2Sensor_bar[i] == 0.0))
             {
                 text[textpointer++] = '\031';
                 text[textpointer++] = ' ';
