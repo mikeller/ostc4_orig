@@ -176,7 +176,6 @@ void refresh_Customviews(void)
 
 void refresh_ViewPort(void)
 {
-    uint16_t heading;
     char text[32];
     uint8_t textIndex = 0;
     float distance = 0.0;
@@ -184,6 +183,7 @@ void refresh_ViewPort(void)
     GFX_DrawCfgScreen* pdrawScreen;
     point_t lowerleft = {0,0};
     point_t upperright = {799,479};
+    float localLimit = 0.1;
 
     text[0] = '\001';
     text[1] = TXT_2BYTE;
@@ -195,17 +195,6 @@ void refresh_ViewPort(void)
     text[1] = TXT2BYTE_CalibView;
     text[2] = 0;
     write_label_var(   30, 700, ME_Y_LINE3, &FontT48, text);
-
-    if(pSettings->compassInertia)
-    {
-    	heading = (uint16_t)compass_getCompensated();
-    }
-    else
-    {
-    	heading = (uint16_t)stateUsed->lifeData.compass_heading;
-    }
-    snprintf(text,32,"\001%03i`",heading);
-    write_label_var(   30, 700, ME_Y_LINE1, &FontT48, text);
 
     textIndex = 0;
     text[textIndex++] = TXT_2BYTE;
@@ -233,6 +222,33 @@ void refresh_ViewPort(void)
 			snprintf(text,32,"\001%03.3f",distance);
 			write_label_var(   30, 700, ME_Y_LINE2, &FontT48, text);
     	}
+
+
+    	/* show "bar graph" indicating the distance to the center point */
+        textIndex = 0;
+        text[textIndex++] = '\001';
+
+    	if(distance < localLimit)
+    	{
+    		text[textIndex++] = '+';
+    	}
+    	else
+    	{
+    		text[textIndex++] = '-';
+    	    while (localLimit < 0.6)
+    	    {
+    	    	localLimit += 0.1;
+    	    	text[textIndex++] = '-';
+    	    	text[textIndex++] = '-';
+    	    	if(distance < localLimit)
+    	    	{
+    	    		break;
+    	    	}
+    	    }
+    	}
+    	text[textIndex] = 0;
+    	write_label_var(   30, 700, ME_Y_LINE1, &FontT48, text);
+
 		if(distance < 0.5)
 		{
 			set_Backlight_Boost(settingsGetPointer()->viewPortMode & 0x03);
