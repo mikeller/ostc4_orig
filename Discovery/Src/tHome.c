@@ -56,11 +56,15 @@ static uint8_t warning_toogle_count;
 static uint16_t display_toogle_count;
 static uint16_t tHome_tick_count_cview;
 static uint16_t tHome_tick_count_field;
+static uint16_t tHome_tick_count_o2sens;
 
 const uint8_t cv_changelist[] = {CVIEW_Compass, CVIEW_SummaryOfLeftCorner, CVIEW_Tissues, CVIEW_Profile, CVIEW_EADTime, CVIEW_Gaslist, CVIEW_noneOrDebug, CVIEW_Decolist,CVIEW_sensors,CVIEW_sensors_mV, CVIEW_END};
 const uint8_t cv_changelist_BS[] = {CVIEW_T3_Decostop, CVIEW_sensors, CVIEW_Compass, CVIEW_T3_MaxDepth,CVIEW_T3_StopWatch, CVIEW_T3_TTS, CVIEW_T3_GasList, CVIEW_T3_ppO2andGas, CVIEW_noneOrDebug, CVIEW_T3_Navigation, CVIEW_T3_DepthData, CVIEW_T3_DecoTTS, CVIEW_T3_END};
 
 /* Private function prototypes -----------------------------------------------*/
+
+#define AUTORETURN_O2SENS		(200u)		/* return to sensor view after 20 seconds in case sensor is connected */
+
 
 /* Exported functions --------------------------------------------------------*/
 
@@ -369,6 +373,7 @@ void tHome_findNextStop(const uint16_t *list, uint8_t *depthOutMeter, uint16_t *
 void tHome_change_field_button_pressed(void)
 {
     tHome_tick_count_field = 0;
+    tHome_tick_count_o2sens = 0;
     if(settingsGetPointer()->design == 7)
         t7_change_field();
 }
@@ -377,6 +382,8 @@ void tHome_change_field_button_pressed(void)
 void tHome_change_customview_button_pressed(uint8_t action)
 {
     tHome_tick_count_cview = 0;
+    tHome_tick_count_o2sens = 0;
+
     if(settingsGetPointer()->design == 7)
         t7_change_customview(action);
     else
@@ -439,6 +446,16 @@ void tHome_tick(void)
                 t3_set_customview_to_primary();
             }
         }
+    }
+
+    if((stateUsed->mode == MODE_SURFACE) && (stateUsed->diveSettings.ppo2sensors_deactivated != 0x07) && (stateUsed->diveSettings.ccrOption != 0))
+    {
+    	tHome_tick_count_o2sens++;
+    	if(tHome_tick_count_o2sens > AUTORETURN_O2SENS)
+    	{
+    		tHome_tick_count_o2sens = 0;
+    		t7_select_customview(CVIEW_sensors);
+    	}
     }
 }
 
