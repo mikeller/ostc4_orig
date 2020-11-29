@@ -59,9 +59,9 @@ Ok, sources are there. You can read them. But you need a few more efforts to let
 
 ## Add include paths ##
 
-1. Select your top-level project, right-click to edit `properties`. In `C/C++ Build` choose `Settings`, then `MCU GCC Compiler` and `Includes`. **Make sure to select `Configuration: [All Configurations]` **. Click `Add...` choose `Workspace...` and select the `Common/Drivers/CMIS_v210` directory.
-2. Do the same for `Common/Drivers/STM32F4xx_v220/Include` directory.
-3. Do the same for `Common/Drivers/STM32F4xx_HAL_DRIVER_v120/Inc` directory.
+1. Select your top-level project, right-click to edit `properties`. In `C/C++ Build` choose `Settings`, then `MCU GCC Compiler` and `Includes`. **Make sure to select `Configuration: [All Configurations]` **. Click `Add...` choose `Workspace...` and select the `Common/Drivers/CMIS/Include` directory.
+2. Do the same for `Common/Drivers/STM32F4xx/Include` directory.
+3. Do the same for `Common/Drivers/STM32F4xx_HAL_DRIVER/Inc` directory.
 4. Do the same for `Common/Inc` directory.
 5. Do the same for `Discovery/Inc` directory.
 6. Use the _Move Up_ icon to make sure `Discovery/Inc` is first.
