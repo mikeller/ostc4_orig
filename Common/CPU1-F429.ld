@@ -208,7 +208,15 @@ SECTIONS
     /* Define Known Address for Each Font */
     /* Flash Sector 23 is protected (bootloader font + image) => use end of sector 22 */
 
-  
+.lower_fonts 	0x080A0000  : {
+	 *(.lower_fonts.image_data_*)
+	 
+	 *(.lower_fonts.*) 
+} > ROM
+
+.lower_directory : {
+	*(.lower_font_directory*)
+} > ROM
 
 /* TODO: the linker does not seem to work as the one of used for initial bootloader ==> Reconstruct layout to keep it compatible with the first version */
 /* TODO: cleanup during next iteration */

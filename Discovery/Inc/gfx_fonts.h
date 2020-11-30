@@ -77,6 +77,7 @@ extern const uint32_t indexHWcolor[indexHWcolorSIZE];
 /* TODO: Looking at older map files the directories should be placed within the firmware memory */
 /*       As well as the image data => to be confirmed */ 
 #define UPPER_FONT_DIRECTORY __attribute__ (( used, section(".upper_font_directory") ))
+#define LOWER_FONT_DIRECTORY __attribute__ (( used, section(".lower_font_directory") ))	/* store new fonts within firmware image to avoid fontlib update */
 
 #define UPPER_IMAGE_DIRECTORY __attribute__(( section(".lower_image_directory") ))
 #define UPPER_IMAGES          __attribute__(( section(".lower_images") ))
