@@ -368,7 +368,21 @@ void tInfoLog_BuildAndShowNextPage(void)
             switch(logbookHeader.decoModel)
             {
             case 1:
-                textPointer += snprintf(&text[textPointer],20,"\016\016 GF  \017");
+            	if(!settingsGetPointer()->nonMetricalSystem)	/* safe space to avoid cursor overlap */
+            	{
+            		if(settingsGetPointer()->amPMTime)
+            		{
+            			textPointer += snprintf(&text[textPointer],20,"\016\016 GF \017");
+            		}
+            		else
+            		{
+            			textPointer += snprintf(&text[textPointer],20,"\016\016GF \017");
+            		}
+            	}
+            	else
+            	{
+            		textPointer += snprintf(&text[textPointer],20,"\016\016 GF  \017");
+            	}
                 break;
             case 2:
                 textPointer += snprintf(&text[textPointer],20,"\016\016 VPM \017");
@@ -386,7 +400,7 @@ void tInfoLog_BuildAndShowNextPage(void)
             }
             else
             {
-                textPointer += snprintf(&text[textPointer], 20,"%3d.%d\016\016m\017 ", maxDepthMeter,maxDepthSubmeter);
+            	textPointer += snprintf(&text[textPointer], 20,"%3d.%d\016\016m \017", maxDepthMeter,maxDepthSubmeter);
             }
             textPointer += snprintf(&text[textPointer], 20,"%3d\016\016min\017\n\r", divetime);
 
