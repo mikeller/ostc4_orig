@@ -76,10 +76,6 @@ static uint32_t D1 = 1;
 static uint32_t D2 = 1;
 //static uint8_t n_crc;
 
-static int64_t C5_x_2p8 = 1;
-static int64_t C2_x_2p16 = 1;
-static int64_t C1_x_2p15 = 1;
-
 /*
 short C2plus10000 = -1;
 short C3plus200 = -1;
@@ -365,10 +361,6 @@ uint8_t init_pressure(void)
 	}
 	// n_crc = crc4(C); // no evaluation at the moment hw 151026
 
-	C5_x_2p8  = C[5] * 256;
-	C2_x_2p16 = C[2] * 65536;
-	C1_x_2p15 = C[1] * 32768;
-	
 	if(global.I2C_SystemStatus == HAL_OK)
 	{
 		pressureSensorInitSuccess = 1;
