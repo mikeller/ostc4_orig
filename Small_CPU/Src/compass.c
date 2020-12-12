@@ -237,12 +237,17 @@ void compass_init(uint8_t fast, uint8_t gain)
 		I2C_Master_Transmit( DEVICE_COMPASS_303D, &data, 1);
 		I2C_Master_Receive(  DEVICE_COMPASS_303D, &data, 1);
 		if(data == WHOIAM_VALUE_LSM303D)
+		{
 			hardwareCompass = compass_generation2;			//LSM303D;
-		data = WHO_AM_I;
-		I2C_Master_Transmit( DEVICE_ACCELARATOR_303AGR, &data, 1);
-		I2C_Master_Receive(  DEVICE_ACCELARATOR_303AGR, &data, 1);
-		if(data == WHOIAM_VALUE_LSM303AGR)
-			hardwareCompass = compass_generation3;			//LSM303AGR;
+		}
+		else
+		{
+			data = WHO_AM_I;
+			I2C_Master_Transmit( DEVICE_ACCELARATOR_303AGR, &data, 1);
+			I2C_Master_Receive(  DEVICE_ACCELARATOR_303AGR, &data, 1);
+			if(data == WHOIAM_VALUE_LSM303AGR)
+				hardwareCompass = compass_generation3;			//LSM303AGR;
+		}
 	}
 
 /* Assume that a HMC5883L is equipped by default if detection still failed */
@@ -598,11 +603,11 @@ void compass_init_LSM303D(uint8_t fast, uint8_t gain)
 	if(fast == 0)
 	{
 		LSM303D_write_checked_reg(ADDR_CTRL_REG0, 0x00);
-		LSM303D_write_checked_reg(ADDR_CTRL_REG1, 0x3F); // mod 12,5 Hz 3 instead of 6,25 Hz 2
-		LSM303D_write_checked_reg(ADDR_CTRL_REG2, 0xC0);
-		LSM303D_write_checked_reg(ADDR_CTRL_REG3, 0x00);
-		LSM303D_write_checked_reg(ADDR_CTRL_REG4, 0x00);
-		LSM303D_write_checked_reg(ADDR_CTRL_REG5, 0x68); // mod 12,5 Hz 8 instead of 6,25 Hz 4
+		LSM303D_write_checked_reg(ADDR_CTRL_REG1, 0x3F); // mod 12,5 Hz 3 instead of 6,25 Hz 2 BDU and all axis
+		LSM303D_write_checked_reg(ADDR_CTRL_REG2, 0xC0); // 50Hz anti alias filter
+		LSM303D_write_checked_reg(ADDR_CTRL_REG3, 0x00); // no interrupts
+		LSM303D_write_checked_reg(ADDR_CTRL_REG4, 0x00); // no interrupts
+		LSM303D_write_checked_reg(ADDR_CTRL_REG5, 0x68); // mod 12,5 Hz 8 instead of 6,25 Hz 4 High resolution
 	}
 	else
 	{
@@ -717,17 +722,17 @@ void compass_init_LSM303AGR(uint8_t fast, uint8_t gain)
 	if(fast == 0)
 	{
 		// init compass
-		LSM303AGR_write_checked_reg(0x60, 0x80); // 10Hz
-		LSM303AGR_write_checked_reg(0x61, 0x03); // CFG_REG_B_M
-		LSM303AGR_write_checked_reg(0x62, 0x10); // CFG_REG_C_M
-		LSM303AGR_write_checked_reg(0x63, 0x00); // INT_CTRL_REG_M
+		LSM303AGR_write_checked_reg(0x60, 0x80); // CFG_REG_A_M     10Hz continuous measurement
+		LSM303AGR_write_checked_reg(0x61, 0x03); // CFG_REG_B_M		Enable offset cancellation and low pass filter
+		LSM303AGR_write_checked_reg(0x62, 0x10); // CFG_REG_C_M		Avoid incoherence (BDU)
+		LSM303AGR_write_checked_reg(0x63, 0x00); // INT_CTRL_REG_M	No interrupts
 
 		// init accel (Same chip, but different address...)
 		LSM303AGR_acc_write_checked_reg(0x1F, 0x00); // TEMP_CFG_REG_A (Temp sensor off)
-		LSM303AGR_acc_write_checked_reg(0x20, 0x4F); // CTRL_REG1_A (50Hz, x,y,z = ON)
-		LSM303AGR_acc_write_checked_reg(0x21, 0x00); // CTRL_REG2_A
-		LSM303AGR_acc_write_checked_reg(0x22, 0x00); // CTRL_REG3_A
-		LSM303AGR_acc_write_checked_reg(0x23, 0x08); // CTRL_REG4_A, High Resolution Mode enabled
+		LSM303AGR_acc_write_checked_reg(0x20, 0x27); // CTRL_REG1_A (10Hz, x,y,z = ON, low power mode)
+		LSM303AGR_acc_write_checked_reg(0x21, 0x00); // CTRL_REG2_A	(High pass filter normal mode)
+		LSM303AGR_acc_write_checked_reg(0x22, 0x00); // CTRL_REG3_A	(no interrupts)
+		LSM303AGR_acc_write_checked_reg(0x23, 0x88); // CTRL_REG4_A, High Resolution Mode enabled, enable BDU
 	}
 	else
 	{
@@ -739,10 +744,10 @@ void compass_init_LSM303AGR(uint8_t fast, uint8_t gain)
 
 		// init accel (Same chip, but different address...)
 		LSM303AGR_acc_write_checked_reg(0x1F, 0x00); // TEMP_CFG_REG_A (Temp sensor off)
-		LSM303AGR_acc_write_checked_reg(0x20, 0x4F); // CTRL_REG1_A (50Hz, x,y,z = ON)
+		LSM303AGR_acc_write_checked_reg(0x20, 0x47); // CTRL_REG1_A (50Hz, x,y,z = ON)
 		LSM303AGR_acc_write_checked_reg(0x21, 0x00); // CTRL_REG2_A
 		LSM303AGR_acc_write_checked_reg(0x22, 0x00); // CTRL_REG3_A
-		LSM303AGR_acc_write_checked_reg(0x23, 0x0); // CTRL_REG4_A, High Resolution Mode enabled
+		LSM303AGR_acc_write_checked_reg(0x23, 0x88); // CTRL_REG4_A, High Resolution Mode enabled
 	}
 
 	return;
@@ -755,14 +760,14 @@ void compass_init_LSM303AGR(uint8_t fast, uint8_t gain)
 //  ===============================================================================
 void compass_sleep_LSM303AGR(void)
 {
-	LSM303AGR_write_checked_reg(0x60, 0x03); //
-	LSM303AGR_write_checked_reg(0x61, 0x04); //
-	LSM303AGR_write_checked_reg(0x62, 0x51); //
-	LSM303AGR_write_checked_reg(0x63, 0x00); //
+	LSM303AGR_write_checked_reg(0x60, 0x13); // low power and idle mode
+	LSM303AGR_write_checked_reg(0x61, 0x04); // pulse only at power on
+	LSM303AGR_write_checked_reg(0x62, 0x51); // int mag pin used (?), BDU and DRDY is output
+	LSM303AGR_write_checked_reg(0x63, 0x00); // no interrupts
 
 
-	LSM303AGR_acc_write_checked_reg(0x1F, 0x00); //
-	LSM303AGR_acc_write_checked_reg(0x20, 0x00); //
+	LSM303AGR_acc_write_checked_reg(0x1F, 0x00); // temperature off
+	LSM303AGR_acc_write_checked_reg(0x20, 0x00); //	power down
 }
 
 
