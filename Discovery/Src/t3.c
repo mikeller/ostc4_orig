@@ -689,6 +689,8 @@ void t3_basics_refresh_apnoeRight(float depth, uint8_t tX_selection_customview, 
 
 void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, GFX_DrawCfgScreen *tXscreen, GFX_DrawCfgWindow* tXc1, GFX_DrawCfgWindow* tXc2, uint8_t mode)
 {
+	static uint8_t last_customview = CVIEW_END;
+
     char text[512];
     uint16_t textpointer = 0;
 
@@ -757,6 +759,14 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
     {
     	heading = (uint16_t)stateUsed->lifeData.compass_heading;
     }
+	if(last_customview != tX_selection_customview)		/* check if current selection is disabled and should be skipped */
+	{
+		if(t3_customview_disabled(tX_selection_customview))
+		{
+			tX_selection_customview = t3_change_customview(ACTION_BUTTON_ENTER);
+		}
+		last_customview = tX_selection_customview;
+	}
 
     switch(tX_selection_customview)
     {
@@ -1413,7 +1423,7 @@ uint8_t t3_customview_disabled(uint8_t view)
     }
 
     if (((view == CVIEW_sensors) || (view == CVIEW_sensors_mV)) &&
-       	((stateUsed->diveSettings.ppo2sensors_deactivated == 0x07) || (stateUsed->diveSettings.ccrOption == 0)))
+       	((stateUsed->diveSettings.ppo2sensors_deactivated == 0x07) || (stateUsed->diveSettings.ccrOption == 0) || stateUsed->warnings.fallback))
     {
       	cv_disabled = 1;
     }
@@ -1421,10 +1431,11 @@ uint8_t t3_customview_disabled(uint8_t view)
     return cv_disabled;
 }
 
-void t3_change_customview(uint8_t action)
+uint8_t t3_change_customview(uint8_t action)
 {
 
     t3_basics_change_customview(&t3_selection_customview, t3_customviewsStandard, action);
+    return t3_selection_customview;
 }
 
 

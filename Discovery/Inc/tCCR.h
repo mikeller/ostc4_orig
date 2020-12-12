@@ -31,6 +31,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
 
+
+#define IGNORE_O2_VOLTAGE_LEVEL_MV	(1.0f)
+
 /* Exported functions --------------------------------------------------------*/
 
 void tCCR_init(void);

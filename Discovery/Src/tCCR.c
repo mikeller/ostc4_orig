@@ -193,8 +193,6 @@ void test_O2_sensor_values_outOfBounds(int8_t * outOfBouds1, int8_t * outOfBouds
 
         if(!sensorActive[2])
             *outOfBouds3 = 1;
-
-        return;
     }
     else
     {
@@ -264,6 +262,7 @@ void test_O2_sensor_values_outOfBounds(int8_t * outOfBouds1, int8_t * outOfBouds
             }
         }
     }
+
 }
 
 
@@ -272,6 +271,7 @@ uint8_t get_ppO2SensorWeightedResult_cbar(void)
     int8_t sensorOutOfBound[3];
     uint16_t result = 0;
     uint8_t count = 0;
+    uint8_t retVal = 0;
 
     test_O2_sensor_values_outOfBounds(&sensorOutOfBound[0], &sensorOutOfBound[1], &sensorOutOfBound[2]);
 
@@ -284,9 +284,14 @@ uint8_t get_ppO2SensorWeightedResult_cbar(void)
         }
     }
     if(count == 0) // all sensors out of bounds!
-        return 0;
+    {
+    	set_warning_fallback();
+    }
     else
-        return (uint8_t)(result / count);
+    {
+       retVal = (uint8_t)(result / count);
+    }
+    return retVal;
 }
 
 

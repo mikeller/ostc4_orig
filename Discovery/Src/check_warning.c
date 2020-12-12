@@ -133,7 +133,7 @@ static int8_t check_fallback(SDiveState * pDiveState)
 
 static int8_t check_ppO2(SDiveState * pDiveState)
 {
-	if(pDiveState->mode != MODE_DIVE)
+	if((pDiveState->mode != MODE_DIVE) || (pDiveState->warnings.fallback))
 	{
 		pDiveState->warnings.ppO2Low = 0;
 		pDiveState->warnings.ppO2High = 0;

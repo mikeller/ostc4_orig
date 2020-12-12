@@ -1594,7 +1594,7 @@ uint8_t t7_customview_disabled(uint8_t view)
     }
 
     if (((view == CVIEW_sensors) || (view == CVIEW_sensors_mV)) &&
-       	((stateUsed->diveSettings.ppo2sensors_deactivated == 0x07) || (stateUsed->diveSettings.ccrOption == 0)))
+       	((stateUsed->diveSettings.ppo2sensors_deactivated == 0x07) || (stateUsed->diveSettings.ccrOption == 0) || (stateUsed->warnings.fallback)))
     {
       	cv_disabled = 1;
     }
@@ -1708,6 +1708,7 @@ void t7_refresh_customview(void)
 		{
 			t7_change_customview(ACTION_BUTTON_ENTER);
 		}
+		last_customview = selection_customview;
 	}
     switch(selection_customview)
     {
