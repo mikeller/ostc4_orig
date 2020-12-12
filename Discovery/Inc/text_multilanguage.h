@@ -268,7 +268,7 @@ extern const tText text_array2[];
 		TXT2BYTE_SetToMOD,
 		/* */
 		TXT2BYTE_HUDbattery,
-		TXT2BYTE_O2CalibAir,
+		TXT2BYTE_O2Calib,
 		TXT2BYTE_O2Interface,
 		TXT2BYTE_O2IFOptic,
 		TXT2BYTE_O2IFAnalog,

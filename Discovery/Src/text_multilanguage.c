@@ -1235,11 +1235,11 @@ static uint8_t text_FR_HUDBattery[] = "Batterie HUD";
 static uint8_t text_IT_HUDBattery[] = "Batteria HUD";
 static uint8_t text_ES_HUDBattery[] = "Carga del HUD";
 
-static uint8_t text_EN_O2CalibAir[] = "Calibrate Air";
-static uint8_t text_DE_O2CalibAir[] = "Kalibrierung Luft";
-static uint8_t text_FR_O2CalibAir[] = "";
-static uint8_t text_IT_O2CalibAir[] = "";
-static uint8_t text_ES_O2CalibAir[] = "";
+static uint8_t text_EN_O2Calib[] = "Calibrate";
+static uint8_t text_DE_O2Calib[] = "Kalibrierung";
+static uint8_t text_FR_O2Calib[] = "";
+static uint8_t text_IT_O2Calib[] = "";
+static uint8_t text_ES_O2Calib[] = "";
 
 static uint8_t text_EN_O2Interface[] = "O2 Interface";
 static uint8_t text_DE_O2Interface[] = "O2 Interface";
@@ -1844,7 +1844,7 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_CornerStandard,  {text_EN_CornerStandard, text_DE_CornerStandard, text_FR_CornerStandard, text_IT_CornerStandard, text_ES_CornerStandard}},
     {(uint8_t)TXT2BYTE_SetToMOD,		{text_EN_SetToMOD, text_DE_SetToMOD, text_FR_SetToMOD, text_IT_SetToMOD, text_ES_SetToMOD}},
     {(uint8_t)TXT2BYTE_HUDbattery,		{text_EN_HUDBattery, text_DE_HUDBattery, text_FR_HUDBattery, text_IT_HUDBattery, text_ES_HUDBattery}},
-	{(uint8_t)TXT2BYTE_O2CalibAir,		{text_EN_O2CalibAir, text_DE_O2CalibAir, text_FR_O2CalibAir, text_IT_O2CalibAir, text_ES_O2CalibAir}},
+	{(uint8_t)TXT2BYTE_O2Calib,			{text_EN_O2Calib, text_DE_O2Calib, text_FR_O2Calib, text_IT_O2Calib, text_ES_O2Calib}},
 	{(uint8_t)TXT2BYTE_O2Interface,		{text_EN_O2Interface, text_DE_O2Interface, text_FR_O2Interface, text_IT_O2Interface, text_ES_O2Interface}},
 	{(uint8_t)TXT2BYTE_O2IFOptic,		{text_EN_O2IFOptic, text_DE_O2IFOptic, text_FR_O2IFOptic, text_IT_O2IFOptic, text_ES_O2IFOptic}},
 	{(uint8_t)TXT2BYTE_O2IFAnalog,		{text_EN_O2IFAnalog, text_DE_O2IFAnalog, text_FR_O2IFAnalog, text_IT_O2IFAnalog, text_ES_O2IFAnalog}},
