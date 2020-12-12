@@ -206,6 +206,7 @@ void tMenuEdit_refresh_live_content(void)
 	 switch(globState)
 	 {
 	 	 case (StMHARD3_O2_Sensor1 & MaskFieldDigit):
+	 	 case (StMHARD3_O2_Calibrate):
 	 	 case (StMHARD3_O2_Source):						 refreshFct = refresh_O2Sensors;
 	 	 	 break;
 	 	 case (StMHARD2_Compass_SetCourse & MaskFieldDigit): refreshFct = refresh_CompassEdit;
@@ -434,7 +435,7 @@ uint8_t get_newContent_of_actual_id_block_and_subBlock(uint8_t action)
     if(ident[id].maintype == FIELD_NUMBERS)
         content = ident[id].newText[ident[id].begin[block] + subBlockPosition];
     else
-    if(ident[id].maintype == FIELD_ON_OFF)
+    if((ident[id].maintype == FIELD_ON_OFF) || (ident[id].maintype == FIELD_TOGGLE))
         content = ident[id].input[block];
     else
         content = 0; /* just a default for protection */
@@ -545,6 +546,11 @@ void enterMenuEditField(void)
         // now fixed for button settings with newContent <= '0'+99 condition
         change_CLUT_entry((CLUT_MenuEditField0 + id), CLUT_MenuEditFieldSelected);
     }
+    if(ident[id].maintype == FIELD_TOGGLE)
+    {
+        change_CLUT_entry(CLUT_MenuEditLineSelected, CLUT_MenuEditCursor);
+    }
+
 
     newContent = get_newContent_of_actual_id_block_and_subBlock(ACTION_BUTTON_ENTER);
 
@@ -1413,6 +1419,32 @@ void write_field_symbol(uint32_t editID, uint16_t XleftGimpStyle, uint16_t Xrigh
         id++;
     }
 }
+void write_field_toggle(uint32_t editID, uint16_t XleftGimpStyle, uint16_t XrightGimpStyle, uint16_t YtopGimpStyle, const tFont *Font, const char *text, uint8_t int1,  uint8_t int2)
+{
+    if(id >= 9) return;
+    ident[id].maintype = FIELD_TOGGLE;
+	ident[id].subtype  = FIELD_TOGGLE;
+	ident[id].coord[0] = XleftGimpStyle;
+	ident[id].coord[1] = XrightGimpStyle;
+	ident[id].coord[2] = YtopGimpStyle;
+	ident[id].fontUsed = (tFont *)Font;
+	ident[id].callerID = editID;
+	strncpy(ident[id].orgText, text, 32);
+	strncpy(ident[id].newText, text, 32);
+	ident[id].orgText[31] = 0;
+	ident[id].newText[31] = 0;
+
+	change_CLUT_entry((CLUT_MenuEditField0 + id), CLUT_MenuEditButtonColor1);
+
+	if(editID == 0) write_content_without_Id();
+	  else
+	{
+	      write_content_of_actual_Id();
+	      if(!tME_stop) idLast = id;
+	        id++;
+	}
+}
+
 
 
 /* was build for field_on_off

@@ -95,7 +95,7 @@ void exitMenuEdit_to_Home(void);
 void exitMenuEdit_to_Home_with_Menu_Update(void);
 void exitMenuEdit_to_Menu_with_Menu_Update(void);
 void exitMenuEdit_to_Menu_with_Menu_Update_do_not_write_settings_for_this_only(void);
-
+void exitMenuEditField(void);
 void tMenuEdit_writeSettingsToFlash(void);
 
 GFX_DrawCfgScreen* getMenuEditScreen(void);

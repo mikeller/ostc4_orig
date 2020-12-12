@@ -72,6 +72,7 @@ uint8_t OnAction_ButtonBalance	(uint32_t editId, uint8_t blockNumber, uint8_t di
 
 #define O2_CALIB_FRACTION_AIR	(0.209F)
 
+static uint8_t	O2_calib_gas = 21;
 
 void openEdit_Hardware(uint8_t line)
 {
@@ -310,9 +311,11 @@ void refresh_O2Sensors(void)
     else
     {
     	text[0] = TXT_2BYTE;
-    	text[1] = TXT2BYTE_O2CalibAir;
+    	text[1] = TXT2BYTE_O2Calib;
     	text[2] = 0;
     	write_label_var(  30, 340, ME_Y_LINE4, &FontT48, text);
+    	snprintf(text, 20,"%d%%", O2_calib_gas);
+    	write_label_var(  400, 800, ME_Y_LINE4, &FontT48, text);
     }
 
 	for(int i=0;i<3;i++)
@@ -344,7 +347,14 @@ void refresh_O2Sensors(void)
     tMenuEdit_refresh_field(StMHARD3_O2_Sensor3);
     tMenuEdit_refresh_field(StMHARD3_O2_Fallback);
 
-    write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
+    if(get_globalState() == StMHARD3_O2_Calibrate)
+    {
+    	write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_O2Calib,TXT2BYTE_ButtonPlus);
+    }
+    else
+    {
+    	write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
+    }
 }
 
 
@@ -369,7 +379,10 @@ void openEdit_O2Sensors(void)
 
     if(settingsGetPointer()->ppo2sensors_source == O2_SENSOR_SOURCE_ANALOG)
     {
-    	write_field_button(StMHARD3_O2_Calibrate,	 30, 800, ME_Y_LINE4,  &FontT48, "");
+        write_label_fix(   30, 800, ME_Y_LINE4, &FontT48, TXT2BYTE_O2Calib);
+        write_label_var(  400, 800, ME_Y_LINE4, &FontT48, "\016\016 %\017");
+
+        write_field_toggle(StMHARD3_O2_Calibrate,	400, 800, ME_Y_LINE4, &FontT48, "", 21, 100);
     }
 
     text[0] = TXT_Fallback;
@@ -468,25 +481,56 @@ uint8_t OnAction_O2_Calibrate (uint32_t editId, uint8_t blockNumber, uint8_t dig
 	uint8_t loop;
 	const SDiveState *pStateReal = stateRealGetPointer();
 	SSettings* pSettings = settingsGetPointer();
+	uint8_t retVal = UNSPECIFIC_RETURN;
+	float compensatedRef;
 
-	for(loop=0;loop<3;loop++)
-	{
-		if((pSettings->ppo2sensors_deactivated & (0x1 << loop)) == 0)
+    if(action == ACTION_BUTTON_ENTER_FINAL)
+    {
+    		if(O2_calib_gas == 21)
+    		{
+    			compensatedRef = O2_CALIB_FRACTION_AIR * pStateReal->lifeData.pressure_ambient_bar / 1.0;
+    		}
+    		else
+    		{
+    			compensatedRef = 100.0 * pStateReal->lifeData.pressure_ambient_bar / 1.0;
+    		}
+			for(loop=0;loop<3;loop++)
+			{
+				if((pSettings->ppo2sensors_deactivated & (0x1 << loop)) == 0)
+				{
+					if(pStateReal->lifeData.sensorVoltage_mV[loop] > 0.0001)		/* sensor connected ?*/
+					{
+						pSettings->ppo2sensors_calibCoeff[loop] =  compensatedRef / pStateReal->lifeData.sensorVoltage_mV[loop];
+					}
+					else
+					{
+						pSettings->ppo2sensors_calibCoeff[loop] = 0.0;
+						settingsGetPointer()->ppo2sensors_deactivated |= 0x1 << loop;
+					}
+				}
+			}
+			tMenuEdit_newInput(editId, O2_calib_gas, 0, 0, 0);
+			retVal = UPDATE_DIVESETTINGS;
+    }
+    if(action == ACTION_BUTTON_NEXT)
+    {
+		if(O2_calib_gas == 21)
 		{
-			if(pStateReal->lifeData.sensorVoltage_mV[loop] > 0.0001)		/* sensor connected ?*/
-			{
-				pSettings->ppo2sensors_calibCoeff[loop] = O2_CALIB_FRACTION_AIR / pStateReal->lifeData.sensorVoltage_mV[loop];
-			}
-			else
-			{
-				pSettings->ppo2sensors_calibCoeff[loop] = 0.0;
-				settingsGetPointer()->ppo2sensors_deactivated |= 0x1 << loop;
-				tMenuEdit_set_on_off(editId, 0);
-			}
+			O2_calib_gas = 100;
 		}
-	}
+		else
+		{
+			O2_calib_gas = 21;
+		}
+   	}
+   	retVal = O2_calib_gas;
 
-	return UPDATE_DIVESETTINGS;
+    if(action == ACTION_BUTTON_BACK)
+    {
+    	exitMenuEditField();
+    }
+
+	return retVal;
 }
 uint8_t OnAction_O2_Source	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {

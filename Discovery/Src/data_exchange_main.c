@@ -102,7 +102,6 @@ static uint8_t DeviceDataUpdated = 0;
 #define UNKNOWN_DATE_MONTH		1
 #define UNKNOWN_DATE_YEAR		16
 
-#define IGNORE_O2_VOLTAGE_LEVEL_MV	(0.5f)
 
 /* Private function prototypes -----------------------------------------------*/
 static uint8_t DataEX_check_header_and_footer_ok(void);

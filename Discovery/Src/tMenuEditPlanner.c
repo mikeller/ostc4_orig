@@ -34,6 +34,7 @@
 #include "simulation.h"
 #include "tHome.h"	//for tHome_gas_writer()
 #include "tMenuEdit.h"
+#include "unit.h"
 
 /* Private types -------------------------------------------------------------*/
 uint8_t resultPage = 0;
