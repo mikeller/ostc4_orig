@@ -111,6 +111,14 @@ uint8_t externalInterface_ReadAndSwitch()
 				}
 			}
 		}
+		else		/* take also i2c bus disturb into account */
+		{
+			if(timeoutCnt++ >= ADC_TIMEOUT)
+			{
+				externalInterface_StartConversion(activeChannel);
+				timeoutCnt = 0;
+			}
+		}
 	}
 	return retval;
 }
