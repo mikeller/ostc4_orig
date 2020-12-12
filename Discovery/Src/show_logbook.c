@@ -474,7 +474,6 @@ static void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t 
     }
 
     //Print time
-    uint8_t hour = logbookHeader.timeHour;
     uint8_t minute = logbookHeader.timeMinute;
 
     if (settingsGetPointer()->amPMTime)
