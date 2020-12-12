@@ -3082,7 +3082,7 @@ static uint32_t GFX_write__Modify_Xdelta__Centered(GFX_CfgWriteString* cfg, GFX_
 	char cText[101];
 	uint32_t result;
 	uint32_t Xsum;
-	uint32_t i, j;
+	uint32_t j;
 	uint8_t gfx_selected_language;
 	uint32_t pText;
 	uint16_t decodeUTF8;
@@ -3171,11 +3171,10 @@ static uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GF
 	char cText[101];
 	uint32_t result;
 	uint32_t Xsum;
-	uint32_t i, j;
+	uint32_t j;
 	tFont *font;
 	uint8_t gfx_selected_language;
 	uint32_t pText;
-	uint8_t setToTinyFont = 0;
 	uint16_t decodeUTF8;
 	uint8_t tinyState = 0;		/* used to identify the usage of tiny font */
 
@@ -3193,7 +3192,6 @@ static uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GF
 
 // -----------------------------
 
-	setToTinyFont = 0;
 	font = (tFont *)cfg->font;
 	Xsum = 0;
 	j = 0;
