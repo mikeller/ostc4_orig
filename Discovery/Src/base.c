@@ -232,6 +232,8 @@
 #include "test_vpm.h"
 #include "tDebug.h"
 #include "motion.h"
+#include "t7.h"
+#include "t3.h"
 
 #ifdef DEMOMODE
 #include "demo.h"
@@ -347,6 +349,7 @@ int main(void)
 {
     uint32_t pLayerInvisible;
     uint16_t totalDiveCounterFound;
+    uint8_t wasInFocus = 0;
 
 	SStateList status;
 #ifdef ENABLE_MOTION_CONTROL
@@ -512,6 +515,7 @@ int main(void)
 
        			if(viewInFocus())
         		{
+       				wasInFocus = 1;
        				set_Backlight_Boost(settingsGetPointer()->viewPortMode & 0x03);
 					switch(settingsGetPointer()->MotionDetection)
 					{
@@ -536,6 +540,19 @@ int main(void)
        			}
        			else
        			{
+       				if(wasInFocus)
+       				{
+       					wasInFocus = 0;
+       					if(settingsGetPointer()->design == 7)
+       					{
+       						t7_set_customview_to_primary();
+       					}
+       					else
+       					{
+       						t3_set_customview_to_primary();
+       					}
+       				}
+
        				set_Backlight_Boost(0);
        			}
         	}
@@ -772,6 +789,10 @@ static void TriggerButtonAction()
 						else								/* return to t7 view */
 						{
 							settingsGetPointer()->design = 7;
+							if(settingsGetPointer()->MotionDetection == MOTION_DETECT_SECTOR)
+							{
+								DefinePitchSectors(settingsGetPointer()->viewPitch,CUSTOMER_DEFINED_VIEWS);
+							}
 						}
 					}
 					else
@@ -785,7 +806,7 @@ static void TriggerButtonAction()
 						settingsGetPointer()->design = 3;
 						if(settingsGetPointer()->MotionDetection == MOTION_DETECT_SECTOR)
 						{
-							DefinePitchSectors(stateRealGetPointer()->lifeData.compass_pitch,CUSTOMER_DEFINED_VIEWS);
+							DefinePitchSectors(settingsGetPointer()->viewPitch,CUSTOMER_DEFINED_VIEWS);
 						}
 					}
 					else if (settingsGetPointer()->extraDisplay	== EXTRADISPLAY_DECOGAME)
