@@ -18,7 +18,7 @@
 #define	STABLE_STATE_COUNT			2	/* number of count to declare a state as stable (at the moment based on 100ms) */
 #define STABLE_STATE_TIMEOUT		5	/* Detection shall be aborted if a movement state is stable for more than 500ms */
 
-#define SECTOR_WINDOW				40.0  	/* Pitch window which is used for custom view projection */
+#define SECTOR_WINDOW				30.0  	/* Pitch window which is used for custom view projection */
 #define SECTOR_WINDOW_MAX			120.0  	/* Pitch window which will be greater than the divers field of view */
 #define SECTOR_HYSTERY				2		/* Additional offset to avoid fast changing displays */
 #define SECTOR_BORDER				400.0	/* Define a value which is out of limit to avoid not wanted key events */
@@ -172,9 +172,9 @@ void DefinePitchSectors(float centerPitch,uint8_t numOfSectors)
 		{
 			sectorDetection.count =  t7_GetEnabled_customviews();
 		}
-		if(sectorDetection.count > 7)
+		if(sectorDetection.count > 5)
 		{
-			sectorDetection.count = 7;	/* more views are hard to manually control */
+			sectorDetection.count = 5;	/* more views are hard to manually control */
 		}
 	}
 	else
