@@ -1,3 +1,4 @@
-copy D:\Kitt\Coding\AC6-workspace\OSTC4_Firmware\Debug\OSTC4_Firmware.bin OSTC4_Firmware.bin /V /Y
-copy D:\Kitt\Coding\AC6-workspace\OSTC4_RTE\Debug\OSTC4_RTE.bin OSTC4_RTE.bin /V /Y
+copy ..\RefPrj\Firmware\Release\OSTC4_Firmware.bin OSTC4_Firmware.bin /V /Y
+copy ..\RefPrj\RTE\Release\OSTC4_RTE.bin OSTC4_RTE.bin /V /Y
+copy ..\RefPrj\FontPack\Release\OSTC4_FontPack.bin OSTC4_FontPack.bin /V /Y
 
