@@ -80,7 +80,7 @@ And select _linker Script_: `OSTC4/Common/CPU1-F429.ld`
 
 ## Prepare generation of bin file ##
 1. Select your top-level project, right-click to edit `properties`. In `C/C++ Build` choose `Settings`, then tab `Build Steps` and `Post build step command`.
-2. Add option -R .upper\* to the command to removed the upper memory section, which is provided by the font library =>arm-none-eabi-objcopy -R .upper\* -O binary "${BuildArtifactFileBaseName}.elf" "${BuildArtifactFileBaseName}.bin"; arm-none-eabi-size "${BuildArtifactFileName}"
+2. Add option -R .upper\* and -R.font_firmware_data to the command to removed the upper memory section, which is provided by the font library =>arm-none-eabi-objcopy -R .upper\* -R.font_firmware_data -O binary "${BuildArtifactFileBaseName}.elf" "${BuildArtifactFileBaseName}.bin"; arm-none-eabi-size "${BuildArtifactFileName}"
 
 ## Build ELF firmware ##
 
