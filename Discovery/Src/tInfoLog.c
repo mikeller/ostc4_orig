@@ -385,7 +385,7 @@ void tInfoLog_BuildAndShowNextPage(void)
             	}
                 break;
             case 2:
-                textPointer += snprintf(&text[textPointer],20,"\016\016 VPM \017");
+                textPointer += snprintf(&text[textPointer],20,"\016\016VPM\017");
                 break;
             default:
                 textPointer += snprintf(&text[textPointer],20,"\016\016  *  \017");
