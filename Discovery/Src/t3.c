@@ -38,6 +38,11 @@
 #include "unit.h"
 #include "motion.h"
 
+#include "logbook_miniLive.h"
+
+
+#define CV_PROFILE_WIDTH		(700U)
+
 //* Imported function prototypes ---------------------------------------------*/
 extern uint8_t write_gas(char *text, uint8_t oxygen, uint8_t helium);
 
@@ -75,6 +80,7 @@ const uint8_t t3_customviewsStandard[] =
 	CVIEW_T3_DepthData,
 	CVIEW_noneOrDebug,
 	CVIEW_T3_DecoTTS,
+	CVIEW_T3_Profile,
     CVIEW_T3_END
 };
 
@@ -163,6 +169,59 @@ void t3_init(void)
     t3c2.WindowY0 = t3c1.WindowY0;
     t3c2.WindowY1 = t3c1.WindowY1;
     t3c2.WindowTab = 600;
+}
+
+void t3_select_customview(uint8_t selectedCustomview)
+{
+	if(selectedCustomview < CVIEW_T3_END)
+	{
+		t3_selection_customview = selectedCustomview;
+	}
+}
+
+void t3_miniLiveLogProfile(void)
+{
+    SWindowGimpStyle wintemp;
+    uint16_t datalength = 0;
+    uint16_t* pReplayData;
+    uint16_t max_depth = 0;
+
+    point_t start, stop;
+
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
+    wintemp.left = t3c1.WindowX0;
+    wintemp.right = t3c1.WindowX0 + CV_PROFILE_WIDTH;
+   	wintemp.top = 480 - BigFontSeperationTopBottom + 5;
+   	wintemp.bottom = t3c1.WindowY1 = 479 - 5;
+
+    start.x = CV_PROFILE_WIDTH + 2;
+    start.y = wintemp.top;
+    stop.x = start.x;
+    stop.y = wintemp.bottom;
+
+   	GFX_draw_line(&t3screen, start, stop, CLUT_Font020);
+
+   	if(getReplayOffset() != 0xFFFF)
+   	{
+		getReplayInfo(&pReplayData, &datalength, &max_depth);
+   	}
+
+   	if(max_depth < (uint16_t)(stateUsed->lifeData.max_depth_meter * 100))
+	{
+		max_depth = (uint16_t)(stateUsed->lifeData.max_depth_meter * 100);
+	}
+	if(datalength != 0)
+	{
+		GFX_graph_print(&t3screen, &wintemp, 0,1,0, max_depth, pReplayData, datalength, CLUT_Font031, NULL);
+	}
+	else
+	{
+		datalength = 750;
+	}
+
+    GFX_graph_print(&t3screen, &wintemp, 0,1,0, max_depth, getMiniLiveReplayPointerToData(), datalength, CLUT_Font030, NULL);
 }
 
 
@@ -955,6 +1014,11 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         t3_basics_compass(tXscreen, center, heading, stateUsed->diveSettings.compassHeading);
         break;
 
+    case CVIEW_T3_Profile:
+        snprintf(text,100,"\032\f\001%c%c",TXT_2BYTE,TXT2BYTE_Profile);
+        GFX_write_string(&FontT42,tXc1,text,0);
+        t3_miniLiveLogProfile();
+    	break;
     case CVIEW_T3_DecoTTS:
     case CVIEW_T3_Decostop:
     default:

@@ -1601,7 +1601,7 @@ uint8_t t7_customview_disabled(uint8_t view)
     return cv_disabled;
 }
 
-void t7_change_customview(uint8_t action)
+uint8_t t7_change_customview(uint8_t action)
 {
     uint8_t *pViews;
     uint8_t *pStartView,*pCurView, *pLastView;
@@ -1660,6 +1660,7 @@ void t7_change_customview(uint8_t action)
     } while(cv_disabled);
 
     selection_customview = *pViews;
+    return *pViews;
 }
 
 void t7_select_customview(uint8_t selectedCustomview)
