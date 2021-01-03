@@ -14,6 +14,7 @@
 #include "t7.h"
 #include "t3.h"
 #include "settings.h"
+#include "base.h"
 
 #define	STABLE_STATE_COUNT			2	/* number of count to declare a state as stable (at the moment based on 100ms) */
 #define STABLE_STATE_TIMEOUT		5	/* Detection shall be aborted if a movement state is stable for more than 500ms */
@@ -26,6 +27,7 @@
 
 #define SECTOR_MAX					24		/* maximum number of sectors */
 #define SECTOR_SCROLL				7		/* number of sectors used for scroll detection */
+#define SECTOR_MAX_CNT				5		/* max number of views used for sector control */
 
 #define MOTION_DELTA_STABLE			0
 #define MOTION_DELTA_JITTER			1
@@ -46,6 +48,7 @@ static uint8_t motionDeltaHistoryIdx;										/* Current index of history data 
 
 static uint8_t focusCnt = 0;
 static uint8_t inFocus = 0;
+static uint8_t sectorMap[SECTOR_MAX_CNT];
 
 void resetMotionDeltaHistory()
 {
@@ -172,9 +175,9 @@ void DefinePitchSectors(float centerPitch,uint8_t numOfSectors)
 		{
 			sectorDetection.count =  t7_GetEnabled_customviews();
 		}
-		if(sectorDetection.count > 5)
+		if(sectorDetection.count > SECTOR_MAX_CNT)
 		{
-			sectorDetection.count = 5;	/* more views are hard to manually control */
+			sectorDetection.count = SECTOR_MAX_CNT;	/* more views are hard to manually control */
 		}
 	}
 	else
@@ -207,6 +210,63 @@ void DefinePitchSectors(float centerPitch,uint8_t numOfSectors)
 
 }
 
+
+uint8_t GetCVForSector(uint8_t selSector)
+{
+	if(selSector < sectorDetection.count)
+	{
+		return sectorMap[selSector];
+	}
+	else
+	{
+		return 0;
+	}
+}
+void MapCVToSector()
+{
+	uint8_t centerView = 0;
+
+	memset(sectorMap, 0, sizeof(sectorMap));
+
+	switch(sectorDetection.count)
+	{
+		case 1: centerView = 0; break;
+		case 2: centerView = 0; break;
+		case 3: centerView = 1; break;
+		case 4: centerView = 1; break;
+		case 5: centerView = 2; break;
+		default: centerView = sectorDetection.count / 2 - 1;
+			break;
+	}
+	if(settingsGetPointer()->design == 3)		/* Big font view ? */
+	{
+		sectorMap[centerView] = settingsGetPointer()->tX_customViewPrimaryBF;
+	}
+	else
+	{
+		sectorMap[centerView] = settingsGetPointer()->tX_customViewPrimary;
+	}
+
+	centerView++;
+	while(sectorMap[centerView] == 0)
+	{
+		if(settingsGetPointer()->design == 3)		/* Big font view ? */
+		{
+			sectorMap[centerView] = t3_change_customview(ACTION_BUTTON_ENTER);
+		}
+		else
+		{
+			sectorMap[centerView] = t7_change_customview(ACTION_BUTTON_ENTER);
+		}
+		centerView++;
+		if(centerView == sectorDetection.count)
+		{
+			centerView = 0;
+		}
+	}
+
+}
+
 void InitMotionDetection(void)
 {
 	sectorDetection.target = 0;
@@ -217,6 +277,7 @@ void InitMotionDetection(void)
 	switch(settingsGetPointer()->MotionDetection)
 	{
 		case MOTION_DETECT_SECTOR: DefinePitchSectors(settingsGetPointer()->viewPitch,CUSTOMER_DEFINED_VIEWS);
+									MapCVToSector();
 			break;
 		case MOTION_DETECT_MOVE: DefinePitchSectors(settingsGetPointer()->viewPitch,SECTOR_MAX);
 			break;
@@ -232,31 +293,20 @@ void InitMotionDetection(void)
 /* Map the current pitch value to a sector and create button event in case the sector is left */
 detectionState_t detectSectorButtonEvent(float curPitch)
 {
-	static uint8_t lastTargetSector = 0;
 	uint8_t newTargetSector;
-	uint8_t PitchEvent = DETECT_NOTHING;
 
-/* only change sector if reading is stable */
 	newTargetSector = GetSectorForPitch(stateRealGetPointer()->lifeData.compass_pitch);
-	if(lastTargetSector == newTargetSector)
+
+	if(settingsGetPointer()->design == 3)		/* Big font view ? */
 	{
-		sectorDetection.target = newTargetSector;
+		t3_select_customview(GetCVForSector(newTargetSector));
 	}
-	lastTargetSector = newTargetSector;
-	if(sectorDetection.target != sectorDetection.current)
+	else
 	{
-		 if(sectorDetection.target > sectorDetection.current)
-		 {
-			 sectorDetection.current++;
-			PitchEvent = DETECT_POS_PITCH;
-		 }
-		 else
-		 {
-			 sectorDetection.current--;
-			 PitchEvent = DETECT_NEG_PITCH;
-		 }
+		t7_select_customview(GetCVForSector(newTargetSector));
 	}
-	return PitchEvent;
+
+	return DETECT_NOTHING;
 }
 
 /* Check if pitch is not in center position and trigger a button action if needed */
