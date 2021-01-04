@@ -1037,12 +1037,13 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         GFX_write_string(&FontT105,tXc1,text,0);
         t3_basics_compass(tXscreen, center, heading, stateUsed->diveSettings.compassHeading);
         break;
-
+#ifdef ENABLE_T3_PROFILE_VIEW
     case CVIEW_T3_Profile:
         snprintf(text,100,"\032\f\002%c%c",TXT_2BYTE,TXT2BYTE_Profile);
         GFX_write_string(&FontT42,tXc1,text,0);
         t3_miniLiveLogProfile();
     	break;
+#endif
     case CVIEW_T3_DecoTTS:
     case CVIEW_T3_Decostop:
     default:
@@ -1604,15 +1605,28 @@ void t3_basics_change_customview(uint8_t *tX_selection_customview,const uint8_t 
 		{
 			if(settingsGetPointer()->MotionDetection != MOTION_DETECT_SECTOR)		/* no hiding in case of active sector view option (fixed mapping would change during dive) */
 			{
-				if((tX_customviews[index] == CVIEW_T3_TTS) && !pDecoinfo->output_time_to_surface_seconds)	/* Skip TTS if value is 0 */
+				/* Skip TTS if value is 0 */
+				if((tX_customviews[index] == CVIEW_T3_TTS) && (!pDecoinfo->output_time_to_surface_seconds))
 				{
+					if(*tX_selection_customview == tX_customviews[index])
+					{
+						useFallback = 1;		/* the provided view is disabled => use fallback */
+					}
 					iterate = 1;
-					fallbackSelection = CVIEW_T3_TTS;
+					if(fallbackSelection == CVIEW_noneOrDebug)
+					{
+						fallbackSelection = CVIEW_T3_TTS;
+					}
 				}
-				if((tX_customviews[index] == CVIEW_T3_Decostop) && ((!pDecoinfo->output_ndl_seconds) && (!pDecoinfo->output_time_to_surface_seconds) && (timer_Safetystop_GetCountDown() == 0)))			/* Skip Deco if NDL is not set */
+				/* Skip Deco if NDL is not set */
+				if((tX_customviews[index] == CVIEW_T3_Decostop) && ((!pDecoinfo->output_ndl_seconds) && (!pDecoinfo->output_time_to_surface_seconds) && (timer_Safetystop_GetCountDown() == 0)))
 				{
-					iterate = 1;
+					if(*tX_selection_customview == tX_customviews[index])
+					{
+						useFallback = 1;		/* the provided view is disabled => use fallback */
+					}
 					fallbackSelection = CVIEW_T3_Decostop;
+					iterate = 1;
 				}
 			}
 		}
