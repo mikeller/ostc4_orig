@@ -38,6 +38,7 @@
 #include "unit.h"
 #include "externLogbookFlash.h"
 #include "configuration.h"
+#include "logbook_miniLive.h"
 
 /* Exported variables --------------------------------------------------------*/
 
@@ -175,9 +176,20 @@ void sendActionToInfoLogList(uint8_t sendAction)
 
 void sendActionToInfoLogShow(uint8_t sendAction)
 {
+#ifdef ENABLE_T3_PROFILE_VIEW
+	uint8_t stepBack;
+#endif
     switch(sendAction)
     {
     case ACTION_BUTTON_ENTER:
+#ifdef ENABLE_T3_PROFILE_VIEW
+    	if(getActiveLogPage() == 1)
+    	{
+   		    stepBack = (6 * (infolog.page - 1)) + infolog.line - 1;
+    		prepareReplayLog(stepBack);
+    		updateReplayIncdicator(&INFOLOGscreen);
+    	}
+#endif
         break;
     case ACTION_BUTTON_NEXT:
         showNextLogPage();

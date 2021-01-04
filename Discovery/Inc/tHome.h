@@ -83,6 +83,9 @@ enum CUSTOMVIEWS
 		CVIEW_T3_Navigation,
 		CVIEW_T3_DepthData,
 		CVIEW_T3_DecoTTS,
+#ifdef ENABLE_T3_PROFILE_VIEW
+		CVIEW_T3_Profile,
+#endif
 		CVIEW_T3_END
 };
 
