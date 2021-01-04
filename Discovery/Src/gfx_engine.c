@@ -1365,6 +1365,8 @@ void GFX_graph_print(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, c
 //		{
 			//output_content[pointer] = colormask;
 			//output_mask[pointer] = true;
+		if(dataTemp != 0xFFFF)	/* do not draw invalid data pixels */
+		{
 			if(w1 > 0)
 			{
 				pDestination_start = (uint16_t*)hgfx->FBStartAdress;
@@ -1462,7 +1464,7 @@ void GFX_graph_print(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, c
 				}
 			}
 			h_ulong_old = h_ulong;
-//		}
+		}
 		w1++;
 		w2++;
 	}
