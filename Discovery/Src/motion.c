@@ -240,11 +240,14 @@ void MapCVToSector()
 	}
 	if(settingsGetPointer()->design == 3)		/* Big font view ? */
 	{
-		sectorMap[centerView] = settingsGetPointer()->tX_customViewPrimaryBF;
+		t3_set_customview_to_primary();
+		sectorMap[centerView] = t3_change_customview(ACTION_END);
 	}
 	else
 	{
-		sectorMap[centerView] = settingsGetPointer()->tX_customViewPrimary;
+		t7_set_customview_to_primary();
+		sectorMap[centerView] = t7_change_customview(ACTION_END);
+
 	}
 
 	centerView++;
