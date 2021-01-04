@@ -37,11 +37,10 @@
 #include "timer.h"
 #include "unit.h"
 #include "motion.h"
-
 #include "logbook_miniLive.h"
 
 
-#define CV_PROFILE_WIDTH		(700U)
+#define CV_PROFILE_WIDTH		(600U)
 
 //* Imported function prototypes ---------------------------------------------*/
 extern uint8_t write_gas(char *text, uint8_t oxygen, uint8_t helium);
@@ -80,7 +79,9 @@ const uint8_t t3_customviewsStandard[] =
 	CVIEW_T3_DepthData,
 	CVIEW_noneOrDebug,
 	CVIEW_T3_DecoTTS,
+#ifdef ENABLE_T3_PROFILE_VIEW
 	CVIEW_T3_Profile,
+#endif
     CVIEW_T3_END
 };
 
@@ -184,28 +185,28 @@ void t3_miniLiveLogProfile(void)
     SWindowGimpStyle wintemp;
     uint16_t datalength = 0;
     uint16_t* pReplayData;
-    uint16_t max_depth = 0;
-
+    uint16_t max_depth = 10;
+    char text[TEXTSIZE];
     point_t start, stop;
+    uint8_t	doNotDrawLifeData = 0;
 
-	SSettings* pSettings;
-	pSettings = settingsGetPointer();
+    uint16_t diveMinutes = 0;
 
     wintemp.left = t3c1.WindowX0;
     wintemp.right = t3c1.WindowX0 + CV_PROFILE_WIDTH;
    	wintemp.top = 480 - BigFontSeperationTopBottom + 5;
-   	wintemp.bottom = t3c1.WindowY1 = 479 - 5;
+   	wintemp.bottom = 479 - 5;
 
     start.x = CV_PROFILE_WIDTH + 2;
-    start.y = wintemp.top;
+    start.y = t3c1.WindowY0;
     stop.x = start.x;
-    stop.y = wintemp.bottom;
+    stop.y = t3c1.WindowY1;
 
    	GFX_draw_line(&t3screen, start, stop, CLUT_Font020);
 
    	if(getReplayOffset() != 0xFFFF)
    	{
-		getReplayInfo(&pReplayData, &datalength, &max_depth);
+		getReplayInfo(&pReplayData, &datalength, &max_depth, &diveMinutes);
    	}
 
    	if(max_depth < (uint16_t)(stateUsed->lifeData.max_depth_meter * 100))
@@ -218,10 +219,32 @@ void t3_miniLiveLogProfile(void)
 	}
 	else
 	{
-		datalength = 750;
+		datalength = getMiniLiveReplayLength();
+		if(datalength < CV_PROFILE_WIDTH)
+		{
+			if(datalength < 3)			/* wait for some data entries to start graph */
+			{
+				doNotDrawLifeData = 1;
+			}
+			datalength = CV_PROFILE_WIDTH;
+		}
+		diveMinutes = 0;	/* do not show divetime because it is already shown in the upper field */
 	}
 
-    GFX_graph_print(&t3screen, &wintemp, 0,1,0, max_depth, getMiniLiveReplayPointerToData(), datalength, CLUT_Font030, NULL);
+
+	if(diveMinutes != 0)
+	{
+		snprintf(text,TEXTSIZE,"\002%dmin",diveMinutes);
+		GFX_write_string(&FontT42,&t3c1,text,1);
+	}
+
+    snprintf(text,TEXTSIZE,"\002%01.1fm", max_depth / 100.0);
+    GFX_write_string(&FontT42,&t3c1,text,0);
+
+    if(!doNotDrawLifeData)
+    {
+    	GFX_graph_print(&t3screen, &wintemp, 0,1,0, max_depth, getMiniLiveReplayPointerToData(), datalength, CLUT_Font030, NULL);
+    }
 }
 
 
@@ -265,6 +288,7 @@ void t3_set_customview_to_primary(void)
     if(stateUsed->mode == MODE_DIVE)
     {
     	t3_selection_customview = settingsGetPointer()->tX_customViewPrimaryBF;
+    	t3_change_customview(ACTION_END);
     }
 }
 
@@ -1015,7 +1039,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
         break;
 
     case CVIEW_T3_Profile:
-        snprintf(text,100,"\032\f\001%c%c",TXT_2BYTE,TXT2BYTE_Profile);
+        snprintf(text,100,"\032\f\002%c%c",TXT_2BYTE,TXT2BYTE_Profile);
         GFX_write_string(&FontT42,tXc1,text,0);
         t3_miniLiveLogProfile();
     	break;
@@ -1513,8 +1537,11 @@ void t3_basics_change_customview(uint8_t *tX_selection_customview,const uint8_t 
 
     uint8_t curViewIdx = 0xff;
     uint8_t index = 0;
+    uint8_t indexOverrun = 0;
     uint8_t lastViewIdx = 0;
-    uint8_t iterate = 0;	/* set to 1 if a view has to be skipped */
+    uint8_t iterate = 0;									/* set to 1 if a view has to be skipped */
+    uint8_t useFallback = 0;								/* is set if the current view is disabled */
+    uint8_t fallbackSelection = CVIEW_noneOrDebug;			/* show "None" view per default */
 
     /* set pointer to currently selected view and count number of entries */
     while((tX_customviews[index] != CVIEW_T3_END))
@@ -1528,7 +1555,7 @@ void t3_basics_change_customview(uint8_t *tX_selection_customview,const uint8_t 
     if(curViewIdx == 0xff)		/* called with unknown view */
     {
     	curViewIdx = 0;
-    	*tX_selection_customview = tX_customviews[index];
+    	*tX_selection_customview = CVIEW_noneOrDebug;		/* show "None" view per default */
     }
     lastViewIdx = index;
     index = curViewIdx;
@@ -1547,12 +1574,14 @@ void t3_basics_change_customview(uint8_t *tX_selection_customview,const uint8_t 
 				if(tX_customviews[index] == CVIEW_T3_END)
 				{
 					index = 0;
+					indexOverrun = 1;
 				}
 				break;
     		case ACTION_PITCH_NEG:
     			if(index == 0)
     			{
     				index = lastViewIdx - 1;
+    				indexOverrun = 1;
     			}
     			else
     			{
@@ -1566,22 +1595,44 @@ void t3_basics_change_customview(uint8_t *tX_selection_customview,const uint8_t 
 		if(t3_customview_disabled(tX_customviews[index]))
 		{
 			iterate = 1;
+			if(*tX_selection_customview == tX_customviews[index])
+			{
+				useFallback = 1;		/* the provided view is disabled => use fallback */
+			}
 		}
-	    if((tX_customviews[index] == CVIEW_T3_TTS) && !pDecoinfo->output_time_to_surface_seconds)	/* Skip TTS if value is 0 */
-	    {
-	    	iterate = 1;
-	    }
-	    if((tX_customviews[index] == CVIEW_T3_Decostop) && ((!pDecoinfo->output_ndl_seconds) && (!pDecoinfo->output_time_to_surface_seconds) && (timer_Safetystop_GetCountDown() == 0)))			/* Skip Deco if NDL is not set */
-	    {
-	       	iterate = 1;
-	    }
-	    if((iterate) && (action == ACTION_END))
+		else	/* special case which are enabled but not to be displayed at the moment */
+		{
+			if(settingsGetPointer()->MotionDetection != MOTION_DETECT_SECTOR)		/* no hiding in case of active sector view option (fixed mapping would change during dive) */
+			{
+				if((tX_customviews[index] == CVIEW_T3_TTS) && !pDecoinfo->output_time_to_surface_seconds)	/* Skip TTS if value is 0 */
+				{
+					iterate = 1;
+					fallbackSelection = CVIEW_T3_TTS;
+				}
+				if((tX_customviews[index] == CVIEW_T3_Decostop) && ((!pDecoinfo->output_ndl_seconds) && (!pDecoinfo->output_time_to_surface_seconds) && (timer_Safetystop_GetCountDown() == 0)))			/* Skip Deco if NDL is not set */
+				{
+					iterate = 1;
+					fallbackSelection = CVIEW_T3_Decostop;
+				}
+			}
+		}
+	    if((iterate) && (action == ACTION_END))			/* ACTION_END is used to check the enable state of the provided view. If it is enable the function will return without change */
 	    {
 	    	action = ACTION_BUTTON_ENTER;
 	    }
-    }while (iterate == 1);
+    }while ((iterate == 1) && (!((indexOverrun == 1) && (*tX_selection_customview == tX_customviews[index]))));		/* no other available view found => use fallback */
 
-    *tX_selection_customview = tX_customviews[index];
+    if(*tX_selection_customview == tX_customviews[index])
+	{
+    	if(useFallback)
+    	{
+		   	*tX_selection_customview = fallbackSelection;		/* no active view found => keep actual view or change to fallback if actual view is deactivated */
+    	}
+	}
+    else
+    {
+    	*tX_selection_customview = tX_customviews[index];
+    }
 }
 
 
