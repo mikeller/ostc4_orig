@@ -54,4 +54,9 @@
 
 /* Enable to have option to hide not needed gases from dive views */
 /* #define ENABLE_UNUSED_GAS_HIDING */
+
+/* Enable to have the new T3 profile view available */
+/* #define ENABLE_T3_PROFILE_VIEW */
+
+
 #endif

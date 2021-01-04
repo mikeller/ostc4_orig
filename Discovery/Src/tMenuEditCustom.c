@@ -402,6 +402,7 @@ char customview_TXT2BYTE_helper(uint8_t customViewId)
         text = TXT2BYTE_Tissues;
         break;
     case CVIEW_Profile:
+    case CVIEW_T3_Profile:
         text = TXT2BYTE_Profile;
         break;
     case CVIEW_Gaslist:
