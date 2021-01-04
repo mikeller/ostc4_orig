@@ -34,6 +34,7 @@
 #include "show_logbook.h"
 #include "unit.h"
 #include "configuration.h"
+#include "logbook_miniLive.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -49,6 +50,9 @@ static GFX_DrawCfgScreen	tLOGbackground;
 
 static void print_gas_name(char* output,uint8_t lengh,uint8_t oxygen,uint8_t helium);
 static int16_t get_colour(int16_t color);
+
+static uint8_t active_log_page = 1;
+static uint8_t active_log_offset = 0;
 
 /* Overview */
 static void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx, uint8_t StepBackwards);
@@ -670,6 +674,19 @@ static void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t 
     snprintf(text,40,"%i\016\016 hPa\017",logbookHeader.surfacePressure_mbar);
     Gfx_write_label_var(hgfx,320,600,440, &FontT42,CLUT_GasSensor1,text);
 
+
+/* show symbol in case log entry is marked for usage in profile custom view */
+	snprintf(text,10,"\002>");
+	if(0xFFFF != getReplayOffset())
+	{
+		 Gfx_write_label_var(hgfx,750,799,440, &FontT42,CLUT_GasSensor1,text);
+	}
+	else
+	{
+		 Gfx_write_label_var(hgfx,750,799,440, &FontT42,CLUT_MenuTopBackground,text);
+    }
+
+
 /* Show tank info */
 #ifdef ENABLE_BOTTLE_SENSOR
     for(loop = 0; loop < dataLength; loop++)
@@ -841,19 +858,21 @@ static void build_logbook_test(uint8_t page, uint8_t StepBackwards)
 
 void show_logbook_test(_Bool firstPage, uint8_t StepBackwards)
 {
-    static uint8_t page = 1;
     if(firstPage)
     {
-            page = 1;
+    	active_log_page = 1;
+    	active_log_offset = StepBackwards;
     }
     else
     {
-            page++;
-            if(page > 4)
-                    page = 1;
+    	active_log_page++;
+        if(active_log_page > 4)
+        {
+           	active_log_page = 1;
+        }
     }
 
-    build_logbook_test(page,StepBackwards);
+    build_logbook_test(active_log_page,StepBackwards);
 //	GFX_ResetLayer(TOP_LAYER);
 //	GFX_ResetLayer(BACKGRD_LAYER);
 
@@ -1110,4 +1129,15 @@ static void print_gas_name(char* output,uint8_t length,uint8_t oxygen,uint8_t he
 static int16_t get_colour(int16_t color)
 {
      return CLUT_GasSensor1 + color;
+}
+
+uint8_t getActiveLogPage()
+{
+	return active_log_page;
+}
+
+void updateReplayIncdicator(GFX_DrawCfgScreen *hgfx)
+{
+    build_logbook_test(1,active_log_offset);
+    GFX_SetFramesTopBottom(tLOGscreen.FBStartAdress, tLOGbackground.FBStartAdress,480);
 }
