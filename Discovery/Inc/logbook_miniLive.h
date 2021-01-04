@@ -36,5 +36,11 @@
 void updateMiniLiveLogbook( _Bool checkOncePerSecond);
 uint16_t *getMiniLiveLogbookPointerToData(void);
 uint16_t getMiniLiveLogbookActualDataLength(void);
+uint16_t *getMiniLiveReplayPointerToData(void);
+uint16_t getMiniLiveReplayLength(void);
+uint8_t prepareReplayLog(uint8_t StepBackwards);
+uint8_t getReplayInfo(uint16_t** pReplayData, uint16_t* DataLength, uint16_t* MaxDepth, uint16_t* diveMinutes);
+uint16_t getReplayDataResolution(void);
+uint16_t getReplayOffset(void);
 
 #endif /* LOGBOOK_MINI_LIVE_H */
