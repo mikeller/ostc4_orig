@@ -28,6 +28,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "t7.h"
+#include "t3.h"
 #include "settings.h"
 #include "data_exchange_main.h"
 #include "decom.h"
@@ -570,12 +571,17 @@ void t7_refresh(void)
             last_mode = MODE_DIVE;
             /* lower left corner primary */
             selection_custom_field = settingsGetPointer()->tX_userselectedLeftLowerCornerPrimary;
-            /* custom view primary OR debug if automatic return is off */
+            /* custom view primary OR debug if automatic return is off | T7 is default dive view => also initialize big font view */
             if((settingsGetPointer()->tX_customViewTimeout == 0) && (settingsGetPointer()->showDebugInfo))
-                selection_customview = CVIEW_noneOrDebug;
+            {
+            	selection_customview = CVIEW_noneOrDebug;
+            	t3_select_customview(CVIEW_noneOrDebug);
+            }
             else
+            {
                 selection_customview = settingsGetPointer()->tX_customViewPrimary;
-
+                t3_set_customview_to_primary();
+            }
             t7_change_customview(ACTION_END);
 
             if((settingsGetPointer()->MotionDetection != MOTION_DETECT_OFF))
