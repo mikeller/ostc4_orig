@@ -792,6 +792,7 @@ static void TriggerButtonAction()
 							if(settingsGetPointer()->MotionDetection == MOTION_DETECT_SECTOR)
 							{
 								DefinePitchSectors(settingsGetPointer()->viewPitch,CUSTOMER_DEFINED_VIEWS);
+								MapCVToSector();
 							}
 						}
 					}
@@ -807,6 +808,7 @@ static void TriggerButtonAction()
 						if(settingsGetPointer()->MotionDetection == MOTION_DETECT_SECTOR)
 						{
 							DefinePitchSectors(settingsGetPointer()->viewPitch,CUSTOMER_DEFINED_VIEWS);
+							MapCVToSector();
 						}
 					}
 					else if (settingsGetPointer()->extraDisplay	== EXTRADISPLAY_DECOGAME)

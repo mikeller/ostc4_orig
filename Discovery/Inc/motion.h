@@ -76,6 +76,7 @@ void InitMotionDetection(void);
 void resetMotionDeltaHistory();
 void evaluateMotionDelta(float roll, float pitch, float yaw);
 void DefinePitchSectors(float centerAngle, uint8_t numOfSectors);
+void MapCVToSector(void);
 detectionState_t detectPitch(float currentPitch);
 detectionState_t detectSectorButtonEvent(float curPitch);
 detectionState_t detectScrollButtonEvent(float curPitch);
