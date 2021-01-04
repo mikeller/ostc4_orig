@@ -32,6 +32,9 @@
 //void build_logbook_test(void);
 void show_logbook_test(_Bool firstPage, uint8_t StepBackwards);
 void show_logbook_exit(void);
+uint8_t getActiveLogPage(void);
+void updateReplayIncdicator(GFX_DrawCfgScreen *hgfx);
+
 //void show_logbook_logbook_show_log_page4(GFX_DrawCfgScreen *hgfx);
 
 #endif /* SHOW_LOGBOOK_H */
