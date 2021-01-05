@@ -183,13 +183,13 @@ void t3_select_customview(uint8_t selectedCustomview)
 void t3_miniLiveLogProfile(void)
 {
     SWindowGimpStyle wintemp;
-    uint16_t datalength = 0;
+    uint16_t replayDataLength = 0;
+    uint16_t liveDataLength = 0;
+    uint16_t drawDataLength = 0;
     uint16_t* pReplayData;
     uint16_t max_depth = 10;
     char text[TEXTSIZE];
     point_t start, stop;
-    uint8_t	doNotDrawLifeData = 0;
-
     uint16_t diveMinutes = 0;
 
     wintemp.left = t3c1.WindowX0;
@@ -206,31 +206,29 @@ void t3_miniLiveLogProfile(void)
 
    	if(getReplayOffset() != 0xFFFF)
    	{
-		getReplayInfo(&pReplayData, &datalength, &max_depth, &diveMinutes);
+		getReplayInfo(&pReplayData, &replayDataLength, &max_depth, &diveMinutes);
    	}
 
    	if(max_depth < (uint16_t)(stateUsed->lifeData.max_depth_meter * 100))
 	{
 		max_depth = (uint16_t)(stateUsed->lifeData.max_depth_meter * 100);
 	}
-	if(datalength != 0)
-	{
-		GFX_graph_print(&t3screen, &wintemp, 0,1,0, max_depth, pReplayData, datalength, CLUT_Font031, NULL);
-	}
-	else
-	{
-		datalength = getMiniLiveReplayLength();
-		if(datalength < CV_PROFILE_WIDTH)
-		{
-			if(datalength < 3)			/* wait for some data entries to start graph */
-			{
-				doNotDrawLifeData = 1;
-			}
-			datalength = CV_PROFILE_WIDTH;
-		}
-		diveMinutes = 0;	/* do not show divetime because it is already shown in the upper field */
-	}
 
+   	liveDataLength = getMiniLiveReplayLength();
+
+   	if(replayDataLength > liveDataLength)
+   	{
+   		drawDataLength = replayDataLength;
+   	}
+   	else
+   	{
+   		drawDataLength = liveDataLength;
+   	}
+
+	if(drawDataLength < CV_PROFILE_WIDTH)
+	{
+		drawDataLength = CV_PROFILE_WIDTH;
+	}
 
 	if(diveMinutes != 0)
 	{
@@ -241,9 +239,14 @@ void t3_miniLiveLogProfile(void)
     snprintf(text,TEXTSIZE,"\002%01.1fm", max_depth / 100.0);
     GFX_write_string(&FontT42,&t3c1,text,0);
 
-    if(!doNotDrawLifeData)
+	if(replayDataLength != 0)
+	{
+		GFX_graph_print(&t3screen, &wintemp, 0,1,0, max_depth, pReplayData, drawDataLength, CLUT_Font031, NULL);
+	}
+
+    if(liveDataLength > 3)
     {
-    	GFX_graph_print(&t3screen, &wintemp, 0,1,0, max_depth, getMiniLiveReplayPointerToData(), datalength, CLUT_Font030, NULL);
+    	GFX_graph_print(&t3screen, &wintemp, 0,1,0, max_depth, getMiniLiveReplayPointerToData(), drawDataLength, CLUT_Font030, NULL);
     }
 }
 

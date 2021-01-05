@@ -41,10 +41,10 @@ static uint16_t MLLpointer  = 0;
 static uint8_t MLLtickIntervallSeconds = 2;
 
 /* Replay Block data storage */
-#define DEPTH_DATA_LENGTH	(1800u)				/* Resolution: 5 hours dive, sampling every 10 seconds */
-uint16_t depthdata[DEPTH_DATA_LENGTH];
-uint16_t livedepthdata[DEPTH_DATA_LENGTH * 2];
-static uint16_t historyIndex = 0;
+#define DEPTH_DATA_LENGTH	(1800u)				/* Resolution: 1 hours dive, sampling every 2 seconds */
+uint16_t ReplayDepthData[DEPTH_DATA_LENGTH];
+uint16_t liveDepthData[DEPTH_DATA_LENGTH];
+static uint16_t lifeDataIndex = 0;
 
 static uint8_t	ReplayDataResolution = 2;		/* Time represented by one sample (second) */
 static uint16_t ReplayDataLength = 0;			/* Number of data entries */
@@ -84,7 +84,7 @@ void updateMiniLiveLogbook( _Bool checkOncePerSecond)
 	static uint8_t bDiveMode = 0;
 	static uint32_t last_second = 0;
 	static uint8_t secondsCount = 0;
-	static uint8_t historysecondsCount = 0;
+	static uint8_t lifesecondsCount = 0;
 
 	if(checkOncePerSecond)
 	{
@@ -94,7 +94,7 @@ void updateMiniLiveLogbook( _Bool checkOncePerSecond)
 		last_second = now;
 	}
 	secondsCount++;
-	historysecondsCount++;
+	lifesecondsCount++;
 	
 	if(!bDiveMode)
 	{
@@ -107,13 +107,13 @@ void updateMiniLiveLogbook( _Bool checkOncePerSecond)
 			for(int i=0;i<MLLsize;i++)
 				MLLdataDepth[i] = 0;
 
-			for(historyIndex = 0; historyIndex < DEPTH_DATA_LENGTH; historyIndex++)
+			for(lifeDataIndex = 0; lifeDataIndex < DEPTH_DATA_LENGTH; lifeDataIndex++)
 			{
-				livedepthdata[historyIndex] = 0xFFFF;
+				liveDepthData[lifeDataIndex] = 0xFFFF;
 			}
-			historysecondsCount = 0;
-			historyIndex = 0;
-			livedepthdata[historyIndex++] = 0;	/* start at 0 */
+			lifesecondsCount = 0;
+			lifeDataIndex = 0;
+			liveDepthData[lifeDataIndex++] = 0;	/* start at 0 */
 		}
 	}
 	else if(stateUsed->mode == MODE_DIVE)
@@ -135,17 +135,18 @@ void updateMiniLiveLogbook( _Bool checkOncePerSecond)
 			if(MLLpointer < MLLsize)
 				MLLdataDepth[MLLpointer++] = (int)(stateUsed->lifeData.depth_meter * 10);
 		}
-		if(historysecondsCount > ReplayDataResolution)
+		if(lifesecondsCount >= ReplayDataResolution)
 		{
-			historysecondsCount = 0;
+			lifesecondsCount = 0;
 
-			if(historyIndex >= 2*DEPTH_DATA_LENGTH)		/* compress data */
+			if(lifeDataIndex >= DEPTH_DATA_LENGTH)		/* compress data */
 			{
 				ReplayDataResolution *= 2;
-				compressBuffer_uint16(livedepthdata,2*DEPTH_DATA_LENGTH);
-				historyIndex = DEPTH_DATA_LENGTH;
+				compressBuffer_uint16(liveDepthData,DEPTH_DATA_LENGTH);
+				compressBuffer_uint16(ReplayDepthData,DEPTH_DATA_LENGTH);		/* also compress Replay data to siplify mapping between live and replay data */
+				lifeDataIndex = DEPTH_DATA_LENGTH / 2;
 			}
-			livedepthdata[historyIndex++] = (int)(stateUsed->lifeData.depth_meter * 100);
+			liveDepthData[lifeDataIndex++] = (int)(stateUsed->lifeData.depth_meter * 100);
 		}
 	}
 	else if(bDiveMode == 3)
@@ -168,6 +169,10 @@ uint8_t prepareReplayLog(uint8_t StepBackwards)
     {
     	ReplayDataOffset = 0xFFFF;
     	ReplayDataResolution = 2;
+		ReplayDataLength = 0;
+		ReplayDataMaxDepth = 0;
+		ReplayDataMinutes =  0;
+
     	retVal = 1;
     }
     else
@@ -175,7 +180,7 @@ uint8_t prepareReplayLog(uint8_t StepBackwards)
     	ReplayDataOffset = StepBackwards;
 		logbook_getHeader(StepBackwards ,&logbookHeader);
 
-		dataLength = logbook_readSampleData(StepBackwards, DEPTH_DATA_LENGTH, depthdata,NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+		dataLength = logbook_readSampleData(StepBackwards, DEPTH_DATA_LENGTH, ReplayDepthData,NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 		if( dataLength == DEPTH_DATA_LENGTH)		/* log data has been compressed to fit into buffer */
 		{
@@ -202,7 +207,7 @@ uint8_t getReplayInfo(uint16_t** pReplayData, uint16_t* DataLength, uint16_t* Ma
 
 	if((ReplayDataOffset != 0xFFFF) && (pReplayData != NULL) && (DataLength != NULL) && (MaxDepth != NULL))
 	{
-		*pReplayData = depthdata;
+		*pReplayData = ReplayDepthData;
 		*DataLength = ReplayDataLength;
 		*MaxDepth = ReplayDataMaxDepth;
 		*diveMinutes = ReplayDataMinutes;
@@ -214,11 +219,11 @@ uint8_t getReplayInfo(uint16_t** pReplayData, uint16_t* DataLength, uint16_t* Ma
 
 uint16_t *getMiniLiveReplayPointerToData(void)
 {
-	return livedepthdata;
+	return liveDepthData;
 }
 uint16_t getMiniLiveReplayLength(void)
 {
-	return historyIndex;
+	return lifeDataIndex;
 }
 
 uint16_t getReplayOffset(void)
