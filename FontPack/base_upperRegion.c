@@ -32,13 +32,13 @@
 			 Don't forget to adjust the length of the font in the last line starting
 			 const tFont .....
 
-	[..] last char vor der groï¿½en Lï¿½cke, Stand 160217
+	[..] last char before the big gap, as of 160217
 			 image_data_FontT24_0x002b[364]
 			 __attribute__((at( START_T24_FONT + (1647 * 28) ))), START_T24_FONT  (0x08142F00 - MINUS_BANK)
 
-			 -> frei ab 0x0814E490
-			 geht dann weiter mit image_data_ostc_fuer_Tauchcomputer_240px
-			 sind ca. 120 kByte frei!
+			 -> free from 0x0814E490
+			 then the logo image_data_ostc_fuer_Tauchcomputer_240px
+			 approx 120 kBytes free space available!
 
 	 @endverbatim
 	******************************************************************************
