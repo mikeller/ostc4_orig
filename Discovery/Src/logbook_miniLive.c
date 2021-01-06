@@ -24,6 +24,7 @@
 #include "logbook_miniLive.h"
 #include "data_exchange.h"
 #include "logbook.h"
+#include "tHome.h"
 
  /*
   ******************************************************************************
@@ -44,6 +45,7 @@ static uint8_t MLLtickIntervallSeconds = 2;
 #define DEPTH_DATA_LENGTH	(1800u)				/* Resolution: 1 hours dive, sampling every 2 seconds */
 uint16_t ReplayDepthData[DEPTH_DATA_LENGTH];
 uint16_t liveDepthData[DEPTH_DATA_LENGTH];
+uint16_t liveDecoData[DEPTH_DATA_LENGTH];
 static uint16_t lifeDataIndex = 0;
 
 static uint8_t	ReplayDataResolution = 2;		/* Time represented by one sample (second) */
@@ -86,6 +88,10 @@ void updateMiniLiveLogbook( _Bool checkOncePerSecond)
 	static uint8_t secondsCount = 0;
 	static uint8_t lifesecondsCount = 0;
 
+	const SDecoinfo* pDecoinfo;
+	uint8_t stopDepth = 0;
+	uint16_t stopTime = 0;
+
 	if(checkOncePerSecond)
 	{
 		uint32_t now =  current_second();
@@ -110,6 +116,7 @@ void updateMiniLiveLogbook( _Bool checkOncePerSecond)
 			for(lifeDataIndex = 0; lifeDataIndex < DEPTH_DATA_LENGTH; lifeDataIndex++)
 			{
 				liveDepthData[lifeDataIndex] = 0xFFFF;
+				liveDecoData[lifeDataIndex] = 0xFFFF;
 			}
 			lifesecondsCount = 0;
 			lifeDataIndex = 0;
@@ -146,7 +153,25 @@ void updateMiniLiveLogbook( _Bool checkOncePerSecond)
 				compressBuffer_uint16(ReplayDepthData,DEPTH_DATA_LENGTH);		/* also compress Replay data to siplify mapping between live and replay data */
 				lifeDataIndex = DEPTH_DATA_LENGTH / 2;
 			}
-			liveDepthData[lifeDataIndex++] = (int)(stateUsed->lifeData.depth_meter * 100);
+			liveDepthData[lifeDataIndex] = (int)(stateUsed->lifeData.depth_meter * 100);
+			if(stateUsed->diveSettings.deco_type.ub.standard == VPM_MODE)
+			{
+				pDecoinfo = &stateUsed->decolistVPM;
+			}
+			else
+			{
+				pDecoinfo = &stateUsed->decolistBuehlmann;
+			}
+			tHome_findNextStop(pDecoinfo->output_stop_length_seconds, &stopDepth, &stopTime);
+			if(stopDepth)
+			{
+				liveDecoData[lifeDataIndex] = stopDepth * 100;
+			}
+			else
+			{
+				liveDecoData[lifeDataIndex] = 0xFFFF;
+			}
+			lifeDataIndex++;
 		}
 	}
 	else if(bDiveMode == 3)
@@ -220,6 +245,10 @@ uint8_t getReplayInfo(uint16_t** pReplayData, uint16_t* DataLength, uint16_t* Ma
 uint16_t *getMiniLiveReplayPointerToData(void)
 {
 	return liveDepthData;
+}
+uint16_t *getMiniLiveDecoPointerToData(void)
+{
+	return liveDecoData;
 }
 uint16_t getMiniLiveReplayLength(void)
 {

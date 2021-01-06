@@ -246,6 +246,7 @@ void t3_miniLiveLogProfile(void)
 
     if(liveDataLength > 3)
     {
+    	GFX_graph_print(&t3screen,&wintemp,wintemp.top * -1,1,0,max_depth, getMiniLiveDecoPointerToData(),drawDataLength, CLUT_NiceGreen, NULL);
     	GFX_graph_print(&t3screen, &wintemp, 0,1,0, max_depth, getMiniLiveReplayPointerToData(), drawDataLength, CLUT_Font030, NULL);
     }
 }
