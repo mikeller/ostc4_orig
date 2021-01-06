@@ -113,42 +113,11 @@ uint32_t tMCustom_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext
     /* MotionCtrl */
 		text[textPointer++] = TXT_2BYTE;
 		text[textPointer++] = TXT2BYTE_MotionCtrl;
-		text[textPointer++] = ' ';
-		text[textPointer++] = ' ';
-		text[textPointer++] = TXT_2BYTE;
-		switch(settingsGetPointer()->MotionDetection)
-		{
-			case MOTION_DETECT_OFF:
-				text[textPointer++] = TXT2BYTE_MoCtrlNone;
-				break;
-			case MOTION_DETECT_MOVE:
-				text[textPointer++] = TXT2BYTE_MoCtrlPitch;
-				break;
-			case MOTION_DETECT_SECTOR:
-				text[textPointer++] = TXT2BYTE_MoCtrlSector;
-				break;
-			case MOTION_DETECT_SCROLL:
-				text[textPointer++] = TXT2BYTE_MoCtrlScroll;
-						break;
-			default:
-				snprintf(&text[4],2,"%u",settingsGetPointer()->MotionDetection);
-				textPointer++;
-			break;
-		}
     }
 
 	strcpy(&text[textPointer],"\n\r");
 	textPointer += 2;
-
-    if((line == 0) || (line == 6))
-    {
-		text[textPointer++] = TXT_2BYTE;
-		text[textPointer++] = TXT2BYTE_CalibView;
-		strcpy(&text[textPointer],"\n\r");
-		textPointer += 2;
-    }
 #endif
-
     return StMCustom;
 }
 

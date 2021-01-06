@@ -43,8 +43,9 @@
 #include <math.h>
 
 
-#define CV_PER_PAGE  (5u)			/* number of cv selections shown at one page */
+#define CV_PER_PAGE  		(5u)	/* number of cv selections shown at one page */
 #define CV_SUBPAGE_MAX		(2u)	/* max number of customer view selection pages */
+#define MAX_BACKLIGHT_BOOST (2u)	/* max number of backlight levels which may be increased during focus state */
 
 static uint8_t customviewsSubpage = 0;
 static uint8_t customviewsSubpageMax = 0;	/* number of pages needed to display all selectable views */
@@ -65,6 +66,7 @@ uint8_t OnAction_CornerStandard(uint32_t editId, uint8_t blockNumber, uint8_t di
 uint8_t OnAction_CViewPortCalib(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_CViewPortLayout(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_CViewPortAmbient(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+uint8_t OnAction_CViewPortControl(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 /* Exported functions --------------------------------------------------------*/
 
 
@@ -187,14 +189,14 @@ void refresh_ViewPort(void)
 
     text[0] = '\001';
     text[1] = TXT_2BYTE;
-    text[2] = TXT2BYTE_CalibView;
+    text[2] = TXT2BYTE_MotionCtrl;
     text[3] = 0;
     write_topline(text);
 
     text[0] = TXT_2BYTE;
     text[1] = TXT2BYTE_CalibView;
     text[2] = 0;
-    write_label_var(   30, 700, ME_Y_LINE3, &FontT48, text);
+    write_label_var(   30, 700, ME_Y_LINE2, &FontT48, text);
 
     textIndex = 0;
     text[textIndex++] = TXT_2BYTE;
@@ -202,13 +204,13 @@ void refresh_ViewPort(void)
     text[textIndex++] = ' ';
     text[textIndex++] = '\006' - (settingsGetPointer()->viewPortMode >> 4);
     text[textIndex++] = 0;
-    write_label_var(   30, 700, ME_Y_LINE5, &FontT48, text);
+    write_label_var(   30, 700, ME_Y_LINE3, &FontT48, text);
     textIndex = 0;
     text[textIndex++] = TXT_2BYTE;
     text[textIndex++] = TXT2BYTE_BoostBacklight;
     text[textIndex++] = ' ';
     snprintf(&text[textIndex],32," %d",(settingsGetPointer()->viewPortMode & 0x3));
-    write_label_var(   30, 700, ME_Y_LINE6, &FontT48, text);
+    write_label_var(   30, 700, ME_Y_LINE4, &FontT48, text);
 
     write_buttonTextline(TXT2BYTE_ButtonBack,TXT2BYTE_ButtonEnter,TXT2BYTE_ButtonNext);
 
@@ -216,13 +218,6 @@ void refresh_ViewPort(void)
     if((pSettings->viewPitch != 0.0) || (pSettings->viewRoll != 0.0) || (pSettings->viewYaw != 0.0))
     {
     	distance = checkViewport(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading);
-
-    	if(pSettings->showDebugInfo)
-    	{
-			snprintf(text,32,"\001%03.3f",distance);
-			write_label_var(   30, 700, ME_Y_LINE2, &FontT48, text);
-    	}
-
 
     	/* show "bar graph" indicating the distance to the center point */
         textIndex = 0;
@@ -249,6 +244,36 @@ void refresh_ViewPort(void)
     	text[textIndex] = 0;
     	write_label_var(   30, 700, ME_Y_LINE1, &FontT48, text);
 
+/* MotionCtrl */
+        textIndex = 0;
+
+    	text[textIndex++] = TXT_2BYTE;
+   		text[textIndex++] = TXT2BYTE_MotionCtrl;
+   		text[textIndex++] = ' ';
+   		text[textIndex++] = ' ';
+   		text[textIndex++] = TXT_2BYTE;
+   		switch(settingsGetPointer()->MotionDetection)
+   		{
+   			case MOTION_DETECT_OFF:
+   				text[textIndex++] = TXT2BYTE_MoCtrlNone;
+   				break;
+   			case MOTION_DETECT_MOVE:
+   				text[textIndex++] = TXT2BYTE_MoCtrlPitch;
+   				break;
+   			case MOTION_DETECT_SECTOR:
+   				text[textIndex++] = TXT2BYTE_MoCtrlSector;
+   				break;
+   			case MOTION_DETECT_SCROLL:
+   				text[textIndex++] = TXT2BYTE_MoCtrlScroll;
+   						break;
+   			default:
+   					snprintf(&text[4],2,"%u",settingsGetPointer()->MotionDetection);
+    				textIndex++;
+    			break;
+        }
+    	text[textIndex] = 0;
+    	write_label_var(   30, 700, ME_Y_LINE6, &FontT48, text);
+
 		if(distance < 0.5)
 		{
 			set_Backlight_Boost(settingsGetPointer()->viewPortMode & 0x03);
@@ -269,7 +294,6 @@ void refresh_ViewPort(void)
 		}
 		resetFocusState();	/* no other instance shall be impacted by the local detection */
     }
-
 }
 
 void openEdit_Custom(uint8_t line)
@@ -288,10 +312,8 @@ void openEdit_Custom(uint8_t line)
     		break;
     	case 4:		openEdit_CustomviewDivemode(cv_changelist_BS);
     		break;
-    	case 5:		openEdit_MotionCtrl();
+    	case 5:		openEdit_ViewPort();
     		break;
-    	case 6: 	openEdit_ViewPort();
-    	break;
     }
 }
 
@@ -369,13 +391,16 @@ void openEdit_ViewPort(void)
 {
     refresh_ViewPort();
 
-    write_field_button(StMCustom6_CViewPortCalib,	400, 700, ME_Y_LINE3,  &FontT48, "");
-    write_field_button(StMCustom6_CViewPortLayout,	400, 700, ME_Y_LINE5,  &FontT48, "");
-    write_field_button(StMCustom6_CViewPortAmbient,	400, 700, ME_Y_LINE6,  &FontT48, "");
+    write_field_button(StMCustom5_CViewPortCalib,	400, 700, ME_Y_LINE2,  &FontT48, "");
+    write_field_button(StMCustom5_CViewPortLayout,	400, 700, ME_Y_LINE3,  &FontT48, "");
+    write_field_button(StMCustom5_CViewPortAmbient,	400, 700, ME_Y_LINE4,  &FontT48, "");
+    write_field_button(StMCustom5_CViewPortControl,	400, 700, ME_Y_LINE6,  &FontT48, "");
 
-    setEvent(StMCustom6_CViewPortCalib,		(uint32_t)OnAction_CViewPortCalib);
-    setEvent(StMCustom6_CViewPortLayout,	(uint32_t)OnAction_CViewPortLayout);
-    setEvent(StMCustom6_CViewPortAmbient,	(uint32_t)OnAction_CViewPortAmbient);
+
+    setEvent(StMCustom5_CViewPortCalib,		(uint32_t)OnAction_CViewPortCalib);
+    setEvent(StMCustom5_CViewPortLayout,	(uint32_t)OnAction_CViewPortLayout);
+    setEvent(StMCustom5_CViewPortAmbient,	(uint32_t)OnAction_CViewPortAmbient);
+    setEvent(StMCustom5_CViewPortControl,	(uint32_t)OnAction_CViewPortControl);
 }
 
 
@@ -670,12 +695,44 @@ uint8_t OnAction_CViewPortLayout(uint32_t editId, uint8_t blockNumber, uint8_t d
 uint8_t OnAction_CViewPortAmbient(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
 	SSettings* pSettings = settingsGetPointer();
-	pSettings->viewPortMode = (pSettings->viewPortMode + 1) & 0xF3;
+	if(((pSettings->viewPortMode +1) & 0x03) <= MAX_BACKLIGHT_BOOST)
+	{
+		pSettings->viewPortMode++;
+	}
+	else
+	{
+		pSettings->viewPortMode &= 0xFC;
+	}
 
 	return UPDATE_DIVESETTINGS;
 }
 
+uint8_t OnAction_CViewPortControl(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
+{
+	uint8_t newValue = 0;
+    SSettings *pSettings = settingsGetPointer();
 
+    switch(pSettings->MotionDetection)
+    {
+    	case MOTION_DETECT_OFF:
+    			newValue = MOTION_DETECT_MOVE;
+    		break;
+    	case MOTION_DETECT_MOVE:
+    			newValue = MOTION_DETECT_SECTOR;
+    		break;
+    	case MOTION_DETECT_SECTOR:
+    			newValue = MOTION_DETECT_SCROLL;
+    		break;
+    	case MOTION_DETECT_SCROLL:
+    			newValue = MOTION_DETECT_OFF;
+    		break;
+    	default:
+    			newValue = MOTION_DETECT_OFF;
+    		break;
+     }
+     pSettings->MotionDetection = newValue;
+     return UPDATE_DIVESETTINGS;
+}
 
 void openEdit_CustomviewDivemode(const uint8_t* pcv_changelist)
 {

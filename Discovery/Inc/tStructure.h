@@ -324,11 +324,11 @@
 #define StMCustom3_CViewSelection6	_MB(2,9,3,6,0)
 
 #define StMCustom4_CViewSelection1	_MB(2,9,4,1,0)
-#define StMCustom5_CViewMotion		_MB(2,9,5,1,0)
 
-#define StMCustom6_CViewPortCalib	_MB(2,9,6,1,0)
-#define StMCustom6_CViewPortLayout	_MB(2,9,6,2,0)
-#define StMCustom6_CViewPortAmbient	_MB(2,9,6,3,0)
+#define StMCustom5_CViewPortCalib	_MB(2,9,5,1,0)
+#define StMCustom5_CViewPortLayout	_MB(2,9,5,2,0)
+#define StMCustom5_CViewPortAmbient	_MB(2,9,5,3,0)
+#define StMCustom5_CViewPortControl	_MB(2,9,5,4,0)
 
 /* PAGE 10 */
 #define StMPLAN		_MB(2,10,0,0,0)
@@ -337,7 +337,7 @@
 #define StMPLAN2_Interval			_MB(2,10,2,1,0)
 #define StMPLAN3_DiveTime			_MB(2,10,3,1,0)
 #define StMPLAN4_MaxDepth			_MB(2,10,4,1,0)
-#define StMPLAN5_ExitResult		_MB(2,10,5,1,0)
+#define StMPLAN5_ExitResult			_MB(2,10,5,1,0)
 #define StMPLAN4_Settings			_MB(2,10,6,1,0)
 
 
