@@ -65,12 +65,13 @@ uint8_t OnAction_O2_Calibrate   (uint32_t editId, uint8_t blockNumber, uint8_t d
 uint8_t OnAction_O2_Source		(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_Button			(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 uint8_t OnAction_ButtonBalance	(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
-// nicht notwending uint8_t OnAction_Bluetooth				(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
+// not required uint8_t OnAction_Bluetooth				(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action);
 
 /* Exported functions --------------------------------------------------------*/
 
 
 #define O2_CALIB_FRACTION_AIR	(0.209F)
+#define O2_CALIB_FRACTION_O2	(0.98F)
 
 static uint8_t	O2_calib_gas = 21;
 
@@ -492,7 +493,7 @@ uint8_t OnAction_O2_Calibrate (uint32_t editId, uint8_t blockNumber, uint8_t dig
     		}
     		else
     		{
-    			compensatedRef = 100.0 * pStateReal->lifeData.pressure_ambient_bar / 1.0;
+    			compensatedRef = O2_CALIB_FRACTION_O2 * pStateReal->lifeData.pressure_ambient_bar / 1.0;
     		}
 			for(loop=0;loop<3;loop++)
 			{
