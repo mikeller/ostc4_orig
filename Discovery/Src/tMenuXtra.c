@@ -35,6 +35,7 @@
 #include "text_multilanguage.h"
 #include "data_central.h"
 #include "simulation.h"
+#include "configuration.h"
 
 /* Exported functions --------------------------------------------------------*/
 
@@ -78,6 +79,7 @@ uint32_t tMXtra_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext)
     strcpy(&text[textPointer],"\n\r");
     textPointer += 2;
 
+#ifdef ENABLE_MOTION_CONTROL
     if((line == 0) || (line == 4))
     {
         text[textPointer++] = TXT_2BYTE;
@@ -85,6 +87,7 @@ uint32_t tMXtra_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext)
     }
     strcpy(&text[textPointer],"\n\r");
     textPointer += 2;
+#endif
 
     if(is_stateUsedSetToSim())
     {
