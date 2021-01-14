@@ -73,6 +73,8 @@ typedef struct
 } SDeltaHistory;
 
 void InitMotionDetection(void);
+void suspendMotionDetection(uint8_t seconds);
+void HandleMotionDetection(void);
 void resetMotionDeltaHistory();
 void evaluateMotionDelta(float roll, float pitch, float yaw);
 void DefinePitchSectors(float centerAngle, uint8_t numOfSectors);

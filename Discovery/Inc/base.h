@@ -109,6 +109,7 @@ void set_globalState_Log_Page(uint8_t pageIsLine);
 void set_returnFromComm(void);
 uint8_t font_update_required(void);
 void set_Backlight_Boost(uint8_t level);
+void StoreButtonAction(uint8_t action);
 
 #endif /* BASE_H */
 

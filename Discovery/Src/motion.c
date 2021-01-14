@@ -50,6 +50,8 @@ static uint8_t focusCnt = 0;
 static uint8_t inFocus = 0;
 static uint8_t sectorMap[SECTOR_MAX_CNT];
 
+static uint8_t suspendMotionDetectionSec = 0;
+
 void resetMotionDeltaHistory()
 {
 	motionDeltaHistoryIdx = 0;
@@ -719,3 +721,73 @@ void resetFocusState(void)
 {
 	inFocus = 0;
 }
+
+void suspendMotionDetection(uint8_t seconds)
+{
+	suspendMotionDetectionSec = seconds * 10;		/* detection function is called every 100ms */
+}
+
+void HandleMotionDetection(void)
+{
+    detectionState_t pitchstate = DETECT_NOTHING;
+    uint8_t wasInFocus = 0;
+
+	evaluateMotionDelta(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading);
+	checkViewport(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading);
+
+	if(viewInFocus())
+	{
+		wasInFocus = 1;
+		set_Backlight_Boost(settingsGetPointer()->viewPortMode & 0x03);
+
+		if(suspendMotionDetectionSec == 0)					/* suspend detection while diver is manually operating the OSTC */
+		{
+			switch(settingsGetPointer()->MotionDetection)
+			{
+				case MOTION_DETECT_MOVE: pitchstate = detectPitch(stateRealGetPointer()->lifeData.compass_pitch);
+					break;
+				case MOTION_DETECT_SECTOR: pitchstate = detectSectorButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
+					break;
+				case MOTION_DETECT_SCROLL: pitchstate = detectScrollButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
+					 break;
+				default:
+					pitchstate = DETECT_NOTHING;
+					break;
+			}
+		}
+
+		if(DETECT_NEG_PITCH == pitchstate)
+		{
+			StoreButtonAction((uint8_t)ACTION_PITCH_NEG);
+		}
+		if(DETECT_POS_PITCH == pitchstate)
+		{
+			StoreButtonAction((uint8_t)ACTION_PITCH_POS);
+		}
+	}
+	else
+	{
+		if(wasInFocus)
+		{
+			wasInFocus = 0;
+			if(suspendMotionDetectionSec == 0)
+			{
+				if(settingsGetPointer()->design == 7)
+				{
+					t7_set_customview_to_primary();
+				}
+				else
+				{
+					t3_set_customview_to_primary();
+				}
+			}
+		}
+		set_Backlight_Boost(0);
+	}
+	if(suspendMotionDetectionSec != 0)
+	{
+		suspendMotionDetectionSec--;
+	}
+}
+
+

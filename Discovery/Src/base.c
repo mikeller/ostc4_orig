@@ -334,7 +334,7 @@ int fputc(int ch, FILE *f) {
 */
 static uint8_t ButtonAction = ACTION_END;
 
-static void StoreButtonAction(uint8_t action)
+void StoreButtonAction(uint8_t action)
 {
 	ButtonAction = action;
 }
@@ -349,12 +349,9 @@ int main(void)
 {
     uint32_t pLayerInvisible;
     uint16_t totalDiveCounterFound;
-    uint8_t wasInFocus = 0;
 
 	SStateList status;
-#ifdef ENABLE_MOTION_CONTROL
-    detectionState_t pitchstate;
-#endif
+
     set_globalState( StBoot0 );
     LastButtonPressed = 0;
 
@@ -510,51 +507,11 @@ int main(void)
 #ifdef ENABLE_MOTION_CONTROL
         	if((stateUsed->mode == MODE_DIVE) && (settingsGetPointer()->MotionDetection != MOTION_DETECT_OFF))		/* handle motion events in divemode only */
         	{
-        		evaluateMotionDelta(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading);
-        		checkViewport(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading);
-
-       			if(viewInFocus())
+        		if(get_globalState() != StD)
         		{
-       				wasInFocus = 1;
-       				set_Backlight_Boost(settingsGetPointer()->viewPortMode & 0x03);
-					switch(settingsGetPointer()->MotionDetection)
-					{
-						case MOTION_DETECT_MOVE: pitchstate = detectPitch(stateRealGetPointer()->lifeData.compass_pitch);
-							break;
-						case MOTION_DETECT_SECTOR: pitchstate = detectSectorButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
-							break;
-						case MOTION_DETECT_SCROLL: pitchstate = detectScrollButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
-							 break;
-						default:
-							pitchstate = DETECT_NOTHING;
-							break;
-					}
-					if(DETECT_NEG_PITCH == pitchstate)
-					{
-						StoreButtonAction((uint8_t)ACTION_PITCH_NEG);
-					}
-					if(DETECT_POS_PITCH == pitchstate)
-					{
-						StoreButtonAction((uint8_t)ACTION_PITCH_POS);
-					}
-       			}
-       			else
-       			{
-       				if(wasInFocus)
-       				{
-       					wasInFocus = 0;
-       					if(settingsGetPointer()->design == 7)
-       					{
-       						t7_set_customview_to_primary();
-       					}
-       					else
-       					{
-       						t3_set_customview_to_primary();
-       					}
-       				}
-
-       				set_Backlight_Boost(0);
-       			}
+        			suspendMotionDetection(1);		/* do not change custom views while divers is operating the computer */
+        		}
+        		HandleMotionDetection();
         	}
 #endif
 
@@ -751,6 +708,9 @@ static void TriggerButtonAction()
 {
 	uint8_t action = ButtonAction;
 	SStateList status;
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
 
 	if(ButtonAction != ACTION_END)
 	{
@@ -778,9 +738,9 @@ static void TriggerButtonAction()
 				{
 					openInfo(StILOGLIST);
 				}
-				else if ((status.page == PageDive) && (settingsGetPointer()->design < 7))
+				else if ((status.page == PageDive) && (pSettings->design < 7))
 				{
-					if(settingsGetPointer()->design == 3)
+					if(pSettings->design == 3)
 					{
 						if(get_globalState() != StD)		/* located in submenu? => return */
 						{
@@ -788,31 +748,31 @@ static void TriggerButtonAction()
 						}
 						else								/* return to t7 view */
 						{
-							settingsGetPointer()->design = 7;
-							if(settingsGetPointer()->MotionDetection == MOTION_DETECT_SECTOR)
+							pSettings->design = 7;
+							if(pSettings->MotionDetection == MOTION_DETECT_SECTOR)
 							{
-								DefinePitchSectors(settingsGetPointer()->viewPitch,CUSTOMER_DEFINED_VIEWS);
+								DefinePitchSectors(pSettings->viewPitch,CUSTOMER_DEFINED_VIEWS);
 								MapCVToSector();
 							}
 						}
 					}
 					else
 					{
-						settingsGetPointer()->design = 7; // auto switch to 9 if necessary
+						pSettings->design = 7; // auto switch to 9 if necessary
 					}
 				} else if ((status.page == PageDive) && (status.line != 0))
 				{
-					if (settingsGetPointer()->extraDisplay == EXTRADISPLAY_BIGFONT)
+					if (pSettings->extraDisplay == EXTRADISPLAY_BIGFONT)
 					{
-						settingsGetPointer()->design = 3;
-						if(settingsGetPointer()->MotionDetection == MOTION_DETECT_SECTOR)
+						pSettings->design = 3;
+						if(pSettings->MotionDetection == MOTION_DETECT_SECTOR)
 						{
-							DefinePitchSectors(settingsGetPointer()->viewPitch,CUSTOMER_DEFINED_VIEWS);
+							DefinePitchSectors(pSettings->viewPitch,CUSTOMER_DEFINED_VIEWS);
 							MapCVToSector();
 						}
 					}
-					else if (settingsGetPointer()->extraDisplay	== EXTRADISPLAY_DECOGAME)
-						settingsGetPointer()->design = 4;
+					else if (pSettings->extraDisplay	== EXTRADISPLAY_DECOGAME)
+						pSettings->design = 4;
 					set_globalState(StD);
 				}
 				else
@@ -824,6 +784,10 @@ static void TriggerButtonAction()
 
 						if ((status.page == PageDive) && (status.line == 0))
 						{
+							if((action == ACTION_BUTTON_ENTER) && ((pSettings->MotionDetection == MOTION_DETECT_SECTOR) || (pSettings->MotionDetection == MOTION_DETECT_SCROLL)))
+							{
+								suspendMotionDetection(10);
+							}
 							tHome_change_customview_button_pressed(action);
 						}
 						else if (status.page == PageSurface)
