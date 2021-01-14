@@ -44,6 +44,7 @@ static uint8_t MLLtickIntervallSeconds = 2;
 /* Replay Block data storage */
 #define DEPTH_DATA_LENGTH	(1800u)				/* Resolution: 1 hours dive, sampling every 2 seconds */
 uint16_t ReplayDepthData[DEPTH_DATA_LENGTH];
+uint8_t ReplayMarkerData[DEPTH_DATA_LENGTH];
 uint16_t liveDepthData[DEPTH_DATA_LENGTH];
 uint16_t liveDecoData[DEPTH_DATA_LENGTH];
 static uint16_t lifeDataIndex = 0;
@@ -69,6 +70,7 @@ void compressBuffer_uint16(uint16_t* pdata, uint16_t size)
 {
 	uint16_t* pTarget = pdata;
 	uint16_t* pSource = pdata;
+	uint16_t  result = 0;
 	
 	uint16_t index = 0;
 	
@@ -76,7 +78,15 @@ void compressBuffer_uint16(uint16_t* pdata, uint16_t size)
 	{
 		*pTarget = *pSource++;
 		*pTarget += *pSource++;
-		*pTarget++ /= 2;
+		result = *pTarget /= 2;
+		if((*pTarget != 0) && (result == 0))	/* avoid termination of information by round up to 1 */
+		{
+			*pTarget++ = 1;
+		}
+		else
+		{
+			*pTarget++ = result;
+		}
 	}
 	memset(pTarget,0,size/2);
 }
@@ -186,7 +196,9 @@ void updateMiniLiveLogbook( _Bool checkOncePerSecond)
 uint8_t prepareReplayLog(uint8_t StepBackwards)
 {
 	uint8_t retVal = 0;
+	uint16_t index = 0;
 	uint16_t dataLength = 0;
+	uint8_t markerDetected = 0;
 
     SLogbookHeader logbookHeader;
 
@@ -205,7 +217,21 @@ uint8_t prepareReplayLog(uint8_t StepBackwards)
     	ReplayDataOffset = StepBackwards;
 		logbook_getHeader(StepBackwards ,&logbookHeader);
 
-		dataLength = logbook_readSampleData(StepBackwards, DEPTH_DATA_LENGTH, ReplayDepthData,NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+		dataLength = logbook_readSampleData(StepBackwards, DEPTH_DATA_LENGTH, ReplayDepthData,NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ReplayMarkerData);
+
+	/* check if a marker is provided. If not disable marker functionality for the replay block */
+		for(index = 0; index < dataLength; index++)
+		{
+			if(ReplayMarkerData[index] != 0)
+			{
+				markerDetected = 1;
+				break;
+			}
+		}
+		if(markerDetected == 0)
+		{
+			ReplayMarkerData[0] = 0xFF;
+		}
 
 		if( dataLength == DEPTH_DATA_LENGTH)		/* log data has been compressed to fit into buffer */
 		{
@@ -226,13 +252,14 @@ uint8_t prepareReplayLog(uint8_t StepBackwards)
 	return retVal;
 }
 
-uint8_t getReplayInfo(uint16_t** pReplayData, uint16_t* DataLength, uint16_t* MaxDepth, uint16_t* diveMinutes)
+uint8_t getReplayInfo(uint16_t** pReplayData, uint8_t** pReplayMarker, uint16_t* DataLength, uint16_t* MaxDepth, uint16_t* diveMinutes)
 {
 	uint8_t retVal = 0;
 
-	if((ReplayDataOffset != 0xFFFF) && (pReplayData != NULL) && (DataLength != NULL) && (MaxDepth != NULL))
+	if((ReplayDataOffset != 0xFFFF) && (pReplayData != NULL) && (DataLength != NULL) && (MaxDepth != NULL) && (pReplayMarker != 0))
 	{
 		*pReplayData = ReplayDepthData;
+		*pReplayMarker = ReplayMarkerData;
 		*DataLength = ReplayDataLength;
 		*MaxDepth = ReplayDataMaxDepth;
 		*diveMinutes = ReplayDataMinutes;
