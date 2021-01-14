@@ -180,6 +180,75 @@ void t3_select_customview(uint8_t selectedCustomview)
 	}
 }
 
+void t3_drawMarker(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, uint8_t *data, uint16_t datalength, uint8_t color)
+{
+	uint16_t line = 0;
+	uint16_t dataIndex = 0;
+	uint16_t lastDataIndex = 0;
+	uint16_t windowWidth = 0;
+	int16_t factor = 0;
+	uint8_t setMarker = 0;
+
+	 point_t start;
+	 point_t stop;
+
+
+	if( (window->bottom <= 479)
+		&& (window->top <= 479)
+		&& (window->right <= 799)
+		&& (window->left <= 799)
+		&& (window->right >= 0)
+		&& (window->left >= 0)
+		&& (window->bottom > window->top)
+		&& (window->right > window->left))
+	{
+		windowWidth = window->right - window->left;
+		if(settingsGetPointer()->FlipDisplay)
+		{
+			start.y = window->bottom;
+			stop.y = window->top;
+		}
+		else
+		{
+			start.y = 479 - window->bottom;
+			stop.y = 479 - window->top;
+		}
+
+		while((line <= windowWidth) && (dataIndex < datalength))
+		{
+			factor = (10 * line * (long)datalength)/windowWidth;
+			dataIndex = factor/10;
+		/* check if a marker is set in the intervall which is bypassed because of data reduction */
+			setMarker = 0;
+			while(lastDataIndex <= dataIndex)
+			{
+				lastDataIndex++;
+				if(data[lastDataIndex] != 0)
+				{
+					setMarker = 1;
+					break;
+				}
+			}
+			lastDataIndex = dataIndex;
+			int rest = factor - dataIndex*10;
+			if(rest >= 5)
+				dataIndex++;
+
+			if((datalength - 1) < dataIndex)
+				dataIndex = datalength-1;
+
+			if((line > 0) && (setMarker))		/* draw marker line */
+			{
+				start.x = line;
+				stop.x = line;
+				GFX_draw_line(hgfx, start, stop, color);
+			}
+			line++;
+			dataIndex++;
+		}
+	}
+}
+
 void t3_miniLiveLogProfile(void)
 {
     SWindowGimpStyle wintemp;
@@ -187,6 +256,7 @@ void t3_miniLiveLogProfile(void)
     uint16_t liveDataLength = 0;
     uint16_t drawDataLength = 0;
     uint16_t* pReplayData;
+    uint8_t* pReplayMarker;
     uint16_t max_depth = 10;
     char text[TEXTSIZE];
     point_t start, stop;
@@ -206,7 +276,7 @@ void t3_miniLiveLogProfile(void)
 
    	if(getReplayOffset() != 0xFFFF)
    	{
-		getReplayInfo(&pReplayData, &replayDataLength, &max_depth, &diveMinutes);
+		getReplayInfo(&pReplayData, &pReplayMarker, &replayDataLength, &max_depth, &diveMinutes);
    	}
 
    	if(max_depth < (uint16_t)(stateUsed->lifeData.max_depth_meter * 100))
@@ -242,6 +312,10 @@ void t3_miniLiveLogProfile(void)
 	if(replayDataLength != 0)
 	{
 		GFX_graph_print(&t3screen, &wintemp, 0,1,0, max_depth, pReplayData, drawDataLength, CLUT_Font031, NULL);
+		if(pReplayMarker[0] != 0xFF)
+		{
+			t3_drawMarker(&t3screen, &wintemp, pReplayMarker, drawDataLength, CLUT_CompassUserHeadingTick);
+		}
 	}
 
     if(liveDataLength > 3)

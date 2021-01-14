@@ -450,7 +450,7 @@ static void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t 
 #endif
 
     uint16_t dataLength = 0;
-    dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, tempdata, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, tankdata);
+    dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, tempdata, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, tankdata,NULL);
 
     //Print Date
     uint8_t year = logbookHeader.dateYear;
@@ -736,7 +736,7 @@ static void show_logbook_logbook_show_log_page2(GFX_DrawCfgScreen *hgfx, uint8_t
     uint16_t decoDepthdata[1000];
     uint16_t *pDecoDepthData = 0;
 
-    dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, tempdata, NULL, NULL, NULL, NULL, NULL, NULL, NULL, decoDepthdata, NULL);
+    dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, tempdata, NULL, NULL, NULL, NULL, NULL, NULL, NULL, decoDepthdata, NULL, NULL);
 
         for(int i = 0; i<dataLength; i++)
         {
@@ -903,7 +903,7 @@ static void show_logbook_logbook_show_log_page3(GFX_DrawCfgScreen *hgfx, uint8_t
     uint16_t dataLength = 0;
     uint16_t depthdata[1000];
     uint8_t  gasdata[1000];
-    dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
     //--- print coordinate system & depth graph with gaschanges ---
     show_logbook_draw_depth_graph(hgfx, StepBackwards, &wintemp, 1, dataLength, depthdata, gasdata, NULL);
@@ -961,13 +961,13 @@ static void show_logbook_logbook_show_log_page4(GFX_DrawCfgScreen *hgfx, uint8_t
 
 
         if(logbookHeader.diveMode != DIVEMODE_CCR)
-            dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, NULL, ppO2data, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+            dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata,gasdata, NULL, ppO2data, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
         else
         {
             if(logbookHeader.CCRmode == CCRMODE_FixedSetpoint)
-                dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata, gasdata, NULL, NULL, setpoint, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata, gasdata, NULL, NULL, setpoint, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
             else
-                dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata, gasdata, NULL, NULL, NULL, sensor1, sensor2, sensor3, NULL, NULL, NULL, NULL);
+                dataLength = logbook_readSampleData(StepBackwards, 1000, depthdata, gasdata, NULL, NULL, NULL, sensor1, sensor2, sensor3, NULL, NULL, NULL, NULL, NULL);
         }
 
 
