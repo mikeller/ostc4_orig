@@ -2239,8 +2239,10 @@ static uint32_t GFX_write_substring(GFX_CfgWriteString* cfg, GFX_DrawCfgWindow* 
 		if(*(char*)pText == '\t')
 			cfg->Xdelta = hgfx->WindowTab - hgfx->WindowX0;
 		else
-		if(*(char*)pText == ' ')
+		if((*(char*)pText == ' ') && (cfg->invert == 0))	/* bypass drawing of white space only for not inverted mode */
+		{
 			cfg->Xdelta += ((tFont *)cfg->actualFont)->spacesize;
+		}
 		else
 		if((*(char*)pText) & 0x80) /* Identify a UNICODE character other than standard ASCII using the highest bit */
 		{
@@ -2452,18 +2454,18 @@ static uint32_t GFX_write_char_doubleSize(GFX_DrawCfgWindow* hgfx, GFX_CfgWriteS
 				else
 				{
 					pSource++;
-					for (j = height; j > 0; j--)
+					for (j = heightFont; j > 0; j--)
 					{
 						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
-						*(__IO uint16_t*)(pDestination + nextLine) =  cfg->color << 8 |0xFF;
-						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
 						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
 						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
 						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
-						*(__IO uint16_t*)pDestination =  cfg->color << 8 |0xFF;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
+						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
+						pDestination += stepdir;
+						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
 						*(__IO uint16_t*)(pDestination + nextLine) =  0xFF << 8 | cfg->color;
 						pDestination += stepdir;
 						*(__IO uint16_t*)pDestination =  0xFF << 8 | cfg->color;
