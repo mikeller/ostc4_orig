@@ -192,6 +192,8 @@ void tHomeDiveMenuControl(uint8_t sendAction)
                         						set_globalState(StDMGAS);
             								}
             			break;
+            		case CVIEW_T3_Profile: 	set_globalState(StDMARK);
+            			break;
             		default:
             			break;
             	}
@@ -342,6 +344,9 @@ void tHomeDiveMenuControl(uint8_t sendAction)
             else
                 dataOutGetPointer()->setEndDive = 1;
             break;
+        case StDMARK:	stateUsedWrite->events.manualMarker = 1;
+				        set_globalState(StD);
+        	break;
 
         default:
             break;
