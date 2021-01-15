@@ -660,6 +660,11 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
     	        			text[textPointer++] = 0;
     	        			GFX_write_string_color(&FontT42,tXr1,text,1,CLUT_WarningYellow);
     	        break;
+
+    		case StDMARK:	snprintf(text,TEXTSIZE,"\a\003\001%c%c", TXT_2BYTE, TXT2BYTE_SetMarkerShort);
+							GFX_write_string_color(&FontT42,tXr1,text,1,CLUT_WarningYellow);
+    			break;
+
     		default:		/* show divetime */
 
 							Divetime.Total = stateUsed->lifeData.dive_time_seconds_without_surface_time;
