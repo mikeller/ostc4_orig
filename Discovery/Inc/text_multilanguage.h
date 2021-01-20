@@ -166,6 +166,7 @@ extern const tText text_array2[];
 		/* */
 		TXT2BYTE_ResetStopwatch,
 		TXT2BYTE_SetMarker,
+		TXT2BYTE_SetMarkerShort,
 		TXT2BYTE_CompassHeading,
 		TXT2BYTE_CalibView,
 		TXT2BYTE_EndDiveMode,
