@@ -739,7 +739,7 @@ static uint16_t readSample(int32_t* depth, int16_t * gasid, int16_t* setpoint_cb
 			length--;
 
 			/* marker */
-			if(eventByte1.ub.bit1 && eventByte1.ub.bit2 && event != NULL)
+			if((eventByte1.ub.bit1 && eventByte1.ub.bit2 && !eventByte1.ub.bit0) && (event != NULL))		/* 3 lsb low bit means battery low */
 			{
 				*event = 1;
 			}
