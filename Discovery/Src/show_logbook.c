@@ -677,7 +677,7 @@ static void show_logbook_logbook_show_log_page1(GFX_DrawCfgScreen *hgfx,uint8_t 
 
 /* show symbol in case log entry is marked for usage in profile custom view */
 	snprintf(text,10,"\002>");
-	if(0xFFFF != getReplayOffset())
+	if(StepBackwards == getReplayOffset())
 	{
 		 Gfx_write_label_var(hgfx,750,799,440, &FontT42,CLUT_GasSensor1,text);
 	}
