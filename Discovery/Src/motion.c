@@ -730,7 +730,7 @@ void suspendMotionDetection(uint8_t seconds)
 void HandleMotionDetection(void)
 {
     detectionState_t pitchstate = DETECT_NOTHING;
-    uint8_t wasInFocus = 0;
+    static uint8_t wasInFocus = 0;
 
 	evaluateMotionDelta(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading);
 	checkViewport(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading);
