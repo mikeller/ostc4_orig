@@ -500,8 +500,15 @@ int main(void)
         if(DoDisplayRefresh)							/* set every 100ms by timer interrupt */
         {
 	        DoDisplayRefresh = 0;
-        	RefreshDisplay();
 
+            if(stateUsed == stateSimGetPointer())
+            {
+                simulation_UpdateLifeData(1);
+            }
+            check_warning();
+            updateMiniLiveLogbook(1);
+
+        	RefreshDisplay();
         	TimeoutControl();								/* exit menus if needed */
 
 #ifdef ENABLE_MOTION_CONTROL
@@ -583,13 +590,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         DataEX_copy_to_deco();
         DataEX_call();
 
-        if(stateUsed == stateSimGetPointer())
-        {
-            simulation_UpdateLifeData(1);
-        }
-
-        check_warning();
-        updateMiniLiveLogbook(1);
         timer_UpdateSecond(1);
         base_tempLightLevel = TIM_BACKLIGHT_adjust();
         tCCR_tick();
