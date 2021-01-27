@@ -43,6 +43,7 @@
 #include "tMenuEditSetpoint.h" // for openEdit_DiveSelectBetterSetpoint()
 #include "simulation.h"
 #include "motion.h"
+#include "logbook_miniLive.h"
 
 /* Private types -------------------------------------------------------------*/
 
@@ -286,6 +287,17 @@ void tHomeDiveMenuControl(uint8_t sendAction)
             set_globalState(StD);
             break;
 
+        case StDMARK:
+        	if((settingsGetPointer()->design == 3) && (MiniLiveLogbook_getNextMarkerIndex(0) != 0))
+            {
+        		set_globalState(StDCHECK);
+            }
+        	else
+        	{
+        		set_globalState(StD);
+        	}
+        	break;
+
         default:
             set_globalState(StD);
         }
@@ -348,6 +360,8 @@ void tHomeDiveMenuControl(uint8_t sendAction)
 				        set_globalState(StD);
         	break;
 
+        case StDCHECK:	MiniLiveLogbook_checkMarker();
+        	break;
         default:
             break;
         }

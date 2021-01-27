@@ -737,11 +737,17 @@ static uint8_t text_FR_SetMarker[] = "Repère";
 static uint8_t text_IT_SetMarker[] = "Marcatura";
 static uint8_t text_ES_SetMarker[] = "Poner Marcador";
 
-static uint8_t text_EN_SetMarkerShort[] = "Set Mark";
-static uint8_t text_DE_SetMarkerShort[] = "Markierung";
+static uint8_t text_EN_SetMarkerShort[] = "Set mark";
+static uint8_t text_DE_SetMarkerShort[] = "Marker";
 static uint8_t text_FR_SetMarkerShort[] = "Repère";
 static uint8_t text_IT_SetMarkerShort[] = "Marcatura";
 static uint8_t text_ES_SetMarkerShort[] = "Marcador";
+
+static uint8_t text_EN_CheckMarker[] = "Check";
+static uint8_t text_DE_CheckMarker[] = "Passiert";
+static uint8_t text_FR_CheckMarker[] = "";
+static uint8_t text_IT_CheckMarker[] = "";
+static uint8_t text_ES_CheckMarker[] = "";
 
 // Dive Menu
 static uint8_t text_EN_CompassHeading[] = "Compass heading";
@@ -1762,6 +1768,7 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_ResetStopwatch,  {text_EN_ResetStopwatch, text_DE_ResetStopwatch, text_FR_ResetStopwatch, text_IT_ResetStopwatch, text_ES_ResetStopwatch}},
     {(uint8_t)TXT2BYTE_SetMarker,		{text_EN_SetMarker, text_DE_SetMarker, text_FR_SetMarker, text_IT_SetMarker, text_ES_SetMarker}},
 	{(uint8_t)TXT2BYTE_SetMarkerShort,	{text_EN_SetMarkerShort, text_DE_SetMarkerShort, text_FR_SetMarkerShort, text_IT_SetMarkerShort, text_ES_SetMarkerShort}},
+	{(uint8_t)TXT2BYTE_CheckMarker,		{text_EN_CheckMarker, text_DE_CheckMarker, text_FR_CheckMarker, text_IT_CheckMarker, text_ES_CheckMarker}},
     {(uint8_t)TXT2BYTE_CompassHeading,  {text_EN_CompassHeading, text_DE_CompassHeading, text_FR_CompassHeading, text_IT_CompassHeading, text_ES_CompassHeading}},
 	{(uint8_t)TXT2BYTE_CalibView,  		{text_EN_CalibView, text_DE_CalibView, text_FR_CalibView, text_IT_CalibView, text_ES_CalibView}},
 	{(uint8_t)TXT2BYTE_IndicateFrame,	{text_EN_IndicateFrame, text_DE_IndicateFrame, text_FR_IndicateFrame, text_IT_IndicateFrame, text_ES_IndicateFrame}},

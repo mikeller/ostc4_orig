@@ -262,6 +262,17 @@ void t3_miniLiveLogProfile(void)
     point_t start, stop;
     uint16_t diveMinutes = 0;
 
+    const SDecoinfo * pDecoinfo;
+
+    if(stateUsed->diveSettings.deco_type.ub.standard == GF_MODE)
+    {
+        pDecoinfo = &stateUsed->decolistBuehlmann;
+    }
+    else
+    {
+        pDecoinfo = &stateUsed->decolistVPM;
+    }
+
     wintemp.left = t3c1.WindowX0;
     wintemp.right = t3c1.WindowX0 + CV_PROFILE_WIDTH;
    	wintemp.top = 480 - BigFontSeperationTopBottom + 5;
@@ -309,6 +320,12 @@ void t3_miniLiveLogProfile(void)
     snprintf(text,TEXTSIZE,"\002%01.1fm", max_depth / 100.0);
     GFX_write_string(&FontT42,&t3c1,text,0);
 
+
+    if(pDecoinfo->output_time_to_surface_seconds)		/* draw deco data first => will be overlayed by all other informations */
+    {
+    	GFX_graph_print(&t3screen,&wintemp,wintemp.top * -1,1,0,max_depth, getMiniLiveDecoPointerToData(),drawDataLength, CLUT_NiceGreen, NULL);
+    }
+
 	if(replayDataLength != 0)
 	{
 		GFX_graph_print(&t3screen, &wintemp, 0,1,0, max_depth, pReplayData, drawDataLength, CLUT_Font031, NULL);
@@ -320,7 +337,6 @@ void t3_miniLiveLogProfile(void)
 
     if(liveDataLength > 3)
     {
-    	GFX_graph_print(&t3screen,&wintemp,wintemp.top * -1,1,0,max_depth, getMiniLiveDecoPointerToData(),drawDataLength, CLUT_NiceGreen, NULL);
     	GFX_graph_print(&t3screen, &wintemp, 0,1,0, max_depth, getMiniLiveReplayPointerToData(), drawDataLength, CLUT_Font030, NULL);
     }
 }
@@ -662,6 +678,10 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
     	        break;
 
     		case StDMARK:	snprintf(text,TEXTSIZE,"\a\003\001%c%c", TXT_2BYTE, TXT2BYTE_SetMarkerShort);
+							GFX_write_string_color(&FontT42,tXr1,text,1,CLUT_WarningYellow);
+    			break;
+
+    		case StDCHECK:	snprintf(text,TEXTSIZE,"\a\003\001%c%c", TXT_2BYTE, TXT2BYTE_CheckMarker);
 							GFX_write_string_color(&FontT42,tXr1,text,1,CLUT_WarningYellow);
     			break;
 
