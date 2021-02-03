@@ -274,6 +274,7 @@ void MapCVToSector()
 
 void InitMotionDetection(void)
 {
+	float sensorPitch = settingsGetPointer()->viewPitch - 180.0;	/* calib values are stored as 360° values. Sensor uses +/- 180° */
 	sectorDetection.target = 0;
 	sectorDetection.current = 0;
 	sectorDetection.size = 0;
@@ -281,12 +282,12 @@ void InitMotionDetection(void)
 
 	switch(settingsGetPointer()->MotionDetection)
 	{
-		case MOTION_DETECT_SECTOR: DefinePitchSectors(settingsGetPointer()->viewPitch,CUSTOMER_DEFINED_VIEWS);
+		case MOTION_DETECT_SECTOR: DefinePitchSectors(sensorPitch,CUSTOMER_DEFINED_VIEWS);
 									MapCVToSector();
 			break;
-		case MOTION_DETECT_MOVE: DefinePitchSectors(settingsGetPointer()->viewPitch,SECTOR_MAX);
+		case MOTION_DETECT_MOVE: DefinePitchSectors(sensorPitch,SECTOR_MAX);
 			break;
-		case MOTION_DETECT_SCROLL: DefinePitchSectors(settingsGetPointer()->viewPitch,SECTOR_SCROLL);
+		case MOTION_DETECT_SCROLL: DefinePitchSectors(sensorPitch,SECTOR_SCROLL);
 			break;
 		default:
 			break;
@@ -531,8 +532,8 @@ void calibrateViewport(float roll, float pitch, float yaw)
 {
     SSettings* pSettings = settingsGetPointer();
 
-    pSettings->viewPitch = pitch;
-	pSettings->viewRoll = roll;
+    pSettings->viewPitch = pitch + 180;
+	pSettings->viewRoll = roll+ 180;
 	pSettings->viewYaw = yaw;
 }
 
@@ -560,8 +561,11 @@ float checkViewport(float roll, float pitch, float yaw)
 
 	SSettings* pSettings = settingsGetPointer();
 
+	roll += 180;
+	pitch += 180;
+
 	/* calculate base vector taking calibration delta into account yaw (heading) */
-	float compYaw = yaw + pSettings->viewYaw;
+	float compYaw;
 
 	compYaw = 360.0 - yaw; 				/* turn to 0° */
 	compYaw +=  pSettings->viewYaw; 	/* consider calib yaw value */
