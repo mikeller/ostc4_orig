@@ -203,17 +203,17 @@ void t3_drawMarker(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, uin
 		&& (window->right > window->left))
 	{
 		windowWidth = window->right - window->left;
-		if(settingsGetPointer()->FlipDisplay)
-		{
-			start.y = window->bottom;
-			stop.y = window->top;
-		}
-		else
-		{
-			start.y = 479 - window->bottom;
-			stop.y = 479 - window->top;
-		}
 
+	    if(!settingsGetPointer()->FlipDisplay)
+	    {
+	    	start.y = 479 - BigFontSeperationTopBottom + 5;
+	    	stop.y = 479 - 5;
+	    }
+	    else
+	    {
+	    	start.y = 479 - BigFontSeperationTopBottom - 5;
+	    	stop.y =5;
+	    }
 		while((line <= windowWidth) && (dataIndex < datalength))
 		{
 			factor = (10 * line * (long)datalength)/windowWidth;
@@ -261,8 +261,10 @@ void t3_miniLiveLogProfile(void)
     char text[TEXTSIZE];
     point_t start, stop;
     uint16_t diveMinutes = 0;
-
     const SDecoinfo * pDecoinfo;
+
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
 
     if(stateUsed->diveSettings.deco_type.ub.standard == GF_MODE)
     {
@@ -273,15 +275,24 @@ void t3_miniLiveLogProfile(void)
         pDecoinfo = &stateUsed->decolistVPM;
     }
 
-    wintemp.left = t3c1.WindowX0;
-    wintemp.right = t3c1.WindowX0 + CV_PROFILE_WIDTH;
-   	wintemp.top = 480 - BigFontSeperationTopBottom + 5;
+   	wintemp.top = 479 - BigFontSeperationTopBottom + 5;
    	wintemp.bottom = 479 - 5;
 
+    if(!pSettings->FlipDisplay)
+    {
+        wintemp.left = t3c1.WindowX0;
+        wintemp.right = t3c1.WindowX0 + CV_PROFILE_WIDTH;
+    }
+    else
+    {
+        wintemp.left = t3c1.WindowX1 - CV_PROFILE_WIDTH;;
+        wintemp.right = t3c1.WindowX1;
+    }
+
     start.x = CV_PROFILE_WIDTH + 2;
-    start.y = t3c1.WindowY0;
     stop.x = start.x;
-    stop.y = t3c1.WindowY1;
+    start.y = 479 - BigFontSeperationTopBottom - 5;
+	stop.y =5;
 
    	GFX_draw_line(&t3screen, start, stop, CLUT_Font020);
 
