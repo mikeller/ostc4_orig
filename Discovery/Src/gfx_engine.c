@@ -836,8 +836,8 @@ void GFX_draw_line(GFX_DrawCfgScreen *hgfx, point_t start, point_t stop, uint8_t
 		pDestination = (uint16_t*)hgfx->FBStartAdress;
 		if(pSettings->FlipDisplay)
 		{
-			pDestination += (800 - start.x) * hgfx->ImageHeight;
-			pDestination += (480 - start.y);
+			pDestination += (799 - start.x) * hgfx->ImageHeight;
+			pDestination += (479 - start.y);
 			stepdir = -1;
 		}
 		else
@@ -860,8 +860,8 @@ void GFX_draw_line(GFX_DrawCfgScreen *hgfx, point_t start, point_t stop, uint8_t
 
 		if(pSettings->FlipDisplay)
 		{
-			pDestination += (800 - start.x) * hgfx->ImageHeight;
-			pDestination += (480 - start.y);
+			pDestination += (799 - start.x) * hgfx->ImageHeight;
+			pDestination += (479 - start.y);
 			stepdir = -1;
 		}
 		else
@@ -893,7 +893,7 @@ void GFX_draw_line(GFX_DrawCfgScreen *hgfx, point_t start, point_t stop, uint8_t
 
 			if(pSettings->FlipDisplay)
 			{
-				pDestination += (((800 - x0) * hgfx->ImageHeight) + (480 - y0));
+				pDestination += (((799 - x0) * hgfx->ImageHeight) + (479 - y0));
 			}
 			else
 			{
@@ -1591,8 +1591,8 @@ void GFX_draw_box(GFX_DrawCfgScreen *hgfx, point_t LeftLow, point_t WidthHeight,
 	}
 	else
 	{
-		pStart += (800 - LeftLow.x - 1) * hgfx->ImageHeight;
-		pStart += (480 - LeftLow.y);
+		pStart += (799 - LeftLow.x) * hgfx->ImageHeight;
+		pStart += (479 - LeftLow.y);
 		stepdir = -1;
 	}
 
