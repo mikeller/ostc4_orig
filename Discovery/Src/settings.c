@@ -39,7 +39,7 @@
 SSettings Settings;
 
 const uint8_t RTErequiredHigh = 2;
-const uint8_t RTErequiredLow = 5;
+const uint8_t RTErequiredLow = 6;
 
 const uint8_t FONTrequiredHigh = 1;
 const uint8_t FONTrequiredLow =	0;
