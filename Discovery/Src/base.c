@@ -292,6 +292,7 @@ static uint8_t returnFromCommCleanUpRequest = 0; ///< use this to exit bluetooth
 uint32_t base_tempLightLevel = 0;
 static uint8_t	wasFirmwareUpdateCheckBattery = 0;
 static uint8_t DoDisplayRefresh = 0;	/* trigger to refresh display data */
+static uint8_t DoHousekeeping = 0;		/* trigger to cleanup the frame buffers */
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
@@ -497,6 +498,10 @@ int main(void)
 
         deco_loop();
         TriggerButtonAction();
+        if(DoHousekeeping)
+        {
+           	DoHousekeeping = housekeepingFrame();
+        }
         if(DoDisplayRefresh)							/* set every 100ms by timer interrupt */
         {
 	        DoDisplayRefresh = 0;
@@ -509,7 +514,8 @@ int main(void)
             updateMiniLiveLogbook(1);
 
         	RefreshDisplay();
-        	TimeoutControl();								/* exit menus if needed */
+        	DoHousekeeping = 0;							/* make sure frames are not cleared before they are transferred */
+        	TimeoutControl();							/* exit menus if needed */
 
 #ifdef ENABLE_MOTION_CONTROL
         	if((stateUsed->mode == MODE_DIVE) && (settingsGetPointer()->MotionDetection != MOTION_DETECT_OFF))		/* handle motion events in divemode only */
@@ -648,7 +654,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == VSYNC_IRQ_PIN) // rechts, unten
 	{
 		GFX_change_LTDC();
-		housekeepingFrame();
+		DoHousekeeping = 1;
 		/*
 		 #ifdef DEMOMODE
 		 static uint8_t countCall = 0;
