@@ -204,16 +204,9 @@ void t3_drawMarker(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, uin
 	{
 		windowWidth = window->right - window->left;
 
-	    if(!settingsGetPointer()->FlipDisplay)
-	    {
-	    	start.y = 479 - BigFontSeperationTopBottom + 5;
-	    	stop.y = 479 - 5;
-	    }
-	    else
-	    {
-	    	start.y = 479 - BigFontSeperationTopBottom - 5;
-	    	stop.y =5;
-	    }
+	    start.y = 479 - BigFontSeperationTopBottom - 5;
+	   	stop.y =5;
+
 		while((line <= windowWidth) && (dataIndex < datalength))
 		{
 			factor = (10 * line * (long)datalength)/windowWidth;
