@@ -3375,27 +3375,45 @@ static uint32_t GFX_doubleBufferTwo(void)
 
 uint32_t getFrame(uint8_t callerId)
 {
+	static uint8_t lastFrameProvided = 0;
 	uint8_t i;
 
-	i = 0;
-	while((i < MAXFRAMES) && (frame[i].status != CLEAR))
+/* first iteration: look for a clear frame */
+	i = lastFrameProvided;
+	do
+	{
 		i++;
+		if(i == MAXFRAMES)
+		{
+			i = 0;
+		}
+	} while((i != lastFrameProvided) && (frame[i].status != CLEAR));
 
 	if((i < MAXFRAMES) && (frame[i].status == CLEAR))
 	{
 		frame[i].status = BLOCKED;
 		frame[i].caller = callerId;
+		lastFrameProvided = i;
 		return frame[i].StartAddress;
 	}
 
-	i = 0;
-	while((i < MAXFRAMES) && (frame[i].status != RELEASED))
+/* second iteration: look for a frame which may be reused after clearing */
+	i = lastFrameProvided;
+	do
+	{
 		i++;
+		if(i == MAXFRAMES)
+		{
+			i = 0;
+		}
+	}while((i < MAXFRAMES) && (frame[i].status != RELEASED));
+
 
 	if((i < MAXFRAMES) && (frame[i].status == RELEASED))
 	{
 		GFX_clear_frame_immediately(frame[i].StartAddress);
 		frame[i].status = BLOCKED;
+		lastFrameProvided = i;
 		return frame[i].StartAddress;
 	}
 	return 0;
@@ -3458,47 +3476,52 @@ uint16_t blockedFramesCount(void)
 }
 
 
-void housekeepingFrame(void)
+uint8_t housekeepingFrame(void)
 {
 	static uint8_t countLogClear = 0;
+	uint8_t i;
+	uint8_t retVal = 1;
 	
-	if(DMA2D_at_work != 255)
-		return;
-
-	/* new for debug hw 151202 */
-	for(int i=1;i<MAXFRAMECOUNTER;i++)
+	if(DMA2D_at_work == 255)
 	{
-		frameCounter[i] = 0;
-	}
-	for(int i=1;i<MAXFRAMES;i++)
-	{
-		if(frame[i].status == BLOCKED)
+		/* new for debug hw 151202 */
+		for(i=1;i<MAXFRAMECOUNTER;i++)
 		{
-			if(frame[i].caller < (MAXFRAMECOUNTER - 2))
-				frameCounter[frame[i].caller]++;
+			frameCounter[i] = 0;
+		}
+		for(int i=1;i<MAXFRAMES;i++)
+		{
+			if(frame[i].status == BLOCKED)
+			{
+				if(frame[i].caller < (MAXFRAMECOUNTER - 2))
+					frameCounter[frame[i].caller]++;
+				else
+					frameCounter[MAXFRAMECOUNTER-3]++;
+			}
 			else
-				frameCounter[MAXFRAMECOUNTER-3]++;
+			if(frame[i].status == RELEASED)
+				frameCounter[MAXFRAMECOUNTER-2]++;
+			else
+				frameCounter[MAXFRAMECOUNTER-1]++;
+		}
+
+		i = 0;
+		/* skip frame cleaning for actual frames which have not yet been replaced by new top/bottom frames */
+		while((i < MAXFRAMES) && ((frame[i].status != RELEASED) || (frame[i].StartAddress == GFX_get_pActualFrameTop()) || (frame[i].StartAddress == GFX_get_pActualFrameBottom())))
+			i++;
+	
+		if((i < MAXFRAMES) && (frame[i].status == RELEASED))
+		{
+			if(frame[i].caller == 15)
+				countLogClear++;
+			GFX_clear_frame_dma2d(i);
 		}
 		else
-		if(frame[i].status == RELEASED)
-			frameCounter[MAXFRAMECOUNTER-2]++;
-		else
-			frameCounter[MAXFRAMECOUNTER-1]++;
+		{
+			retVal = 0;		/* no more frame to be cleaned found */
+		}
 	}
-	
-	
-	uint8_t i;
-
-	i = 0;
-	while((i < MAXFRAMES) && ((frame[i].status != RELEASED) || (frame[i].StartAddress == GFX_get_pActualFrameTop()) || (frame[i].StartAddress == GFX_get_pActualFrameBottom())))
-		i++;
-
-	if((i < MAXFRAMES) && (frame[i].status == RELEASED))
-	{
-		if(frame[i].caller == 15)
-			countLogClear++;
-		GFX_clear_frame_dma2d(i);
-	}
+	return retVal;
 }
 
 
