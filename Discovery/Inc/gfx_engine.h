@@ -173,7 +173,7 @@ uint32_t getFrameByNumber(uint8_t ZeroToMaxFrames);
 uint8_t releaseFrame(uint8_t callerId, uint32_t frameStartAddress);
 void GFX_forceReleaseFramesWithId(uint8_t callerId);
 void releaseAllFramesExcept(uint8_t callerId, uint32_t frameStartAddress);
-void housekeepingFrame(void);
+uint8_t housekeepingFrame(void);
 uint16_t blockedFramesCount(void);
 uint8_t getFrameCount(uint8_t frameId);
 

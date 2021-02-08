@@ -757,7 +757,7 @@ static void TriggerButtonAction()
 							pSettings->design = 7;
 							if(pSettings->MotionDetection == MOTION_DETECT_SECTOR)
 							{
-								DefinePitchSectors((float)(pSettings->viewPitch - 180.0),CUSTOMER_DEFINED_VIEWS);
+								DefineSectorCount(CUSTOMER_DEFINED_VIEWS);
 								MapCVToSector();
 							}
 						}
@@ -773,7 +773,7 @@ static void TriggerButtonAction()
 						pSettings->design = 3;
 						if(pSettings->MotionDetection == MOTION_DETECT_SECTOR)
 						{
-							DefinePitchSectors((float)(pSettings->viewPitch - 180.0),CUSTOMER_DEFINED_VIEWS);
+							DefineSectorCount(CUSTOMER_DEFINED_VIEWS);
 							MapCVToSector();
 						}
 					}

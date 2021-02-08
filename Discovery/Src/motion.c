@@ -19,12 +19,6 @@
 #define	STABLE_STATE_COUNT			2	/* number of count to declare a state as stable (at the moment based on 100ms) */
 #define STABLE_STATE_TIMEOUT		5	/* Detection shall be aborted if a movement state is stable for more than 500ms */
 
-#define SECTOR_WINDOW				30.0  	/* Pitch window which is used for custom view projection */
-#define SECTOR_WINDOW_MAX			120.0  	/* Pitch window which will be greater than the divers field of view */
-#define SECTOR_HYSTERY				2		/* Additional offset to avoid fast changing displays */
-#define SECTOR_BORDER				400.0	/* Define a value which is out of limit to avoid not wanted key events */
-#define SECTOR_FILTER				10		/* Define speed for calculated angle to follow real value */
-
 #define SECTOR_MAX					24		/* maximum number of sectors */
 #define SECTOR_SCROLL				7		/* number of sectors used for scroll detection */
 #define SECTOR_MAX_CNT				5		/* max number of views used for sector control */
@@ -34,9 +28,9 @@
 #define MOTION_DELTA_RAISE			2
 #define MOTION_DELTA_FALL			3
 
-#define MOTION_DELTA_JITTER_LEVEL	3.0		/* lower values are considered as stable */
-#define MOTION_DELTA_RAISE_LEVEL	6.0		/* Movement causing a significant change detected */
-#define MOTION_DELTA_FALL_LEVEL		-6.0	/* Movement causing a significant change detected */
+#define MOTION_DELTA_JITTER_LEVEL	2.0		/* lower values are considered as stable */
+#define MOTION_DELTA_RAISE_LEVEL	4.0		/* Movement causing a significant change detected */
+#define MOTION_DELTA_FALL_LEVEL		-4.0	/* Movement causing a significant change detected */
 
 #define MOTION_DELTA_HISTORY_SIZE	20		/* Number of history data sets */
 
@@ -137,35 +131,31 @@ SDeltaHistory GetDeltaHistory(uint8_t stepback)
 	return result;
 }
 
-uint8_t GetSectorForPitch(float pitch)
+uint8_t GetSectorForFocus(float focusOffset)
 {
-	static uint8_t lastsector = 0;
-	float newPitch;
 	uint8_t sector = 0;
+	float compare = 0.1;
 
-	newPitch = pitch + sectorDetection.offset + sectorDetection.center;		/* do not use negative values and consider offset to center position */
-	if (newPitch < 0.0)							/* clip value */
+	while(compare <= 0.5)
 	{
-		newPitch = 0.0;
+		if(focusOffset > compare)
+		{
+			sector++;
+		}
+		else
+		{
+			break;
+		}
+		compare += 0.1;
 	}
-	if (newPitch > sectorDetection.window)							/* clip value */
+	if(sector > sectorDetection.count)
 	{
-		newPitch = sectorDetection.window;
+		sector = sectorDetection.count;
 	}
-
-	/* switch to other sector? */
-	if((newPitch > sectorDetection.upperborder) || (newPitch <= sectorDetection.lowerborder))
-	{
-		sector = (uint16_t) newPitch / sectorDetection.size;
-		sectorDetection.lowerborder = sector * sectorDetection.size - SECTOR_HYSTERY;
-		sectorDetection.upperborder = (sector + 1) * sectorDetection.size + SECTOR_HYSTERY;
-		lastsector = sector;
-	}
-
-	return lastsector;
+	return sector;
 }
 
-void DefinePitchSectors(float centerPitch,uint8_t numOfSectors)
+void DefineSectorCount(uint8_t numOfSectors)
 {
 	if(numOfSectors == CUSTOMER_DEFINED_VIEWS)
 	{
@@ -187,29 +177,6 @@ void DefinePitchSectors(float centerPitch,uint8_t numOfSectors)
 	{
 		sectorDetection.count = numOfSectors;
 	}
-
-	if(sectorDetection.count == SECTOR_MAX)
-	{
-		sectorDetection.window = SECTOR_WINDOW_MAX;
-	}
-	else
-	{
-		sectorDetection.window = SECTOR_WINDOW;
-	}
-
-	sectorDetection.offset = (centerPitch - (sectorDetection.window / 2)) * -1.0;
-	sectorDetection.size = sectorDetection.window / sectorDetection.count;
-	sectorDetection.center = 0;
-
-/* reset border values */
-	sectorDetection.lowerborder = SECTOR_BORDER;
-	sectorDetection.upperborder = SECTOR_BORDER * -1.0;
-/* get the current sector */
-	sectorDetection.current = GetSectorForPitch(stateRealGetPointer()->lifeData.compass_pitch);
-	sectorDetection.target = sectorDetection.current;
-/* do a small adjustment to center pitch to make sure the actual pitch is in the center of the current sector */
-	sectorDetection.center = (sectorDetection.upperborder) - ((sectorDetection.size + 2 *SECTOR_HYSTERY) / 2.0) - (centerPitch + sectorDetection.offset);
-
 }
 
 
@@ -224,57 +191,43 @@ uint8_t GetCVForSector(uint8_t selSector)
 		return 0;
 	}
 }
+
 void MapCVToSector()
 {
-	uint8_t centerView = 0;
+	uint8_t ViewIndex = 0;
 
 	memset(sectorMap, 0, sizeof(sectorMap));
 
-	switch(sectorDetection.count)
-	{
-		case 1: centerView = 0; break;
-		case 2: centerView = 0; break;
-		case 3: centerView = 1; break;
-		case 4: centerView = 1; break;
-		case 5: centerView = 2; break;
-		default: centerView = sectorDetection.count / 2 - 1;
-			break;
-	}
 	if(settingsGetPointer()->design == 3)		/* Big font view ? */
 	{
 		t3_set_customview_to_primary();
-		sectorMap[centerView] = t3_change_customview(ACTION_END);
+		sectorMap[ViewIndex] = t3_change_customview(ACTION_END);
 	}
 	else
 	{
 		t7_set_customview_to_primary();
-		sectorMap[centerView] = t7_change_customview(ACTION_END);
+		sectorMap[ViewIndex] = t7_change_customview(ACTION_END);
 
 	}
 
-	centerView++;
-	while(sectorMap[centerView] == 0)
+	ViewIndex++;
+	while(ViewIndex < sectorDetection.count)
 	{
 		if(settingsGetPointer()->design == 3)		/* Big font view ? */
 		{
-			sectorMap[centerView] = t3_change_customview(ACTION_BUTTON_ENTER);
+			sectorMap[ViewIndex] = t3_change_customview(ACTION_BUTTON_ENTER);
 		}
 		else
 		{
-			sectorMap[centerView] = t7_change_customview(ACTION_BUTTON_ENTER);
+			sectorMap[ViewIndex] = t7_change_customview(ACTION_BUTTON_ENTER);
 		}
-		centerView++;
-		if(centerView == sectorDetection.count)
-		{
-			centerView = 0;
-		}
+		ViewIndex++;
 	}
 
 }
 
 void InitMotionDetection(void)
 {
-	float sensorPitch = settingsGetPointer()->viewPitch - 180.0;	/* calib values are stored as 360° values. Sensor uses +/- 180° */
 	sectorDetection.target = 0;
 	sectorDetection.current = 0;
 	sectorDetection.size = 0;
@@ -282,12 +235,12 @@ void InitMotionDetection(void)
 
 	switch(settingsGetPointer()->MotionDetection)
 	{
-		case MOTION_DETECT_SECTOR: DefinePitchSectors(sensorPitch,CUSTOMER_DEFINED_VIEWS);
+		case MOTION_DETECT_SECTOR: DefineSectorCount(CUSTOMER_DEFINED_VIEWS);
 									MapCVToSector();
 			break;
-		case MOTION_DETECT_MOVE: DefinePitchSectors(sensorPitch,SECTOR_MAX);
+		case MOTION_DETECT_MOVE: DefineSectorCount(SECTOR_MAX);
 			break;
-		case MOTION_DETECT_SCROLL: DefinePitchSectors(sensorPitch,SECTOR_SCROLL);
+		case MOTION_DETECT_SCROLL: DefineSectorCount(SECTOR_SCROLL);
 			break;
 		default:
 			break;
@@ -297,11 +250,11 @@ void InitMotionDetection(void)
 }
 
 /* Map the current pitch value to a sector and create button event in case the sector is left */
-detectionState_t detectSectorButtonEvent(float curPitch)
+detectionState_t detectSectorButtonEvent(float focusOffset)
 {
 	uint8_t newTargetSector;
 
-	newTargetSector = GetSectorForPitch(stateRealGetPointer()->lifeData.compass_pitch);
+	newTargetSector = GetSectorForFocus(focusOffset);
 
 	if(settingsGetPointer()->design == 3)		/* Big font view ? */
 	{
@@ -316,28 +269,17 @@ detectionState_t detectSectorButtonEvent(float curPitch)
 }
 
 /* Check if pitch is not in center position and trigger a button action if needed */
-detectionState_t detectScrollButtonEvent(float curPitch)
+detectionState_t detectScrollButtonEvent(float focusOffset)
 {
 	static uint8_t	delayscroll = 0;		/* slow down the number of scroll events */
 
 	uint8_t PitchEvent = DETECT_NOTHING;
-	uint8_t newSector;
 
 	if(delayscroll == 0)
 	{
-		newSector = GetSectorForPitch(stateRealGetPointer()->lifeData.compass_pitch);
-		/* for scroll detection the motion window is split into 6 sectors => set event accoring to the sector number*/
-		switch(newSector)
+		if(focusOffset > 0.3)
 		{
-			case 0: PitchEvent = DETECT_POS_PITCH;
-				break;
-			case 6:	PitchEvent = DETECT_NEG_PITCH;
-				break;
-			default:
-				break;
-		}
-		if(PitchEvent != DETECT_NOTHING)
-		{
+			PitchEvent = DETECT_POS_PITCH;
 			delayscroll = 7;
 		}
 	}
@@ -538,11 +480,8 @@ void calibrateViewport(float roll, float pitch, float yaw)
 }
 
 
-float checkViewport(float roll, float pitch, float yaw)
+float checkViewport(float roll, float pitch, float yaw, uint8_t enableAxis)
 {
-	static float freezeRoll = 0;
-	static float freezeYaw = 0;
-
 	uint8_t retval = 0;
 	float angleYaw;
 	float anglePitch;
@@ -557,7 +496,6 @@ float checkViewport(float roll, float pitch, float yaw)
 	SCoord axis_2;
 	SCoord curVec;
 	SCoord resultVec;
-	SDeltaHistory test;
 
 	SSettings* pSettings = settingsGetPointer();
 
@@ -567,36 +505,55 @@ float checkViewport(float roll, float pitch, float yaw)
 	/* calculate base vector taking calibration delta into account yaw (heading) */
 	float compYaw;
 
-	compYaw = 360.0 - yaw; 				/* turn to 0° */
-	compYaw +=  pSettings->viewYaw; 	/* consider calib yaw value */
-	compYaw += yaw;
+	if(enableAxis & MOTION_ENABLE_YAW)
+	{
+		compYaw = 360.0 - yaw; 				/* turn to 0° */
+		compYaw +=  pSettings->viewYaw; 	/* consider calib yaw value */
+		compYaw += yaw;
 
-	if (compYaw < 0.0)
+		if (compYaw < 0.0)
+		{
+			compYaw = 360.0 + compYaw;
+		}
+
+		if (compYaw > 360.0)
+		{
+			compYaw = compYaw - 360.0;
+		}
+		if (compYaw > 360.0)
+		{
+			compYaw = compYaw - 360.0;
+		}
+		angleYaw = pSettings->viewYaw * M_PI / 180.0;
+	}
+	else
 	{
-		compYaw = 360.0 + compYaw;
+		compYaw = 0.0;
+		angleYaw = 0.0;
 	}
 
-	if (compYaw > 360.0)
+	if(enableAxis & MOTION_ENABLE_PITCH)
 	{
-		compYaw = compYaw - 360.0;
+		anglePitch = pSettings->viewPitch * M_PI / 180.0;
 	}
-	if (compYaw > 360.0)
+	else
 	{
-		compYaw = compYaw - 360.0;
+		anglePitch = 0;
 	}
-	angleYaw = pSettings->viewYaw * M_PI / 180.0;
-	anglePitch = pSettings->viewPitch * M_PI / 180.0;
-	angleRoll = pSettings->viewRoll * M_PI / 180.0;
+	if(enableAxis & MOTION_ENABLE_ROLL)
+	{
+		angleRoll = pSettings->viewRoll * M_PI / 180.0;
+	}
+	else
+	{
+		angleRoll = 0;
+	}
 
 	refVec.x = 0;
 	refVec.y = 0;
 	refVec.z = 1.0;
 
     anglesToCoord(angleRoll,anglePitch,angleYaw, &refVec);
-
-	anglePitch = pitch * M_PI / 180.0;
-	angleRoll = roll * M_PI / 180.0;
-    angleYaw = yaw * M_PI / 180.0;
 
     /* assume x = 0 and y = 1 => find matching vector so axis_1 is 90° to axis_2 */
     axis_1.x = 0;
@@ -619,9 +576,31 @@ float checkViewport(float roll, float pitch, float yaw)
     }
     else
     {
-    	angleYaw = compYaw * M_PI / 180.0;
-    	anglePitch = pitch * M_PI / 180.0;
-    	angleRoll = roll * M_PI / 180.0;
+    	if(enableAxis & MOTION_ENABLE_PITCH)
+    	{
+    		anglePitch = pitch * M_PI / 180.0;
+    	}
+    	else
+    	{
+    		anglePitch = 0.0;
+    	}
+    	if(enableAxis & MOTION_ENABLE_ROLL)
+    	{
+    		angleRoll = roll * M_PI / 180.0;
+    	}
+    	else
+    	{
+    		angleRoll = 0.0;
+    	}
+    	if(enableAxis & MOTION_ENABLE_YAW)
+    	{
+    		angleYaw = compYaw * M_PI / 180.0;
+    	}
+    	else
+    	{
+    		angleYaw = 0.0;
+    	}
+
     	curVec.x = 0;
     	curVec.y = 0;
     	curVec.z = 1.0;
@@ -645,7 +624,6 @@ float checkViewport(float roll, float pitch, float yaw)
 		distance = retval * 1.0;			/* just for debugging */
 		if(retval == 0)
 		{
-
 			/* start calculating the matchpoint */
 			curVec = CoordMulF(curVec,r);
 			resultVec = CoordSub(refVec,curVec);
@@ -679,40 +657,18 @@ float checkViewport(float roll, float pitch, float yaw)
 		if((focusCnt == 10) && (inFocus == 0))
 		{
 			inFocus = 1;
-			freezeRoll = roll;
-			freezeYaw = yaw;
 		}
 	}
 	else
 	{
-		if(focusCnt >= 5)												/* Reset focus faster then setting focus */
+		if(focusCnt >= 5)						/* Reset focus faster then setting focus */
 		{
-			if(pSettings->MotionDetection != MOTION_DETECT_MOVE)		/* only apply extended focus for methods using absolute pitch values */
-			{
-				test = GetDeltaHistory(0);
-				if((test.yaw == MOTION_DELTA_STABLE) && (test.roll == MOTION_DELTA_STABLE)) 
-				{
-					if((fabsf(freezeRoll - roll) < MOTION_DELTA_JITTER_LEVEL) && (fabsf(freezeYaw - yaw) < MOTION_DELTA_JITTER_LEVEL))
-					{
-						focusCnt++;
-					}
-				}
-				else
-				{
-					if(freezeRoll != 0.0)
-					{
-						focusCnt = 1;
-					}
-				}
-			}
 			focusCnt--;
 		}
 		else
 		{
 			focusCnt = 0;
 			inFocus = 0;
-			freezeRoll = 0;
-			freezeYaw = 0;
 		}
 	}
     return distance;
@@ -735,10 +691,17 @@ void HandleMotionDetection(void)
 {
     detectionState_t pitchstate = DETECT_NOTHING;
     static uint8_t wasInFocus = 0;
+    float focusOffset = 0.0;
 
 	evaluateMotionDelta(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading);
-	checkViewport(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading);
-
+	if(viewInFocus())
+	{
+		focusOffset = checkViewport(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading, (MOTION_ENABLE_PITCH | MOTION_ENABLE_YAW));
+	}
+	else
+	{
+		focusOffset = checkViewport(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading, MOTION_ENABLE_ALL);
+	}
 	if(viewInFocus())
 	{
 		wasInFocus = 1;
@@ -750,9 +713,9 @@ void HandleMotionDetection(void)
 			{
 				case MOTION_DETECT_MOVE: pitchstate = detectPitch(stateRealGetPointer()->lifeData.compass_pitch);
 					break;
-				case MOTION_DETECT_SECTOR: pitchstate = detectSectorButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
+				case MOTION_DETECT_SECTOR: pitchstate = detectSectorButtonEvent(focusOffset);
 					break;
-				case MOTION_DETECT_SCROLL: pitchstate = detectScrollButtonEvent(stateRealGetPointer()->lifeData.compass_pitch);
+				case MOTION_DETECT_SCROLL: pitchstate = detectScrollButtonEvent(focusOffset);
 					 break;
 				default:
 					pitchstate = DETECT_NOTHING;

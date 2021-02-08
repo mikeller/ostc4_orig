@@ -13,6 +13,11 @@
 #define CUSTOMER_DEFINED_VIEWS	(100u)	/* value will cause the function to detect the number of selected views */
 #define CUSTOMER_KEEP_LAST_SECTORS	(200u)	/* do not update number of sectors, just define the new center position */
 
+#define MOTION_ENABLE_ROLL	(0x01u)
+#define MOTION_ENABLE_PITCH	(0x02u)
+#define MOTION_ENABLE_YAW	(0x04u)
+#define MOTION_ENABLE_ALL	(MOTION_ENABLE_ROLL | MOTION_ENABLE_PITCH | MOTION_ENABLE_YAW)
+
 typedef enum
 {
 		MOTION_DETECT_OFF = 0,
@@ -77,15 +82,15 @@ void suspendMotionDetection(uint8_t seconds);
 void HandleMotionDetection(void);
 void resetMotionDeltaHistory();
 void evaluateMotionDelta(float roll, float pitch, float yaw);
-void DefinePitchSectors(float centerAngle, uint8_t numOfSectors);
+void DefineSectorCount(uint8_t numOfSectors);
 void MapCVToSector(void);
 detectionState_t detectPitch(float currentPitch);
-detectionState_t detectSectorButtonEvent(float curPitch);
-detectionState_t detectScrollButtonEvent(float curPitch);
+detectionState_t detectSectorButtonEvent(float focusOffset);
+detectionState_t detectScrollButtonEvent(float focusOffset);
 
 void anglesToCoord(float roll, float pitch, float yaw, SCoord *pCoord);
 void calibrateViewport(float roll, float pitch, float yaw);
-float checkViewport(float roll, float pitch, float yaw);
+float checkViewport(float roll, float pitch, float yaw, uint8_t enableAxis);
 uint8_t viewInFocus(void);
 void resetFocusState(void);
 
