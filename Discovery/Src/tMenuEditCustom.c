@@ -217,7 +217,7 @@ void refresh_ViewPort(void)
     /* test if we are in focus */
     if((pSettings->viewPitch != 0.0) || (pSettings->viewRoll != 0.0) || (pSettings->viewYaw != 0.0))
     {
-    	distance = checkViewport(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading);
+    	distance = checkViewport(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading, MOTION_ENABLE_ALL);
 
     	/* show "bar graph" indicating the distance to the center point */
         textIndex = 0;
