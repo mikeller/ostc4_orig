@@ -266,6 +266,7 @@ extern const tText text_array2[];
 		TXT2BYTE_CornerStandard,
 		TXT2BYTE_IndicateFrame,
 		TXT2BYTE_BoostBacklight,
+		TXT2BYTE_FocusSpotSize,
 
 		TXT2BYTE_SetToMOD,
 		/* */
@@ -323,6 +324,11 @@ extern const tText text_array2[];
 		TXT2BYTE_Navigation,
 		TXT2BYTE_DepthData,
 		TXT2BYTE_DecoTTS,
+
+		TXT2BYTE_Minimum,
+		TXT2BYTE_Normal,
+		TXT2BYTE_Maximum,
+
 		TXT2BYTE_END
 };
 

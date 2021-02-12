@@ -1348,7 +1348,7 @@ static uint8_t text_IT_MoCtrlNone[] = "Off";
 static uint8_t text_ES_MoCtrlNone[] = "Off";
 
 static uint8_t text_EN_MoCtrlPitch[] = "Pitch move";
-static uint8_t text_DE_MoCtrlPitch[] = "Nickbewegung";
+static uint8_t text_DE_MoCtrlPitch[] = "Nicken";
 static uint8_t text_FR_MoCtrlPitch[] = "Pitch move";
 static uint8_t text_IT_MoCtrlPitch[] = "Pitch move";
 static uint8_t text_ES_MoCtrlPitch[] = "Pitch move";
@@ -1449,11 +1449,16 @@ static uint8_t text_IT_IndicateFrame[] = "";
 static uint8_t text_ES_IndicateFrame[] = "";
 
 static uint8_t text_EN_BoostBacklight[] = "Boost Backlight:";
-static uint8_t text_DE_BoostBacklight[] = "Helligkeit+:";
+static uint8_t text_DE_BoostBacklight[] = "Helligkeit +:";
 static uint8_t text_FR_BoostBacklight[] = "";
 static uint8_t text_IT_BoostBacklight[] = "";
 static uint8_t text_ES_BoostBacklight[] = "";
 
+static uint8_t text_EN_FocusSpotSize[] = "Focus detection:";
+static uint8_t text_DE_FocusSpotSize[] = "Fokus Reaktion:";
+static uint8_t text_FR_FocusSpotSize[] = "";
+static uint8_t text_IT_FocusSpotSize[] = "";
+static uint8_t text_ES_FocusSpotSize[] = "";
 /*
 static uint8_t text_EN_ApneaCount[] = "";
 static uint8_t text_DE_ApneaCount[] = "";
@@ -1773,6 +1778,7 @@ const tText text_array2[] =
 	{(uint8_t)TXT2BYTE_CalibView,  		{text_EN_CalibView, text_DE_CalibView, text_FR_CalibView, text_IT_CalibView, text_ES_CalibView}},
 	{(uint8_t)TXT2BYTE_IndicateFrame,	{text_EN_IndicateFrame, text_DE_IndicateFrame, text_FR_IndicateFrame, text_IT_IndicateFrame, text_ES_IndicateFrame}},
 	{(uint8_t)TXT2BYTE_BoostBacklight,	{text_EN_BoostBacklight, text_DE_BoostBacklight, text_FR_BoostBacklight, text_IT_BoostBacklight, text_ES_BoostBacklight}},
+	{(uint8_t)TXT2BYTE_FocusSpotSize,	{text_EN_FocusSpotSize, text_DE_FocusSpotSize, text_FR_FocusSpotSize, text_IT_FocusSpotSize, text_ES_FocusSpotSize}},
     {(uint8_t)TXT2BYTE_EndDiveMode,		{text_EN_EndDiveMode, text_DE_EndDiveMode, text_FR_EndDiveMode, text_IT_EndDiveMode, text_ES_EndDiveMode}},
 	{(uint8_t)TXT2BYTE_Simulator,		{text_EN_Simulator, text_DE_Simulator, text_FR_Simulator, text_IT_Simulator, text_ES_Simulator}},
     {(uint8_t)TXT2BYTE_StartSimulator,  {text_EN_StartSimulator, text_DE_StartSimulator, text_FR_StartSimulator, text_IT_StartSimulator, text_ES_StartSimulator}},
@@ -1908,4 +1914,8 @@ const tText text_array2[] =
 	{(uint8_t)TXT2BYTE_Navigation, 		{text_EN_Navigation, text_DE_Navigation, text_FR_Navigation, text_IT_Navigation, text_ES_Navigation}},
 	{(uint8_t)TXT2BYTE_DepthData, 		{text_EN_DepthData, text_DE_DepthData, text_FR_DepthData, text_IT_DepthData, text_ES_DepthData}},
 	{(uint8_t)TXT2BYTE_DecoTTS, 		{text_EN_DecoTTS, text_DE_DecoTTS, text_FR_DecoTTS, text_IT_DecoTTS, text_ES_DecoTTS}},
+
+	{(uint8_t)TXT2BYTE_Minimum, 		{text_EN_Minimum, text_DE_Minimum, text_FR_Minimum, text_IT_Minimum, text_ES_Minimum}},
+	{(uint8_t)TXT2BYTE_Normal, 			{text_EN_Normal, text_DE_Normal, text_FR_Normal, text_IT_Normal, text_ES_Normal}},
+	{(uint8_t)TXT2BYTE_Maximum, 		{text_EN_Maximum, text_DE_Maximum, text_FR_Maximum, text_IT_Maximum, text_ES_Maximum}},
 };

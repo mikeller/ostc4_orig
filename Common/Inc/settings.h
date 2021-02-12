@@ -238,7 +238,7 @@ typedef struct
 	uint8_t compassInertia;
 	uint8_t tX_customViewPrimaryBF;
 	/* new in 0xFFFF001D */
-	uint8_t  viewPortMode;
+	uint8_t  viewPortMode;		/* 7-Reserve| 6..5 - Focus spot size | 4-Focusframe |  3-Reserve | 2..0-BacklightBoost */
 	uint16_t viewRoll;
 	uint16_t viewPitch;
 	uint16_t viewYaw;
