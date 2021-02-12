@@ -23,16 +23,27 @@
 #define SECTOR_SCROLL				7		/* number of sectors used for scroll detection */
 #define SECTOR_MAX_CNT				5		/* max number of views used for sector control */
 
-#define MOTION_DELTA_STABLE			0
-#define MOTION_DELTA_JITTER			1
-#define MOTION_DELTA_RAISE			2
-#define MOTION_DELTA_FALL			3
+
+typedef enum
+{
+	MOTION_DELTA_STABLE = 0,
+	MOTION_DELTA_JITTER,
+	MOTION_DELTA_RAISE,
+	MOTION_DELTA_RAISE_FAST,
+	MOTION_DELTA_FALL,
+	MOTION_DELTA_FALL_FAST
+} MotionDeltaState_t;
 
 #define MOTION_DELTA_JITTER_LEVEL	2.0		/* lower values are considered as stable */
 #define MOTION_DELTA_RAISE_LEVEL	4.0		/* Movement causing a significant change detected */
 #define MOTION_DELTA_FALL_LEVEL		-4.0	/* Movement causing a significant change detected */
+#define MOTION_DELTA_FAST_LEVEL		6.0		/* Movement causing a fast change detected */
 
 #define MOTION_DELTA_HISTORY_SIZE	20		/* Number of history data sets */
+
+#define MOTION_FOCUS_LIMIT			0.5		/* +/- value which defines the border of the focus area */
+#define MOTION_FOCUS_USE_SECTOR		0.4		/* +/- value for the focus area used to map secors to views */
+#define MOTION_FOCUS_SCROLL_IDLE	0.3		/* +/- value for starting generation of scroll events */
 
 detectionState_t detectionState = DETECT_NOTHING;
 SSector sectorDetection;
@@ -99,6 +110,12 @@ void evaluateMotionDelta(float roll, float pitch, float yaw)
 		{
 			motionDeltaHistory[axis][nextIndex] = MOTION_DELTA_FALL;
 		}
+
+		if(fabsf(curValue - lastValue[axis]) > MOTION_DELTA_FAST_LEVEL)
+		{
+			motionDeltaHistory[axis][nextIndex]++;
+		}
+
 		lastValue[axis] = curValue;
 	}
 	motionDeltaHistoryIdx = nextIndex;
@@ -111,8 +128,7 @@ SDeltaHistory GetDeltaHistory(uint8_t stepback)
 
 	SDeltaHistory result = {0,0,0};
 
-	stepback++;						/* motionDeltaHistoryIdx is pointing to future entry => step back one to get the latest */
-	loop = stepback;
+	loop = stepback + 1;			/* motionDeltaHistoryIdx is pointing to future entry => step back one more to get the latest */
 	if(stepback < MOTION_DELTA_HISTORY_SIZE)
 	{
 		while(loop != 0)			/* find requested entry */
@@ -134,9 +150,9 @@ SDeltaHistory GetDeltaHistory(uint8_t stepback)
 uint8_t GetSectorForFocus(float focusOffset)
 {
 	uint8_t sector = 0;
-	float compare = 0.1;
+	float compare = -1.0 * MOTION_FOCUS_USE_SECTOR + sectorDetection.size ;		/* start with first sector upper limit */
 
-	while(compare <= 0.5)
+	while(compare <= MOTION_FOCUS_USE_SECTOR)
 	{
 		if(focusOffset > compare)
 		{
@@ -146,11 +162,11 @@ uint8_t GetSectorForFocus(float focusOffset)
 		{
 			break;
 		}
-		compare += 0.1;
+		compare += sectorDetection.size;
 	}
-	if(sector > sectorDetection.count)
+	if(sector >= sectorDetection.count)
 	{
-		sector = sectorDetection.count;
+		sector = sectorDetection.count - 1;
 	}
 	return sector;
 }
@@ -177,6 +193,7 @@ void DefineSectorCount(uint8_t numOfSectors)
 	{
 		sectorDetection.count = numOfSectors;
 	}
+	sectorDetection.size = MOTION_FOCUS_USE_SECTOR * 2.0 / sectorDetection.count;
 }
 
 
@@ -195,8 +212,12 @@ uint8_t GetCVForSector(uint8_t selSector)
 void MapCVToSector()
 {
 	uint8_t ViewIndex = 0;
-
 	memset(sectorMap, 0, sizeof(sectorMap));
+
+	while(ViewIndex < (sectorDetection.count / 2))		/* define center sector */
+	{
+		ViewIndex++;
+	}
 
 	if(settingsGetPointer()->design == 3)		/* Big font view ? */
 	{
@@ -211,7 +232,7 @@ void MapCVToSector()
 	}
 
 	ViewIndex++;
-	while(ViewIndex < sectorDetection.count)
+	while(sectorMap[ViewIndex] == 0)
 	{
 		if(settingsGetPointer()->design == 3)		/* Big font view ? */
 		{
@@ -222,6 +243,10 @@ void MapCVToSector()
 			sectorMap[ViewIndex] = t7_change_customview(ACTION_BUTTON_ENTER);
 		}
 		ViewIndex++;
+		if(ViewIndex == sectorDetection.count)
+		{
+			ViewIndex = 0;
+		}
 	}
 
 }
@@ -277,9 +302,14 @@ detectionState_t detectScrollButtonEvent(float focusOffset)
 
 	if(delayscroll == 0)
 	{
-		if(focusOffset > 0.3)
+		if(focusOffset > MOTION_FOCUS_SCROLL_IDLE)
 		{
 			PitchEvent = DETECT_POS_PITCH;
+			delayscroll = 7;
+		}
+		if(focusOffset < (-1.0 * MOTION_FOCUS_SCROLL_IDLE))
+		{
+			PitchEvent = DETECT_NEG_PITCH;
 			delayscroll = 7;
 		}
 	}
@@ -345,12 +375,12 @@ detectionState_t detectPitch(float currentPitch)
 										}
 										duration = 0;
 					break;
-				case DETECT_NEG_MOVE:	if((test.pitch <= MOTION_DELTA_JITTER) || (test.pitch == MOTION_DELTA_RAISE))
+				case DETECT_NEG_MOVE:	if((test.pitch <= MOTION_DELTA_JITTER) || (test.pitch == MOTION_DELTA_RAISE) || (test.pitch == MOTION_DELTA_RAISE_FAST))
 										{
 											detectionState++;
 										}
 					break;
-				case DETECT_POS_MOVE:	if((test.pitch <= MOTION_DELTA_JITTER) || (test.pitch == MOTION_DELTA_FALL))
+				case DETECT_POS_MOVE:	if((test.pitch <= MOTION_DELTA_JITTER) || (test.pitch == MOTION_DELTA_FALL) || (test.pitch == MOTION_DELTA_FALL_FAST))
 										{
 											detectionState++;
 										}
@@ -489,13 +519,16 @@ float checkViewport(float roll, float pitch, float yaw, uint8_t enableAxis)
 	float distance = 0;
 	float _a, _b;
 	SCoord u,v,n;
-	float r;
+	float r = 0.0;
+	float focusLimit = 0;
 
 	SCoord refVec;
 	SCoord axis_1;
 	SCoord axis_2;
 	SCoord curVec;
 	SCoord resultVec;
+
+	SDeltaHistory movementDelta;
 
 	SSettings* pSettings = settingsGetPointer();
 
@@ -644,7 +677,18 @@ float checkViewport(float roll, float pitch, float yaw, uint8_t enableAxis)
 		}
     }
 
-    if(distance < 0.5)		/* handle focus counter to avoid fast in/out focus changes */
+    movementDelta = GetDeltaHistory(0);
+
+    if(inFocus == 0)							/* consider option to use smaller spot to detect focus state */
+    {
+    	focusLimit = MOTION_FOCUS_LIMIT - (((pSettings->viewPortMode >> 5) & 0x03) / 10.0);
+    }
+    else
+    {
+    	focusLimit = MOTION_FOCUS_LIMIT;		/* use standard spot to detect diver interactions */
+    }
+
+    if((distance <= focusLimit) && (movementDelta.yaw != MOTION_DELTA_RAISE_FAST) && (movementDelta.yaw != MOTION_DELTA_FALL_FAST))		/* handle focus counter to avoid fast in/out focus changes */
     {
 		if(focusCnt < 10)
 		{
@@ -661,6 +705,10 @@ float checkViewport(float roll, float pitch, float yaw, uint8_t enableAxis)
 	}
 	else
 	{
+		if((movementDelta.yaw > MOTION_DELTA_JITTER ) && (focusCnt >= 5))
+		{
+			focusCnt--;
+		}
 		if(focusCnt >= 5)						/* Reset focus faster then setting focus */
 		{
 			focusCnt--;
@@ -670,6 +718,10 @@ float checkViewport(float roll, float pitch, float yaw, uint8_t enableAxis)
 			focusCnt = 0;
 			inFocus = 0;
 		}
+	}
+	if ((r<1) && (retval == 0))		/* add direction information to distance */
+	{
+		distance *= -1.0;
 	}
     return distance;
 }
@@ -715,7 +767,7 @@ void HandleMotionDetection(void)
 					break;
 				case MOTION_DETECT_SECTOR: pitchstate = detectSectorButtonEvent(focusOffset);
 					break;
-				case MOTION_DETECT_SCROLL: pitchstate = detectScrollButtonEvent(focusOffset);
+				case MOTION_DETECT_SCROLL: pitchstate = detectScrollButtonEvent(fabs(focusOffset));
 					 break;
 				default:
 					pitchstate = DETECT_NOTHING;
