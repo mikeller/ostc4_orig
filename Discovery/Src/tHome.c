@@ -193,7 +193,9 @@ void tHomeDiveMenuControl(uint8_t sendAction)
                         						set_globalState(StDMGAS);
             								}
             			break;
+#ifdef ENABLE_T3_PROFILE_VIEW
             		case CVIEW_T3_Profile: 	set_globalState(StDMARK);
+#endif
             			break;
             		default:
             			break;
