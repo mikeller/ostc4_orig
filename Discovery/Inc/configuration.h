@@ -58,5 +58,7 @@
 /* Enable to have the new T3 profile view available */
 /* #define ENABLE_T3_PROFILE_VIEW */
 
+/* Enable to have PPO2 adjustments in T3 sensor view during dive simulation */
+/* #define ENABLE_T3_PPO_SIM */
 
 #endif

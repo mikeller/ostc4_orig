@@ -193,6 +193,13 @@ void tHomeDiveMenuControl(uint8_t sendAction)
                         						set_globalState(StDMGAS);
             								}
             			break;
+#ifdef ENABLE_T3_PPO_SIM
+            		case CVIEW_sensors:		if(is_stateUsedSetToSim())
+											{
+												set_globalState(StDSIM1);
+											}
+						break;
+#endif
 #ifdef ENABLE_T3_PROFILE_VIEW
             		case CVIEW_T3_Profile: 	set_globalState(StDMARK);
 #endif
@@ -232,7 +239,34 @@ void tHomeDiveMenuControl(uint8_t sendAction)
 
         case StDMENU:
             if(is_stateUsedSetToSim())
-                set_globalState(StDSIM1);
+            {
+            	if(settingsGetPointer()->design != 3)
+            	{
+            		set_globalState(StDSIM1);
+            	}
+            	else
+            	{
+#ifdef ENABLE_T3_PPO_SIM
+            		if((stateUsed->diveSettings.ppo2sensors_deactivated & 0x01) == 0)
+            		{
+            			set_globalState(StDSIM1);
+            		}
+            		else if((stateUsed->diveSettings.ppo2sensors_deactivated & 0x02) == 0)
+            		{
+            			set_globalState(StDSIM3);
+            		}
+            		else if((stateUsed->diveSettings.ppo2sensors_deactivated & 0x04) == 0)
+            		{
+            			set_globalState(StDSIM5);
+            		}
+            		else
+            		{
+            			set_globalState(StD);
+            		}
+#endif
+            	}
+            }
+
             else
                 set_globalState(StD);
             break;
@@ -242,7 +276,27 @@ void tHomeDiveMenuControl(uint8_t sendAction)
             break;
 
         case StDSIM2:
-                set_globalState(StDSIM3);
+           		if(settingsGetPointer()->design != 3)
+            	{
+            		set_globalState(StDSIM3);
+            	}
+            	else
+            	{
+#ifdef ENABLE_T3_PPO_SIM
+            		if((stateUsed->diveSettings.ppo2sensors_deactivated & 0x02) == 0)
+            		{
+            			set_globalState(StDSIM3);
+            		}
+            		else if((stateUsed->diveSettings.ppo2sensors_deactivated & 0x04) == 0)
+            		{
+            			set_globalState(StDSIM5);
+            		}
+            		else
+            		{
+            			set_globalState(StD);
+            		}
+#endif
+            	}
             break;
 
         case StDSIM3:
@@ -250,9 +304,33 @@ void tHomeDiveMenuControl(uint8_t sendAction)
             break;
 
         case StDSIM4:
+           	if(settingsGetPointer()->design != 3)
+            {
                 set_globalState(StD);
+            }
+           	else
+           	{
+#ifdef ENABLE_T3_PPO_SIM
+           		if((stateUsed->diveSettings.ppo2sensors_deactivated & 0x04) == 0)
+           		{
+           			set_globalState(StDSIM5);
+           		}
+           		else
+           		{
+           			set_globalState(StD);
+           		}
+#endif
+           	}
+            break;
+#ifdef ENABLE_T3_PPO_SIM
+        case StDSIM5:
+                set_globalState(StDSIM6);
             break;
 
+        case StDSIM6:
+                set_globalState(StD);
+            break;
+#endif
         case StDBEAR:
         	if(settingsGetPointer()->design == 5)
         	{
@@ -326,21 +404,59 @@ void tHomeDiveMenuControl(uint8_t sendAction)
             break;
 
         case StDSIM1:
+        	if(settingsGetPointer()->design != 3)
+        	{
                 Sim_Quit();
+        	}
+        	else
+        	{
+        		Sim_IncreasePPO(0);
+        	}
             break;
 
         case StDSIM2:
-                Sim_Ascend();
+        	if(settingsGetPointer()->design != 3)
+        	{
+        		Sim_Ascend();
+        	}
+        	else
+        	{
+        		Sim_DecreasePPO(0);
+        	}
+
             break;
 
         case StDSIM3:
+        	if(settingsGetPointer()->design != 3)
+        	{
                 Sim_Descend();
+        	}
+        	else
+        	{
+        		Sim_IncreasePPO(1);
+        	}
+
             break;
 
         case StDSIM4:
+        	if(settingsGetPointer()->design != 3)
+        	{
                 Sim_Divetime();
-            break;
+        	}
+        	else
+        	{
+        		Sim_DecreasePPO(1);
+        	}
 
+            break;
+#ifdef ENABLE_T3_PPO_SIM
+        case StDSIM5:
+        		Sim_IncreasePPO(2);
+			break;
+        case StDSIM6:
+        		Sim_DecreasePPO(2);
+			break;
+#endif
         case StDBEAR: // t5_gauge
         	stateUsedWrite->diveSettings.compassHeading = (uint16_t)stateUsed->lifeData.compass_heading;
             set_globalState(StD);
