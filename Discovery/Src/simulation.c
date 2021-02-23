@@ -58,6 +58,10 @@ static float sim_get_ambient_pressure(SDiveState * pDiveState);
 static void sim_reduce_deco_time_one_second(SDiveState* pDiveState);
 static void simulation_set_aim_depth(int depth_meter);
 
+#define NUM_OF_SENSORS	(3u)
+#define SIM_PPO2_STEP	(1.1f)
+static float simSensmVOffset[NUM_OF_SENSORS];
+
 /**
   ******************************************************************************
   * @brief  sets heed_decostops_while_ascending
@@ -67,7 +71,7 @@ static void simulation_set_aim_depth(int depth_meter);
   */
 void simulation_set_heed_decostops(_Bool heed_decostops_while_ascending)
 {
-  sim_heed_decostops = heed_decostops_while_ascending;
+	sim_heed_decostops = heed_decostops_while_ascending;
 }
 
 /**
@@ -78,20 +82,21 @@ void simulation_set_heed_decostops(_Bool heed_decostops_while_ascending)
   */
 void simulation_start(int aim_depth)
 {
-  copyDiveSettingsToSim();
+	copyDiveSettingsToSim();
     copyVpmRepetetiveDataToSim();
   //vpm_init(&stateSimGetPointerWrite()->vpm,  stateSimGetPointerWrite()->diveSettings.vpm_conservatism, 0, 0);
     stateSimGetPointerWrite()->lifeData.counterSecondsShallowDepth = 0;
-  stateSimGetPointerWrite()->mode = MODE_DIVE;
+    stateSimGetPointerWrite()->mode = MODE_DIVE;
     if(aim_depth <= 0)
         aim_depth = 20;
-  simulation_set_aim_depth(aim_depth);
-  timer_init();
-  set_stateUsedToSim();
+    simulation_set_aim_depth(aim_depth);
+    timer_init();
+    set_stateUsedToSim();
     stateSim.lifeData.boolResetAverageDepth = 1;
-  decoLock = DECO_CALC_init_as_is_start_of_dive;
+    decoLock = DECO_CALC_init_as_is_start_of_dive;
 
     stateSim.lifeData.apnea_total_max_depth_meter = 0;
+    memset(simSensmVOffset,0,sizeof(simSensmVOffset));
 }
 
 /**
@@ -120,13 +125,39 @@ void simulation_exit(void)
 void simulation_UpdateLifeData( _Bool checkOncePerSecond)
 {
     SDiveState * pDiveState = &stateSim;
+	SSettings *pSettings;
 
     static int last_second = -1;
     static _Bool two_second = 0;
     static float lastPressure_bar = 0;
 
+    float localCalibCoeff[3];
+    uint8_t index, index2;
+
     if(checkOncePerSecond)
     {
+
+        pSettings = settingsGetPointer();
+        for(index = 0; index < 3; index++)
+        {
+        	localCalibCoeff[index] = pSettings->ppo2sensors_calibCoeff[index];
+        	if(localCalibCoeff[index] < 0.01)
+        	{
+        		for(index2 = 0; index2 < 3; index2++)		/* no valid coeff => check other entries */
+        		{
+        			if(pSettings->ppo2sensors_calibCoeff[index2] > 0.01)
+        			{
+        				localCalibCoeff[index] = pSettings->ppo2sensors_calibCoeff[index2];
+        				break;
+        			}
+        			if(index2 == 3)		/* no coeff at all => use default */
+        			{
+        				localCalibCoeff[index] = 0.02;
+        			}
+        		}
+        	}
+        }
+
         pDiveState->lifeData.temperature_celsius = stateRealGetPointer()->lifeData.temperature_celsius;
         pDiveState->lifeData.battery_charge = stateRealGetPointer()->lifeData.battery_charge;
         pDiveState->lifeData.compass_heading = stateRealGetPointer()->lifeData.compass_heading;
@@ -158,15 +189,20 @@ void simulation_UpdateLifeData( _Bool checkOncePerSecond)
     else if(pDiveState->lifeData.depth_meter <= (float)(decom_get_actual_deco_stop(pDiveState) + 0.001))
       sim_reduce_deco_time_one_second(pDiveState);
 
-    pDiveState->lifeData.ppO2Sensor_bar[0] = stateRealGetPointer()->lifeData.ppO2Sensor_bar[0];
-    pDiveState->lifeData.ppO2Sensor_bar[1] = stateRealGetPointer()->lifeData.ppO2Sensor_bar[1];
-    pDiveState->lifeData.ppO2Sensor_bar[2] = stateRealGetPointer()->lifeData.ppO2Sensor_bar[2];
-    pDiveState->lifeData.sensorVoltage_mV[0] = stateRealGetPointer()->lifeData.sensorVoltage_mV[0];
-    pDiveState->lifeData.sensorVoltage_mV[1] = stateRealGetPointer()->lifeData.sensorVoltage_mV[1];
-    pDiveState->lifeData.sensorVoltage_mV[2] = stateRealGetPointer()->lifeData.sensorVoltage_mV[2];
-
     pDiveState->lifeData.dive_time_seconds += 1;
     pDiveState->lifeData.pressure_ambient_bar = sim_get_ambient_pressure(pDiveState);
+
+    pDiveState->lifeData.sensorVoltage_mV[0] = stateRealGetPointer()->lifeData.sensorVoltage_mV[0] + simSensmVOffset[0];
+    if(pDiveState->lifeData.sensorVoltage_mV[0] < 0.0) { pDiveState->lifeData.sensorVoltage_mV[0] = 0.0; }
+    pDiveState->lifeData.sensorVoltage_mV[1] = stateRealGetPointer()->lifeData.sensorVoltage_mV[1] + simSensmVOffset[1];
+    if(pDiveState->lifeData.sensorVoltage_mV[1] < 0.0) { pDiveState->lifeData.sensorVoltage_mV[1] = 0.0; }
+    pDiveState->lifeData.sensorVoltage_mV[2] = stateRealGetPointer()->lifeData.sensorVoltage_mV[2] + simSensmVOffset[2];
+    if(pDiveState->lifeData.sensorVoltage_mV[2] < 0.0) { pDiveState->lifeData.sensorVoltage_mV[2] = 0.0; }
+
+    pDiveState->lifeData.ppO2Sensor_bar[0]  = pDiveState->lifeData.sensorVoltage_mV[0] * localCalibCoeff[0] * pDiveState->lifeData.pressure_ambient_bar;
+    pDiveState->lifeData.ppO2Sensor_bar[1]  = pDiveState->lifeData.sensorVoltage_mV[1] * localCalibCoeff[1] * pDiveState->lifeData.pressure_ambient_bar;
+    pDiveState->lifeData.ppO2Sensor_bar[2]  = pDiveState->lifeData.sensorVoltage_mV[2] * localCalibCoeff[2] * pDiveState->lifeData.pressure_ambient_bar;
+
 
     if(is_ambient_pressure_close_to_surface(&pDiveState->lifeData)) // new hw 170214
     {
@@ -871,4 +907,18 @@ void Sim_Quit (void)
             stateSimGetPointerWrite()->lifeData.counterSecondsShallowDepth = settingsGetPointer()->timeoutDiveReachedZeroDepth - 15;
         }
     }
+}
+void Sim_IncreasePPO(uint8_t sensorIdx)
+{
+	if((sensorIdx < NUM_OF_SENSORS) && (simSensmVOffset[sensorIdx] + SIM_PPO2_STEP < 100.0) && ((stateUsed->diveSettings.ppo2sensors_deactivated & (1 << sensorIdx)) == 0))
+	{
+		simSensmVOffset[sensorIdx] += SIM_PPO2_STEP;
+	}
+}
+void Sim_DecreasePPO(uint8_t sensorIdx)
+{
+	if((sensorIdx < NUM_OF_SENSORS) && (simSensmVOffset[sensorIdx] - SIM_PPO2_STEP >= -100.0))
+	{
+		simSensmVOffset[sensorIdx] -= SIM_PPO2_STEP;
+	}
 }
