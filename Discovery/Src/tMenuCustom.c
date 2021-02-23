@@ -84,7 +84,7 @@ uint32_t tMCustom_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext
 			   break;
 
 		   default:
-			   snprintf(&text[textPointer++],2,"%u",settingsGetPointer()->extraDisplay);
+			   snprintf(&text[textPointer++],4,"%u",settingsGetPointer()->extraDisplay);
        break;
        }
     }
