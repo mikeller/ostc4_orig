@@ -1872,7 +1872,7 @@ void t7_refresh_customview(void)
             // Wechseltiefe
             if(pGasLine[gasId].depth_meter)
             {
-                textpointer += snprintf(&text[textpointer],7,"\t%u %c%c",unit_depth_integer(pGasLine[gasId].depth_meter), unit_depth_char1(), unit_depth_char2());
+                textpointer += snprintf(&text[textpointer],10,"\t%u %c%c",unit_depth_integer(pGasLine[gasId].depth_meter), unit_depth_char1(), unit_depth_char2());
             }
             GFX_write_string(&FontT42, &t7cY0free, text, gasId);
 #ifdef ENABLE_UNUSED_GAS_HIDING
