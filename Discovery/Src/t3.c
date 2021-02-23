@@ -689,6 +689,26 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
 							GFX_write_string_color(&FontT42,tXr1,text,1,CLUT_WarningYellow);
     			break;
 
+#ifdef ENABLE_T3_PPO_SIM
+    		case StDSIM1:	snprintf(text,TEXTSIZE,"\a\003\001PPO S0 +");
+							GFX_write_string_color(&FontT42,tXr1,text,1,CLUT_WarningYellow);
+    			break;
+    		case StDSIM2:	snprintf(text,TEXTSIZE,"\a\003\001PPO S0 -");
+							GFX_write_string_color(&FontT42,tXr1,text,1,CLUT_WarningYellow);
+    			break;
+    		case StDSIM3:	snprintf(text,TEXTSIZE,"\a\003\001PPO S1 +");
+							GFX_write_string_color(&FontT42,tXr1,text,1,CLUT_WarningYellow);
+    			break;
+    		case StDSIM4:	snprintf(text,TEXTSIZE,"\a\003\001PPO S1 -");
+							GFX_write_string_color(&FontT42,tXr1,text,1,CLUT_WarningYellow);
+    			break;
+    		case StDSIM5:	snprintf(text,TEXTSIZE,"\a\003\001PPO S2 +");
+							GFX_write_string_color(&FontT42,tXr1,text,1,CLUT_WarningYellow);
+    			break;
+    		case StDSIM6:	snprintf(text,TEXTSIZE,"\a\003\001PPO S2 -");
+							GFX_write_string_color(&FontT42,tXr1,text,1,CLUT_WarningYellow);
+    			break;
+#endif
     		default:		/* show divetime */
 
 							Divetime.Total = stateUsed->lifeData.dive_time_seconds_without_surface_time;
@@ -1241,6 +1261,7 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
                 text[textpointer++] = ' ';
                 text[textpointer++] = '-';
                 text[textpointer++] = ' ';
+                text[textpointer++] = 0;
             }
             else
             {

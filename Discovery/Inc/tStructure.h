@@ -99,6 +99,8 @@
 #define StDQUIT	_MB(1,2,10,0,0)
 #define StDMARK	_MB(1,2,11,0,0)
 #define StDCHECK _MB(1,2,12,0,0)
+#define StDSIM5	_MB(1,2,13,0,0)
+#define StDSIM6	_MB(1,2,14,0,0)
 
 
 #define StUART_STANDARD		_MB(3,1,0,0,0)
