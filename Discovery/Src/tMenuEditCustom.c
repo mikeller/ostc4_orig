@@ -170,7 +170,7 @@ void refresh_Customviews(void)
         text[4] = '-';
         break;
     default:
-        snprintf(&text[4],2,"%u",settingsGetPointer()->tX_userselectedLeftLowerCornerPrimary);
+    	 text[4] = 'X';
     break;
     }
     text[5] = 0;
@@ -294,8 +294,7 @@ void refresh_ViewPort(void)
    				text[textIndex++] = TXT2BYTE_MoCtrlScroll;
    						break;
    			default:
-   					snprintf(&text[4],2,"%u",settingsGetPointer()->MotionDetection);
-    				textIndex++;
+   					textIndex += snprintf(&text[4],4,"%u",settingsGetPointer()->MotionDetection);
     			break;
         }
     	text[textIndex] = 0;

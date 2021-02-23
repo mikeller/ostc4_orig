@@ -302,7 +302,7 @@ void tInfoLog_BuildAndShowNextPage(void)
 
     if((*text == 0) && (infolog.maxpages > 1))
     {
-        snprintf(text,8, "\002" "%u/%u", infolog.page, infolog.maxpages);
+        snprintf(text,10, "\002" "%u/%u", infolog.page, infolog.maxpages);
         gfx_write_topline_simple(&INFOLOGscreen, text, CLUT_InfoPageLogbook);
         *text = 0;
     }
