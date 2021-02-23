@@ -135,7 +135,7 @@ static void show_logbook_draw_depth_graph(GFX_DrawCfgScreen *hgfx, uint8_t StepB
     }
 
  //   winsmal.left = wintemp.left - 48;
-    char msg[3];
+    char msg[10];
     float deltaline = ((float)(wintemp.bottom - wintemp.top))/5;
     for(int i = 1; i<=5; i++)
     {
@@ -143,7 +143,7 @@ static void show_logbook_draw_depth_graph(GFX_DrawCfgScreen *hgfx, uint8_t StepB
         winsmal.bottom = winsmal.top + 16;
 
     //    winsmal.right = wintemp.left - 2;
-        snprintf(msg,5,"%i",unit_depth_integer(i * vstep));
+        snprintf(msg,10,"%i",unit_depth_integer(i * vstep));
         Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_GasSensor1,msg);
     }
 
@@ -177,7 +177,7 @@ static void show_logbook_draw_depth_graph(GFX_DrawCfgScreen *hgfx, uint8_t StepB
     {
         winsmal.left= wintemp.left + vdeltaline * i - 15;
         winsmal.right = winsmal.left + 30;
-        snprintf(msg,5,"%3i",i * timestep);
+        snprintf(msg,10,"%3i",i * timestep);
         Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_GasSensor1,msg);
     }
     winsmal.left = wintemp.left;// - 9;
@@ -785,7 +785,7 @@ static void show_logbook_logbook_show_log_page2(GFX_DrawCfgScreen *hgfx, uint8_t
 
     // temperature in 1/10 ï¿½C
     int deltaline = (1 + wintemp.bottom - wintemp.top)/5;
-    char msg[3];
+    char msg[15];
     int tmp = maxValTop;
     int converted;
     for(int i = 1; i<=5; i++)
@@ -802,9 +802,9 @@ static void show_logbook_logbook_show_log_page2(GFX_DrawCfgScreen *hgfx, uint8_t
         winsmal.top	= wintemp.top + deltaline * i - 14;
         winsmal.bottom = winsmal.top + 16;
         if((converted >= 0) && (converted < 100))
-            snprintf(msg,2,"%1i",converted);
+            snprintf(msg,15,"%1i",converted);
         else
-            snprintf(msg,3,"%2i",converted);
+            snprintf(msg,15,"%2i",converted);
         Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_LogbookTemperature,msg);
     }
 
