@@ -63,5 +63,8 @@ void Sim_Ascend (void);
 void Sim_Divetime (void);
 void Sim_Quit (void);
 
+void Sim_IncreasePPO(uint8_t sensorIdx);
+void Sim_DecreasePPO(uint8_t sensorIdx);
+
 
 #endif /* SIMULATION_H */
