@@ -34,6 +34,7 @@
 #include "data_exchange.h"
 #include "check_warning.h"
 #include "configuration.h"
+#include <math.h>
 
 /* Private types -------------------------------------------------------------*/
 typedef struct
@@ -47,6 +48,14 @@ typedef struct
     uint16_t checksum;
 } 	SIrLink;
 
+typedef enum
+{
+	sensorOK = 0,
+	sensorSuspect,
+	SensorOutOfBounds
+} sensorTrustState_t;
+
+
 #define HUD_BABBLING_IDIOT			(30u)		/* 30 Bytes received without break */
 #define HUD_RX_FRAME_LENGTH			(15u)		/* Length of a HUD data frame */
 #define HUD_RX_FRAME_BREAK_MS		(100u)		/* Time used to detect a gap between two byte receptions => frame start */
@@ -54,6 +63,8 @@ typedef struct
 												/* Based on an assumed cycle time by the sensor of 1 second. Started at time of last RX */
 
 #define BOTTLE_SENSOR_TIMEOUT		(6000u)     /* signal pressure budget as not received after 10 minutes (6000 * 100ms) */
+
+#define MAX_SENSOR_COMPARE_DEVIATION (0.15f)	/* max deviation between two sensors allowed before their results are rated as suspect */
 
 /* Private variables ---------------------------------------------------------*/
 static SIrLink receiveHUD[2];
@@ -132,6 +143,9 @@ void test_O2_sensor_values_outOfBounds(int8_t * outOfBouds1, int8_t * outOfBouds
 {
     uint8_t sensorNotActiveBinary;
     uint8_t sensorActive[3];
+    sensorTrustState_t sensorState[3];
+    uint8_t index;
+
 
     // test1: user deactivation
     sensorNotActiveBinary = stateUsed->diveSettings.ppo2sensors_deactivated;
@@ -154,6 +168,8 @@ void test_O2_sensor_values_outOfBounds(int8_t * outOfBouds1, int8_t * outOfBouds
     // test2: mV of remaining sensors
     for(int i=0;i<3;i++)
     {
+    	sensorState[i] = sensorOK;
+
         if(sensorActive[i])
         {
             if(	(stateUsed->lifeData.sensorVoltage_mV[i] < 8) ||
@@ -196,78 +212,50 @@ void test_O2_sensor_values_outOfBounds(int8_t * outOfBouds1, int8_t * outOfBouds
     }
     else
     {
-        uint8_t sensor_id_ordered[3];
-        float difference[2];
-
-        if((stateUsed->lifeData.ppO2Sensor_bar[1] > stateUsed->lifeData.ppO2Sensor_bar[0]))
+    	/* Check two or more of Three */
+        /* compare every sensor with each other. If there is only one mismatch the value might be OK. In case both comparisons fail the sensor is out of bounds */
+        if(fabsf(stateUsed->lifeData.ppO2Sensor_bar[0] - stateUsed->lifeData.ppO2Sensor_bar[1]) > MAX_SENSOR_COMPARE_DEVIATION)
         {
-            sensor_id_ordered[0] = 0;
-            sensor_id_ordered[1] = 1;
+        	sensorState[0]++;
+        	sensorState[1]++;
         }
-        else
+        if(fabsf(stateUsed->lifeData.ppO2Sensor_bar[0] - stateUsed->lifeData.ppO2Sensor_bar[2]) > MAX_SENSOR_COMPARE_DEVIATION)
         {
-            sensor_id_ordered[0] = 1;
-            sensor_id_ordered[1] = 0;
+        	sensorState[0]++;
+        	sensorState[2]++;
         }
-        if(stateUsed->lifeData.ppO2Sensor_bar[2] > stateUsed->lifeData.ppO2Sensor_bar[sensor_id_ordered[1]])
+        if(fabsf(stateUsed->lifeData.ppO2Sensor_bar[1] - stateUsed->lifeData.ppO2Sensor_bar[2]) > MAX_SENSOR_COMPARE_DEVIATION)
         {
-            sensor_id_ordered[2] = 2;
+        	sensorState[1]++;
+        	sensorState[2]++;
         }
-        else
+        for(index = 0; index < 3; index++)
         {
-            sensor_id_ordered[2] = sensor_id_ordered[1];
-            if(stateUsed->lifeData.ppO2Sensor_bar[2] > stateUsed->lifeData.ppO2Sensor_bar[sensor_id_ordered[0]])
-            {
-                sensor_id_ordered[1] = 2;
-            }
-            else
-            {
-                sensor_id_ordered[1] = sensor_id_ordered[0];
-                sensor_id_ordered[0] = 2;
-            }
-        }
-
-        difference[0] = stateUsed->lifeData.ppO2Sensor_bar[sensor_id_ordered[1]]- stateUsed->lifeData.ppO2Sensor_bar[sensor_id_ordered[0]];
-        difference[1] = stateUsed->lifeData.ppO2Sensor_bar[sensor_id_ordered[2]]- stateUsed->lifeData.ppO2Sensor_bar[sensor_id_ordered[1]];
-
-        if((difference[0] > difference[1]) && (difference[0] > 0.15))		/* was 15cBar ==> 0.15 bar */
-        {
-            switch(sensor_id_ordered[0])
-            {
-            case 0:
-                *outOfBouds1 = 1;
-            break;
-            case 1:
-                *outOfBouds2 = 1;
-            break;
-            case 2:
-                *outOfBouds3 = 1;
-            break;
-            }
-        }
-        else
-        if((difference[0] < difference[1]) && (difference[1] > 0.15))
-        {
-            switch(sensor_id_ordered[2])
-            {
-            case 0:
-                *outOfBouds1 = 1;
-            break;
-            case 1:
-                *outOfBouds2 = 1;
-            break;
-            case 2:
-                *outOfBouds3 = 1;
-            break;
-            }
+        	if(sensorState[index] == SensorOutOfBounds)
+        	{
+				switch(index)
+				{
+					case 0:
+						*outOfBouds1 = 1;
+						break;
+					case 1:
+						*outOfBouds2 = 1;
+						break;
+					case 2:
+						*outOfBouds3 = 1;
+						break;
+					default:
+						break;
+				}
+        	}
         }
     }
-
 }
 
 
 uint8_t get_ppO2SensorWeightedResult_cbar(void)
 {
+	static uint8_t lastValidValue = 0;
     int8_t sensorOutOfBound[3];
     uint16_t result = 0;
     uint8_t count = 0;
@@ -283,13 +271,15 @@ uint8_t get_ppO2SensorWeightedResult_cbar(void)
             count++;
         }
     }
-    if(count == 0) // all sensors out of bounds!
+    if(count == 0) /* all sensors out of bounds! => return last valid value as workaround till diver takes action */
     {
     	set_warning_fallback();
+    	retVal = lastValidValue;
     }
     else
     {
        retVal = (uint8_t)(result / count);
+       lastValidValue = retVal;
     }
     return retVal;
 }

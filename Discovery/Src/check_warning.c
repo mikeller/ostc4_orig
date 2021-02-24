@@ -184,8 +184,8 @@ static int8_t check_O2_sensors(SDiveState * pDiveState)
 				if(!get_HUD_battery_voltage_V())
 					pDiveState->warnings.sensorLinkLost = 1;
 			}
-			test_O2_sensor_values_outOfBounds(&pDiveState->warnings.sensorOutOfBounds[0], &pDiveState->warnings.sensorOutOfBounds[1], &pDiveState->warnings.sensorOutOfBounds[2]);
 		}
+	test_O2_sensor_values_outOfBounds(&pDiveState->warnings.sensorOutOfBounds[0], &pDiveState->warnings.sensorOutOfBounds[1], &pDiveState->warnings.sensorOutOfBounds[2]);
 	return 		pDiveState->warnings.sensorLinkLost
 					+ pDiveState->warnings.sensorOutOfBounds[0]
 					+ pDiveState->warnings.sensorOutOfBounds[1]
