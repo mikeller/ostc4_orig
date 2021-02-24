@@ -38,5 +38,8 @@ uint8_t actualBetterSetpointId(void);
 uint8_t actualLeftMaxDepth(const SDiveState * pDiveState);
 void set_warning_fallback(void);
 void clear_warning_fallback(void);
+uint8_t debounce_warning_fallback(uint16_t debounceStepms);
+void reset_debounce_warning_fallback();
+
 
 #endif // CHECK_WARNING_H
