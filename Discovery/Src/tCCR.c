@@ -82,7 +82,7 @@ static uint32_t LastReceivedTick_HUD = 0;
 /* Private variables with external access via get_xxx() function -------------*/
 
 /* Private function prototypes -----------------------------------------------*/
-static void tCCR_fallbackToFixedSetpoint(void);
+static uint8_t tCCR_fallbackToFixedSetpoint(void);
 
 #ifndef USART_IR_HUD
 
@@ -252,7 +252,7 @@ void test_O2_sensor_values_outOfBounds(int8_t * outOfBouds1, int8_t * outOfBouds
     }
 }
 
-
+/* this function is called out of the 100ms callback => to be considered for debouncing */
 uint8_t get_ppO2SensorWeightedResult_cbar(void)
 {
 	static uint8_t lastValidValue = 0;
@@ -273,13 +273,21 @@ uint8_t get_ppO2SensorWeightedResult_cbar(void)
     }
     if(count == 0) /* all sensors out of bounds! => return last valid value as workaround till diver takes action */
     {
-    	set_warning_fallback();
-    	retVal = lastValidValue;
+    	if(debounce_warning_fallback(100))
+    	{
+    		set_warning_fallback();
+    		retVal = tCCR_fallbackToFixedSetpoint(); 	/* this function only changes setpoint if option is enabled */
+    	}
+    	if(retVal == 0)
+    	{
+    		retVal = lastValidValue;
+    	}
     }
     else
     {
-       retVal = (uint8_t)(result / count);
-       lastValidValue = retVal;
+    	reset_debounce_warning_fallback();
+		retVal = (uint8_t)(result / count);
+    	lastValidValue = retVal;
     }
     return retVal;
 }
@@ -416,8 +424,9 @@ void tCCR_control(void)
 #endif
 /* Private functions ---------------------------------------------------------*/
 
-static void tCCR_fallbackToFixedSetpoint(void)
+static uint8_t tCCR_fallbackToFixedSetpoint(void)
 {
+	uint8_t retVal = 0;
     if((stateUsed->mode == MODE_DIVE) && (stateUsed->diveSettings.diveMode == DIVEMODE_CCR) && (stateUsed->diveSettings.CCR_Mode == CCRMODE_Sensors) && (stateUsed->diveSettings.fallbackOption))
     {
         uint8_t setpointCbar, actualGasID;
@@ -429,5 +438,7 @@ static void tCCR_fallbackToFixedSetpoint(void)
         setActualGas_DM(&stateUsedWrite->lifeData,actualGasID,setpointCbar);
 
         set_warning_fallback();
+        retVal = stateUsed->diveSettings.setpoint[1].setpoint_cbar;
     }
+    return retVal;
 }
