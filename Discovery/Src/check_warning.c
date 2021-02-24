@@ -38,10 +38,14 @@
 #include "decom.h"
 #include "tCCR.h"
 
+
+#define DEBOUNCE_FALLBACK_TIME_MS	(5000u)		/* set warning after 5 seconds of pending error condition */
+
 /* Private variables with access ----------------------------------------------*/
 static uint8_t betterGasId = 0;
 static uint8_t betterSetpointId = 0;
 static int8_t fallback = 0;
+static uint16_t debounceFallbackTimeMS = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 static int8_t check_fallback(SDiveState * pDiveState);
@@ -96,6 +100,7 @@ void set_warning_fallback(void)
 void clear_warning_fallback(void)
 {
 	fallback = 0;
+	debounceFallbackTimeMS = 0;
 }
 
 
@@ -429,5 +434,22 @@ static int8_t check_pressureSensor(SDiveState * pDiveState)
 	return ret;
 }
 #endif
+
+uint8_t debounce_warning_fallback(uint16_t debounceStepms)
+{
+	uint8_t retVal = 0;
+
+	debounceFallbackTimeMS += debounceStepms;
+	if(debounceFallbackTimeMS > DEBOUNCE_FALLBACK_TIME_MS)
+	{
+		debounceFallbackTimeMS = DEBOUNCE_FALLBACK_TIME_MS;
+		retVal = 1;
+	}
+	return retVal;
+}
+void reset_debounce_warning_fallback()
+{
+	debounceFallbackTimeMS = 0;
+}
 /************************ (C) COPYRIGHT heinrichs weikamp *****END OF FILE****/
 
