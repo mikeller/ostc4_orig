@@ -129,7 +129,7 @@ void openEdit_Setpoint(uint8_t line)
             set_globalState_Menu_Line(line);
             resetMenuEdit(CLUT_MenuPageGasSP);
 
-            char text[3];
+            char text[20];
             uint8_t sensorActive[3];
 
             text[0] = '\001';
@@ -137,19 +137,40 @@ void openEdit_Setpoint(uint8_t line)
             text[2] = 0;
             write_topline(text);
 
-            write_label_var(  96, 340, ME_Y_LINE1, &FontT48, "Sensor 1");
-            write_label_var(  96, 340, ME_Y_LINE2, &FontT48, "Sensor 2");
-            write_label_var(  96, 340, ME_Y_LINE3, &FontT48, "Sensor 3");
+            if(stateUsedWrite->diveSettings.ppo2sensors_deactivated & 1)
+            {
+            	snprintf (text,20,"Sensor 1");
+            	sensorActive[0] = 0;
+            }
+            else
+            {
+            	snprintf (text,20,"Sensor 1    (%01.2f)", stateUsed->lifeData.ppO2Sensor_bar[0] );
+            }
+            write_label_var(  96, 600, ME_Y_LINE1, &FontT48, text);
+            if(stateUsedWrite->diveSettings.ppo2sensors_deactivated & 2)
+            {
+               	snprintf (text,20,"Sensor 2");
+               	sensorActive[1] = 0;
+            }
+            else
+            {
+               	snprintf (text,20,"Sensor 2    (%01.2f)", stateUsed->lifeData.ppO2Sensor_bar[1] );
+            }
+            write_label_var(  96, 600, ME_Y_LINE2, &FontT48, text);
+            if(stateUsedWrite->diveSettings.ppo2sensors_deactivated & 4)
+            {
+               	snprintf (text,20,"Sensor 3");
+               	sensorActive[2] = 0;
+            }
+            else
+            {
+              	snprintf (text,20,"Sensor 3    (%01.2f)", stateUsed->lifeData.ppO2Sensor_bar[2] );
+            }
+            write_label_var(  96, 600, ME_Y_LINE3, &FontT48, text);
 
             sensorActive[0] = 1;
             sensorActive[1] = 1;
             sensorActive[2] = 1;
-            if(stateUsedWrite->diveSettings.ppo2sensors_deactivated & 1)
-                sensorActive[0] = 0;
-            if(stateUsedWrite->diveSettings.ppo2sensors_deactivated & 2)
-                sensorActive[1] = 0;
-            if(stateUsedWrite->diveSettings.ppo2sensors_deactivated & 4)
-                sensorActive[2] = 0;
 
             write_field_on_off(StMSP_Sensor1,	 30, 95, ME_Y_LINE1,  &FontT48, "", sensorActive[0]);
             write_field_on_off(StMSP_Sensor2,	 30, 95, ME_Y_LINE2,  &FontT48, "", sensorActive[1]);
