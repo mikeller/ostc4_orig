@@ -58,7 +58,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
 {
     .versionFirst   = 1,
     .versionSecond 	= 5,
-    .versionThird   = 6,
+    .versionThird   = 7,
     .versionBeta    = 0,
 
     /* 4 bytes with trailing 0 */
@@ -66,7 +66,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
 
     .release_year = 21,
     .release_month = 02,
-    .release_day = 06,
+    .release_day = 25,
     .release_sub = 0,
 
     /* max 48 with trailing 0 */
