@@ -69,7 +69,7 @@
 #define PRESSURE_OFFSET_LIMIT_MBAR	50
 
 #define MAX_COMPASS_COMP 		(2u)
-#define MAX_VIEWPORT_MODE 		(0x1F)
+#define MAX_VIEWPORT_MODE 		(0x7F)
 
 typedef enum
 {
