@@ -244,6 +244,8 @@ void t3_drawMarker(GFX_DrawCfgScreen *hgfx, const  SWindowGimpStyle *window, uin
 
 void t3_miniLiveLogProfile(void)
 {
+	static uint8_t wasDecoDive = 0;
+
     SWindowGimpStyle wintemp;
     uint16_t replayDataLength = 0;
     uint16_t liveDataLength = 0;
@@ -324,9 +326,14 @@ void t3_miniLiveLogProfile(void)
     snprintf(text,TEXTSIZE,"\002%01.1fm", max_depth / 100.0);
     GFX_write_string(&FontT42,&t3c1,text,0);
 
-
-    if(pDecoinfo->output_time_to_surface_seconds)		/* draw deco data first => will be overlayed by all other informations */
+    if(getMiniLiveReplayLength() < 10)		/* new dive startet => reset the visualization state for deco data */
     {
+    	wasDecoDive = 0;
+    }
+
+    if((pDecoinfo->output_time_to_surface_seconds) || (wasDecoDive))		/* draw deco data first => will be overlayed by all other informations */
+    {
+    	wasDecoDive = 1;
     	GFX_graph_print(&t3screen,&wintemp,wintemp.top * -1,1,0,max_depth, getMiniLiveDecoPointerToData(),drawDataLength, CLUT_NiceGreen, NULL);
     }
 
