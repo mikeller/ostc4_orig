@@ -709,9 +709,9 @@ uint8_t OnAction_CViewPortCalib(uint32_t editId, uint8_t blockNumber, uint8_t di
 uint8_t OnAction_CViewPortLayout(uint32_t editId, uint8_t blockNumber, uint8_t digitNumber, uint8_t digitContent, uint8_t action)
 {
 	SSettings* pSettings = settingsGetPointer();
-	if(pSettings->viewPortMode >> 4 != 0)
+	if((pSettings->viewPortMode >> 4) & 0x10 != 0)
 	{
-		pSettings->viewPortMode &= 0x0F;
+		pSettings->viewPortMode &= 0xEF;	/* 1110 1111 */
 	}
 	else
 	{
@@ -772,7 +772,7 @@ uint8_t OnAction_CViewPortSpot(uint32_t editId, uint8_t blockNumber, uint8_t dig
     {
     	newValue = 0;
     }
-    pSettings->viewPortMode &= 0x9F;
+    pSettings->viewPortMode &= 0x9F;		/* 1001 1111 */
     pSettings->viewPortMode |= (newValue << 5);
     return UPDATE_DIVESETTINGS;
 }
