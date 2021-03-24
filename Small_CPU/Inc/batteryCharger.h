@@ -36,7 +36,7 @@ uint8_t get_charge_status(void);
 void init_battery_charger_status(void);
 void ReInit_battery_charger_status_pins(void);
 void DeInit_battery_charger_status_pins(void);
-void battery_charger_get_status_and_contral_battery_gas_gauge(uint8_t inSleepModeLessCounts);
+void battery_charger_get_status_and_contral_battery_gas_gauge(uint8_t cycleTimeBase);
 
 #ifdef __cplusplus
 }

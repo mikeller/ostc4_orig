@@ -886,8 +886,8 @@ void scheduleSurfaceMode(void)
 			{
 				global.lifeData.desaturation_time_minutes = 0;
 			}
-			battery_charger_get_status_and_contral_battery_gas_gauge(0);
 			battery_gas_gauge_get_data();
+			battery_charger_get_status_and_contral_battery_gas_gauge(1);
 
 			copyCnsAndOtuData();
 			copyTimeData();
@@ -1081,7 +1081,7 @@ void scheduleSleepMode(void)
 			pressure_sensor_get_temperature_raw();
 			battery_gas_gauge_get_data();
 //			ReInit_battery_charger_status_pins();
-			battery_charger_get_status_and_contral_battery_gas_gauge(1);
+			battery_charger_get_status_and_contral_battery_gas_gauge(30);
 //			DeInit_battery_charger_status_pins();
 			secondsCount = 0;
 		}
