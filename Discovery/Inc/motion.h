@@ -92,6 +92,7 @@ void anglesToCoord(float roll, float pitch, float yaw, SCoord *pCoord);
 void calibrateViewport(float roll, float pitch, float yaw);
 float checkViewport(float roll, float pitch, float yaw, uint8_t enableAxis);
 uint8_t viewInFocus(void);
+uint8_t viewDetectionSuspended(void);
 void resetFocusState(void);
 
 #endif /* INC_MOTION_H_ */

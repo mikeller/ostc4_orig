@@ -415,7 +415,7 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
     start.x = 0;
     stop.x = 799;
     stop.y = start.y = BigFontSeperationTopBottom;
-    if(viewInFocus())
+    if((viewInFocus()) && (!viewDetectionSuspended()))
     {
     	GFX_draw_line(tXscreen, start, stop, CLUT_Font023);
     }
@@ -429,7 +429,7 @@ float t3_basics_lines_depth_and_divetime(GFX_DrawCfgScreen *tXscreen, GFX_DrawCf
     stop.y = 479;
 
     stop.x = start.x = BigFontSeperationLeftRight;
-    if(viewInFocus())
+    if((viewInFocus() && (!viewDetectionSuspended())))
     {
     	GFX_draw_line(tXscreen, start, stop, CLUT_Font023);
     }

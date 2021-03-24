@@ -522,7 +522,7 @@ int main(void)
         	{
         		if(get_globalState() != StD)
         		{
-        			suspendMotionDetection(1);		/* do not change custom views while divers is operating the computer */
+        			suspendMotionDetection(10);		/* do not change custom views while divers is operating the computer */
         		}
         		HandleMotionDetection();
         	}
@@ -790,7 +790,7 @@ static void TriggerButtonAction()
 
 						if ((status.page == PageDive) && (status.line == 0))
 						{
-							if((action == ACTION_BUTTON_ENTER) && ((pSettings->MotionDetection == MOTION_DETECT_SECTOR) || (pSettings->MotionDetection == MOTION_DETECT_SCROLL)))
+							if(action == ACTION_BUTTON_ENTER)
 							{
 								suspendMotionDetection(10);
 							}
@@ -799,7 +799,9 @@ static void TriggerButtonAction()
 						else if (status.page == PageSurface)
 							tHome_change_customview_button_pressed(action);
 						else
+						{
 							tHomeDiveMenuControl(action);
+						}
 					}
 			break;
 

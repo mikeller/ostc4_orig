@@ -2935,7 +2935,7 @@ void draw_frame(_Bool PluginBoxHeader, _Bool LinesOnTheSides, uint8_t colorBox, 
     WidthHeight.x = CUSTOMBOX_LINE_RIGHT - CUSTOMBOX_LINE_LEFT;
     LeftLow.y = 60;
     WidthHeight.y = 440 - LeftLow.y;
-    if(viewInFocus())
+    if((viewInFocus() && (!viewDetectionSuspended())))
     {
     	GFX_draw_box(&t7screen, LeftLow, WidthHeight, 1, CLUT_Font023);
     }

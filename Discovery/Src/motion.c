@@ -277,19 +277,26 @@ void InitMotionDetection(void)
 /* Map the current pitch value to a sector and create button event in case the sector is left */
 detectionState_t detectSectorButtonEvent(float focusOffset)
 {
+	static uint8_t lastTargetSector = 0xFF;
+	static float lastfocusOffset = 0.0;
+
 	uint8_t newTargetSector;
 
 	newTargetSector = GetSectorForFocus(focusOffset);
 
-	if(settingsGetPointer()->design == 3)		/* Big font view ? */
+	/* take a small hysteresis into account to avoid fast display changes (flicker) */
+	if((newTargetSector != lastTargetSector) && (fabsf(focusOffset - lastfocusOffset) > (sectorDetection.size / 3)))
 	{
-		t3_select_customview(GetCVForSector(newTargetSector));
+		lastfocusOffset = focusOffset;
+		if(settingsGetPointer()->design == 3)		/* Big font view ? */
+		{
+			t3_select_customview(GetCVForSector(newTargetSector));
+		}
+		else
+		{
+			t7_select_customview(GetCVForSector(newTargetSector));
+		}
 	}
-	else
-	{
-		t7_select_customview(GetCVForSector(newTargetSector));
-	}
-
 	return DETECT_NOTHING;
 }
 
@@ -732,6 +739,17 @@ uint8_t viewInFocus(void)
 void resetFocusState(void)
 {
 	inFocus = 0;
+}
+
+uint8_t viewDetectionSuspended(void)
+{
+	uint8_t retVal = 0;
+
+	if(suspendMotionDetectionSec)
+	{
+		retVal = 1;
+	}
+	return retVal;
 }
 
 void suspendMotionDetection(uint8_t seconds)
