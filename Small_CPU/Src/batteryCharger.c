@@ -17,7 +17,7 @@ The open-drain FET connected to the CHG pin will be turned on whenever the outpu
 enabled. As a note, the output of the charger supply will not be enabled if the VRECT-REG does not converge to the
 no-load target voltage.
 
-CHG F4 7 O Open-drain output – active when BAT is enabled. Float if not used.
+CHG F4 7 O Open-drain output ï¿½ active when BAT is enabled. Float if not used.
 
 @endverbatim
   ******************************************************************************
@@ -35,7 +35,7 @@ CHG F4 7 O Open-drain output – active when BAT is enabled. Float if not used.
 
 
 /* Use This compile switch to select the new charger status control implementation */
-/* #define ENABLE_CHARGER_STATUS_V2 */
+#define ENABLE_CHARGER_STATUS_V2
 
 #define CHARGE_IN_PIN							GPIO_PIN_2
 #define CHARGE_IN_GPIO_PORT				GPIOC
