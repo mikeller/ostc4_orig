@@ -1149,11 +1149,11 @@ static uint8_t text_IT_Usage_Environment[] = "Condizioni ambientali";
 static uint8_t text_ES_Usage_Environment[] = "Condiciones ambientales";
 
 // Menu SYS2 sub Information
-static uint8_t text_EN_ChargeCycles[] = "Charge cycles (complete)";
-static uint8_t text_DE_ChargeCycles[] = "Ladezyklen (vollständig)";
-static uint8_t text_FR_ChargeCycles[] = "Cycles de charge (complets)";
-static uint8_t text_IT_ChargeCycles[] = "Ricarica completata";
-static uint8_t text_ES_ChargeCycles[] = "Carga completada";
+static uint8_t text_EN_ChargeCycles[] = "Last charging cycle (complete)";
+static uint8_t text_DE_ChargeCycles[] = "Letzter Ladezyklus (vollständig)";
+static uint8_t text_FR_ChargeCycles[] = "Dernier cycles de charge (complets)";
+static uint8_t text_IT_ChargeCycles[] = "Ultimo ciclo di ricarica (completata)";
+static uint8_t text_ES_ChargeCycles[] = "Ultimo ciclo de carga (completada)";
 
 // Menu SYS2 sub Information
 static uint8_t text_EN_LowestVoltage[] = "Lowest battery voltage";
