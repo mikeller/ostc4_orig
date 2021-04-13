@@ -842,13 +842,13 @@ void refresh_InformationPage(void)
         text_content[1] = TXT2BYTE_ChargeCycles;
         text_content[2] = 0;
         write_label_var(  20, 800, ME_Y_LINE1, &FontT42, text_content);
-        snprintf(text_content,80,"%ld (%ld)",stateDeviceGetPointer()->batteryChargeCycles.value_int32,stateDeviceGetPointer()->batteryChargeCompleteCycles.value_int32);
-        write_label_var(  20, 800, ME_Y_LINE2, &FontT42, text_content);
+        /*      snprintf(text_content,80,"%ld (%ld)",stateDeviceGetPointer()->batteryChargeCycles.value_int32,stateDeviceGetPointer()->batteryChargeCompleteCycles.value_int32);
+       write_label_var(  20, 800, ME_Y_LINE2, &FontT42, text_content); */
 
         translateDate(stateDeviceGetPointer()->batteryChargeCycles.date_rtc_dr, &Sdate);
         translateDate(stateDeviceGetPointer()->batteryChargeCompleteCycles.date_rtc_dr, &Sdate2);
         snprintf(text_content,80,"%u.%u.20%02u (%u.%u.20%02u)",Sdate.Date,Sdate.Month,Sdate.Year, Sdate2.Date,Sdate2.Month,Sdate2.Year);
-        write_label_var(  20, 800, ME_Y_LINE3, &FontT42, text_content);
+        write_label_var(  20, 800, ME_Y_LINE2, &FontT42, text_content);
 
         text_content[0] = TXT_2BYTE;
         text_content[1] = TXT2BYTE_LowestVoltage;
