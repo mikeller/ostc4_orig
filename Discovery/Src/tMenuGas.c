@@ -37,7 +37,7 @@
 #define OCGAS_STANDARD (0)
 #define OCGAS_BAILOUT_INACTIVE (1)
 #define OCGAS_BAILOUT_ACTIVE (2)
-#define CCGAS_STANDARD (0)
+#define CCGAS_STANDARD (3)
 
 /* Private function prototypes -----------------------------------------------*/
 uint8_t write_gas(char *text, uint8_t oxygen, uint8_t helium);
@@ -313,17 +313,33 @@ void tMG_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext, uint8_t
     }
 
     /* special gas number #6 in dive mode*/
-    if(((line == 0) || (line == 6)) && (actual_menu_content != MENU_SURFACE))
+    if(((line == 0) || (line == 6)))
     {
-        text[textPointer++] = '\020';
-        text[textPointer++] = TXT_2BYTE;
-        if(start == NUM_OFFSET_DILUENT)
-            text[textPointer++] = TXT2BYTE_SpecialDiveGasMenuCCR;
-        else
-            text[textPointer++] = TXT2BYTE_SpecialDiveGasMenu;
-        text[textPointer++] = '\n';
-        text[textPointer++] = '\r';
-        text[textPointer++] = 0;
+    	if(actual_menu_content != MENU_SURFACE)
+    	{
+			text[textPointer++] = '\020';
+			text[textPointer++] = TXT_2BYTE;
+			if(start == NUM_OFFSET_DILUENT)
+				text[textPointer++] = TXT2BYTE_SpecialDiveGasMenuCCR;
+			else
+				text[textPointer++] = TXT2BYTE_SpecialDiveGasMenu;
+			text[textPointer++] = '\n';
+			text[textPointer++] = '\r';
+			text[textPointer++] = 0;
+    	}
+    	else	/* switch to bailout selection in surface mode */
+    	if((settingsGetPointer()->dive_mode == DIVEMODE_CCR) || (stateUsed->diveSettings.ccrOption == 1))
+    	{
+			text[textPointer++] = '\024';
+			if(gasMode == CCGAS_STANDARD)
+			{
+				textPointer += snprintf(&text[textPointer], 14,"Bailout\n");
+			}
+			else
+			{
+				textPointer += snprintf(&text[textPointer], 14,"Diluent\n");
+			}
+    	}
     }
 }
 

@@ -68,6 +68,8 @@ typedef struct
     uint8_t 	pageCountNumber[MAXPAGES+1];
     uint8_t 	pageCountTotal;
     uint8_t		modeFlipPages;
+    uint8_t		shadowPage[MAXPAGES+1];		/* the page is switch in the context of another page */
+    uint8_t	    activeShadow;				/* Base page which is used for the shadow */
 } SMenuMemory;
 
 /* Exported variables --------------------------------------------------------*/
@@ -92,7 +94,7 @@ static void draw_tMdesignSubUnselected(uint32_t *ppDestination);
 static void draw_tMdesignSubSelected(uint32_t *ppDestination);
 static void draw_tMdesignSubSelectedBorder(uint32_t *ppDestination);
 static void tMenu_write(uint8_t page, char *text, char *subtext);
-
+static void nextLine(void);
 static void clean_line_actual_page(void);
 void tM_build_pages(void);
 
@@ -144,6 +146,7 @@ void tM_init(void)
         menu.lineMemoryForNavigationForPage[i] = 0;
         menu.StartAddressForPage[i] = 0;
         menu.linesAvailableForPage[i] = 0;
+        menu.shadowPage[i] = 0;
     }
 
     tMscreen.FBStartAdress = 0;
@@ -342,11 +345,13 @@ void tM_build_page(uint32_t id, char *text, uint16_t tab, char *subtext)
 
     page = idList.page;
 
-    if(!menu.pageCountNumber[page])
-        return;
+  	if((!menu.pageCountNumber[page]) && (!menu.shadowPage[page]))		/* shadow pages are not visible on top level */
+	{
+		return;
+	}
 
-    if(menu.pagesAvailable == 0)
-        tM_create_pagenumbering();
+	if(menu.pagesAvailable == 0)
+		tM_create_pagenumbering();
 
     if(*text == 0)
         return;
@@ -433,7 +438,7 @@ static void findValidPosition(uint8_t *pageOuput, uint8_t *lineOutput)
     if(page == 0)
         page = first;
 
-    while((page <= MAXPAGES) && ((menu.linesAvailableForPage[page] == 0) || (menu.StartAddressForPage[page] == 0) || (menu.pageCountNumber[page] == 0)))
+    while((page <= MAXPAGES) && ((menu.linesAvailableForPage[page] == 0) || (menu.StartAddressForPage[page] == 0) || ((menu.pageCountNumber[page] == 0) && !((menu.shadowPage[page]) && (menu.pageMemoryForNavigation == page)))))
         page += 1;
 
     if(page > MAXPAGES)
@@ -465,6 +470,21 @@ static void tM_add(uint32_t id)
         return;
 
     menu.pageCountNumber[page] = 1;
+}
+
+static void tM_addShadow(uint32_t id)
+{
+    SStateList idList;
+    uint8_t page;
+
+    get_idSpecificStateList(id, &idList);
+
+    page = idList.page;
+
+    if(page > MAXPAGES)
+        return;
+
+    menu.shadowPage[page] = 1;
 }
 
 
@@ -507,13 +527,26 @@ void tM_build_pages(void)
     }
 //	if((pSettings->dive_mode != DIVEMODE_Gauge) && (pSettings->dive_mode != DIVEMODE_Apnea))
 //	{
-        tM_add(StMOG);
         tM_add(StMDECOP);
 //	}
+
     if((pSettings->dive_mode == DIVEMODE_CCR) || (stateUsed->diveSettings.ccrOption == 1))
     {
         tM_add(StMCG);
         tM_add(StMSP);
+        if (actual_menu_content == MENU_SURFACE)  /* StMOG is now accessed using StMCG in CCR mode*/
+        {
+        	tM_add(StMXTRA);
+        	tM_addShadow(StMOG);
+        }
+        else
+        {
+        	tM_add(StMOG);
+        }
+    }
+    else
+    {
+        tM_add(StMOG);
     }
 
     id = tMOG_refresh(0, text, &tabPosition, subtext);
@@ -848,6 +881,57 @@ static void nextPage(void)
     }
 }
 
+void selectPage(uint32_t selection)
+{
+    uint8_t page, line;
+    SStateList idList;
+
+	SSettings* pSettings;
+	pSettings = settingsGetPointer();
+
+ //   menu.pageMemoryForNavigation = selection;
+
+ //   findValidPosition(&page, &line);
+    if(selection > MAXPAGES)		/* selection via structure */
+    {
+    	get_idSpecificStateList(selection, &idList);
+    	page = idList.page;
+    }
+    else
+    {
+    	page = selection;
+    }
+
+    if(menu.shadowPage[page])		/* backup base page in case a shadow was selected */
+    {
+    	menu.activeShadow = menu.pageMemoryForNavigation;
+    }
+
+    menu.pageMemoryForNavigation = page;
+    /* new test for 3button design */
+    //menu.lineMemoryForNavigationForPage[page] = line;
+    menu.lineMemoryForNavigationForPage[page] = 0;
+    menu.modeFlipPages = 1;
+
+    set_globalState_Menu_Page(page);
+
+    change_CLUT_entry(CLUT_MenuLineSelectedSides, 		(CLUT_MenuPageGasOC + page - 1));
+    change_CLUT_entry(CLUT_MenuLineSelectedSeperator, (CLUT_MenuPageGasOC + page - 1));
+
+    GFX_SetFrameTop(menu.StartAddressForPage[page]);
+    /* new test for 3button design */
+    //GFX_SetFrameBottom((.FBStartAdress) + 65*2*(line - 1), 0, 25, 800, 390);
+    if(!pSettings->FlipDisplay)
+    {
+    	GFX_SetFrameBottom(tMdesignSolo.FBStartAdress, 0, 25, 800, 390);
+    }
+    else
+    {
+    	GFX_SetFrameBottom(tMdesignSolo.FBStartAdress, 0, 65, 800, 390);
+    }
+    nextLine();
+}
+
 
 static void nextLine(void)
 {
@@ -876,6 +960,11 @@ static void nextLine(void)
 
 static void stepBackMenu(void)
 {
+	if(menu.activeShadow)	/* restore base page */
+	{
+		selectPage(menu.activeShadow);
+		menu.activeShadow = 0;
+	}
     if(menu.modeFlipPages == 0)
     {
         menu.lineMemoryForNavigationForPage[menu.pageMemoryForNavigation] = 0;
@@ -1143,7 +1232,7 @@ static void draw_tMheader(uint8_t page)
     uint16_t positionText;
     uint8_t pageText;
 
-    const char text8max[MAXPAGES+1][8] =
+    char text8max[MAXPAGES+1][8] =
     {   "",
         "OC",
         "CC",
@@ -1157,7 +1246,7 @@ static void draw_tMheader(uint8_t page)
         "SIM"
     };
 
-    const _Bool spacing[MAXPAGES+1] =
+    _Bool spacing[MAXPAGES+1] =
     {   0,
         0, // behind OC
         0, // behind CC
@@ -1171,6 +1260,12 @@ static void draw_tMheader(uint8_t page)
         1, // behind SIM
         0
     };
+
+    if(actual_menu_content == MENU_SURFACE)
+    {
+    	spacing[3] = 0;		/* Display extra menu directly after setpoint */
+    	sprintf(text8max[4],"OP");
+    }
 
     pBackup = tMscreen.FBStartAdress;
     tMscreen.FBStartAdress = menu.StartAddressForPage[page];
@@ -1237,7 +1332,7 @@ static void draw_tMheader(uint8_t page)
 					pDestination += 5 * 480;
 					positionText += 70;
 
-					if((k == 4) || ((k == 6) && (menu.pageCountNumber[5] == 0)))
+					if(((k == 4) && (actual_menu_content != MENU_SURFACE)) || ((k == 6) && (menu.pageCountNumber[5] == 0)))
 					{
 						pDestination += 70 * 480;
 						positionText += 70;
