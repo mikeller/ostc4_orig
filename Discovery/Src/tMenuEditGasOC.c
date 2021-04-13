@@ -89,24 +89,58 @@ uint8_t OnAction_DefaultDepth	(uint32_t editId, uint8_t blockNumber, uint8_t dig
 void openEdit_GasCC(uint8_t line)
 {
     if(actual_menu_content == MENU_SURFACE)
-        openEdit_Gas(line , 1);
+    {
+		if(line == 6)
+		{
+			if((settingsGetPointer()->dive_mode == DIVEMODE_CCR) || (stateUsed->diveSettings.ccrOption == 1))
+			{
+				selectPage(StMOG);
+			}
+		}
+		else
+		{
+			openEdit_Gas(line , 1);
+		}
+    }
     else
-    if(line == 6)
-        openEdit_SpecialDiveGasMenu(1);
-    else
-        openEdit_DiveGasSelect(line, 1);
+    {
+		if(line == 6)
+		{
+			openEdit_SpecialDiveGasMenu(1);
+		}
+		else
+		{
+			openEdit_DiveGasSelect(line, 1);
+		}
+    }
 }
 
 
 void openEdit_GasOC(uint8_t line)
 {
     if(actual_menu_content == MENU_SURFACE)
-        openEdit_Gas(line, 0);
+    {
+		if(line == 6)
+		{
+			if((settingsGetPointer()->dive_mode == DIVEMODE_CCR) || (stateUsed->diveSettings.ccrOption == 1))
+			{
+				selectPage(StMCG);
+			}
+		}
+		else
+		{
+			openEdit_Gas(line, 0);
+		}
+    }
     else
     if(line == 6)
+    {
         openEdit_SpecialDiveGasMenu(0);
+    }
     else
+    {
         openEdit_DiveGasSelect(line, 0);
+    }
 }
 
 

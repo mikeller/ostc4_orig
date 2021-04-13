@@ -83,4 +83,6 @@ void tM_build_page(uint32_t id, char *text, uint16_t tab, char *subtext);
 void block_diluent_page(void);
 void unblock_diluent_page(void);
 
+void selectPage(uint32_t selection);
+
 #endif /* TMENU_H */
