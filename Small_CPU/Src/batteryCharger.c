@@ -45,7 +45,7 @@ CHG F4 7 O Open-drain output � active when BAT is enabled. Float if not used.
 #define CHARGE_OUT_GPIO_PORT			GPIOC
 #define CHARGE_OUT_GPIO_ENABLE()	__GPIOC_CLK_ENABLE()
 
-#define CHARGER_DEBOUNCE_SECONDS	(120u)		/* 120 seconds used to avoid problems with charger interrupts / disconnections */
+#define CHARGER_DEBOUNCE_SECONDS	(5u)		/* 5 seconds used to avoid problems with charger interrupts / disconnections */
 
 uint8_t battery_i_charge_status = 0;
 uint16_t battery_charger_counter = 0;
@@ -165,7 +165,7 @@ void battery_charger_get_status_and_contral_battery_gas_gauge(uint8_t cycleTimeB
 													batteryChargerState = Charger_Finished;
 													global.dataSendToMaster.chargeStatus = CHARGER_complete;
 													global.deviceDataSendToMaster.chargeStatus = CHARGER_complete;
-													battery_charger_counter = 30;
+													battery_charger_counter = 15;
 													notifyChargeComplete = 1;
 												}
 										break;
@@ -181,6 +181,7 @@ void battery_charger_get_status_and_contral_battery_gas_gauge(uint8_t cycleTimeB
 												else
 												{
 													battery_charger_counter = 0;
+													battery_i_charge_status = 0;
 													global.dataSendToMaster.chargeStatus = CHARGER_off;
 													global.deviceDataSendToMaster.chargeStatus = CHARGER_off;
 
@@ -253,6 +254,7 @@ void battery_charger_get_status_and_contral_battery_gas_gauge(uint8_t cycleTimeB
 												GPIO_InitStructure.Pull = GPIO_NOPULL;
 												GPIO_InitStructure.Speed = GPIO_SPEED_LOW;
 												HAL_GPIO_Init(CHARGE_OUT_GPIO_PORT, &GPIO_InitStructure);
+												HAL_Delay(1);
 										break;
 
 				default:						/* wait for disconnection */
