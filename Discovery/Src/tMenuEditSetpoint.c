@@ -282,8 +282,8 @@ static uint8_t OnAction_SP_Setpoint(uint32_t editId, uint8_t blockNumber, uint8_
 
         new_cbar = (new_integer_part * 100) + new_fractional_part;
 
-        if(new_cbar < 50)
-            new_cbar = 50;
+        if(new_cbar < MIN_PPO2_SP_CBAR)
+            new_cbar = MIN_PPO2_SP_CBAR;
 
         if(new_cbar > 160)
             new_cbar = 160;
