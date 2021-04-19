@@ -3132,6 +3132,12 @@ static uint32_t GFX_write__Modify_Xdelta__Centered(GFX_CfgWriteString* cfg, GFX_
 		{
 			ptargetFont = (tFont *)cfg->font;
 		}
+
+		if((*(char*)pText == '\005') || (*(char*)pText == '\006'))
+		{
+			Xsum += 45;
+		}
+		else
 		if((*(char*)pText) & 0x80) /* Identify a UNICODE character other than standard ASCII using the highest bit */
 		{
 			decodeUTF8 = ((*(char*)pText) & 0x1F) << 6; /* use 5bits of first byte for upper part of unicode */
@@ -3232,6 +3238,11 @@ static uint32_t GFX_write__Modify_Xdelta__RightAlign(GFX_CfgWriteString* cfg, GF
 		if(*(char*)pText == ' ')
 		{
 			Xsum += font->spacesize;
+		}
+		else
+		if((*(char*)pText == '\005') || (*(char*)pText == '\006'))
+		{
+			Xsum += 45;
 		}
 		else
 		{
