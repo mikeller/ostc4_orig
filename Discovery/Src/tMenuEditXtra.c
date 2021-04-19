@@ -111,6 +111,7 @@ void openEdit_SimFollowDecostops(void)
 void openEdit_CalibViewport(void)
 {
 	calibrateViewport(stateUsed->lifeData.compass_roll, stateUsed->lifeData.compass_pitch, stateUsed->lifeData.compass_heading);
+	suspendMotionDetection(0);	/* exit to focus mode directly */
     exitMenuEdit_to_Home();
 }
 
