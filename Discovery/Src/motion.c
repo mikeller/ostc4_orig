@@ -278,7 +278,7 @@ void InitMotionDetection(void)
 detectionState_t detectSectorButtonEvent(float focusOffset)
 {
 	static uint8_t lastTargetSector = 0xFF;
-	static float lastfocusOffset = 0.0;
+	static float lastfocusOffset = 1000.0;
 
 	uint8_t newTargetSector;
 
@@ -288,6 +288,7 @@ detectionState_t detectSectorButtonEvent(float focusOffset)
 	if((newTargetSector != lastTargetSector) && (fabsf(focusOffset - lastfocusOffset) > (sectorDetection.size / 3)))
 	{
 		lastfocusOffset = focusOffset;
+		lastTargetSector = newTargetSector;
 		if(settingsGetPointer()->design == 3)		/* Big font view ? */
 		{
 			t3_select_customview(GetCVForSector(newTargetSector));
