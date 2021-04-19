@@ -85,7 +85,7 @@ const SFirmwareData firmware_FirmwareData __attribute__( (section(".firmware_fir
  * There might even be entries with fixed values that have no range
  */
 const SSettings SettingsStandard = {
-    .header = 0xFFFF001E,
+    .header = 0xFFFF001F,
     .warning_blink_dsec = 8 * 2,
     .lastDiveLogId = 0,
     .logFlashNextSampleStartAddress = 0,
@@ -323,6 +323,9 @@ const SSettings SettingsStandard = {
 	.ppo2sensors_calibCoeff[1] = 0.0,
 	.ppo2sensors_calibCoeff[2] = 0.0,
 	.amPMTime = 0,
+	.autoSetpoint = 0,
+	.scrubTimerMax = 0,
+	.scrubTimerCur = 0,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -1439,6 +1442,20 @@ uint8_t check_and_correct_settings(void)
     	Settings.amPMTime = 0;
     	corrections++;
     }
+
+    if(Settings.autoSetpoint > 1) /* only boolean values allowed */
+    {
+    	Settings.autoSetpoint = 0;
+    	corrections++;
+    }
+
+    if((Settings.scrubTimerMax > MAX_SCRUBBER_TIME) || (Settings.scrubTimerCur > MAX_SCRUBBER_TIME))
+    {
+    	Settings.scrubTimerMax = 0;
+    	Settings.scrubTimerCur = 0;
+    	corrections++;
+    }
+
     if(corrections > 255)
         return 255;
     else

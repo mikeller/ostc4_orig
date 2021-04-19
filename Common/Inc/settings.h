@@ -71,6 +71,8 @@
 #define MAX_COMPASS_COMP 		(2u)
 #define MAX_VIEWPORT_MODE 		(0x7F)
 
+#define MAX_SCRUBBER_TIME 		(500u)
+
 typedef enum
 {
 	O2_SENSOR_SOURCE_OPTIC = 0,
@@ -245,8 +247,11 @@ typedef struct
 	/* new in 0xFFFF001E */
 	uint8_t ppo2sensors_source;
 	float   ppo2sensors_calibCoeff[3];
-	/* new in something */
 	uint8_t amPMTime;
+	/* new in 0xFFFF001F */
+	uint8_t autoSetpoint;
+	uint16_t scrubTimerMax;
+	uint16_t scrubTimerCur;
 } SSettings;
 
 typedef struct

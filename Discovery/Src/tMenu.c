@@ -883,7 +883,7 @@ static void nextPage(void)
 
 void selectPage(uint32_t selection)
 {
-    uint8_t page, line;
+    uint8_t page;
     SStateList idList;
 
 	SSettings* pSettings;
