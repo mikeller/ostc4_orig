@@ -682,9 +682,9 @@ uint8_t check_and_correct_settings(void)
  */
     for(int i=1; i<=NUM_GASES;i++)
     {
-        if(Settings.setpoint[i].setpoint_cbar < 50)
+        if(Settings.setpoint[i].setpoint_cbar < MIN_PPO2_SP_CBAR)
         {
-            Settings.setpoint[i].setpoint_cbar = 50;
+            Settings.setpoint[i].setpoint_cbar = MIN_PPO2_SP_CBAR;
             corrections++;
         }
         if(Settings.setpoint[i].setpoint_cbar > 160)

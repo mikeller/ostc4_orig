@@ -72,6 +72,7 @@
 #define MAX_VIEWPORT_MODE 		(0x7F)
 
 #define MAX_SCRUBBER_TIME 		(500u)
+#define MIN_PPO2_SP_CBAR		(40u)
 
 typedef enum
 {
