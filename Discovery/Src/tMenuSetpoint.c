@@ -133,5 +133,17 @@ uint32_t tMSP_refresh(uint8_t line,
         text[textPointer++] = '\r';
         text[textPointer++] = 0;
     }
+    else
+    {
+        text[textPointer++] = '\020';
+        text[textPointer++] = TXT_2BYTE;
+        text[textPointer++] = TXT2BYTE_AutomaticSP;
+        text[textPointer++] = '\002';
+        if(settingsGetPointer()->autoSetpoint)
+                    text[textPointer++] = '\005';
+                else
+                    text[textPointer++] = '\006';
+        text[textPointer++] = 0;
+    }
     return StMSP;
 }

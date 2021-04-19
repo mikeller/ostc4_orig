@@ -910,6 +910,13 @@ static uint8_t text_FR_UseSensor[] = "Cellules";
 static uint8_t text_IT_UseSensor[] = "Sensore";
 static uint8_t text_ES_UseSensor[] = "Usar sensor";
 
+// Dive Menu (CCR mode)
+static uint8_t text_EN_AutomaticSP[] = "Switch SP automatically";
+static uint8_t text_DE_AutomaticSP[] = "Automatischer SP Wechsel";
+static uint8_t text_FR_AutomaticSP[] = "";
+static uint8_t text_IT_AutomaticSP[] = "";
+static uint8_t text_ES_AutomaticSP[] = "";
+
 // Warning
 static uint8_t text_EN_WarnDecoMissed[] = "Deco stop";
 static uint8_t text_DE_WarnDecoMissed[] = "Deco Stopp";
@@ -1804,6 +1811,7 @@ const tText text_array2[] =
     {(uint8_t)TXT2BYTE_CompassCalib, 	{text_EN_CompassCalib, text_DE_CompassCalib, text_FR_CompassCalib, text_IT_CompassCalib, text_ES_CompassCalib}},
 	{(uint8_t)TXT2BYTE_CompassInertia,	{text_EN_CompassInertia, text_DE_CompassInertia, text_FR_CompassInertia, text_IT_CompassInertia, text_ES_CompassInertia}},
 	{(uint8_t)TXT2BYTE_UseSensor,		{text_EN_UseSensor, text_DE_UseSensor, text_FR_UseSensor, text_IT_UseSensor, text_ES_UseSensor}},
+	{(uint8_t)TXT2BYTE_AutomaticSP,		{text_EN_AutomaticSP, text_DE_AutomaticSP, text_FR_AutomaticSP, text_IT_AutomaticSP, text_ES_AutomaticSP}},
     {(uint8_t)TXT2BYTE_WarnDecoMissed,  {text_EN_WarnDecoMissed, text_DE_WarnDecoMissed, text_FR_WarnDecoMissed, text_IT_WarnDecoMissed, text_ES_WarnDecoMissed}},
     {(uint8_t)TXT2BYTE_WarnPPO2Low,		{text_EN_WarnPPO2Low, text_DE_WarnPPO2Low, text_FR_WarnPPO2Low, text_IT_WarnPPO2Low, text_ES_WarnPPO2Low}},
     {(uint8_t)TXT2BYTE_WarnPPO2High,	{text_EN_WarnPPO2High, text_DE_WarnPPO2High, text_FR_WarnPPO2High, text_IT_WarnPPO2High, text_ES_WarnPPO2High}},

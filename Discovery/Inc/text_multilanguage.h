@@ -200,6 +200,7 @@ extern const tText text_array2[];
 		TXT2BYTE_CompassCalib,
 		TXT2BYTE_CompassInertia,
 		TXT2BYTE_UseSensor,
+		TXT2BYTE_AutomaticSP,
 		/* */
 		TXT2BYTE_WarnDecoMissed,
 		TXT2BYTE_WarnPPO2Low,

@@ -191,63 +191,80 @@ void openEdit_Setpoint(uint8_t line)
         uint8_t textPointer;
         uint16_t y_line;
 
-        set_globalState_Menu_Line(line);
+        if(line < 6)
+        {
+			set_globalState_Menu_Line(line);
 
-        resetMenuEdit(CLUT_MenuPageGasSP);
+			resetMenuEdit(CLUT_MenuPageGasSP);
 
-        spId = line;
-        editSetpointPage.spID = spId;
-        SSettings *data = settingsGetPointer();
-        editSetpointPage.pSetpointLine = data->setpoint;
+			spId = line;
+			editSetpointPage.spID = spId;
+			SSettings *data = settingsGetPointer();
+			editSetpointPage.pSetpointLine = data->setpoint;
 
-        setpoint_cbar = editSetpointPage.pSetpointLine[spId].setpoint_cbar;
-        depthDeco = editSetpointPage.pSetpointLine[spId].depth_meter;
-        //active = editSetpointPage.pSetpointLine[spId].note.ub.active;
-        first = editSetpointPage.pSetpointLine[spId].note.ub.first;
+			setpoint_cbar = editSetpointPage.pSetpointLine[spId].setpoint_cbar;
+			depthDeco = editSetpointPage.pSetpointLine[spId].depth_meter;
+			//active = editSetpointPage.pSetpointLine[spId].note.ub.active;
+			first = editSetpointPage.pSetpointLine[spId].note.ub.first;
 
-        sp_high = setpoint_cbar / 100;
+			sp_high = setpoint_cbar / 100;
 
-        strcpy(text, "\001" "Setpoint #0 X");
-        text[11] += spId;
-        text[13] = TXT_Setpoint_Edit;
-        write_topline(text);
+			strcpy(text, "\001" "Setpoint #0 X");
+			text[11] += spId;
+			text[13] = TXT_Setpoint_Edit;
+			write_topline(text);
 
 
-        y_line = ME_Y_LINE_BASE + (line * ME_Y_LINE_STEP);
+			y_line = ME_Y_LINE_BASE + (line * ME_Y_LINE_STEP);
 
-        textPointer = 0;
-        text[textPointer++] = 'S';
-        text[textPointer++] = 'P';
-        text[textPointer++] = '0' + spId;
-        text[textPointer++] = ' ';
-        text[textPointer++] = ' ';
+			textPointer = 0;
+			text[textPointer++] = 'S';
+			text[textPointer++] = 'P';
+			text[textPointer++] = '0' + spId;
+			text[textPointer++] = ' ';
+			text[textPointer++] = ' ';
 
-        if(first == 0)
-            strcpy(&text[textPointer++],"\177");
+			if(first == 0)
+				strcpy(&text[textPointer++],"\177");
 
-        textPointer += snprintf(&text[textPointer], 60,\
-            "* "
-            "       "
-            "\016\016"
-            " bar"
-            "\017"
-            "\034"
-            "   "
-            "\016\016"
-            " "
-            "\017"
-            "           "
-            "\016\016"
-            "meter"
-            "\017"
-            "\035"
-            "\n\r"
-        );
-        write_label_var(  20, 800, y_line, &FontT48, text);
+			textPointer += snprintf(&text[textPointer], 60,\
+				"* "
+				"       "
+				"\016\016"
+				" bar"
+				"\017"
+				"\034"
+				"   "
+				"\016\016"
+				" "
+				"\017"
+				"           "
+				"\016\016"
+				"meter"
+				"\017"
+				"\035"
+				"\n\r"
+			);
+			write_label_var(  20, 800, y_line, &FontT48, text);
 
-        write_field_udigit(StMSP_ppo2_setting,	160, 800, y_line, &FontT48, "#.##            ###", (uint32_t)sp_high, (uint32_t)(setpoint_cbar - (100 * sp_high)), depthDeco, 0);
-        setEvent(StMSP_ppo2_setting,	(uint32_t)OnAction_SP_Setpoint);
-        startEdit();
+			write_field_udigit(StMSP_ppo2_setting,	160, 800, y_line, &FontT48, "#.##            ###", (uint32_t)sp_high, (uint32_t)(setpoint_cbar - (100 * sp_high)), depthDeco, 0);
+			setEvent(StMSP_ppo2_setting,	(uint32_t)OnAction_SP_Setpoint);
+			startEdit();
+		}
+        else
+        {
+            SSettings *pSettings = settingsGetPointer();
+
+            if(pSettings->autoSetpoint == 0)
+            {
+                pSettings->autoSetpoint = 1;
+            }
+            else
+            {
+                pSettings->autoSetpoint = 0;
+            }
+            exitMenuEdit_to_Menu_with_Menu_Update_do_not_write_settings_for_this_only();
+        }
     }
 }
 
