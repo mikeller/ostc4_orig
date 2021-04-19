@@ -234,6 +234,7 @@
 #include "motion.h"
 #include "t7.h"
 #include "t3.h"
+#include "tMenuEditSetpoint.h"
 
 #ifdef DEMOMODE
 #include "demo.h"
@@ -1565,6 +1566,11 @@ static void deco_loop(void)
     static int counter = 0;
     if((stateUsed->mode != MODE_DIVE) || (stateUsed->diveSettings.diveMode == DIVEMODE_Apnea) || (stateUsed->diveSettings.diveMode == DIVEMODE_Gauge) || (decoLock != DECO_CALC_ready ))
         return;
+
+    if((stateUsed->warnings.betterSetpoint) && (settingsGetPointer()->autoSetpoint) && (settingsGetPointer()->CCR_Mode == CCRMODE_FixedSetpoint))
+   	{
+    	openEdit_DiveSelectBetterSetpoint();
+   	}
 
     decoLock = DECO_CALC_running;
 
