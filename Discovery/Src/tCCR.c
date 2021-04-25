@@ -75,6 +75,7 @@ static uint8_t receiveHUDraw[16];
 
 static uint8_t StartListeningToUART_HUD = 0;
 static uint16_t HUDTimeoutCount = 0;
+static uint16_t ScrubberTimeoutCount = 0;
 
 static __IO ITStatus UartReadyHUD = RESET;
 static uint32_t LastReceivedTick_HUD = 0;
@@ -312,7 +313,9 @@ void tCCR_init(void)
     */
 void tCCR_tick(void)
 {
-	if(settingsGetPointer()->ppo2sensors_source == O2_SENSOR_SOURCE_OPTIC)
+	SSettings* pSettings = settingsGetPointer();
+
+	if(pSettings->ppo2sensors_source == O2_SENSOR_SOURCE_OPTIC)
 	{
 		if(HUDTimeoutCount < 3 * 10)
 			HUDTimeoutCount++;
@@ -325,6 +328,20 @@ void tCCR_tick(void)
 				tCCR_fallbackToFixedSetpoint();
 		}
 	}
+
+	/* decrease scrubber timer only in real dive mode */
+    if((pSettings->scrubTimerMode != SCRUB_TIMER_OFF) && (pSettings->dive_mode == DIVEMODE_CCR) && (stateUsed->mode == MODE_DIVE) && (stateUsed == stateRealGetPointer()))
+    {
+    	ScrubberTimeoutCount++;
+    	if(ScrubberTimeoutCount >= 600)		/* resolution is minutes */
+    	{
+    		ScrubberTimeoutCount = 0;
+    		if(pSettings->scrubTimerCur > 0)
+    		{
+    			pSettings->scrubTimerCur--;
+    		}
+    	}
+    }
 }
 
 void tCCR_SetRXIndication(void)
