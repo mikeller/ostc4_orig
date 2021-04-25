@@ -326,6 +326,7 @@ const SSettings SettingsStandard = {
 	.autoSetpoint = 0,
 	.scrubTimerMax = 0,
 	.scrubTimerCur = 0,
+	.scrubTimerMode = SCRUB_TIMER_OFF,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -1455,7 +1456,11 @@ uint8_t check_and_correct_settings(void)
     	Settings.scrubTimerCur = 0;
     	corrections++;
     }
-
+    if(Settings.scrubTimerMode > SCRUB_TIMER_END)
+    {
+    	Settings.scrubTimerMode = SCRUB_TIMER_OFF;
+    	corrections++;
+    }
     if(corrections > 255)
         return 255;
     else

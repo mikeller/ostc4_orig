@@ -137,6 +137,11 @@ extern const tText text_array2[];
 		/* */
 		TXT_Information,
 		/* */
+		TXT_ScrubTime,
+		TXT_ScrubTimeReset,
+		TXT_ScrubTimeMode,
+		TXT_Percent,
+		/* */
 		TXT_END,
 
 		TXT_MINIMAL = '\xFE',

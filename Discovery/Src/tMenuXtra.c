@@ -47,75 +47,125 @@ uint32_t tMXtra_refresh(uint8_t line, char *text, uint16_t *tab, char *subtext)
     *tab = 500;
     *subtext = 0;
 
-    if((line == 0) || (line == 1))
+    /* DIVE MODE */
+    if(actual_menu_content != MENU_SURFACE)
     {
-        text[textPointer++] = TXT_2BYTE;
-        text[textPointer++] = TXT2BYTE_ResetStopwatch;
-    }
-    strcpy(&text[textPointer],"\n\r");
-    textPointer += 2;
-/*
-    if((line == 0) || (line == 2))
-    {
-            text[textPointer++] = TXT_2BYTE;
-            text[textPointer++] = TXT2BYTE_ResetAvgDepth;
-    }
-    strcpy(&text[textPointer],"\n\r");
-    textPointer += 2;
-*/
-    if((line == 0) || (line == 2))
-    {
-        text[textPointer++] = TXT_2BYTE;
-        text[textPointer++] = TXT2BYTE_CompassHeading;
-    }
-    strcpy(&text[textPointer],"\n\r");
-    textPointer += 2;
+		if((line == 0) || (line == 1))
+		{
+			text[textPointer++] = TXT_2BYTE;
+			text[textPointer++] = TXT2BYTE_ResetStopwatch;
+		}
+		strcpy(&text[textPointer],"\n\r");
+		textPointer += 2;
+	/*
+		if((line == 0) || (line == 2))
+		{
+				text[textPointer++] = TXT_2BYTE;
+				text[textPointer++] = TXT2BYTE_ResetAvgDepth;
+		}
+		strcpy(&text[textPointer],"\n\r");
+		textPointer += 2;
+	*/
+		if((line == 0) || (line == 2))
+		{
+			text[textPointer++] = TXT_2BYTE;
+			text[textPointer++] = TXT2BYTE_CompassHeading;
+		}
+		strcpy(&text[textPointer],"\n\r");
+		textPointer += 2;
 
-    if((line == 0) || (line == 3))
-    {
-        text[textPointer++] = TXT_2BYTE;
-        text[textPointer++] = TXT2BYTE_SetMarker;
-    }
-    strcpy(&text[textPointer],"\n\r");
-    textPointer += 2;
+		if((line == 0) || (line == 3))
+		{
+			text[textPointer++] = TXT_2BYTE;
+			text[textPointer++] = TXT2BYTE_SetMarker;
+		}
+		strcpy(&text[textPointer],"\n\r");
+		textPointer += 2;
 
 #ifdef ENABLE_MOTION_CONTROL
-    if((line == 0) || (line == 4))
-    {
-        text[textPointer++] = TXT_2BYTE;
-        text[textPointer++] = TXT2BYTE_CalibView;
-    }
-    strcpy(&text[textPointer],"\n\r");
-    textPointer += 2;
+		if((line == 0) || (line == 4))
+		{
+			text[textPointer++] = TXT_2BYTE;
+			text[textPointer++] = TXT2BYTE_CalibView;
+		}
+		strcpy(&text[textPointer],"\n\r");
+		textPointer += 2;
 #endif
 
-    if(is_stateUsedSetToSim())
+		if(is_stateUsedSetToSim())
+		{
+			if((line == 0) || (line == 5))
+			{
+				text[textPointer++] = TXT_2BYTE;
+				text[textPointer++] = TXT2BYTE_SimFollowDecoStops;
+				text[textPointer++] = ' ';
+				text[textPointer++] = ' ';
+				if(simulation_get_heed_decostops())
+					text[textPointer++] = '\005';
+				else
+					text[textPointer++] = '\006';
+			}
+			strcpy(&text[textPointer],"\n\r");
+			textPointer += 2;
+		}
+		else
+		{
+			if((line == 0) || (line == 5))		/* end dive mode only used during real dives */
+				{
+					text[textPointer++] = TXT_2BYTE;
+					text[textPointer++] = TXT2BYTE_EndDiveMode;
+				}
+			strcpy(&text[textPointer],"\n\r");
+			textPointer += 2;
+		}
+    }
+    else	/* Surface MODE */
     {
-        if((line == 0) || (line == 5))
+        if((line == 0) || (line == 1))
         {
-            text[textPointer++] = TXT_2BYTE;
-            text[textPointer++] = TXT2BYTE_SimFollowDecoStops;
-            text[textPointer++] = ' ';
-            text[textPointer++] = ' ';
-            if(simulation_get_heed_decostops())
-                text[textPointer++] = '\005';
-            else
-                text[textPointer++] = '\006';
+            textPointer += snprintf(&text[textPointer], 60,\
+                "%c"
+            	"\016\016(%c)\17"
+                "\002"
+                "%u"
+                "\016\016"
+                " %c"
+                "\017"
+                ,TXT_ScrubTime
+				,TXT_Maximum
+                ,settingsGetPointer()->scrubTimerMax
+                ,TXT_Minutes
+            );
         }
         strcpy(&text[textPointer],"\n\r");
         textPointer += 2;
-    }
-    else
-    {
-    	if((line == 0) || (line == 5))		/* end dive mode only used during real dives */
-    	    {
-    	        text[textPointer++] = TXT_2BYTE;
-    	        text[textPointer++] = TXT2BYTE_EndDiveMode;
-    	    }
-    	strcpy(&text[textPointer],"\n\r");
-    	textPointer += 2;
-    }
+        if((line == 0) || (line == 2))
+        {
+            textPointer += snprintf(&text[textPointer], 60,\
+                        "%c\002%03u\016\016 %c\017"
+                        ,TXT_ScrubTimeReset
+                        ,settingsGetPointer()->scrubTimerCur
+                        ,TXT_Minutes);
+        }
+        strcpy(&text[textPointer],"\n\r");
+        textPointer += 2;
+        if((line == 0) || (line == 3))
+        {
+        	switch(settingsGetPointer()->scrubTimerMode)
+        	{
+        		case SCRUB_TIMER_OFF:
+        		default: 	textPointer += snprintf(&text[textPointer], 60,"%c\002%c%c",TXT_ScrubTimeMode, TXT_2BYTE, TXT2BYTE_MoCtrlNone );
+        			break;
+        		case SCRUB_TIMER_MINUTES: textPointer += snprintf(&text[textPointer], 60,"%c\002%c",TXT_ScrubTimeMode, TXT_Minutes );
+        			break;
+        		case SCRUB_TIMER_PERCENT: textPointer += snprintf(&text[textPointer], 60,"%c\002%c",TXT_ScrubTimeMode, TXT_Percent );
+        			break;
+        	}
+        }
+        strcpy(&text[textPointer],"\n\r");
+        textPointer += 2;
 
+    }
     return StMXTRA;
 }
 
