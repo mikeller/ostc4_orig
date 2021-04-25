@@ -160,6 +160,10 @@ void refresh_Customviews(void)
     case LLC_GF:
     	text[4] = TXT_ActualGradient;
     	break;
+    case LLC_ScrubberTime:
+    	text[4] = TXT_ScrubTime;
+    	break;
+
 #ifdef ENABLE_BOTTLE_SENSOR
     case LCC_BottleBar:
     	text[4] = TXT_AtemGasVorrat;

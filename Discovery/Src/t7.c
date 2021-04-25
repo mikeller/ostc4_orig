@@ -146,7 +146,7 @@ static uint8_t selection_custom_field = LLC_Temperature;
 const uint8_t *customviewsDive		= customviewsDiveStandard;
 const uint8_t *customviewsSurface	= customviewsSurfaceStandard;
 
-#define TEXTSIZE 16
+#define TEXTSIZE 30
 /* offset includes line: 2 = line +1
  * box (line) is 300 px
  * inside is 296 px
@@ -2412,7 +2412,7 @@ void t7_refresh_divemode(void)
         TextR1[textPointer++] = '\a';
         TextR1[textPointer++] = '\001';
         TextR1[textPointer++] = ' ';
-        textPointer += snprintf(&TextR1[textPointer],5,"%f01.2",((float)(stateUsed->diveSettings.setpoint[actualBetterSetpointId()].setpoint_cbar))/100);
+        textPointer += snprintf(&TextR1[textPointer],TEXTSIZE,"%f01.2",((float)(stateUsed->diveSettings.setpoint[actualBetterSetpointId()].setpoint_cbar))/100);
         TextR1[textPointer++] = '?';
         TextR1[textPointer++] = ' ';
         TextR1[textPointer++] = 0;
@@ -2661,6 +2661,10 @@ void t7_change_field(void)
     {
     	selection_custom_field++;
     }
+    if((selection_custom_field == LLC_ScrubberTime) && ((settingsGetPointer()->scrubTimerMode == SCRUB_TIMER_OFF) || (settingsGetPointer()->dive_mode != DIVEMODE_CCR)))
+    {
+    	selection_custom_field++;
+    }
 
     if(selection_custom_field >= LLC_END)
     {
@@ -2786,6 +2790,20 @@ void t7_refresh_divemode_userselected_left_lower_corner(void)
         headerText[2] = TXT_ActualGradient;
         snprintf(text,TEXTSIZE,"\020%.0f\016\016%%\017",100 * pDecoinfoStandard->super_saturation);
         break;
+
+    case LLC_ScrubberTime:
+    	tinyHeaderFont = 1;
+        headerText[2] = TXT_ScrubTime;
+        if(settingsGetPointer()->scrubTimerMode == SCRUB_TIMER_MINUTES)
+        {
+        	snprintf(text,TEXTSIZE,"\020%3u'",settingsGetPointer()->scrubTimerCur);
+        }
+        else
+        {
+        	snprintf(text,TEXTSIZE,"\020%u\016\016%%\017", (settingsGetPointer()->scrubTimerCur * 100 / settingsGetPointer()->scrubTimerMax));
+        }
+		break;
+
 #ifdef ENABLE_BOTTLE_SENSOR
     case LCC_BottleBar:
         headerText[2] = TXT_AtemGasVorrat;
@@ -3311,6 +3329,7 @@ void t7_SummaryOfLeftCorner(void)
 {
     char text[256+60];
     uint8_t textpointer = 0;
+    SSettings* pSettings = settingsGetPointer();
 
     const SDecoinfo * pDecoinfoStandard;
     const SDecoinfo * pDecoinfoFuture;
@@ -3332,7 +3351,7 @@ void t7_SummaryOfLeftCorner(void)
         fCNS = 999;
 
     t7cY0free.WindowY0 = t7cC.WindowY0 - 10;
-    if(settingsGetPointer()->FlipDisplay)
+    if(pSettings->FlipDisplay)
     {
     	t7cY0free.WindowY1 = 400;
     }
@@ -3359,10 +3378,16 @@ void t7_SummaryOfLeftCorner(void)
     text[textpointer++] = '\n';
     text[textpointer++] = '\r';
     text[textpointer++] = TXT_FutureTTS;
-    text[textpointer++] = '\017';
-    text[textpointer++] = 0;
+    text[textpointer++] = '\n';
+    text[textpointer++] = '\r';
+    if((pSettings->scrubTimerMode != SCRUB_TIMER_OFF) && (pSettings->dive_mode == DIVEMODE_CCR))
+    {
+		text[textpointer++] = TXT_ScrubTime;
 
-    if(!settingsGetPointer()->FlipDisplay)
+    }
+    text[textpointer++] = '\017';
+	text[textpointer++] = 0;
+    if(!pSettings->FlipDisplay)
     {
 		t7cY0free.WindowX0 += 10;
 		t7cY0free.WindowY0 += 10;
@@ -3403,6 +3428,21 @@ void t7_SummaryOfLeftCorner(void)
     	textpointer += snprintf(&text[textpointer],10,"\020%i'", (pDecoinfoFuture->output_time_to_surface_seconds + 59) / 60);
     else
     	textpointer += snprintf(&text[textpointer],10,"\020%ih", (pDecoinfoFuture->output_time_to_surface_seconds + 59) / 3600);
+
+    if((pSettings->scrubTimerMode != SCRUB_TIMER_OFF) && (pSettings->dive_mode == DIVEMODE_CCR))
+    {
+        text[textpointer++] = '\n';
+        text[textpointer++] = '\r';
+        text[textpointer++] = '\t';
+        if(settingsGetPointer()->scrubTimerMode == SCRUB_TIMER_MINUTES)
+        {
+        	textpointer += snprintf(&text[textpointer],10,"\020%3u'", pSettings->scrubTimerCur);
+        }
+        else
+        {
+        	textpointer += snprintf(&text[textpointer],10,"\020%u\016\016%%\017", (pSettings->scrubTimerCur * 100 / pSettings->scrubTimerMax));
+        }
+    }
     text[textpointer++] = 0;
     t7_colorscheme_mod(text);
     GFX_write_string(&FontT42, &t7cY0free, text, 1);
