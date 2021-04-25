@@ -1680,6 +1680,30 @@ static uint8_t text_FR_DecoTTS[] = "";
 static uint8_t text_IT_DecoTTS[] = "";
 static uint8_t text_ES_DecoTTS[] = "";
 
+static uint8_t text_EN_ScrubTime[] = "Scrubber time";
+static uint8_t text_DE_ScrubTime[] = "Kalkstandzeit";
+static uint8_t text_FR_ScrubTime[] = "Scrubber time";
+static uint8_t text_IT_ScrubTime[] = "Scrubber time";
+static uint8_t text_ES_ScrubTime[] = "Scrubber time";
+
+static uint8_t text_EN_ScrubTimeReset[] = "Reset scrubber timer";
+static uint8_t text_DE_ScrubTimeReset[] = "Kalkstandzeit zurücksetzen";
+static uint8_t text_FR_ScrubTimeReset[] = "Reset scrubber timer";
+static uint8_t text_IT_ScrubTimeReset[] = "Reset scrubber timer";
+static uint8_t text_ES_ScrubTimeReset[] = "Reset scrubber timer";
+
+static uint8_t text_EN_ScrubTimeMode[] = "Scrubber timer display";
+static uint8_t text_DE_ScrubTimeMode[] = "Anzeige Modus";
+static uint8_t text_FR_ScrubTimeMode[] = "Scrubber timer display";
+static uint8_t text_IT_ScrubTimeMode[] = "Scrubber timer display";
+static uint8_t text_ES_ScrubTimeMode[] = "Scrubber timer display";
+
+static uint8_t text_EN_Percent[] = "Percent";
+static uint8_t text_DE_Percent[] = "Prozent";
+static uint8_t text_FR_Percent[] = "Percent";
+static uint8_t text_IT_Percent[] = "Percent";
+static uint8_t text_ES_Percent[] = "Percent";
+
 /* Lookup Table -------------------------------------------------------------*/
 
 const tText text_array[] =
@@ -1759,6 +1783,11 @@ const tText text_array[] =
     {(uint8_t)TXT_LogbookEmpty,		{text_EN_LogbookEmpty, text_DE_LogbookEmpty, text_FR_LogbookEmpty, text_IT_LogbookEmpty, text_ES_LogbookEmpty}},
     {(uint8_t)TXT_Start_Calculation,{text_EN_Start_Calculation, text_DE_Start_Calculation, text_FR_Start_Calculation, text_IT_Start_Calculation, text_ES_Start_Calculation}},
     {(uint8_t)TXT_Information,		{text_EN_Information, text_DE_Information, text_FR_Information, text_IT_Information, text_ES_Information}},
+	{(uint8_t)TXT_ScrubTime,		{text_EN_ScrubTime, text_DE_ScrubTime, text_FR_ScrubTime, text_IT_ScrubTime, text_ES_ScrubTime}},
+	{(uint8_t)TXT_ScrubTimeReset,	{text_EN_ScrubTimeReset, text_DE_ScrubTimeReset, text_FR_ScrubTimeReset, text_IT_ScrubTimeReset, text_ES_ScrubTimeReset}},
+	{(uint8_t)TXT_ScrubTimeMode,	{text_EN_ScrubTimeMode, text_DE_ScrubTimeMode, text_FR_ScrubTimeMode, text_IT_ScrubTimeMode, text_ES_ScrubTimeMode}},
+	{(uint8_t)TXT_Percent,	    	{text_EN_Percent, text_DE_Percent, text_FR_Percent, text_IT_Percent, text_ES_Percent}},
+
 };
 
 const tText text_array2[] =

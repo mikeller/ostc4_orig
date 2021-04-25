@@ -82,6 +82,14 @@ typedef enum
 } SensorSource;
 #define MAX_O2_SENSOR_SOURCE 	(2u)
 
+typedef enum
+{
+	SCRUB_TIMER_OFF = 0,
+	SCRUB_TIMER_MINUTES,
+	SCRUB_TIMER_PERCENT,
+	SCRUB_TIMER_END
+} ScrubTimerMode_e;
+
 /*	2015 Jan 30, hw, deco and travel added for MenuEditGas
 	* can be used for buehlmann, vpm, etc. later but be carefull
 	*	with current implemenation */
@@ -132,6 +140,8 @@ typedef struct
 	uint8_t depth_meter;
 	gasbit8_Type note;
 } SSetpointLine;
+
+
 
 /* SSettings
 	 * gas[0] and setpoint[0] are the special ones configurable during the dive
@@ -253,6 +263,7 @@ typedef struct
 	uint8_t autoSetpoint;
 	uint16_t scrubTimerMax;
 	uint16_t scrubTimerCur;
+	uint8_t scrubTimerMode;
 } SSettings;
 
 typedef struct

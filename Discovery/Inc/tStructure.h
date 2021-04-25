@@ -190,8 +190,15 @@
 #define StMXTRA   _MB(2,4,0,0,0)
 
 /* PAGE 4 MENU EDIT */
+/* DIVE MODE */
 #define StMXTRA_ResetStopwatch	_MB(2,4,1,1,0)
 #define StMXTRA_CompassHeading	_MB(2,4,2,1,0)
+
+ /* SURFACE MODE */
+ #define StMXTRA_ScrubTimer_Max_Minutes	_MB(2,4,1,1,0)
+ #define StMXTRA_ScrubTimer_Reset		_MB(2,4,2,1,0)
+ #define StMXTRA_ScrubTimer_OP_Mode		_MB(2,4,3,1,0)
+
 
 /* PAGE 5 */
 #define StMDECO		_MB(2,5,0,0,0)
