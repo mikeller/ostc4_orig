@@ -1277,6 +1277,24 @@ void t3_basics_refresh_customview(float depth, uint8_t tX_selection_customview, 
                 textpointer += snprintf(&text[textpointer],TEXTSIZE,"%.2f",stateUsed->lifeData.ppO2Sensor_bar[i]);
             }
             GFX_write_string(&FontT105,tXc1,text,0);
+
+
+            if((pSettings->scrubTimerMode != SCRUB_TIMER_OFF) && (pSettings->dive_mode == DIVEMODE_CCR))
+            {
+                 snprintf(text,TEXTSIZE,"\032\002\f%c",TXT_ScrubTime);
+                 GFX_write_string(&FontT42,tXc1,text,0);
+
+            	textpointer = 0;
+                if(settingsGetPointer()->scrubTimerMode == SCRUB_TIMER_MINUTES)
+                {
+                	textpointer += snprintf(&text[textpointer],10,"\020\002%3u'", pSettings->scrubTimerCur);
+                }
+                else
+                {
+                	textpointer += snprintf(&text[textpointer],20,"\020\002%u\016\016%%\017", (uint16_t)(pSettings->scrubTimerCur * 100 / pSettings->scrubTimerMax));
+                }
+                GFX_write_string(&FontT105,tXc1,text,1);
+            }
         }
         break;
 
