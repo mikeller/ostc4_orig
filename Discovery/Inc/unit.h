@@ -46,7 +46,7 @@
 float unit_depth_float(float input_meter);
 uint16_t unit_depth_integer(uint16_t input_meter);
 float unit_temperature_float(float input_celsius);
-uint16_t unit_temperature_integer(uint16_t input_celsius);
+int16_t unit_temperature_integer(int16_t input_celsius);
 uint16_t unit_speed_integer(uint16_t input_meterPerMinute);
 int unit_SeaLevelRelation_integer(int input_atmospheric_mbar);
 char unit_depth_char1(void);

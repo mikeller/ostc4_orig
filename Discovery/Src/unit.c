@@ -107,13 +107,13 @@ float unit_temperature_float(float input_celsius)
     }
 }
 
-uint16_t unit_temperature_integer(uint16_t input_celsius)
+int16_t unit_temperature_integer(int16_t input_celsius)
 {
     if(settingsGetPointer()->nonMetricalSystem == 0)
         return input_celsius;
     else
     {
-        return ((input_celsius * 9 / 5) + 320);
+        return ((input_celsius * 9 / 5) + 32);
     }
 }
 

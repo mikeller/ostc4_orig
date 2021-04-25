@@ -774,6 +774,7 @@ static void show_logbook_logbook_show_log_page2(GFX_DrawCfgScreen *hgfx, uint8_t
     int newBottom = 0;
     uint16_t step = 0;
     int16_t maxValTop = 0;
+    int16_t tmp = 0;
 
     scaleHelper(dataLength, tempdata, wintemp.top, wintemp.bottom,
                             &minVal, &maxVal, &newTop, &newBottom,
@@ -786,25 +787,18 @@ static void show_logbook_logbook_show_log_page2(GFX_DrawCfgScreen *hgfx, uint8_t
     // temperature in 1/10 ï¿½C
     int deltaline = (1 + wintemp.bottom - wintemp.top)/5;
     char msg[15];
-    int tmp = maxValTop;
-    int converted;
+
+    /* temperature is provided in centi scaling => convert */
+    maxValTop /= 10;
+    step /= 10;
+
+    tmp = maxValTop;
     for(int i = 1; i<=5; i++)
     {
         tmp -= 	step;
-        if(settingsGetPointer()->nonMetricalSystem) {
-        	converted = unit_temperature_integer(tmp);
-        }
-        else{
-        	converted = tmp;
-        }
-        //if(tmp < 0)
-            //break;
         winsmal.top	= wintemp.top + deltaline * i - 14;
         winsmal.bottom = winsmal.top + 16;
-        if((converted >= 0) && (converted < 100))
-            snprintf(msg,15,"%1i",converted);
-        else
-            snprintf(msg,15,"%2i",converted);
+        snprintf(msg,15,"%2i",unit_temperature_integer(tmp));
         Gfx_write_label_var(hgfx, winsmal.left, winsmal.right,winsmal.top, &FontT24,CLUT_LogbookTemperature,msg);
     }
 
