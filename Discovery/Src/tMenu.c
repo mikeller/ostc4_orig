@@ -1362,7 +1362,7 @@ static void draw_tMheader(uint8_t page)
 				pDestination -= (800) * 480;
 				positionText += 70;
 
-				if((k == 4) || ((k == 6) && (menu.pageCountNumber[5] == 0)))
+				if(((k == 4) && (actual_menu_content != MENU_SURFACE)) || ((k == 6) && (menu.pageCountNumber[5] == 0)))
 				{
 					pDestination -= 70 * 480;
 					positionText += 70;
