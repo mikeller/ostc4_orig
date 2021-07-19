@@ -5,15 +5,16 @@
 #
 
 # the build products are here
-BUILD_PATH="$HOME/OSTC4workspace"
+BUILD_PATH="$HOME/git/ostc4/projects"
 
 # Debug or Release build
 BUILD_TYPE="Release"
 
 # build project names
-CPU1_DISCOVERY="CPU1-Discovery"
-CPU1_FONTPACK="CPU1-FontPack"
-CPU2_RTE="CPU2-RTE"
+CPU1_DISCOVERY="ostc4_discovery"
+CPU1_FONTPACK="ostc4_fontpack"
+CPU2_RTE="ostc4_rte"
+
 
 #
 # End of path and file name settings
