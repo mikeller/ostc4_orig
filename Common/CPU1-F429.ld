@@ -93,6 +93,8 @@ _Min_Stack_Size = 0x08000; 	/* required 32K of stack */
  *   _estack
  */
 
+REGION_ALIAS("ROM", ROM_MAIN)
+
 /****************************************************************************/
 /*************************** Code and Data Sections *************************/
 SECTIONS
